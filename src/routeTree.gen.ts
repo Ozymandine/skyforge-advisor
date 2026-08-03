@@ -10,33 +10,206 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdvisorRouteImport } from './routes/advisor'
+import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as AuctionHouseRouteImport } from './routes/auction-house'
+import { Route as BazaarRouteImport } from './routes/bazaar'
+import { Route as CollectionsRouteImport } from './routes/collections'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as GoalsRouteImport } from './routes/goals'
+import { Route as InventoryRouteImport } from './routes/inventory'
+import { Route as NetWorthRouteImport } from './routes/net-worth'
+import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SkillsRouteImport } from './routes/skills'
+import { Route as WikiRouteImport } from './routes/wiki'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdvisorRoute = AdvisorRouteImport.update({
+  id: '/advisor',
+  path: '/advisor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnalyticsRoute = AnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuctionHouseRoute = AuctionHouseRouteImport.update({
+  id: '/auction-house',
+  path: '/auction-house',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BazaarRoute = BazaarRouteImport.update({
+  id: '/bazaar',
+  path: '/bazaar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CollectionsRoute = CollectionsRouteImport.update({
+  id: '/collections',
+  path: '/collections',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GoalsRoute = GoalsRouteImport.update({
+  id: '/goals',
+  path: '/goals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoryRoute = InventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NetWorthRoute = NetWorthRouteImport.update({
+  id: '/net-worth',
+  path: '/net-worth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SkillsRoute = SkillsRouteImport.update({
+  id: '/skills',
+  path: '/skills',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WikiRoute = WikiRouteImport.update({
+  id: '/wiki',
+  path: '/wiki',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/advisor': typeof AdvisorRoute
+  '/analytics': typeof AnalyticsRoute
+  '/auction-house': typeof AuctionHouseRoute
+  '/bazaar': typeof BazaarRoute
+  '/collections': typeof CollectionsRoute
+  '/dashboard': typeof DashboardRoute
+  '/goals': typeof GoalsRoute
+  '/inventory': typeof InventoryRoute
+  '/net-worth': typeof NetWorthRoute
+  '/notifications': typeof NotificationsRoute
+  '/settings': typeof SettingsRoute
+  '/skills': typeof SkillsRoute
+  '/wiki': typeof WikiRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/advisor': typeof AdvisorRoute
+  '/analytics': typeof AnalyticsRoute
+  '/auction-house': typeof AuctionHouseRoute
+  '/bazaar': typeof BazaarRoute
+  '/collections': typeof CollectionsRoute
+  '/dashboard': typeof DashboardRoute
+  '/goals': typeof GoalsRoute
+  '/inventory': typeof InventoryRoute
+  '/net-worth': typeof NetWorthRoute
+  '/notifications': typeof NotificationsRoute
+  '/settings': typeof SettingsRoute
+  '/skills': typeof SkillsRoute
+  '/wiki': typeof WikiRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/advisor': typeof AdvisorRoute
+  '/analytics': typeof AnalyticsRoute
+  '/auction-house': typeof AuctionHouseRoute
+  '/bazaar': typeof BazaarRoute
+  '/collections': typeof CollectionsRoute
+  '/dashboard': typeof DashboardRoute
+  '/goals': typeof GoalsRoute
+  '/inventory': typeof InventoryRoute
+  '/net-worth': typeof NetWorthRoute
+  '/notifications': typeof NotificationsRoute
+  '/settings': typeof SettingsRoute
+  '/skills': typeof SkillsRoute
+  '/wiki': typeof WikiRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/advisor'
+    | '/analytics'
+    | '/auction-house'
+    | '/bazaar'
+    | '/collections'
+    | '/dashboard'
+    | '/goals'
+    | '/inventory'
+    | '/net-worth'
+    | '/notifications'
+    | '/settings'
+    | '/skills'
+    | '/wiki'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/advisor'
+    | '/analytics'
+    | '/auction-house'
+    | '/bazaar'
+    | '/collections'
+    | '/dashboard'
+    | '/goals'
+    | '/inventory'
+    | '/net-worth'
+    | '/notifications'
+    | '/settings'
+    | '/skills'
+    | '/wiki'
+  id:
+    | '__root__'
+    | '/'
+    | '/advisor'
+    | '/analytics'
+    | '/auction-house'
+    | '/bazaar'
+    | '/collections'
+    | '/dashboard'
+    | '/goals'
+    | '/inventory'
+    | '/net-worth'
+    | '/notifications'
+    | '/settings'
+    | '/skills'
+    | '/wiki'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdvisorRoute: typeof AdvisorRoute
+  AnalyticsRoute: typeof AnalyticsRoute
+  AuctionHouseRoute: typeof AuctionHouseRoute
+  BazaarRoute: typeof BazaarRoute
+  CollectionsRoute: typeof CollectionsRoute
+  DashboardRoute: typeof DashboardRoute
+  GoalsRoute: typeof GoalsRoute
+  InventoryRoute: typeof InventoryRoute
+  NetWorthRoute: typeof NetWorthRoute
+  NotificationsRoute: typeof NotificationsRoute
+  SettingsRoute: typeof SettingsRoute
+  SkillsRoute: typeof SkillsRoute
+  WikiRoute: typeof WikiRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +221,116 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/advisor': {
+      id: '/advisor'
+      path: '/advisor'
+      fullPath: '/advisor'
+      preLoaderRoute: typeof AdvisorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/analytics': {
+      id: '/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auction-house': {
+      id: '/auction-house'
+      path: '/auction-house'
+      fullPath: '/auction-house'
+      preLoaderRoute: typeof AuctionHouseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bazaar': {
+      id: '/bazaar'
+      path: '/bazaar'
+      fullPath: '/bazaar'
+      preLoaderRoute: typeof BazaarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/collections': {
+      id: '/collections'
+      path: '/collections'
+      fullPath: '/collections'
+      preLoaderRoute: typeof CollectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/goals': {
+      id: '/goals'
+      path: '/goals'
+      fullPath: '/goals'
+      preLoaderRoute: typeof GoalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory': {
+      id: '/inventory'
+      path: '/inventory'
+      fullPath: '/inventory'
+      preLoaderRoute: typeof InventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/net-worth': {
+      id: '/net-worth'
+      path: '/net-worth'
+      fullPath: '/net-worth'
+      preLoaderRoute: typeof NetWorthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/skills': {
+      id: '/skills'
+      path: '/skills'
+      fullPath: '/skills'
+      preLoaderRoute: typeof SkillsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/wiki': {
+      id: '/wiki'
+      path: '/wiki'
+      fullPath: '/wiki'
+      preLoaderRoute: typeof WikiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdvisorRoute: AdvisorRoute,
+  AnalyticsRoute: AnalyticsRoute,
+  AuctionHouseRoute: AuctionHouseRoute,
+  BazaarRoute: BazaarRoute,
+  CollectionsRoute: CollectionsRoute,
+  DashboardRoute: DashboardRoute,
+  GoalsRoute: GoalsRoute,
+  InventoryRoute: InventoryRoute,
+  NetWorthRoute: NetWorthRoute,
+  NotificationsRoute: NotificationsRoute,
+  SettingsRoute: SettingsRoute,
+  SkillsRoute: SkillsRoute,
+  WikiRoute: WikiRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
