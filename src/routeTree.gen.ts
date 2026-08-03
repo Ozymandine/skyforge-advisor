@@ -10,14 +10,27 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuctionHouseRouteImport } from './routes/auction-house'
+import { Route as BazaarRouteImport } from './routes/bazaar'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as InventoryRouteImport } from './routes/inventory'
+import { Route as NetWorthRouteImport } from './routes/net-worth'
 import { Route as SkillsRouteImport } from './routes/skills'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuctionHouseRoute = AuctionHouseRouteImport.update({
+  id: '/auction-house',
+  path: '/auction-house',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BazaarRoute = BazaarRouteImport.update({
+  id: '/bazaar',
+  path: '/bazaar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CollectionsRoute = CollectionsRouteImport.update({
@@ -35,6 +48,11 @@ const InventoryRoute = InventoryRouteImport.update({
   path: '/inventory',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NetWorthRoute = NetWorthRouteImport.update({
+  id: '/net-worth',
+  path: '/net-worth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SkillsRoute = SkillsRouteImport.update({
   id: '/skills',
   path: '/skills',
@@ -43,40 +61,76 @@ const SkillsRoute = SkillsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auction-house': typeof AuctionHouseRoute
+  '/bazaar': typeof BazaarRoute
   '/collections': typeof CollectionsRoute
   '/dashboard': typeof DashboardRoute
   '/inventory': typeof InventoryRoute
+  '/net-worth': typeof NetWorthRoute
   '/skills': typeof SkillsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auction-house': typeof AuctionHouseRoute
+  '/bazaar': typeof BazaarRoute
   '/collections': typeof CollectionsRoute
   '/dashboard': typeof DashboardRoute
   '/inventory': typeof InventoryRoute
+  '/net-worth': typeof NetWorthRoute
   '/skills': typeof SkillsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auction-house': typeof AuctionHouseRoute
+  '/bazaar': typeof BazaarRoute
   '/collections': typeof CollectionsRoute
   '/dashboard': typeof DashboardRoute
   '/inventory': typeof InventoryRoute
+  '/net-worth': typeof NetWorthRoute
   '/skills': typeof SkillsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/collections' | '/dashboard' | '/inventory' | '/skills'
+  fullPaths:
+    | '/'
+    | '/auction-house'
+    | '/bazaar'
+    | '/collections'
+    | '/dashboard'
+    | '/inventory'
+    | '/net-worth'
+    | '/skills'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/collections' | '/dashboard' | '/inventory' | '/skills'
+  to:
+    | '/'
+    | '/auction-house'
+    | '/bazaar'
+    | '/collections'
+    | '/dashboard'
+    | '/inventory'
+    | '/net-worth'
+    | '/skills'
   id:
-    '__root__' | '/' | '/collections' | '/dashboard' | '/inventory' | '/skills'
+    | '__root__'
+    | '/'
+    | '/auction-house'
+    | '/bazaar'
+    | '/collections'
+    | '/dashboard'
+    | '/inventory'
+    | '/net-worth'
+    | '/skills'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuctionHouseRoute: typeof AuctionHouseRoute
+  BazaarRoute: typeof BazaarRoute
   CollectionsRoute: typeof CollectionsRoute
   DashboardRoute: typeof DashboardRoute
   InventoryRoute: typeof InventoryRoute
+  NetWorthRoute: typeof NetWorthRoute
   SkillsRoute: typeof SkillsRoute
 }
 
@@ -87,6 +141,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auction-house': {
+      id: '/auction-house'
+      path: '/auction-house'
+      fullPath: '/auction-house'
+      preLoaderRoute: typeof AuctionHouseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bazaar': {
+      id: '/bazaar'
+      path: '/bazaar'
+      fullPath: '/bazaar'
+      preLoaderRoute: typeof BazaarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/collections': {
@@ -110,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InventoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/net-worth': {
+      id: '/net-worth'
+      path: '/net-worth'
+      fullPath: '/net-worth'
+      preLoaderRoute: typeof NetWorthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/skills': {
       id: '/skills'
       path: '/skills'
@@ -122,9 +197,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuctionHouseRoute: AuctionHouseRoute,
+  BazaarRoute: BazaarRoute,
   CollectionsRoute: CollectionsRoute,
   DashboardRoute: DashboardRoute,
   InventoryRoute: InventoryRoute,
+  NetWorthRoute: NetWorthRoute,
   SkillsRoute: SkillsRoute,
 }
 export const routeTree = rootRouteImport
