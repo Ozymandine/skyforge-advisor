@@ -23,10 +23,11 @@ export const Route = createFileRoute("/inventory")({
 });
 
 function Inventory() {
-  const [tab, setTab] = useState(inventoryTabs[0].id);
+  const [tab, setTab] = useState(inventoryTabs[0]!.id);
   const current = inventoryTabs.find((t) => t.id === tab)!;
   const [selected, setSelected] = useState(0);
   const item = current.items[Math.min(selected, current.items.length - 1)];
+
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
