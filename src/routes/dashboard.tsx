@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CircleCheck, Lock } from "lucide-react";
 
-import { Panel, PageHero, ProgressBar } from "@/components/layout/app-shell";
+import { Panel, ProgressBar } from "@/components/layout/app-shell";
 import { dashboardCoverage, eventHistory, profile, skills } from "@/data/mock";
 
 export const Route = createFileRoute("/dashboard")({
@@ -156,8 +156,3 @@ function Dashboard() {
     </div>
   );
 }
-
-function PageHeroUnused() {
-  return <PageHero eyebrow="" title="" description="" />;
-}
-void PageHeroUnused;
