@@ -25,7 +25,7 @@ import {
 import { useEffect, useState, type ReactNode } from "react";
 
 import headerBg from "@/assets/skyblock-header.jpg";
-import { profile, profiles } from "@/data/mock";
+import { usePlayer, useAccount } from "@/hooks/use-account";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -82,6 +82,9 @@ const nav = [
 ] as const;
 
 function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+  const player = usePlayer();
+  const activeProfile = player.data?.profiles.find((p) => p.selected);
+
   return (
     <aside
       className={cn(
@@ -145,10 +148,10 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
           {!collapsed ? (
             <>
               <p className="eyebrow">Profile</p>
-              <p className="mt-2 text-base font-semibold">{profile.username}</p>
+              <p className="mt-2 text-base font-semibold">{player.data?.username ?? "Not connected"}</p>
               <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
                 <span className="size-1.5 rounded-full bg-primary" />
-                {profile.profileName} · synced profile
+                {activeProfile ? `${activeProfile.cuteName} · synced profile` : "Add an API key"}
               </p>
             </>
           ) : (
@@ -163,7 +166,12 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
 }
 
 function Header({ onOpenSearch }: { onOpenSearch: () => void }) {
-  const [active, setActive] = useState(profile.profileName);
+  const account = useAccount();
+  const player = usePlayer();
+  const profiles = player.data?.profiles ?? [];
+  const active =
+    profiles.find((p) => p.profileId === (account.profileId || player.data?.activeProfileId))
+      ?.cuteName ?? "No profile";
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface-strong backdrop-blur-2xl">
@@ -181,7 +189,7 @@ function Header({ onOpenSearch }: { onOpenSearch: () => void }) {
 
         <div className="ml-auto flex items-center gap-2">
           <span className="hidden text-sm text-muted-foreground xl:block">
-            {profile.username} · {active}
+            {player.data?.username ?? "Not connected"} · {active}
           </span>
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 rounded-full border border-input bg-secondary/50 px-3.5 py-2 text-sm font-medium transition-colors hover:border-ring/40">
@@ -189,28 +197,40 @@ function Header({ onOpenSearch }: { onOpenSearch: () => void }) {
               {active}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64">
+              {profiles.length === 0 && (
+                <DropdownMenuItem disabled className="py-2.5 text-xs">
+                  Connect an API key in Settings
+                </DropdownMenuItem>
+              )}
               {profiles.map((p) => (
                 <DropdownMenuItem
-                  key={p.name}
-                  onSelect={() => setActive(p.name)}
+                  key={p.profileId}
+                  onSelect={() => account.save({ profileId: p.profileId })}
                   className="flex items-start gap-2 py-2.5"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium">{p.name}</p>
+                    <p className="text-sm font-medium">{p.cuteName}</p>
                     <p className="text-xs text-muted-foreground">
-                      {p.type} · {p.members} member{p.members > 1 ? "s" : ""}
+                      {p.gameMode} · {p.members} member{p.members > 1 ? "s" : ""}
                     </p>
                   </div>
-                  {active === p.name && <Check className="mt-1 size-4 text-primary" />}
+                  {active === p.cuteName && <Check className="mt-1 size-4 text-primary" />}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {[RefreshCw, Bell, Sun].map((Icon, i) => (
+          <button
+            onClick={() => player.refetch()}
+            aria-label="Refresh"
+            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <RefreshCw className={cn("size-4", player.isFetching && "animate-spin")} />
+          </button>
+          {[Bell, Sun].map((Icon, i) => (
             <button
               key={i}
-              aria-label={["Refresh", "Notifications", "Theme"][i]}
+              aria-label={["Notifications", "Theme"][i]}
               className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               <Icon className="size-4" />

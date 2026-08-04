@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Heart, RefreshCw, Search } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { RefreshCw, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { ErrorState, LoadState } from "@/components/data-states";
 import { Chip, PageHero, Panel, ProgressBar, RarityTag, StatRow } from "@/components/layout/app-shell";
-import { auctionStats, auctions } from "@/data/mock";
+import { fetchAuctions } from "@/lib/hypixel.functions";
+import { formatDuration, formatNumber, type AuctionEntry } from "@/lib/skyblock";
 
 export const Route = createFileRoute("/auction-house")({
   head: () => ({
@@ -11,170 +14,198 @@ export const Route = createFileRoute("/auction-house")({
       { title: "Auction House — SkyBlock Assistant" },
       {
         name: "description",
-        content: "Lowest BIN lookup, item price history and a live auction tracker.",
+        content: "Live auction listings, lowest BIN comparisons and flip margins from Hypixel.",
       },
       { property: "og:title", content: "Auction House — SkyBlock Assistant" },
       {
         property: "og:description",
-        content: "Inspect every live listing with decoded item metadata and price context.",
+        content: "Every active listing scanned for undercuts and flip profit.",
       },
     ],
   }),
   component: AuctionHouse,
 });
 
-const filters = [
-  "All listings",
-  "Active",
-  "Best flips",
-  "Ending soon",
-  "Recently listed",
-  "Dungeon",
-  "Pets",
-  "Soulbound",
-  "Legendary",
-  "Mythic",
-];
+const filters = ["All listings", "BIN only", "Bids only", "Underpriced", "Ending soon"];
+
+const sorts = {
+  "Flip profit": (a: AuctionEntry, b: AuctionEntry) => b.profit - a.profit,
+  "Highest price": (a: AuctionEntry, b: AuctionEntry) => b.price - a.price,
+  "Lowest price": (a: AuctionEntry, b: AuctionEntry) => a.price - b.price,
+  "Ending soonest": (a: AuctionEntry, b: AuctionEntry) => a.endsInMs - b.endsInMs,
+} as const;
 
 function AuctionHouse() {
   const [query, setQuery] = useState("");
-  const [mode, setMode] = useState<"ALL" | "BIN" | "AUCTION">("ALL");
   const [filter, setFilter] = useState("All listings");
+  const [sort, setSort] = useState<keyof typeof sorts>("Flip profit");
 
-  const listings = useMemo(
-    () =>
-      auctions.filter(
-        (a) =>
-          (mode === "ALL" || a.type === mode) &&
-          (a.name.toLowerCase().includes(query.toLowerCase()) ||
-            a.uuid.toLowerCase().includes(query.toLowerCase())),
-      ),
-    [query, mode],
-  );
+  const { data, isLoading, error, refetch, isFetching } = useQuery({
+    queryKey: ["auctions"],
+    queryFn: () => fetchAuctions(),
+    staleTime: 60_000,
+    refetchInterval: 180_000,
+  });
+
+  const listings = useMemo(() => {
+    if (!data) return [];
+    const q = query.toLowerCase();
+    return data.entries
+      .filter((a) => a.name.toLowerCase().includes(q))
+      .filter((a) => {
+        if (filter === "BIN only") return a.bin;
+        if (filter === "Bids only") return !a.bin;
+        if (filter === "Underpriced") return a.profit > 0;
+        if (filter === "Ending soon") return a.endsInMs < 3600_000;
+        return true;
+      })
+      .sort(sorts[sort])
+      .slice(0, 60);
+  }, [data, query, filter, sort]);
+
+  const stats = data
+    ? [
+        {
+          label: "Active auctions",
+          value: formatNumber(data.totalAuctions),
+          sub: `${data.totalPages} API pages`,
+        },
+        {
+          label: "BIN / bid listings",
+          value: `${formatNumber(data.binCount)} / ${formatNumber(data.auctionCount)}`,
+          sub: `${formatNumber(data.uniqueItems)} unique items scanned`,
+        },
+        { label: "Average BIN", value: formatNumber(data.averageBin), sub: "Scanned BIN listings" },
+        {
+          label: "Last updated",
+          value: new Date(data.lastUpdated).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          sub: "Hypixel timestamp",
+        },
+      ]
+    : [];
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <Panel>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="eyebrow">Live marketplace</p>
-            <h1 className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">Auction House</h1>
-            <p className="mt-3 text-sm text-muted-foreground">
-              Inspect every live listing with decoded item metadata and price context.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-full border border-primary/40 bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary">
-              ● LIVE
-            </span>
-            <button className="flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-1.5 text-xs font-medium transition-colors hover:border-ring/40">
-              <RefreshCw className="size-3.5" /> Refreshing
-            </button>
-          </div>
-        </div>
-        <div className="mt-8">
-          <StatRow stats={auctionStats} />
-        </div>
-      </Panel>
+      <PageHero
+        eyebrow="Economy"
+        title="Auction House"
+        description="Live listings scanned from the Hypixel auction API with lowest-BIN comparisons."
+      />
 
       <Panel>
-        <div className="flex flex-wrap gap-3">
-          <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-input bg-secondary/40 px-4 py-2.5">
-            <Search className="size-4 shrink-0 text-muted-foreground" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search item, seller, UUID, reforge, enchantment..."
-              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-            />
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <span className="rounded-full border border-primary/40 bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary">
+            ● LIVE
+          </span>
+          <button
+            onClick={() => refetch()}
+            className="flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-1.5 text-xs font-medium transition-colors hover:border-ring/40"
+          >
+            <RefreshCw className={`size-3.5 ${isFetching ? "animate-spin" : ""}`} /> Refresh
+          </button>
+        </div>
+        {data && (
+          <div className="mt-6">
+            <StatRow stats={stats} />
           </div>
-          <div className="flex overflow-hidden rounded-xl border border-input">
-            {(["ALL", "BIN", "AUCTION"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                className={`px-4 py-2.5 text-xs font-medium transition-colors ${
-                  mode === m ? "bg-primary/15 text-primary" : "text-muted-foreground"
-                }`}
-              >
-                {m}
-              </button>
+        )}
+      </Panel>
+
+      {isLoading && <LoadState>Scanning active auctions…</LoadState>}
+      {error && <ErrorState error={error} />}
+
+      {data && (
+        <Panel>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex min-w-56 flex-1 items-center gap-2 rounded-xl border border-input bg-secondary/40 px-3 py-2">
+              <Search className="size-4 text-muted-foreground" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search listings..."
+                className="w-full bg-transparent text-sm outline-none"
+              />
+            </div>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as keyof typeof sorts)}
+              className="rounded-xl border border-input bg-secondary/40 px-3 py-2 text-sm outline-none"
+            >
+              {Object.keys(sorts).map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {filters.map((f) => (
+              <Chip key={f} active={filter === f} onClick={() => setFilter(f)}>
+                {f}
+              </Chip>
             ))}
           </div>
-        </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {filters.map((f) => (
-            <Chip key={f} active={filter === f} onClick={() => setFilter(f)}>
-              {f}
-            </Chip>
-          ))}
-        </div>
-
-        <div className="mt-6 flex items-center justify-between text-xs text-muted-foreground">
-          <p>{listings.length} matching listings</p>
-          <p>Updated 12:37 PM</p>
-        </div>
-
-        <div className="mt-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-          {listings.map((a) => (
-            <div key={a.uuid} className="glass-soft rounded-2xl p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-base font-semibold">{a.name}</p>
-                  <div className="mt-2 flex gap-1.5">
-                    <RarityTag rarity={a.rarity} />
-                    <span className="rounded-md border border-border bg-secondary px-1.5 py-0.5 text-[10px] font-semibold tracking-widest text-muted-foreground">
-                      {a.type}
-                    </span>
-                  </div>
-                </div>
-                <button aria-label="Favorite" className="text-muted-foreground hover:text-primary">
-                  <Heart className="size-4" />
-                </button>
-              </div>
-
-              <div className="mt-5 grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-xs text-muted-foreground">Current price</p>
-                  <p className="mt-1 font-medium">{a.price}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Lowest BIN</p>
-                  <p className="mt-1 font-medium">{a.lowestBin}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Potential profit</p>
-                  <p className="mt-1 font-medium text-primary">{a.profit}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Time remaining</p>
-                  <p className="mt-1 font-medium">{a.time}</p>
-                </div>
-              </div>
-
-              <div className="mt-5 grid grid-cols-2 gap-3">
-                {[
-                  ["Value score", a.value],
-                  ["Competition", a.competition],
-                ].map(([label, val]) => (
-                  <div key={label as string}>
-                    <p className="flex justify-between text-[11px] text-muted-foreground">
-                      <span>{label}</span>
-                      <span>{val}%</span>
-                    </p>
-                    <div className="mt-1.5">
-                      <ProgressBar pct={val as number} />
+          <div className="mt-6 grid gap-3 lg:grid-cols-2">
+            {listings.map((a) => {
+              const value =
+                a.lowestBin && a.lowestBin > 0
+                  ? Math.max(0, Math.min(100, Math.round((1 - a.price / a.lowestBin) * 100 + 50)))
+                  : 50;
+              return (
+                <div key={a.uuid} className="glass-soft rounded-2xl px-5 py-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-semibold">{a.name}</p>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <RarityTag rarity={a.rarity} />
+                        <span className="rounded-md border border-border px-1.5 py-0.5 text-[10px] tracking-widest text-muted-foreground">
+                          {a.bin ? "BIN" : `AUCTION · ${a.bids} bids`}
+                        </span>
+                      </div>
                     </div>
+                    <p className="shrink-0 text-right text-sm font-semibold">
+                      {formatNumber(a.price)}
+                    </p>
                   </div>
-                ))}
-              </div>
 
-              <p className="mt-5 truncate font-mono text-[10px] text-muted-foreground">{a.uuid}</p>
-            </div>
-          ))}
-        </div>
-      </Panel>
+                  <dl className="mt-4 grid grid-cols-3 gap-2 text-xs">
+                    {[
+                      ["Lowest BIN", a.lowestBin ? formatNumber(a.lowestBin) : "—"],
+                      [
+                        "Flip profit",
+                        a.profit > 0 ? `+${formatNumber(a.profit)}` : formatNumber(a.profit),
+                      ],
+                      ["Ends in", formatDuration(a.endsInMs)],
+                    ].map(([k, v]) => (
+                      <div key={k}>
+                        <dt className="text-muted-foreground">{k}</dt>
+                        <dd className="mt-0.5 font-mono font-medium">{v}</dd>
+                      </div>
+                    ))}
+                  </dl>
+
+                  <div className="mt-4 flex items-center gap-3 text-[11px] text-muted-foreground">
+                    <span className="w-16 shrink-0">Value</span>
+                    <div className="flex-1">
+                      <ProgressBar pct={value} />
+                    </div>
+                    <span className="w-8 text-right">{value}</span>
+                  </div>
+                  <p className="mt-3 truncate font-mono text-[10px] text-muted-foreground">
+                    {a.category} · {a.uuid}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+          {listings.length === 0 && (
+            <p className="mt-6 text-sm text-muted-foreground">No listings match that filter.</p>
+          )}
+        </Panel>
+      )}
     </div>
   );
 }

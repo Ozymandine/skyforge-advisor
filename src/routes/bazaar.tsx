@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { RefreshCw, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { ErrorState, LoadState } from "@/components/data-states";
 import { Chip, PageHero, Panel, ProgressBar, StatRow } from "@/components/layout/app-shell";
-import { bazaarItems, bazaarStats } from "@/data/mock";
+import { fetchBazaar } from "@/lib/hypixel.functions";
+import { formatNumber, type BazaarProduct } from "@/lib/skyblock";
 
 export const Route = createFileRoute("/bazaar")({
   head: () => ({
@@ -23,164 +26,195 @@ export const Route = createFileRoute("/bazaar")({
   component: Bazaar,
 });
 
-const filters = [
-  "All markets",
-  "Profitable",
-  "Most active",
-  "Fastest selling",
-  "Low competition",
-  "Stable",
-  "High risk",
-  "Favorites",
-];
+const sorts = {
+  "Profit per hour": (a: BazaarProduct, b: BazaarProduct) => b.profitPerHour - a.profitPerHour,
+  "Margin %": (a: BazaarProduct, b: BazaarProduct) => b.margin - a.margin,
+  "Spread per unit": (a: BazaarProduct, b: BazaarProduct) => b.spread - a.spread,
+  "Weekly volume": (a: BazaarProduct, b: BazaarProduct) => b.buyMovingWeek - a.buyMovingWeek,
+  "Buy price": (a: BazaarProduct, b: BazaarProduct) => b.buyPrice - a.buyPrice,
+} as const;
+
+function medianMargin(products: BazaarProduct[]): number {
+  if (!products.length) return 0;
+  const sorted = [...products].map((p) => p.margin).sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)] ?? 0;
+}
+
+const filters = ["All markets", "High liquidity", "Low competition", "Cheap entry", "Big ticket"];
 
 function Bazaar() {
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("All markets");
-  const [sort, setSort] = useState("Profit per hour");
+  const [filter, setFilter] = useState<string>("All markets");
+  const [sort, setSort] = useState<keyof typeof sorts>("Profit per hour");
 
-  const items = useMemo(
-    () =>
-      bazaarItems.filter(
-        (i) =>
-          i.name.toLowerCase().includes(query.toLowerCase()) ||
-          i.id.toLowerCase().includes(query.toLowerCase()),
-      ),
-    [query],
-  );
+  const { data, isLoading, error, refetch, isFetching } = useQuery({
+    queryKey: ["bazaar"],
+    queryFn: () => fetchBazaar(),
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+  });
+
+  const items = useMemo(() => {
+    if (!data) return [];
+    const q = query.toLowerCase();
+    return data.products
+      .filter((i) => i.name.toLowerCase().includes(q) || i.id.toLowerCase().includes(q))
+      .filter((i) => {
+        if (filter === "High liquidity") return i.liquidity >= 70;
+        if (filter === "Low competition") return i.buyVolume < 500_000;
+        if (filter === "Cheap entry") return i.buyPrice < 100_000;
+        if (filter === "Big ticket") return i.buyPrice >= 1_000_000;
+        return true;
+      })
+      .sort(sorts[sort])
+      .slice(0, 60);
+  }, [data, query, filter, sort]);
+
+  const stats = data
+    ? [
+        {
+          label: "Bazaar products",
+          value: formatNumber(data.products.length),
+          sub: "Official Hypixel feed",
+        },
+        {
+          label: "Profitable markets",
+          value: formatNumber(data.products.filter((p) => p.spread > 0).length),
+          sub: "After 1.25% tax",
+        },
+        {
+          label: "Median margin",
+          value: `${medianMargin(data.products).toFixed(1)}%`,
+          sub: "Order-to-order",
+        },
+        {
+          label: "Last updated",
+          value: new Date(data.lastUpdated).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          sub: "Hypixel timestamp",
+        },
+      ]
+    : [];
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <div className="flex justify-end">
-        <p className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="size-1.5 rounded-full bg-primary" /> LIVE · SYNCED 12:37 PM
-        </p>
-      </div>
+      <PageHero
+        eyebrow="Market intelligence"
+        title="Bazaar"
+        description="Live liquidity, margin and order-flip analysis straight from the Hypixel Bazaar API."
+      />
 
       <Panel>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="eyebrow">Market intelligence</p>
-            <h1 className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">Bazaar</h1>
-            <p className="mt-3 text-sm text-muted-foreground">
-              Live liquidity, margin, and order-flip analysis from Hypixel.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-full border border-primary/40 bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary">
-              ● LIVE
-            </span>
-            <button className="flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-1.5 text-xs font-medium transition-colors hover:border-ring/40">
-              <RefreshCw className="size-3.5" /> Refresh
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-8">
-          <StatRow stats={bazaarStats} />
-        </div>
-      </Panel>
-
-      <Panel>
-        <div className="flex flex-wrap gap-3">
-          <div className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-input bg-secondary/40 px-4 py-2.5">
-            <Search className="size-4 shrink-0 text-muted-foreground" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search a Bazaar item or internal ID..."
-              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-            />
-          </div>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="rounded-xl border border-input bg-secondary/40 px-4 py-2.5 text-sm outline-none"
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <span className="rounded-full border border-primary/40 bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary">
+            ● LIVE
+          </span>
+          <button
+            onClick={() => refetch()}
+            className="flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-1.5 text-xs font-medium transition-colors hover:border-ring/40"
           >
-            {[
-              "Profit per hour",
-              "Profit per flip",
-              "Spread",
-              "Spread %",
-              "ROI",
-              "Weekly volume",
-              "Liquidity",
-              "Demand",
-              "Alphabetical",
-            ].map((s) => (
-              <option key={s}>{s}</option>
-            ))}
-          </select>
+            <RefreshCw className={`size-3.5 ${isFetching ? "animate-spin" : ""}`} /> Refresh
+          </button>
         </div>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          {filters.map((f) => (
-            <Chip key={f} active={filter === f} onClick={() => setFilter(f)}>
-              {f}
-            </Chip>
-          ))}
-        </div>
-
-        <p className="mt-6 text-xs text-muted-foreground">{items.length} matching markets</p>
-
-        <div className="mt-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-          {items.map((item) => (
-            <div key={item.id} className="glass-soft rounded-2xl p-5">
-              <p className="text-base font-semibold">{item.name}</p>
-              <p className="font-mono text-[11px] text-muted-foreground">{item.id}</p>
-
-              <div className="mt-5 grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-xs text-muted-foreground">Acquire price</p>
-                  <p className="mt-1 font-medium">{item.buy}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Sale price</p>
-                  <p className="mt-1 font-medium">{item.sell}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Net profit</p>
-                  <p className="mt-1 font-medium text-primary">{item.profit}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Profit / hr</p>
-                  <p className="mt-1 font-medium text-primary">{item.perHour}</p>
-                </div>
-              </div>
-
-              <div className="mt-5 grid grid-cols-3 gap-3">
-                {[
-                  ["Liquidity", item.liquidity],
-                  ["Health", item.health],
-                  ["ROI", item.roi],
-                ].map(([label, val]) => (
-                  <div key={label as string}>
-                    <p className="flex justify-between text-[11px] text-muted-foreground">
-                      <span>{label}</span>
-                      <span>{val}%</span>
-                    </p>
-                    <div className="mt-1.5">
-                      <ProgressBar
-                        pct={val as number}
-                        tone={
-                          (val as number) >= 60 ? "emerald" : (val as number) >= 30 ? "gold" : "danger"
-                        }
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-5 flex items-center justify-between">
-                <span className="rounded-md border border-primary/40 bg-primary/15 px-2 py-1 text-[10px] font-semibold tracking-widest text-primary">
-                  PROFITABLE
-                </span>
-                <span className="text-xs text-muted-foreground">{item.perHour} / hr</span>
-              </div>
-            </div>
-          ))}
-        </div>
+        {data && (
+          <div className="mt-6">
+            <StatRow stats={stats} />
+          </div>
+        )}
       </Panel>
+
+      {isLoading && <LoadState>Loading live Bazaar prices…</LoadState>}
+      {error && <ErrorState error={error} />}
+
+      {data && (
+        <Panel>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex min-w-56 flex-1 items-center gap-2 rounded-xl border border-input bg-secondary/40 px-3 py-2">
+              <Search className="size-4 text-muted-foreground" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search 1,900+ products..."
+                className="w-full bg-transparent text-sm outline-none"
+              />
+            </div>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as keyof typeof sorts)}
+              className="rounded-xl border border-input bg-secondary/40 px-3 py-2 text-sm outline-none"
+            >
+              {Object.keys(sorts).map((s) => (
+                <option key={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {filters.map((f) => (
+              <Chip key={f} active={filter === f} onClick={() => setFilter(f)}>
+                {f}
+              </Chip>
+            ))}
+          </div>
+
+          <div className="mt-6 grid gap-3 lg:grid-cols-2">
+            {items.map((i) => (
+              <div key={i.id} className="glass-soft rounded-2xl px-5 py-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="truncate text-base font-semibold">{i.name}</p>
+                    <p className="truncate font-mono text-[10px] text-muted-foreground">{i.id}</p>
+                  </div>
+                  <p className="shrink-0 text-right text-sm font-semibold text-primary">
+                    +{formatNumber(i.profitPerHour)}/hr
+                  </p>
+                </div>
+
+                <dl className="mt-4 grid grid-cols-4 gap-2 text-xs">
+                  {[
+                    ["Buy", formatNumber(i.buyPrice)],
+                    ["Sell", formatNumber(i.sellPrice)],
+                    ["Spread", formatNumber(i.spread)],
+                    ["Margin", `${i.margin.toFixed(1)}%`],
+                  ].map(([k, v]) => (
+                    <div key={k}>
+                      <dt className="text-muted-foreground">{k}</dt>
+                      <dd className="mt-0.5 font-mono font-medium">{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                    <span className="w-16 shrink-0">Liquidity</span>
+                    <div className="flex-1">
+                      <ProgressBar pct={i.liquidity} />
+                    </div>
+                    <span className="w-8 text-right">{i.liquidity}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+                    <span className="w-16 shrink-0">Health</span>
+                    <div className="flex-1">
+                      <ProgressBar pct={i.health} />
+                    </div>
+                    <span className="w-8 text-right">{i.health}</span>
+                  </div>
+                </div>
+
+                <p className="mt-3 text-[11px] text-muted-foreground">
+                  Weekly volume {formatNumber(i.buyMovingWeek)} bought ·{" "}
+                  {formatNumber(i.sellMovingWeek)} sold
+                </p>
+              </div>
+            ))}
+          </div>
+          {items.length === 0 && (
+            <p className="mt-6 text-sm text-muted-foreground">No products match that filter.</p>
+          )}
+        </Panel>
+      )}
     </div>
   );
 }
