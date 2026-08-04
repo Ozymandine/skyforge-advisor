@@ -320,7 +320,8 @@ export async function getPlayerData(
   if (!list.length) throw new HypixelError(`No SkyBlock profiles found for ${name}`);
 
   const chosen = list.find((p) => p.profile_id === profileId) ?? list.find((p) => p.selected) ?? list[0]!;
-  const member = (chosen.members[uuid] ?? {}) as Record<string, any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const member: any = chosen.members[uuid] ?? {};
 
   const summaries: ProfileSummary[] = list.map((p) => ({
     profileId: p.profile_id,
@@ -337,7 +338,8 @@ export async function getPlayerData(
   const rated = skills.filter((s) => s.key !== "RUNECRAFTING" && s.key !== "SOCIAL");
   const skillAverage = rated.reduce((a, s) => a + s.level, 0) / (rated.length || 1);
 
-  const inv = (member?.inventory ?? {}) as Record<string, any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const inv: any = member?.inventory ?? {};
   const containerDefs: [string | undefined, string, string][] = [
     [inv?.inv_contents?.data, "inventory", "Inventory"],
     [inv?.ender_chest_contents?.data, "ender-chest", "Ender Chest"],
@@ -382,6 +384,6 @@ export async function getPlayerData(
     containers,
     collections,
     fairySouls: Number(member?.fairy_soul?.total_collected ?? 0),
-    lastSave: Number(member?.profile?.last_save ?? chosen.members[uuid]?.["last_save"] ?? Date.now()),
+    lastSave: Number(member?.profile?.last_save ?? member?.last_save ?? Date.now()),
   };
 }
