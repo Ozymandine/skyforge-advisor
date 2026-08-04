@@ -220,10 +220,17 @@ function Header({ onOpenSearch }: { onOpenSearch: () => void }) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {[RefreshCw, Bell, Sun].map((Icon, i) => (
+          <button
+            onClick={() => player.refetch()}
+            aria-label="Refresh"
+            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <RefreshCw className={cn("size-4", player.isFetching && "animate-spin")} />
+          </button>
+          {[Bell, Sun].map((Icon, i) => (
             <button
               key={i}
-              aria-label={["Refresh", "Notifications", "Theme"][i]}
+              aria-label={["Notifications", "Theme"][i]}
               className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               <Icon className="size-4" />
