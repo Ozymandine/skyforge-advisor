@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
 import { PageHero, Panel, ProgressBar } from "@/components/layout/app-shell";
-import { profile, skills } from "@/data/mock";
+import { usePlayer } from "@/hooks/use-account";
+import { formatFull, formatNumber } from "@/lib/skyblock";
 
 export const Route = createFileRoute("/skills")({
   head: () => ({
@@ -22,38 +24,62 @@ export const Route = createFileRoute("/skills")({
 });
 
 function Skills() {
+  const { data, isLoading, error, connected } = usePlayer();
+
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="mx-auto max-w-7xl space-y-6">
       <PageHero
         eyebrow="Progression"
         title="Skills"
-        description="Track every skill level and see exactly how close you are to the next milestone."
+        description="Live skill levels and XP pulled from the Hypixel SkyBlock API."
       />
 
-      <Panel>
-        <p className="eyebrow">Total SkyBlock level</p>
-        <div className="mt-3 h-0.5 w-10 rounded-full bg-foreground/60" />
-        <p className="mt-5 text-sm text-muted-foreground">{profile.totalXp} total SkyBlock XP</p>
+      {!connected && <ConnectPrompt what="your real skill levels" />}
+      {connected && isLoading && <LoadState>Loading skills from Hypixel…</LoadState>}
+      {connected && error && <ErrorState error={error} />}
 
-        <div className="mt-6 grid gap-3 rounded-2xl bg-secondary/25 p-4 lg:grid-cols-2">
-          {skills.map((s) => (
-            <div key={s.name} className="glass-soft rounded-2xl px-5 py-4">
-              <div className="flex items-baseline justify-between gap-4">
-                <p className="text-lg font-semibold">
-                  {s.name} {s.level}
-                </p>
-                <p className="font-mono text-xs text-muted-foreground">
-                  {s.current} / {s.target} XP
-                </p>
-              </div>
-              <div className="mt-3">
-                <ProgressBar pct={s.pct} />
-              </div>
-              <p className="mt-2 text-right text-xs text-muted-foreground">{s.pct}%</p>
+      {data && (
+        <Panel>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="eyebrow">Skill average</p>
+              <p className="mt-2 text-4xl font-semibold tracking-tight">
+                {data.skillAverage.toFixed(2)}
+              </p>
             </div>
-          ))}
-        </div>
-      </Panel>
+            <p className="text-sm text-muted-foreground">
+              {formatFull(data.totalSkillXp)} total skill XP · {data.username}
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-3 rounded-2xl bg-secondary/25 p-4 lg:grid-cols-2">
+            {data.skills.map((s) => (
+              <div key={s.key} className="glass-soft rounded-2xl px-5 py-4">
+                <div className="flex items-baseline justify-between gap-4">
+                  <p className="text-lg font-semibold">
+                    {s.name} {s.level}
+                    {s.maxed && (
+                      <span className="ml-2 text-xs font-medium text-primary">MAXED</span>
+                    )}
+                  </p>
+                  <p className="font-mono text-xs text-muted-foreground">
+                    {s.maxed
+                      ? `${formatNumber(s.totalXp)} XP`
+                      : `${formatNumber(s.currentXp)} / ${formatNumber(s.neededXp)} XP`}
+                  </p>
+                </div>
+                <div className="mt-3">
+                  <ProgressBar pct={s.pct} />
+                </div>
+                <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+                  <span>Cap {s.cap}</span>
+                  <span>{s.pct}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      )}
     </div>
   );
 }
