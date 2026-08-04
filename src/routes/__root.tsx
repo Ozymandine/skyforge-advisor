@@ -87,6 +87,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:title", content: "SkyBlock Assistant — Personal Hypixel SkyBlock Analytics" },
+      { name: "twitter:title", content: "SkyBlock Assistant — Personal Hypixel SkyBlock Analytics" },
+      { property: "og:description", content: "Track skills, collections, net worth, bazaar flips and auctions for your Hypixel SkyBlock profile." },
+      { name: "twitter:description", content: "Track skills, collections, net worth, bazaar flips and auctions for your Hypixel SkyBlock profile." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e8274fd9-940e-4b3e-9b16-89cd21bfe23a/id-preview-a5c394c7--7edcf77c-968d-4810-8c5f-730527975f38.lovable.app-1785806362953.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e8274fd9-940e-4b3e-9b16-89cd21bfe23a/id-preview-a5c394c7--7edcf77c-968d-4810-8c5f-730527975f38.lovable.app-1785806362953.png" },
     ],
     links: [
       {
