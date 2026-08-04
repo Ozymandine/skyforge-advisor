@@ -34,6 +34,12 @@ const sorts = {
   "Buy price": (a: BazaarProduct, b: BazaarProduct) => b.buyPrice - a.buyPrice,
 } as const;
 
+function medianMargin(products: BazaarProduct[]): number {
+  if (!products.length) return 0;
+  const sorted = [...products].map((p) => p.margin).sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)] ?? 0;
+}
+
 const filters = ["All markets", "High liquidity", "Low competition", "Cheap entry", "Big ticket"];
 
 function Bazaar() {
@@ -77,8 +83,8 @@ function Bazaar() {
           sub: "After 1.25% tax",
         },
         {
-          label: "Average margin",
-          value: `${(data.products.reduce((a, p) => a + p.margin, 0) / (data.products.length || 1)).toFixed(1)}%`,
+          label: "Median margin",
+          value: `${medianMargin(data.products).toFixed(1)}%`,
           sub: "Order-to-order",
         },
         {
