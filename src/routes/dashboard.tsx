@@ -48,56 +48,63 @@ function Dashboard() {
     [data],
   );
 
-  const dashboardCoverage = useMemo(
-    () =>
-      data
-        ? [
-            {
-              label: "Skills",
-              value: String(data.skills.length),
-              meta: `${data.skills.filter((s) => s.maxed).length} maxed`,
-              note: "Live skill progress from your profile",
-              verified: true,
-            },
-            {
-              label: "Collections",
-              value: String(collectionCategories.length),
-              meta: `${data.collections.length} items`,
-              note: "Collection categories detected for this profile",
-              verified: true,
-            },
-            {
-              label: "Fairy Souls",
-              value: formatFull(data.fairySouls),
-              meta: "Collected total",
-              note: "Live fairy soul count",
-              verified: true,
-            },
-            {
-              label: "Inventory",
-              value: String(data.containers.length),
-              meta: "Containers available",
-              note: "Storage containers decoded from profile data",
-              verified: true,
-            },
-            {
-              label: "Profiles",
-              value: String(data.profiles.length),
-              meta: profile?.cuteName ?? "Active profile",
-              note: "Loaded profiles from your Hypixel account",
-              verified: true,
-            },
-            {
-              label: "Net worth",
-              value: formatFull(netWorth),
-              meta: data.bank === null ? "Bank hidden" : "Purse + bank",
-              note: "Estimated live economy value",
-              verified: true,
-            },
-          ]
-        : [],
-    [data, collectionCategories.length, netWorth, profile?.cuteName],
-  );
+  const dashboardCoverage = useMemo(() => {
+    if (!data) return [];
+
+    const skillAvgPct = Math.min(100, Math.round((data.skillAverage / 50.36) * 100));
+    const maxedSkillsCount = data.skills.filter((s) => s.maxed).length;
+
+    return [
+      {
+        label: "Skill Average",
+        value: data.skillAverage.toFixed(2),
+        meta: `${skillAvgPct}% of max`,
+        pct: skillAvgPct,
+        note: `${maxedSkillsCount} / ${data.skills.length} maxed skills`,
+        verified: true,
+      },
+      {
+        label: "Collections",
+        value: String(collectionCategories.length),
+        meta: `${data.collections.length} items`,
+        pct: Math.min(100, Math.round((collectionCategories.length / 6) * 100)),
+        note: "Collection categories detected for this profile",
+        verified: true,
+      },
+      {
+        label: "Fairy Souls",
+        value: formatFull(data.fairySouls),
+        meta: "Collected total",
+        pct: Math.min(100, Math.round((data.fairySouls / 242) * 100)),
+        note: "Live fairy soul count",
+        verified: true,
+      },
+      {
+        label: "Inventory",
+        value: String(data.containers.length),
+        meta: "Containers available",
+        pct: Math.min(100, Math.round((data.containers.length / 10) * 100)),
+        note: "Storage containers decoded from profile data",
+        verified: true,
+      },
+      {
+        label: "Profiles",
+        value: String(data.profiles.length),
+        meta: profile?.cuteName ?? "Active profile",
+        pct: 100,
+        note: "Loaded profiles from your Hypixel account",
+        verified: true,
+      },
+      {
+        label: "Net worth",
+        value: formatFull(netWorth),
+        meta: data.bank === null ? "Bank hidden" : "Purse + bank",
+        pct: 100,
+        note: "Estimated live economy value",
+        verified: true,
+      },
+    ];
+  }, [data, collectionCategories.length, netWorth, profile?.cuteName]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -107,26 +114,20 @@ function Dashboard() {
 
       {connected && data && (
         <>
-          <Panel className="flex flex-wrap items-center justify-between gap-8">
-            <div>
-              <p className="eyebrow">SkyBlock profile</p>
-              <h1 className="mt-2 text-5xl font-semibold tracking-tight">
-                {data.username}
-              </h1>
-              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                <span>{profile?.cuteName ?? "Active profile"}</span>
-                <span className="rounded-md border border-border bg-secondary/60 px-2 py-0.5 text-xs">
-                  {profile?.gameMode ?? "Unknown mode"}
-                </span>
-                <span>{profile?.members ?? 1} members</span>
-              </div>
-            </div>
-            <div className="glass-soft rounded-2xl px-8 py-6 text-center">
-              <p className="eyebrow">Skill average</p>
-              <p className="mt-2 text-4xl font-semibold text-primary">
-                {data.skillAverage.toFixed(2)}
-              </p>
-              <p className="mt-2 text-xs text-muted-foreground">Live profile summary</p>
+          {/* Centered SkyBlock Profile Banner */}
+          <Panel className="flex flex-col items-center justify-center py-8 text-center">
+            <p className="eyebrow uppercase tracking-wider text-xs text-muted-foreground">
+              SkyBlock Profile
+            </p>
+            <h1 className="mt-2 text-5xl font-bold tracking-tight">
+              {data.username}
+            </h1>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground">
+              <span>{profile?.cuteName ?? "Active profile"}</span>
+              <span className="glass-soft rounded-full px-2.5 py-0.5 text-xs font-medium">
+                {profile?.gameMode ?? "Classic"}
+              </span>
+              <span>{profile?.members ?? 1} member(s)</span>
             </div>
           </Panel>
 
@@ -165,7 +166,7 @@ function Dashboard() {
                       <p className="text-xs text-muted-foreground">{c.meta}</p>
                     </div>
                     <div className="mt-4">
-                      <ProgressBar pct={Math.min(100, Number(c.value.replace(/[^0-9]/g, "")) || 0)} />
+                      <ProgressBar pct={c.pct} />
                     </div>
                     <p className="mt-3 truncate text-xs text-muted-foreground">{c.note}</p>
                   </div>
