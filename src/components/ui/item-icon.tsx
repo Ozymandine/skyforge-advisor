@@ -9,11 +9,7 @@ interface ItemIconProps {
   className?: string;
 }
 
-/**
- * Maps raw Hypixel SkyBlock API IDs to exact texture filenames
- */
 const ITEM_ALIASES: Record<string, string> = {
-  // Dragon Fragments
   unstable_fragment: "unstable_dragon_fragment",
   strong_fragment: "strong_dragon_fragment",
   wise_fragment: "wise_dragon_fragment",
@@ -22,14 +18,9 @@ const ITEM_ALIASES: Record<string, string> = {
   old_fragment: "old_dragon_fragment",
   protector_fragment: "protector_dragon_fragment",
   holy_fragment: "holy_dragon_fragment",
-  
-  // Custom Skull / Head items mapped to vanilla or custom assets
   petrified_oak_slab: "oak_slab",
-  skull_item: "skeleton_skull",
-  
-  // Common SkyBlock Material Re-mappings
-  whipped_form: "whipped_cream",
-  exp_bottle: "experience_bottle",
+  skeleton_talisman: "skeleton_talisman",
+  ender_necklace: "ender_necklace",
 };
 
 function getTextureSources(id?: string, name?: string, texturePath?: string): string[] {
@@ -40,40 +31,31 @@ function getTextureSources(id?: string, name?: string, texturePath?: string): st
 
   if (!rawId && !rawName) return [];
 
-  // Skill Mappings
-  const skillKeys = [
-    "farming", "mining", "combat", "foraging", "fishing",
-    "enchanting", "alchemy", "taming", "carpentry", "runecrafting",
-    "social", "hunting"
-  ];
-  if (skillKeys.includes(rawId)) {
-    return [`/items/${rawId}_skill.png`];
-  }
-
-  // Clean the ID
+  // Strip prefixes (reforges like 'soft_', 'sharp_', etc.)
   let cleanId = rawId
+    .replace(/^(soft|sharp|heavy|heroic|spicy|godly|rapid|fabled|withered|rebound)_/, "")
     .replace(/^enchanted_/, "")
     .replace(/^minecraft:/, "")
     .replace(/[^a-z0-9_]/g, "");
 
-  // Apply Alias Mapping if present
   if (ITEM_ALIASES[cleanId]) {
     cleanId = ITEM_ALIASES[cleanId];
   }
 
-  // Fallback slug from name if ID is generic
-  const nameSlug = rawName.replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+  // Slug from display name (e.g. "Skeleton Talisman" -> "skeleton_talisman")
+  const nameSlug = rawName
+    .replace(/^(soft|sharp|heavy|heroic|spicy|godly|rapid|fabled|withered|rebound)\s+/i, "")
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
 
   return [
-    // 1. Primary: Local FurfSky asset by clean ID
+    // 1. Local FurfSky textures by ID
     `/items/${cleanId}.png`,
-    // 2. Primary Alt: Local FurfSky asset by display name slug
+    // 2. Local FurfSky textures by clean name
     `/items/${nameSlug}.png`,
-    // 3. SkyArchive Public Asset CDN (Coverage for custom SkyBlock heads/items)
-    `https://raw.githubusercontent.com/SkyCryptWebsite/SkyCryptWebsite/main/public/head/${rawId}`,
-    // 4. PrismarineJS Official Vanilla 1.20 Minecraft Textures
+    // 3. PrismarineJS Vanilla Textures
     `https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.20.1/items/${cleanId}.png`,
-    // 5. MC-Heads Fallback
+    // 4. MC-Heads Fallback
     `https://mc-heads.net/item/${cleanId}`,
   ];
 }
@@ -81,6 +63,7 @@ function getTextureSources(id?: string, name?: string, texturePath?: string): st
 export function ItemIcon({ id, name, texturePath, enchanted, className }: ItemIconProps) {
   const [sourceIndex, setSourceIndex] = React.useState(0);
   const [status, setStatus] = React.useState<"loading" | "loaded" | "error">("loading");
+  const [useCanvas, setUseCanvas] = React.useState(true);
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
 
   const sources = React.useMemo(() => getTextureSources(id, name, texturePath), [id, name, texturePath]);
@@ -89,14 +72,20 @@ export function ItemIcon({ id, name, texturePath, enchanted, className }: ItemIc
   React.useEffect(() => {
     setSourceIndex(0);
     setStatus("loading");
+    setUseCanvas(true);
   }, [id, name, texturePath]);
 
   React.useEffect(() => {
-    if (!currentSrc) return;
+    if (!currentSrc || !useCanvas) return;
 
     let animationFrameId: number;
     const img = new Image();
-    img.crossOrigin = "anonymous";
+    
+    // Only attempt crossOrigin if loading from external domain
+    if (currentSrc.startsWith("http")) {
+      img.crossOrigin = "anonymous";
+    }
+
     img.src = currentSrc;
 
     img.onload = () => {
@@ -107,43 +96,48 @@ export function ItemIcon({ id, name, texturePath, enchanted, className }: ItemIc
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      ctx.imageSmoothingEnabled = false;
+      try {
+        ctx.imageSmoothingEnabled = false;
 
-      const frameSize = img.naturalWidth;
-      const totalFrames = Math.max(1, Math.floor(img.naturalHeight / frameSize));
+        const frameSize = img.naturalWidth || 16;
+        const totalFrames = Math.max(1, Math.floor(img.naturalHeight / frameSize));
 
-      canvas.width = frameSize;
-      canvas.height = frameSize;
+        canvas.width = frameSize;
+        canvas.height = frameSize;
 
-      let currentFrame = 0;
-      let lastTime = performance.now();
-      const frameInterval = 100; // ~10 FPS native Minecraft sprite animation
+        let currentFrame = 0;
+        let lastTime = performance.now();
+        const frameInterval = 100;
 
-      const render = (now: number) => {
-        if (totalFrames > 1 && now - lastTime >= frameInterval) {
-          currentFrame = (currentFrame + 1) % totalFrames;
-          lastTime = now;
-        }
+        const render = (now: number) => {
+          if (totalFrames > 1 && now - lastTime >= frameInterval) {
+            currentFrame = (currentFrame + 1) % totalFrames;
+            lastTime = now;
+          }
 
-        ctx.clearRect(0, 0, frameSize, frameSize);
-        ctx.drawImage(
-          img,
-          0,
-          currentFrame * frameSize,
-          frameSize,
-          frameSize,
-          0,
-          0,
-          frameSize,
-          frameSize
-        );
+          ctx.clearRect(0, 0, frameSize, frameSize);
+          ctx.drawImage(
+            img,
+            0,
+            currentFrame * frameSize,
+            frameSize,
+            frameSize,
+            0,
+            0,
+            frameSize,
+            frameSize
+          );
 
-        if (totalFrames > 1) {
-          animationFrameId = requestAnimationFrame(render);
-        }
-      };
+          if (totalFrames > 1) {
+            animationFrameId = requestAnimationFrame(render);
+          }
+        };
 
-      render(performance.now());
+        render(performance.now());
+      } catch (err) {
+        // If canvas drawing fails due to CORS, fallback to standard <img> rendering
+        setUseCanvas(false);
+      }
     };
 
     img.onerror = () => {
@@ -157,7 +151,7 @@ export function ItemIcon({ id, name, texturePath, enchanted, className }: ItemIc
     return () => {
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
     };
-  }, [currentSrc, sourceIndex, sources.length]);
+  }, [currentSrc, sourceIndex, sources.length, useCanvas]);
 
   return (
     <div className={cn("relative inline-flex shrink-0 items-center justify-center overflow-hidden", className)}>
@@ -168,16 +162,38 @@ export function ItemIcon({ id, name, texturePath, enchanted, className }: ItemIc
       )}
 
       {currentSrc && status !== "error" && (
-        <canvas
-          ref={canvasRef}
-          className={cn(
-            "size-full object-contain pixelated transition-transform duration-75 hover:scale-110 drop-shadow-sm shrink-0",
-            status === "loading" && "opacity-0",
-            status === "loaded" && "opacity-100",
-            enchanted && "brightness-125 contrast-125 drop-shadow-[0_0_6px_rgba(168,85,247,0.7)]",
-            className
-          )}
-        />
+        useCanvas ? (
+          <canvas
+            ref={canvasRef}
+            className={cn(
+              "size-full object-contain pixelated transition-transform duration-75 hover:scale-110 drop-shadow-sm shrink-0",
+              status === "loading" && "opacity-0",
+              status === "loaded" && "opacity-100",
+              enchanted && "brightness-125 contrast-125 drop-shadow-[0_0_6px_rgba(168,85,247,0.7)]",
+              className
+            )}
+          />
+        ) : (
+          <img
+            src={currentSrc}
+            alt={name ?? id ?? "SkyBlock Item"}
+            loading="lazy"
+            className={cn(
+              "size-full object-contain pixelated transition-transform duration-75 hover:scale-110 drop-shadow-sm shrink-0",
+              enchanted && "brightness-125 contrast-125 drop-shadow-[0_0_6px_rgba(168,85,247,0.7)]",
+              className
+            )}
+            onLoad={() => setStatus("loaded")}
+            onError={() => {
+              if (sourceIndex + 1 < sources.length) {
+                setSourceIndex((prev) => prev + 1);
+                setUseCanvas(true);
+              } else {
+                setStatus("error");
+              }
+            }}
+          />
+        )
       )}
     </div>
   );
