@@ -110,8 +110,8 @@ function Inventory() {
               </div>
             </Panel>
 
-            {/* Sticky Inspector Panel with Stable Scrollbar Gutter */}
-            <Panel className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2 [scrollbar-gutter:stable]">
+            {/* Sticky Inspector Panel (Hover effects & layout shifts completely disabled) */}
+            <Panel className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2 [scrollbar-gutter:stable] hover:transform-none hover:border-border hover:shadow-none transition-none">
               <p className="eyebrow">Item detail</p>
               {item ? (
                 <>

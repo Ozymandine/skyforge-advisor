@@ -27,7 +27,7 @@ const ITEM_ALIASES: Record<string, string> = {
   protector_fragment: "protector_dragon_fragment",
   holy_fragment: "holy_dragon_fragment",
 
-  // Accessories & Equipment
+  // Accessories & Custom Skulls
   petrified_oak_slab: "oak_slab",
   skeleton_talisman: "skeleton_talisman",
   ender_necklace: "ender_necklace",
@@ -37,6 +37,8 @@ const ITEM_ALIASES: Record<string, string> = {
   primordial_eye: "primordial_eye",
 };
 
+const REFORGES_REGEX = /^(gentle|odd|fast|fair|epic|sharp|heroic|spicy|legendary|dirty|filded|salty|treacherous|deadly|fine|grand|hasty|neat|rapid|unreal|awkward|rich|clean|fierce|heavy|mythIC|pure|smart|titanic|wise|bizarre|demonic|forceful|hurtful|keen|strong|unpleasant|zealous|godly|soft|fabled|withered|rebound|very)_/gi;
+
 function getTextureSources(id?: string, name?: string, texturePath?: string): string[] {
   if (texturePath) return [texturePath];
 
@@ -45,7 +47,7 @@ function getTextureSources(id?: string, name?: string, texturePath?: string): st
 
   if (!rawId && !rawName) return [];
 
-  // Skills
+  // Skill Icons
   const skillKeys = [
     "farming", "mining", "combat", "foraging", "fishing",
     "enchanting", "alchemy", "taming", "carpentry", "runecrafting",
@@ -55,9 +57,9 @@ function getTextureSources(id?: string, name?: string, texturePath?: string): st
     return [`/items/${rawId}_skill.png`];
   }
 
-  // 1. Clean ID (Strip reforge prefixes & sack tier prefixes like 'beginner_')
+  // 1. Clean ID
   let cleanId = rawId
-    .replace(/^(soft|sharp|heavy|heroic|spicy|godly|rapid|fabled|withered|rebound)_/, "")
+    .replace(REFORGES_REGEX, "")
     .replace(/^(beginner|small|medium|large|large_tier|greater)_/, "")
     .replace(/^enchanted_/, "")
     .replace(/^minecraft:/, "")
@@ -65,32 +67,33 @@ function getTextureSources(id?: string, name?: string, texturePath?: string): st
 
   const mappedId = ITEM_ALIASES[cleanId] || cleanId;
 
-  // 2. Clean Name Variations (Handle apostrophes: "Arachne's" -> "arachne" vs "arachnes")
-  const baseName = rawName.replace(/^(soft|sharp|heavy|heroic|spicy|godly|rapid|fabled|withered|rebound)\s+/i, "");
-  
-  // Variation A: Strip apostrophe ('s -> s)
+  // 2. Name Slugs
+  const baseName = rawName.replace(REFORGES_REGEX, "");
   const slugWithS = baseName.replace(/'/g, "").replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
-  // Variation B: Remove 's completely ('s -> "")
   const slugNoS = baseName.replace(/'s/g, "").replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
-
-  // Base fallback word (e.g. "Tarantula Ring" -> "ring")
   const baseType = slugNoS.split("_").pop() || "";
 
   return [
-    // FurfSky variants
+    // 1. Local FurfSky Textures
     `/items/${cleanId}.png`,
     `/items/${mappedId}.png`,
     `/items/${slugWithS}.png`,
     `/items/${slugNoS}.png`,
-    
-    // Vanilla Local Gallery variants
+
+    // 2. Local Vanilla Gallery
     `/vanilla/${mappedId}.png`,
     `/vanilla/${cleanId}.png`,
     `/vanilla/${slugNoS}.png`,
     `/vanilla/${baseType}.png`,
-    
-    // External CDN Fallbacks
+
+    // 3. SkyCrypt Public Heads Repository (Fixes custom player skull accessories)
+    `https://raw.githubusercontent.com/SkyCryptWebsite/SkyCryptWebsite/main/public/head/${cleanId}`,
+
+    // 4. PrismarineJS Vanilla Textures
     `https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.20.1/items/${mappedId}.png`,
+    `https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.20.1/items/${baseType}.png`,
+
+    // 5. MC-Heads Fallback
     `https://mc-heads.net/item/${mappedId}`,
   ];
 }
@@ -102,16 +105,20 @@ export function ItemIcon({ id, name, texturePath, enchanted, className }: ItemIc
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
 
   const sources = React.useMemo(() => getTextureSources(id, name, texturePath), [id, name, texturePath]);
-  const currentSrc = sources[sourceIndex];
+  
+  // FIX #1: Ensure sourceIndex stays bounded if sources length changes
+  const currentIndex = Math.min(sourceIndex, sources.length - 1);
+  const currentSrc = sources[currentIndex];
 
-  React.useEffect(() => {
+  // FIX #1: Synchronously reset states when item props change
+  React.useLayoutEffect(() => {
     setSourceIndex(0);
     setStatus("loading");
     setUseCanvas(true);
   }, [id, name, texturePath]);
 
   React.useEffect(() => {
-    if (!currentSrc || !useCanvas) return;
+    if (!currentSrc) return;
 
     let animationFrameId: number;
     const img = new Image();
@@ -124,6 +131,9 @@ export function ItemIcon({ id, name, texturePath, enchanted, className }: ItemIc
 
     img.onload = () => {
       setStatus("loaded");
+
+      if (!useCanvas) return;
+
       const canvas = canvasRef.current;
       if (!canvas) return;
 
@@ -169,13 +179,16 @@ export function ItemIcon({ id, name, texturePath, enchanted, className }: ItemIc
 
         render(performance.now());
       } catch (err) {
+        // If Canvas CORS fails, switch to standard <img> rendering
         setUseCanvas(false);
       }
     };
 
     img.onerror = () => {
-      if (sourceIndex + 1 < sources.length) {
-        setSourceIndex((prev) => prev + 1);
+      // Step to next available source URL
+      if (currentIndex + 1 < sources.length) {
+        setSourceIndex(currentIndex + 1);
+        setUseCanvas(true);
       } else {
         setStatus("error");
       }
@@ -184,7 +197,7 @@ export function ItemIcon({ id, name, texturePath, enchanted, className }: ItemIc
     return () => {
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
     };
-  }, [currentSrc, sourceIndex, sources.length, useCanvas]);
+  }, [currentSrc, currentIndex, sources.length, useCanvas]);
 
   return (
     <div className={cn("relative inline-flex shrink-0 items-center justify-center overflow-hidden", className)}>
@@ -218,8 +231,8 @@ export function ItemIcon({ id, name, texturePath, enchanted, className }: ItemIc
             )}
             onLoad={() => setStatus("loaded")}
             onError={() => {
-              if (sourceIndex + 1 < sources.length) {
-                setSourceIndex((prev) => prev + 1);
+              if (currentIndex + 1 < sources.length) {
+                setSourceIndex(currentIndex + 1);
                 setUseCanvas(true);
               } else {
                 setStatus("error");
