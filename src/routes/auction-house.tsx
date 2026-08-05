@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { ErrorState, LoadState } from "@/components/data-states";
 import { Chip, PageHero, Panel, ProgressBar, RarityTag, StatRow } from "@/components/layout/app-shell";
+import { ItemIcon } from "@/components/ui/item-icon";
 import { fetchAuctions } from "@/lib/hypixel.functions";
 import { formatDuration, formatNumber, type AuctionEntry } from "@/lib/skyblock";
 
@@ -102,7 +103,7 @@ function AuctionHouse() {
           </span>
           <button
             onClick={() => refetch()}
-            className="flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-1.5 text-xs font-medium transition-colors hover:border-ring/40"
+            className="flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-1.5 text-xs font-medium transition-all duration-75 ease-out hover:scale-[1.03] hover:border-ring/40 active:scale-95"
           >
             <RefreshCw className={`size-3.5 ${isFetching ? "animate-spin" : ""}`} /> Refresh
           </button>
@@ -120,7 +121,7 @@ function AuctionHouse() {
       {data && (
         <Panel>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex min-w-56 flex-1 items-center gap-2 rounded-xl border border-input bg-secondary/40 px-3 py-2">
+            <div className="flex min-w-56 flex-1 items-center gap-2 rounded-xl border border-input bg-secondary/40 px-3 py-2 transition-all duration-75 hover:border-ring/40">
               <Search className="size-4 text-muted-foreground" />
               <input
                 value={query}
@@ -132,7 +133,7 @@ function AuctionHouse() {
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as keyof typeof sorts)}
-              className="rounded-xl border border-input bg-secondary/40 px-3 py-2 text-sm outline-none"
+              className="rounded-xl border border-input bg-secondary/40 px-3 py-2 text-sm outline-none transition-all duration-75 hover:border-ring/40 cursor-pointer"
             >
               {Object.keys(sorts).map((s) => (
                 <option key={s}>{s}</option>
@@ -155,15 +156,21 @@ function AuctionHouse() {
                   ? Math.max(0, Math.min(100, Math.round((1 - a.price / a.lowestBin) * 100 + 50)))
                   : 50;
               return (
-                <div key={a.uuid} className="glass-soft rounded-2xl px-5 py-4">
+                <div
+                  key={a.uuid}
+                  className="glass-soft rounded-2xl px-5 py-4 transition-all duration-75 ease-out hover:scale-[1.01] hover:border-primary/30"
+                >
                   <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="truncate text-base font-semibold">{a.name}</p>
-                      <div className="mt-1.5 flex items-center gap-2">
-                        <RarityTag rarity={a.rarity} />
-                        <span className="rounded-md border border-border px-1.5 py-0.5 text-[10px] tracking-widest text-muted-foreground">
-                          {a.bin ? "BIN" : `AUCTION · ${a.bids} bids`}
-                        </span>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <ItemIcon id={a.name} name={a.name} className="size-8" />
+                      <div className="min-w-0">
+                        <p className="truncate text-base font-semibold">{a.name}</p>
+                        <div className="mt-1.5 flex items-center gap-2">
+                          <RarityTag rarity={a.rarity} />
+                          <span className="rounded-md border border-border px-1.5 py-0.5 text-[10px] tracking-widest text-muted-foreground">
+                            {a.bin ? "BIN" : `AUCTION · ${a.bids} bids`}
+                          </span>
+                        </div>
                       </div>
                     </div>
                     <p className="shrink-0 text-right text-sm font-semibold">

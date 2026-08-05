@@ -1,3 +1,4 @@
+import { RenderMinecraftLore } from "@/lib/minecraft-text";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
@@ -5,6 +6,7 @@ import { useMemo, useState } from "react";
 
 import { ErrorState, LoadState } from "@/components/data-states";
 import { Chip, PageHero, Panel, RarityTag } from "@/components/layout/app-shell";
+import { ItemIcon } from "@/components/ui/item-icon";
 import { fetchBazaar, fetchItems } from "@/lib/hypixel.functions";
 import { formatNumber } from "@/lib/skyblock";
 
@@ -75,9 +77,10 @@ function Wiki() {
       {items.error && <ErrorState error={items.error} />}
 
       {items.data && (
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-3 items-start">
+          {/* Main List Column */}
           <Panel className="lg:col-span-2">
-            <div className="flex items-center gap-2 rounded-xl border border-input bg-secondary/40 px-3 py-2">
+            <div className="flex items-center gap-2 rounded-xl border border-input bg-secondary/40 px-3 py-2 transition-all duration-75 hover:border-ring/40">
               <Search className="size-4 text-muted-foreground" />
               <input
                 value={query}
@@ -100,14 +103,17 @@ function Wiki() {
                 <button
                   key={i.id}
                   onClick={() => setSelectedId(i.id)}
-                  className={`glass-soft rounded-2xl px-4 py-3 text-left transition-colors hover:border-primary/40 ${
-                    selected?.id === i.id ? "ring-1 ring-primary/40" : ""
+                  className={`glass-soft flex items-center gap-3 rounded-2xl px-4 py-3 text-left transition-all duration-75 ease-out hover:scale-[1.02] hover:border-primary/40 active:scale-95 ${
+                    selected?.id === i.id ? "ring-2 ring-primary/40 bg-primary/10" : ""
                   }`}
                 >
-                  <p className="truncate text-sm font-semibold">{i.name}</p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <RarityTag rarity={i.rarity} />
-                    <span className="truncate text-[10px] text-muted-foreground">{i.category}</span>
+                  <ItemIcon id={i.id} name={i.name} className="size-8 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{i.name}</p>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <RarityTag rarity={i.rarity} />
+                      <span className="truncate text-[10px] text-muted-foreground">{i.category}</span>
+                    </div>
                   </div>
                 </button>
               ))}
@@ -117,14 +123,21 @@ function Wiki() {
             )}
           </Panel>
 
-          <Panel>
+          {/* Sticky Inspector Panel (Pins to top as you scroll) */}
+          <Panel className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
             <p className="eyebrow">Item detail</p>
             {selected ? (
               <>
-                <h3 className="mt-3 text-2xl font-semibold">{selected.name}</h3>
-                <div className="mt-3">
-                  <RarityTag rarity={selected.rarity} />
+                <div className="mt-3 flex items-center gap-3">
+                  <ItemIcon id={selected.id} name={selected.name} className="size-12 shrink-0" />
+                  <div className="min-w-0">
+                    <h3 className="text-xl font-semibold truncate">{selected.name}</h3>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <RarityTag rarity={selected.rarity} />
+                    </div>
+                  </div>
                 </div>
+
                 <dl className="mt-6 space-y-3 text-sm">
                   {[
                     ["Item ID", selected.id],
@@ -134,12 +147,32 @@ function Wiki() {
                     ["Bazaar sell", price ? formatNumber(price.sellPrice) : "—"],
                     ["Weekly volume", price ? formatNumber(price.buyMovingWeek) : "—"],
                   ].map(([k, v]) => (
-                    <div key={k} className="flex justify-between gap-3 border-b border-border pb-3">
+                    <div key={k} className="flex justify-between gap-3 border-b border-white/10 pb-3">
                       <dt className="shrink-0 text-muted-foreground">{k}</dt>
-                      <dd className="truncate font-mono text-xs font-medium">{v}</dd>
+                      <dd className="truncate font-mono text-xs font-semibold">{v}</dd>
                     </div>
                   ))}
                 </dl>
+
+                {/* Subtly tinted, low-opacity lore box (semi-transparent so video shows through) */}
+                {selected.description && (
+                  <div className="mt-6">
+                    <p className="eyebrow mb-2">Lore & Description</p>
+                    <div className="rounded-2xl border border-white/10 bg-black/30 p-4 font-mono text-xs leading-relaxed text-slate-100 shadow-xl backdrop-blur-sm">
+                      {Array.isArray(selected.description) ? (
+                        selected.description.map((line: string, idx: number) => (
+                          <p key={idx} className="min-h-[1.25rem] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                            <RenderMinecraftLore text={line} />
+                          </p>
+                        ))
+                      ) : (
+                        <p className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                          <RenderMinecraftLore text={selected.description} />
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <p className="mt-4 text-sm text-muted-foreground">Pick an item to inspect it.</p>

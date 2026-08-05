@@ -31,6 +31,16 @@ function getTextureSources(id?: string, name?: string, texturePath?: string): st
 
   if (!rawId && !rawName) return [];
 
+  // Skill Icons
+  const skillKeys = [
+    "farming", "mining", "combat", "foraging", "fishing",
+    "enchanting", "alchemy", "taming", "carpentry", "runecrafting",
+    "social", "hunting"
+  ];
+  if (skillKeys.includes(rawId)) {
+    return [`/items/${rawId}_skill.png`];
+  }
+
   // Strip prefixes (reforges like 'soft_', 'sharp_', etc.)
   let cleanId = rawId
     .replace(/^(soft|sharp|heavy|heroic|spicy|godly|rapid|fabled|withered|rebound)_/, "")
@@ -49,13 +59,16 @@ function getTextureSources(id?: string, name?: string, texturePath?: string): st
     .replace(/[^a-z0-9_]/g, "");
 
   return [
-    // 1. Local FurfSky textures by ID
+    // 1. Primary: Local FurfSky textures by ID
     `/items/${cleanId}.png`,
-    // 2. Local FurfSky textures by clean name
+    // 2. Primary Alt: Local FurfSky textures by clean name
     `/items/${nameSlug}.png`,
-    // 3. PrismarineJS Vanilla Textures
+    // 3. Secondary: Local MC Item Gallery vanilla textures
+    `/vanilla/${cleanId}.png`,
+    `/vanilla/${nameSlug}.png`,
+    // 4. PrismarineJS Vanilla Textures CDN Fallback
     `https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.20.1/items/${cleanId}.png`,
-    // 4. MC-Heads Fallback
+    // 5. MC-Heads Fallback
     `https://mc-heads.net/item/${cleanId}`,
   ];
 }
@@ -135,7 +148,7 @@ export function ItemIcon({ id, name, texturePath, enchanted, className }: ItemIc
 
         render(performance.now());
       } catch (err) {
-        // If canvas drawing fails due to CORS, fallback to standard <img> rendering
+        // Fallback to standard <img> rendering if canvas drawing fails
         setUseCanvas(false);
       }
     };

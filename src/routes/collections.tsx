@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 
 import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
 import { Chip, PageHero, Panel, ProgressBar, StatRow } from "@/components/layout/app-shell";
+import { ItemIcon } from "@/components/ui/item-icon";
 import { usePlayer } from "@/hooks/use-account";
 import { formatFull } from "@/lib/skyblock";
 
@@ -46,7 +47,7 @@ function toRoman(num: number): string {
 // Estimates tier & next level target based on collected quantity
 function getCollectionTier(amount: number) {
   if (amount <= 0) return { tier: "Tier I", pct: 0, nextGoal: 50 };
-  
+
   // Logarithmic estimation scale for generic collection thresholds
   const tiers = [50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000];
   let currentTier = 1;
@@ -175,15 +176,24 @@ function Collections() {
                     <ul className="mt-6 space-y-3">
                       {category.items.map((item) => {
                         const { tier, pct } = getCollectionTier(item.amount);
+                        // Convert display name to SNAKE_CASE ID for texture lookup
+                        const itemId = item.name.toUpperCase().replace(/\s+/g, "_");
+
                         return (
-                          <li key={item.name} className="glass-soft rounded-xl px-4 py-3 space-y-2">
-                            <div className="flex items-baseline justify-between gap-3">
-                              <p className="text-sm font-medium">
-                                {item.name}{" "}
-                                <span className="text-xs font-normal text-muted-foreground">
-                                  {tier}
-                                </span>
-                              </p>
+                          <li
+                            key={item.name}
+                            className="glass-soft rounded-xl px-4 py-3 space-y-2 transition-all duration-75 ease-out hover:scale-[1.01] hover:border-primary/30"
+                          >
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                <ItemIcon id={itemId} name={item.name} />
+                                <p className="text-sm font-medium">
+                                  {item.name}{" "}
+                                  <span className="text-xs font-normal text-muted-foreground">
+                                    {tier}
+                                  </span>
+                                </p>
+                              </div>
                               <p className="font-mono text-xs text-muted-foreground">
                                 {formatFull(item.amount)}
                               </p>

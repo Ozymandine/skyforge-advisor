@@ -47,7 +47,7 @@ export function RenderMinecraftLore({ text }: { text: string }) {
 
   const cleaned = cleanGlyphs(text);
 
-  // If text contains section symbols §, parse them directly
+  // If text contains section symbols §, parse them directly:
   if (cleaned.includes("§")) {
     const parts = cleaned.split(/§([0-9a-fk-or])/gi);
     const elements: React.ReactNode[] = [];
@@ -89,18 +89,22 @@ export function RenderMinecraftLore({ text }: { text: string }) {
   // AUTO-COLOR FALLBACK: For unformatted plain-text lore
   let colorClass = "text-slate-300";
 
-  if (/^(Damage|Strength|Crit Chance|Crit Damage|Health|Defense|Intelligence):/i.test(cleaned)) {
-    if (cleaned.startsWith("Damage:")) colorClass = "text-[#FF5555] font-semibold";
-    else if (cleaned.startsWith("Strength:")) colorClass = "text-[#FF5555] font-semibold";
-    else if (cleaned.startsWith("Crit Chance:") || cleaned.startsWith("Crit Damage:")) colorClass = "text-[#5555FF] font-semibold";
-    else if (cleaned.startsWith("Health:") || cleaned.startsWith("Defense:")) colorClass = "text-[#55FF55] font-semibold";
-    else if (cleaned.startsWith("Intelligence:")) colorClass = "text-[#55FFFF] font-semibold";
-  } else if (cleaned.startsWith("Ability:")) {
+  // Handle all SkyBlock stats
+  if (/^(Damage|Strength|Crit Chance|Crit Damage|Health|Defense|Intelligence|Mining Speed|Mining Fortune|Breaking Power|Speed):/i.test(cleaned)) {
+    if (cleaned.startsWith("Damage:") || cleaned.startsWith("Strength:")) colorClass = "text-[#FF5555] font-semibold"; // Red
+    else if (cleaned.startsWith("Crit Chance:") || cleaned.startsWith("Crit Damage:")) colorClass = "text-[#5555FF] font-semibold"; // Blue
+    else if (cleaned.startsWith("Health:") || cleaned.startsWith("Defense:")) colorClass = "text-[#55FF55] font-semibold"; // Green
+    else if (cleaned.startsWith("Intelligence:") || cleaned.startsWith("Mana:")) colorClass = "text-[#55FFFF] font-semibold"; // Aqua
+    else if (cleaned.startsWith("Mining Speed:") || cleaned.startsWith("Mining Fortune:") || cleaned.startsWith("Breaking Power:")) colorClass = "text-[#FFAA00] font-semibold"; // Gold
+    else if (cleaned.startsWith("Speed:")) colorClass = "text-[#FFFFFF] font-semibold"; // White
+  } 
+  // Ability Headers
+  else if (cleaned.startsWith("Ability:") || cleaned.startsWith("Shortbow:")) {
     colorClass = "text-[#FFAA00] font-bold";
-  } else if (cleaned.includes("V,") || cleaned.includes("IV,") || cleaned.includes("III,")) {
+  } 
+  // Enchantment Lists
+  else if (cleaned.includes("V,") || cleaned.includes("IV,") || cleaned.includes("III,") || cleaned.includes("Efficiency") || cleaned.includes("Fortune")) {
     colorClass = "text-[#5555FF] font-medium";
-  } else if (cleaned.endsWith("SWORD") || cleaned.endsWith("BOW") || cleaned.endsWith("CHESTPLATE") || cleaned.endsWith("RARE")) {
-    colorClass = "text-[#FFAA00] font-bold tracking-wider";
   }
 
   return <span className={`drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] ${colorClass}`}>{cleaned}</span>;

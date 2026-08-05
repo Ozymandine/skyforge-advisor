@@ -65,7 +65,7 @@ function Notifications() {
           <button
             onClick={() => setItems((current) => current.map((item) => ({ ...item, unread: false })))}
             disabled={items.length === 0}
-            className="rounded-xl border border-border bg-secondary/50 px-4 py-2 text-sm transition-colors hover:border-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl border border-border bg-secondary/50 px-4 py-2 text-sm transition-all duration-75 ease-out hover:scale-[1.02] hover:border-ring/40 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
           >
             Mark all read
           </button>
@@ -86,11 +86,14 @@ function Notifications() {
             ))}
           </div>
 
-          <ul className="space-y-3">
+          <ul className="mt-6 space-y-3">
             {filtered.map((notification) => {
               const Icon = icons[notification.kind] ?? Bell;
               return (
-                <li key={notification.title} className="glass-soft flex gap-4 rounded-2xl p-5">
+                <li
+                  key={notification.title}
+                  className="glass-soft flex gap-4 rounded-2xl p-5 transition-all duration-75 ease-out hover:scale-[1.01] hover:border-primary/30"
+                >
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
                     <Icon className="size-4" />
                   </span>
@@ -102,7 +105,7 @@ function Notifications() {
                     <p className="mt-1.5 text-sm text-muted-foreground">{notification.body}</p>
                   </div>
                   {notification.unread && (
-                    <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
+                    <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary animate-pulse" />
                   )}
                 </li>
               );
