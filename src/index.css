@@ -5,11 +5,11 @@
   image-rendering: crisp-edges;
 }
 
-@keyframes playSprite {
-  0% {
+@keyframes playSpriteSheet {
+  from {
     background-position: 0 0;
   }
-  100% {
+  to {
     background-position: 0 100%;
   }
 }
