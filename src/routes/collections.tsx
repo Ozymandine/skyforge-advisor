@@ -26,23 +26,24 @@ export const Route = createFileRoute("/collections")({
 });
 
 /**
- * Maps items that Hypixel puts in unconventional API categories or unique IDs directly to standard Skill categories
+ * Normalized override lookup keys (all uppercase, NO spaces or special characters)
  */
 const CATEGORY_OVERRIDES: Record<string, string> = {
-  // Mining
-  END_STONE: "Mining",
-  ENDSTONE: "Mining",
-  HARD_STONE: "Mining",
-  GLOWSTONE: "Mining",
-  QUARTZ: "Mining",
-
   // Foraging
-  LUSH_LILAC: "Foraging",
-  "LUSH LILAC": "Foraging",
+  LUSHLILAC: "Foraging",
   LILAC: "Foraging",
   PEONY: "Foraging",
-  ROSE_BUSH: "Foraging",
-  DOUBLE_PLANT: "Foraging",
+  ROSEBUSH: "Foraging",
+  DOUBLEPLANT: "Foraging",
+  FIGLOG: "Foraging",
+
+  // Mining
+  ENDSTONE: "Mining",
+  HARDSTONE: "Mining",
+  GLOWSTONE: "Mining",
+  QUARTZ: "Mining",
+  LAPISLAZULI: "Mining",
+  LAPIS: "Mining",
 
   // Farming
   SUNFLOWER: "Farming",
@@ -51,17 +52,19 @@ const CATEGORY_OVERRIDES: Record<string, string> = {
 };
 
 /**
- * Ensures collection display names map cleanly to texture asset IDs
+ * Map collection names to texture asset IDs
  */
 const CATEGORY_ITEM_IDS: Record<string, string> = {
   "End Stone": "ENDSTONE",
   "Lush Lilac": "DOUBLE_PLANT",
+  "Lushlilac": "DOUBLE_PLANT",
   "Lilac": "DOUBLE_PLANT",
   "Peony": "DOUBLE_PLANT",
   "Rose Bush": "DOUBLE_PLANT",
   "Sunflower": "DOUBLE_PLANT",
   "Redstone Dust": "REDSTONE",
   "Sugar Cane": "SUGAR_CANE",
+  "Lapis Lazuli": "INK_SACK_4",
 };
 
 // Helper to convert tier numbers to Roman Numerals (e.g., 7 -> VII)
@@ -127,15 +130,11 @@ function Collections() {
     >();
 
     for (const collection of collections) {
-      const rawId = collection.name.toUpperCase().replace(/\s+/g, "_");
-      const rawNameUpper = collection.name.toUpperCase().trim();
+      // Clean string by removing spaces & special characters for 100% resilient matching
+      const keyClean = collection.name.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
-      // Check explicit overrides by raw snake_case ID or string name
-      const categoryName =
-        CATEGORY_OVERRIDES[rawId] ||
-        CATEGORY_OVERRIDES[rawNameUpper] ||
-        collection.category ||
-        "Boss & Misc";
+      // Determine category with normalized key
+      const categoryName = CATEGORY_OVERRIDES[keyClean] || collection.category || "Boss & Misc";
 
       const existing = map.get(categoryName);
       if (existing) {
@@ -234,7 +233,6 @@ function Collections() {
                           >
                             <div className="flex items-center justify-between gap-3">
                               <div className="flex items-center gap-3 min-w-0">
-                                {/* Explicitly sized icon wrapper (size-6 = 24px) */}
                                 <div className="size-6 shrink-0 flex items-center justify-center">
                                   <ItemIcon
                                     id={itemId}
