@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 
-import headerBg from "@/assets/skyblock-header.jpg";
+import headerVideo from "@/assets/skyblock-header.mp4";
 import { usePlayer, useAccount } from "@/hooks/use-account";
 import { cn } from "@/lib/utils";
 import {
@@ -88,12 +88,12 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
   return (
     <aside
       className={cn(
-        "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar backdrop-blur-2xl lg:flex",
+        "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-white/10 bg-sidebar/40 backdrop-blur-xl lg:flex",
         collapsed ? "w-[86px]" : "w-[276px]",
       )}
     >
       <div className="flex items-center gap-3 px-5 py-6">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary ring-1 ring-primary/30">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/20 text-primary ring-1 ring-primary/40 shadow-inner">
           <Trophy className="size-4" />
         </div>
         {!collapsed && (
@@ -108,7 +108,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         <button
           onClick={onToggle}
           aria-label="Toggle sidebar"
-          className="flex w-full items-center justify-center rounded-xl border border-sidebar-border bg-secondary/40 py-2.5 text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.02] hover:bg-secondary/70 hover:text-foreground active:scale-95"
+          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 py-2.5 text-muted-foreground backdrop-blur-md transition-all duration-75 ease-out hover:scale-[1.02] hover:bg-white/15 hover:text-foreground active:scale-95"
         >
           {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
         </button>
@@ -125,12 +125,12 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.02] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:scale-95",
+                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.02] hover:bg-white/10 hover:text-foreground active:scale-95",
                       collapsed && "justify-center px-0",
                     )}
                     activeProps={{
                       className:
-                        "bg-sidebar-accent text-sidebar-accent-foreground ring-1 ring-sidebar-border font-medium",
+                        "bg-white/15 text-foreground ring-1 ring-white/20 font-medium backdrop-blur-md shadow-sm",
                     }}
                   >
                     <item.icon className="size-4 shrink-0 transition-transform duration-75" />
@@ -144,7 +144,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       </nav>
 
       <div className="p-4">
-        <div className="glass-soft rounded-2xl p-4 transition-all duration-75 hover:scale-[1.01]">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md transition-all duration-75 hover:bg-white/10">
           {!collapsed ? (
             <>
               <p className="eyebrow">Profile</p>
@@ -174,15 +174,15 @@ function Header({ onOpenSearch }: { onOpenSearch: () => void }) {
       ?.cuteName ?? "No profile";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-surface-strong backdrop-blur-2xl">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-surface-strong/40 backdrop-blur-xl">
       <div className="flex items-center gap-4 px-4 py-3.5 sm:px-6">
         <button
           onClick={onOpenSearch}
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-input bg-secondary/40 px-4 py-2.5 text-sm text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.01] hover:border-ring/40 active:scale-[0.98] sm:max-w-xl"
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-muted-foreground backdrop-blur-md transition-all duration-75 ease-out hover:scale-[1.01] hover:border-white/20 hover:bg-white/10 active:scale-[0.98] sm:max-w-xl"
         >
           <Search className="size-4 shrink-0" />
           <span className="truncate">Search or type a command...</span>
-          <kbd className="ml-auto hidden rounded-md border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:block">
+          <kbd className="ml-auto hidden rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:block">
             ⌘K
           </kbd>
         </button>
@@ -192,11 +192,11 @@ function Header({ onOpenSearch }: { onOpenSearch: () => void }) {
             {player.data?.username ?? "Not connected"} · {active}
           </span>
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-2 rounded-full border border-input bg-secondary/50 px-3.5 py-2 text-sm font-medium transition-all duration-75 ease-out hover:scale-[1.03] hover:border-ring/40 active:scale-95">
+            <DropdownMenuTrigger className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3.5 py-2 text-sm font-medium backdrop-blur-md transition-all duration-75 ease-out hover:scale-[1.03] hover:bg-white/20 active:scale-95">
               <Users className="size-4 text-muted-foreground" />
               {active}
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64">
+            <DropdownMenuContent align="end" className="w-64 border-white/10 bg-slate-950/80 backdrop-blur-2xl">
               {profiles.length === 0 && (
                 <DropdownMenuItem disabled className="py-2.5 text-xs">
                   Connect an API key in Settings
@@ -223,7 +223,7 @@ function Header({ onOpenSearch }: { onOpenSearch: () => void }) {
           <button
             onClick={() => player.refetch()}
             aria-label="Refresh"
-            className="rounded-lg p-2 text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.05] hover:bg-accent hover:text-foreground active:scale-95"
+            className="rounded-lg p-2 text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.05] hover:bg-white/10 hover:text-foreground active:scale-95"
           >
             <RefreshCw className={cn("size-4", player.isFetching && "animate-spin")} />
           </button>
@@ -231,7 +231,7 @@ function Header({ onOpenSearch }: { onOpenSearch: () => void }) {
             <button
               key={i}
               aria-label={["Notifications", "Theme"][i]}
-              className="rounded-lg p-2 text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.05] hover:bg-accent hover:text-foreground active:scale-95"
+              className="rounded-lg p-2 text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.05] hover:bg-white/10 hover:text-foreground active:scale-95"
             >
               <Icon className="size-4" />
             </button>
@@ -239,7 +239,7 @@ function Header({ onOpenSearch }: { onOpenSearch: () => void }) {
           <Link
             to="/settings"
             aria-label="Settings"
-            className="rounded-lg p-2 text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.05] hover:bg-accent hover:text-foreground active:scale-95"
+            className="rounded-lg p-2 text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.05] hover:bg-white/10 hover:text-foreground active:scale-95"
           >
             <Settings className="size-4" />
           </Link>
@@ -267,16 +267,19 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="relative min-h-screen">
-      <div className="pointer-events-none fixed inset-0 -z-10">
-        <img
-          src={headerBg}
-          alt=""
-          aria-hidden="true"
-          width={1920}
-          height={1080}
+      {/* Live Video Background: Full Fill, Minimal Overlay & Very Subtle Blur */}
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden select-none">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
           className="size-full object-cover"
-        />
-        <div className="absolute inset-0 bg-background/85 backdrop-blur-md" />
+        >
+          <source src={headerVideo} type="video/mp4" />
+        </video>
+        {/* Minimal tint & 2px blur so the video stays crisp and bright */}
+        <div className="absolute inset-0 bg-background/20 backdrop-blur-[2px]" />
       </div>
 
       <div className="flex">
@@ -338,7 +341,7 @@ export function Panel({ className, children }: { className?: string; children: R
   return (
     <section
       className={cn(
-        "glass-panel rounded-3xl p-6 transition-all duration-100 ease-out hover:border-primary/20",
+        "rounded-3xl border border-white/10 bg-slate-950/30 p-6 backdrop-blur-xl shadow-2xl transition-all duration-100 ease-out hover:border-primary/30 hover:bg-slate-950/40",
         className,
       )}
     >
@@ -359,7 +362,7 @@ export function StatTile({ label, value, sub }: { label: string; value: string; 
 
 export function StatRow({ stats }: { stats: { label: string; value: string; sub: string }[] }) {
   return (
-    <div className="glass-panel grid grid-cols-1 divide-y divide-border rounded-3xl sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x">
+    <div className="grid grid-cols-1 divide-y divide-white/10 rounded-3xl border border-white/10 bg-slate-950/30 backdrop-blur-xl shadow-2xl sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x lg:divide-white/10">
       {stats.map((s) => (
         <StatTile key={s.label} {...s} />
       ))}
@@ -371,9 +374,9 @@ export function ProgressBar({ pct, tone = "emerald" }: { pct: number; tone?: "em
   const toneClass =
     tone === "gold" ? "bg-gold" : tone === "danger" ? "bg-danger" : "bg-emerald";
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10 backdrop-blur-sm">
       <div
-        className={cn("h-full rounded-full transition-all duration-300", toneClass)}
+        className={cn("h-full rounded-full transition-all duration-300 shadow-sm", toneClass)}
         style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
       />
     </div>
@@ -381,10 +384,10 @@ export function ProgressBar({ pct, tone = "emerald" }: { pct: number; tone?: "em
 }
 
 const rarityClass: Record<string, string> = {
-  MYTHIC: "text-mythic border-mythic/40 bg-mythic/10",
-  LEGENDARY: "text-legendary border-legendary/40 bg-legendary/10",
-  EPIC: "text-epic border-epic/40 bg-epic/10",
-  RARE: "text-rare border-rare/40 bg-rare/10",
+  MYTHIC: "text-mythic border-mythic/40 bg-mythic/10 backdrop-blur-sm",
+  LEGENDARY: "text-legendary border-legendary/40 bg-legendary/10 backdrop-blur-sm",
+  EPIC: "text-epic border-epic/40 bg-epic/10 backdrop-blur-sm",
+  RARE: "text-rare border-rare/40 bg-rare/10 backdrop-blur-sm",
 };
 
 export function RarityTag({ rarity }: { rarity: string }) {
@@ -392,7 +395,7 @@ export function RarityTag({ rarity }: { rarity: string }) {
     <span
       className={cn(
         "rounded-md border px-1.5 py-0.5 text-[10px] font-semibold tracking-widest",
-        rarityClass[rarity] ?? "text-muted-foreground border-border bg-secondary",
+        rarityClass[rarity] ?? "text-muted-foreground border-white/10 bg-white/5 backdrop-blur-sm",
       )}
     >
       {rarity}
@@ -413,8 +416,8 @@ export function Chip({
     <button
       onClick={onClick}
       className={cn(
-        "rounded-full border border-border px-4 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.04] hover:text-foreground active:scale-95",
-        active && "border-primary/40 bg-primary/15 text-primary",
+        "rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-md transition-all duration-75 ease-out hover:scale-[1.04] hover:bg-white/10 hover:text-foreground active:scale-95",
+        active && "border-primary/40 bg-primary/20 text-primary font-semibold shadow-sm",
       )}
     >
       {children}
