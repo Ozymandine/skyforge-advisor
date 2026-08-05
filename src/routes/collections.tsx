@@ -25,6 +25,36 @@ export const Route = createFileRoute("/collections")({
   component: Collections,
 });
 
+/**
+ * Maps items that Hypixel puts in unconventional API categories or unique IDs to standard Skill categories
+ */
+const CATEGORY_OVERRIDES: Record<string, string> = {
+  END_STONE: "Mining",
+  ENDSTONE: "Mining",
+  HARD_STONE: "Mining",
+  GLOWSTONE: "Mining",
+  QUARTZ: "Mining",
+  LILAC: "Foraging",
+  PEONY: "Foraging",
+  ROSE_BUSH: "Foraging",
+  SUNFLOWER: "Farming",
+  POPPY: "Farming",
+  DANDELION: "Farming",
+};
+
+/**
+ * Ensures collection display names map cleanly to texture asset IDs
+ */
+const CATEGORY_ITEM_IDS: Record<string, string> = {
+  "End Stone": "ENDSTONE",
+  "Lilac": "DOUBLE_PLANT",
+  "Peony": "DOUBLE_PLANT",
+  "Rose Bush": "DOUBLE_PLANT",
+  "Sunflower": "DOUBLE_PLANT",
+  "Redstone Dust": "REDSTONE",
+  "Sugar Cane": "SUGAR_CANE",
+};
+
 // Helper to convert tier numbers to Roman Numerals (e.g., 7 -> VII)
 function toRoman(num: number): string {
   const map: [number, string][] = [
@@ -88,13 +118,17 @@ function Collections() {
     >();
 
     for (const collection of collections) {
-      const existing = map.get(collection.category);
+      const rawId = collection.name.toUpperCase().replace(/\s+/g, "_");
+      // Use category override if Hypixel API returns an unconventional group
+      const categoryName = CATEGORY_OVERRIDES[rawId] || collection.category || "Boss & Misc";
+
+      const existing = map.get(categoryName);
       if (existing) {
         existing.total += collection.amount;
         existing.items.push({ name: collection.name, amount: collection.amount });
       } else {
-        map.set(collection.category, {
-          name: collection.category,
+        map.set(categoryName, {
+          name: categoryName,
           total: collection.amount,
           items: [{ name: collection.name, amount: collection.amount }],
         });
@@ -175,7 +209,8 @@ function Collections() {
                     <ul className="mt-6 space-y-3">
                       {category.items.map((item) => {
                         const { tier, pct } = getCollectionTier(item.amount);
-                        const itemId = item.name.toUpperCase().replace(/\s+/g, "_");
+                        const itemId =
+                          CATEGORY_ITEM_IDS[item.name] || item.name.toUpperCase().replace(/\s+/g, "_");
 
                         return (
                           <li
@@ -186,7 +221,11 @@ function Collections() {
                               <div className="flex items-center gap-3 min-w-0">
                                 {/* Explicitly sized icon wrapper (size-6 = 24px) */}
                                 <div className="size-6 shrink-0 flex items-center justify-center">
-                                  <ItemIcon id={itemId} name={item.name} className="size-6 hover:scale-100 transition-none" />
+                                  <ItemIcon
+                                    id={itemId}
+                                    name={item.name}
+                                    className="size-6 hover:scale-100 transition-none"
+                                  />
                                 </div>
                                 <p className="text-sm font-medium truncate">
                                   {item.name}{" "}
