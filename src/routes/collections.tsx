@@ -26,7 +26,7 @@ export const Route = createFileRoute("/collections")({
 });
 
 /**
- * Maps items that Hypixel puts in unconventional API categories or unique IDs to standard Skill categories
+ * Maps items that Hypixel puts in unconventional API categories or unique IDs directly to standard Skill categories
  */
 const CATEGORY_OVERRIDES: Record<string, string> = {
   // Mining
@@ -38,6 +38,7 @@ const CATEGORY_OVERRIDES: Record<string, string> = {
 
   // Foraging
   LUSH_LILAC: "Foraging",
+  "LUSH LILAC": "Foraging",
   LILAC: "Foraging",
   PEONY: "Foraging",
   ROSE_BUSH: "Foraging",
@@ -127,8 +128,14 @@ function Collections() {
 
     for (const collection of collections) {
       const rawId = collection.name.toUpperCase().replace(/\s+/g, "_");
-      // Use category override if Hypixel API returns an unconventional group
-      const categoryName = CATEGORY_OVERRIDES[rawId] || collection.category || "Boss & Misc";
+      const rawNameUpper = collection.name.toUpperCase().trim();
+
+      // Check explicit overrides by raw snake_case ID or string name
+      const categoryName =
+        CATEGORY_OVERRIDES[rawId] ||
+        CATEGORY_OVERRIDES[rawNameUpper] ||
+        collection.category ||
+        "Boss & Misc";
 
       const existing = map.get(categoryName);
       if (existing) {
