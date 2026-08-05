@@ -9,13 +9,56 @@ interface ItemIconProps {
   className?: string;
 }
 
+/**
+ * Maps Hypixel SkyBlock Item IDs & Display Names to your exact local /public/items/*.png filenames
+ */
 const ITEM_ALIASES: Record<string, string> = {
-  // Utility & Sacks
-  gift_compass: "compass",
-  skyblock_menu: "nether_star",
-  redstone_dust: "redstone",
-  husbandry_sack: "husbandry_sack_1",
-  gemstone_sack: "gemstone_sack_1",
+  // Sacks & Utility
+  husbandry_sack: "backpack_brown",
+  beginner_husbandry_sack: "backpack_brown",
+  small_husbandry_sack: "backpack_brown",
+  medium_husbandry_sack: "backpack_brown",
+  large_husbandry_sack: "backpack_brown",
+  gemstone_sack: "backpack_gray",
+  sack_of_sacks: "sack_of_sacks",
+  gift_compass: "royal_compass",
+  skyblock_menu: "skyblock_menu",
+  redstone_dust: "redstone_rune",
+
+  // Collections & Specific Items
+  lushlilac: "double_plant",
+  lush_lilac: "double_plant",
+  lilac: "double_plant",
+  double_plant: "double_plant",
+  end_stone: "endstone",
+  endstone: "endstone",
+  fig_log: "toil_log",
+  figlog: "toil_log",
+  lapis_lazuli: "lapis_crystal",
+  lapis: "lapis_crystal",
+  ink_sack_4: "lapis_crystal",
+  slimeball: "compact_ooze",
+  slime_ball: "compact_ooze",
+
+  // Weapons & Tools
+  aote: "aspect_of_the_end",
+  aspect_of_the_end: "aspect_of_the_end",
+  aotv: "aspect_of_the_void",
+  aspect_of_the_void: "aspect_of_the_void",
+  aotd: "aspect_of_the_dragons",
+  aspect_of_the_dragons: "aspect_of_the_dragons",
+  hyperion: "hyperion",
+  valkyrie: "valkyrie",
+  scylla: "scylla",
+  astraea: "astraea",
+  terminator: "terminator",
+  juju_shortbow: "juju_shortbow",
+  artisanal_shortbow: "artisanal_shortbow",
+  dragon_shortbow: "dragon_shortbow",
+  livid_dagger: "livid_dagger",
+  shadow_fury: "shadow_fury",
+  giant_sword: "giant_sword",
+  dark_claymore: "dark_claymore",
 
   // Dragon Fragments
   unstable_fragment: "unstable_dragon_fragment",
@@ -27,17 +70,18 @@ const ITEM_ALIASES: Record<string, string> = {
   protector_fragment: "protector_dragon_fragment",
   holy_fragment: "holy_dragon_fragment",
 
-  // Accessories & Custom Skulls
-  petrified_oak_slab: "oak_slab",
+  // Accessories & Equipment
+  petrified_oak_slab: "hardened_wood",
   skeleton_talisman: "skeleton_talisman",
-  ender_necklace: "ender_necklace",
-  tarantula_ring: "tarantula_ring",
+  ender_necklace: "ender_monocle",
+  tarantula_ring: "tarantula_talisman",
   tarantula_silk: "tarantula_silk",
-  arack: "arack",
-  primordial_eye: "primordial_eye",
+  arack: "spider_sword",
+  primordial_eye: "gazing_pearl",
+  shriveled_bracelet: "adaptive_belt",
 };
 
-const REFORGES_REGEX = /^(gentle|odd|fast|fair|epic|sharp|heroic|spicy|legendary|dirty|filded|salty|treacherous|deadly|fine|grand|hasty|neat|rapid|unreal|awkward|rich|clean|fierce|heavy|mythIC|pure|smart|titanic|wise|bizarre|demonic|forceful|hurtful|keen|strong|unpleasant|zealous|godly|soft|fabled|withered|rebound|very)_/gi;
+const REFORGES_REGEX = /^(gentle|odd|fast|fair|epic|sharp|heroic|spicy|legendary|dirty|filded|salty|treacherous|deadly|fine|grand|hasty|neat|rapid|unreal|awkward|rich|clean|fierce|heavy|mythic|pure|smart|titanic|wise|bizarre|demonic|forceful|hurtful|keen|strong|unpleasant|zealous|godly|soft|fabled|withered|rebound|very)_/gi;
 
 function getTextureSources(id?: string, name?: string, texturePath?: string): string[] {
   if (texturePath) return [texturePath];
@@ -74,26 +118,24 @@ function getTextureSources(id?: string, name?: string, texturePath?: string): st
   const baseType = slugNoS.split("_").pop() || "";
 
   return [
-    // 1. Local FurfSky Textures
+    // 1. Local FurfSky Textures (Primary target folder)
     `/items/${cleanId}.png`,
     `/items/${mappedId}.png`,
     `/items/${slugWithS}.png`,
     `/items/${slugNoS}.png`,
 
-    // 2. Local Vanilla Gallery
+    // 2. Local Vanilla Fallbacks
     `/vanilla/${mappedId}.png`,
     `/vanilla/${cleanId}.png`,
     `/vanilla/${slugNoS}.png`,
     `/vanilla/${baseType}.png`,
 
-    // 3. SkyCrypt Public Heads Repository (Fixes custom player skull accessories)
+    // 3. SkyCrypt Public Heads Repository (Custom Player Skulls)
     `https://raw.githubusercontent.com/SkyCryptWebsite/SkyCryptWebsite/main/public/head/${cleanId}`,
 
-    // 4. PrismarineJS Vanilla Textures
+    // 4. External CDN Fallbacks
     `https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.20.1/items/${mappedId}.png`,
     `https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.20.1/items/${baseType}.png`,
-
-    // 5. MC-Heads Fallback
     `https://mc-heads.net/item/${mappedId}`,
   ];
 }
@@ -106,11 +148,11 @@ export function ItemIcon({ id, name, texturePath, enchanted, className }: ItemIc
 
   const sources = React.useMemo(() => getTextureSources(id, name, texturePath), [id, name, texturePath]);
   
-  // FIX #1: Ensure sourceIndex stays bounded if sources length changes
+  // Ensure sourceIndex stays bounded if sources array changes
   const currentIndex = Math.min(sourceIndex, sources.length - 1);
   const currentSrc = sources[currentIndex];
 
-  // FIX #1: Synchronously reset states when item props change
+  // Reset state when props change
   React.useLayoutEffect(() => {
     setSourceIndex(0);
     setStatus("loading");
@@ -179,13 +221,11 @@ export function ItemIcon({ id, name, texturePath, enchanted, className }: ItemIc
 
         render(performance.now());
       } catch (err) {
-        // If Canvas CORS fails, switch to standard <img> rendering
         setUseCanvas(false);
       }
     };
 
     img.onerror = () => {
-      // Step to next available source URL
       if (currentIndex + 1 < sources.length) {
         setSourceIndex(currentIndex + 1);
         setUseCanvas(true);
