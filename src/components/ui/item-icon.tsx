@@ -7,13 +7,11 @@ interface ItemIconProps {
   className?: string;
 }
 
-/**
- * Normalizes SkyBlock IDs and item names to match FurfSky PNG filenames inside public/items/
- */
 function getFurfSkyPath(id?: string, name?: string): string {
-  let raw = (id || name || "").toLowerCase().trim();
+  const raw = (id || name || "").toLowerCase().trim();
+  if (!raw) return "";
 
-  // If it's a skill key like "farming", "mining", map to "farming_skill"
+  // Map skill names/keys (e.g., "farming" or "FARMING" -> "farming_skill")
   const skillKeys = [
     "farming",
     "mining",
@@ -28,17 +26,19 @@ function getFurfSkyPath(id?: string, name?: string): string {
     "social",
     "hunting",
   ];
+
+  let cleaned = raw;
   if (skillKeys.includes(raw)) {
-    raw = `${raw}_skill`;
+    cleaned = `${raw}_skill`;
   }
 
-  // Format to snake_case and strip invalid filename characters
-  const cleanId = raw
+  // Convert to snake_case and strip non-filename characters
+  cleaned = cleaned
     .replace(/\s+/g, "_")
     .replace(/^enchanted_/, "")
     .replace(/[^a-z0-9_]/g, "");
 
-  return `/items/${cleanId}.png`;
+  return `/items/${cleaned}.png`;
 }
 
 export function ItemIcon({ id, name, className }: ItemIconProps) {
@@ -46,12 +46,17 @@ export function ItemIcon({ id, name, className }: ItemIconProps) {
 
   const localSrc = getFurfSkyPath(id, name);
 
+  // Debug: Log whenever an ItemIcon renders
+  if (!localSrc) {
+    console.warn("[ItemIcon] Received empty id AND name props:", { id, name });
+    return <div className={cn("size-7 rounded-md bg-secondary/30 shrink-0", className)} />;
+  }
+
   if (hasError) {
-    // If the local texture isn't present in FurfSky, display a clean placeholder slot
     return (
       <div
         className={cn(
-          "size-7 rounded-md border border-border/40 bg-secondary/30 shrink-0",
+          "size-7 rounded-md border border-border/40 bg-secondary/20 shrink-0",
           className
         )}
       />
@@ -67,8 +72,7 @@ export function ItemIcon({ id, name, className }: ItemIconProps) {
         className
       )}
       onError={() => {
-        // Log exact missing FurfSky file to F12 Console for easy mapping
-        console.warn(`[ItemIcon] Missing FurfSky PNG: ${localSrc}`);
+        console.error(`[ItemIcon 404] File missing in public/items/: ${localSrc} (received id: "${id}", name: "${name}")`);
         setHasError(true);
       }}
     />
