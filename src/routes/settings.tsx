@@ -78,7 +78,7 @@ function Settings() {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ozymandine"
+            placeholder="Steve"
             className="w-64 rounded-xl border border-input bg-secondary/40 px-4 py-2 text-sm outline-none"
           />
         </Row>
