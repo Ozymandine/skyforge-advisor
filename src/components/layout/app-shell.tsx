@@ -108,7 +108,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         <button
           onClick={onToggle}
           aria-label="Toggle sidebar"
-          className="flex w-full items-center justify-center rounded-xl border border-sidebar-border bg-secondary/40 py-2.5 text-muted-foreground transition-colors hover:text-foreground"
+          className="flex w-full items-center justify-center rounded-xl border border-sidebar-border bg-secondary/40 py-2.5 text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.02] hover:bg-secondary/70 hover:text-foreground active:scale-95"
         >
           {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
         </button>
@@ -125,15 +125,15 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.02] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:scale-95",
                       collapsed && "justify-center px-0",
                     )}
                     activeProps={{
                       className:
-                        "bg-sidebar-accent text-sidebar-accent-foreground ring-1 ring-sidebar-border",
+                        "bg-sidebar-accent text-sidebar-accent-foreground ring-1 ring-sidebar-border font-medium",
                     }}
                   >
-                    <item.icon className="size-4 shrink-0" />
+                    <item.icon className="size-4 shrink-0 transition-transform duration-75" />
                     {!collapsed && <span className="truncate">{item.label}</span>}
                   </Link>
                 </li>
@@ -144,7 +144,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       </nav>
 
       <div className="p-4">
-        <div className="glass-soft rounded-2xl p-4">
+        <div className="glass-soft rounded-2xl p-4 transition-all duration-75 hover:scale-[1.01]">
           {!collapsed ? (
             <>
               <p className="eyebrow">Profile</p>
@@ -178,7 +178,7 @@ function Header({ onOpenSearch }: { onOpenSearch: () => void }) {
       <div className="flex items-center gap-4 px-4 py-3.5 sm:px-6">
         <button
           onClick={onOpenSearch}
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-input bg-secondary/40 px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:border-ring/40 sm:max-w-xl"
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-input bg-secondary/40 px-4 py-2.5 text-sm text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.01] hover:border-ring/40 active:scale-[0.98] sm:max-w-xl"
         >
           <Search className="size-4 shrink-0" />
           <span className="truncate">Search or type a command...</span>
@@ -192,7 +192,7 @@ function Header({ onOpenSearch }: { onOpenSearch: () => void }) {
             {player.data?.username ?? "Not connected"} · {active}
           </span>
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-2 rounded-full border border-input bg-secondary/50 px-3.5 py-2 text-sm font-medium transition-colors hover:border-ring/40">
+            <DropdownMenuTrigger className="flex items-center gap-2 rounded-full border border-input bg-secondary/50 px-3.5 py-2 text-sm font-medium transition-all duration-75 ease-out hover:scale-[1.03] hover:border-ring/40 active:scale-95">
               <Users className="size-4 text-muted-foreground" />
               {active}
             </DropdownMenuTrigger>
@@ -206,7 +206,7 @@ function Header({ onOpenSearch }: { onOpenSearch: () => void }) {
                 <DropdownMenuItem
                   key={p.profileId}
                   onSelect={() => account.save({ profileId: p.profileId })}
-                  className="flex items-start gap-2 py-2.5"
+                  className="flex items-start gap-2 py-2.5 transition-all duration-75 hover:scale-[1.01]"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium">{p.cuteName}</p>
@@ -223,7 +223,7 @@ function Header({ onOpenSearch }: { onOpenSearch: () => void }) {
           <button
             onClick={() => player.refetch()}
             aria-label="Refresh"
-            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="rounded-lg p-2 text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.05] hover:bg-accent hover:text-foreground active:scale-95"
           >
             <RefreshCw className={cn("size-4", player.isFetching && "animate-spin")} />
           </button>
@@ -231,7 +231,7 @@ function Header({ onOpenSearch }: { onOpenSearch: () => void }) {
             <button
               key={i}
               aria-label={["Notifications", "Theme"][i]}
-              className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="rounded-lg p-2 text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.05] hover:bg-accent hover:text-foreground active:scale-95"
             >
               <Icon className="size-4" />
             </button>
@@ -239,7 +239,7 @@ function Header({ onOpenSearch }: { onOpenSearch: () => void }) {
           <Link
             to="/settings"
             aria-label="Settings"
-            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="rounded-lg p-2 text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.05] hover:bg-accent hover:text-foreground active:scale-95"
           >
             <Settings className="size-4" />
           </Link>
@@ -335,7 +335,16 @@ export function PageHero({
 }
 
 export function Panel({ className, children }: { className?: string; children: ReactNode }) {
-  return <section className={cn("glass-panel rounded-3xl p-6", className)}>{children}</section>;
+  return (
+    <section
+      className={cn(
+        "glass-panel rounded-3xl p-6 transition-all duration-100 ease-out hover:border-primary/20",
+        className,
+      )}
+    >
+      {children}
+    </section>
+  );
 }
 
 export function StatTile({ label, value, sub }: { label: string; value: string; sub: string }) {
@@ -364,7 +373,7 @@ export function ProgressBar({ pct, tone = "emerald" }: { pct: number; tone?: "em
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
       <div
-        className={cn("h-full rounded-full transition-all", toneClass)}
+        className={cn("h-full rounded-full transition-all duration-300", toneClass)}
         style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
       />
     </div>
@@ -404,7 +413,7 @@ export function Chip({
     <button
       onClick={onClick}
       className={cn(
-        "rounded-full border border-border px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground",
+        "rounded-full border border-border px-4 py-1.5 text-xs font-medium text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.04] hover:text-foreground active:scale-95",
         active && "border-primary/40 bg-primary/15 text-primary",
       )}
     >
