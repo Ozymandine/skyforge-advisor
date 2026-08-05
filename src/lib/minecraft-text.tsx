@@ -1,23 +1,22 @@
 import React from "react";
 
-// Official Minecraft Color Code Map (All with high-contrast text shadows)
 const MC_COLORS: Record<string, string> = {
-  "0": "text-[#000000] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]", // Black
-  "1": "text-[#0000AA] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]", // Dark Blue
-  "2": "text-[#00AA00] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]", // Dark Green
-  "3": "text-[#00AAAA] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]", // Dark Aqua
-  "4": "text-[#AA0000] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]", // Dark Red
-  "5": "text-[#AA00AA] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]", // Dark Purple
-  "6": "text-[#FFAA00] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] font-semibold", // Gold
-  "7": "text-[#AAAAAA] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]", // Gray
-  "8": "text-[#555555] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]", // Dark Gray
-  "9": "text-[#5555FF] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]", // Blue
-  a: "text-[#55FF55] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] font-semibold", // Green (+Stats)
-  b: "text-[#55FFFF] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] font-semibold", // Aqua (+Mana)
-  c: "text-[#FF5555] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] font-semibold", // Red (+Damage)
-  d: "text-[#FF55FF] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]", // Light Purple
-  e: "text-[#FFFF55] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] font-semibold", // Yellow
-  f: "text-[#FFFFFF] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] font-semibold", // White
+  "0": "text-[#000000] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]",
+  "1": "text-[#0000AA] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]",
+  "2": "text-[#00AA00] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]",
+  "3": "text-[#00AAAA] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]",
+  "4": "text-[#AA0000] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]",
+  "5": "text-[#AA00AA] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]",
+  "6": "text-[#FFAA00] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] font-semibold",
+  "7": "text-[#AAAAAA] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]",
+  "8": "text-[#555555] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]",
+  "9": "text-[#5555FF] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]",
+  a: "text-[#55FF55] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] font-semibold",
+  b: "text-[#55FFFF] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] font-semibold",
+  c: "text-[#FF5555] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] font-semibold",
+  d: "text-[#FF55FF] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]",
+  e: "text-[#FFFF55] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] font-semibold",
+  f: "text-[#FFFFFF] drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] font-semibold",
 };
 
 const MC_FORMATS: Record<string, string> = {
@@ -27,9 +26,6 @@ const MC_FORMATS: Record<string, string> = {
   o: "italic",
 };
 
-/**
- * Clean up missing/broken Minecraft Unicode glyphs
- */
 function cleanGlyphs(str: string): string {
   if (!str) return "";
   return str
@@ -38,16 +34,12 @@ function cleanGlyphs(str: string): string {
     .replace(/Speed for/g, "✦ Speed for");
 }
 
-/**
- * Parses raw Minecraft lore strings containing section symbols (§)
- * into rich, color-graded React elements.
- */
 export function RenderMinecraftLore({ text }: { text: string }) {
   if (!text) return null;
 
   const cleaned = cleanGlyphs(text);
 
-  // If text contains section symbols §, parse them directly:
+  // Direct Minecraft § Section Code Parsing
   if (cleaned.includes("§")) {
     const parts = cleaned.split(/§([0-9a-fk-or])/gi);
     const elements: React.ReactNode[] = [];
@@ -86,26 +78,46 @@ export function RenderMinecraftLore({ text }: { text: string }) {
     return <>{elements}</>;
   }
 
-  // AUTO-COLOR FALLBACK: For unformatted plain-text lore
-  let colorClass = "text-slate-300";
+  // AUTO-COLOR FALLBACK: Split stat labels (White) from stat numbers (Colored)
+  const statMatch = cleaned.match(/^([A-Za-z\s]+:)\s*(.+)$/);
 
-  // Handle all SkyBlock stats
-  if (/^(Damage|Strength|Crit Chance|Crit Damage|Health|Defense|Intelligence|Mining Speed|Mining Fortune|Breaking Power|Speed):/i.test(cleaned)) {
-    if (cleaned.startsWith("Damage:") || cleaned.startsWith("Strength:")) colorClass = "text-[#FF5555] font-semibold"; // Red
-    else if (cleaned.startsWith("Crit Chance:") || cleaned.startsWith("Crit Damage:")) colorClass = "text-[#5555FF] font-semibold"; // Blue
-    else if (cleaned.startsWith("Health:") || cleaned.startsWith("Defense:")) colorClass = "text-[#55FF55] font-semibold"; // Green
-    else if (cleaned.startsWith("Intelligence:") || cleaned.startsWith("Mana:")) colorClass = "text-[#55FFFF] font-semibold"; // Aqua
-    else if (cleaned.startsWith("Mining Speed:") || cleaned.startsWith("Mining Fortune:") || cleaned.startsWith("Breaking Power:")) colorClass = "text-[#FFAA00] font-semibold"; // Gold
-    else if (cleaned.startsWith("Speed:")) colorClass = "text-[#FFFFFF] font-semibold"; // White
-  } 
-  // Ability Headers
-  else if (cleaned.startsWith("Ability:") || cleaned.startsWith("Shortbow:")) {
-    colorClass = "text-[#FFAA00] font-bold";
-  } 
-  // Enchantment Lists
-  else if (cleaned.includes("V,") || cleaned.includes("IV,") || cleaned.includes("III,") || cleaned.includes("Efficiency") || cleaned.includes("Fortune")) {
-    colorClass = "text-[#5555FF] font-medium";
+  if (statMatch) {
+    const label = statMatch[1];
+    const value = statMatch[2];
+    let valueColorClass = "text-slate-200";
+
+    if (/^(Damage|Strength):/i.test(label)) {
+      valueColorClass = "text-[#FF5555] font-semibold"; // Red
+    } else if (/^(Crit Chance|Crit Damage):/i.test(label)) {
+      valueColorClass = "text-[#5555FF] font-semibold"; // Blue
+    } else if (/^(Health|Defense):/i.test(label)) {
+      valueColorClass = "text-[#55FF55] font-semibold"; // Green
+    } else if (/^(Intelligence|Mana):/i.test(label)) {
+      valueColorClass = "text-[#55FFFF] font-semibold"; // Aqua
+    } else if (/^(Mining Speed|Mining Fortune|Breaking Power):/i.test(label)) {
+      valueColorClass = "text-[#FFAA00] font-semibold"; // Gold
+    } else if (/^Speed:/i.test(label)) {
+      valueColorClass = "text-[#FFFFFF] font-semibold"; // White
+    }
+
+    return (
+      <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+        <span className="text-gray-200 font-normal">{label} </span>
+        <span className={valueColorClass}>{value}</span>
+      </span>
+    );
   }
 
-  return <span className={`drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] ${colorClass}`}>{cleaned}</span>;
+  // Non-stat lines (Enchantments / Abilities / Rarity)
+  let generalColorClass = "text-slate-300";
+
+  if (cleaned.startsWith("Ability:") || cleaned.startsWith("Shortbow:")) {
+    generalColorClass = "text-[#FFAA00] font-bold";
+  } else if (cleaned.includes("V,") || cleaned.includes("IV,") || cleaned.includes("III,")) {
+    generalColorClass = "text-[#5555FF] font-medium";
+  } else if (cleaned.endsWith("SWORD") || cleaned.endsWith("BOW") || cleaned.endsWith("RARE")) {
+    generalColorClass = "text-[#FFAA00] font-bold tracking-wider";
+  }
+
+  return <span className={`drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] ${generalColorClass}`}>{cleaned}</span>;
 }
