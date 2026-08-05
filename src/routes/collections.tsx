@@ -29,14 +29,21 @@ export const Route = createFileRoute("/collections")({
  * Maps items that Hypixel puts in unconventional API categories or unique IDs to standard Skill categories
  */
 const CATEGORY_OVERRIDES: Record<string, string> = {
+  // Mining
   END_STONE: "Mining",
   ENDSTONE: "Mining",
   HARD_STONE: "Mining",
   GLOWSTONE: "Mining",
   QUARTZ: "Mining",
+
+  // Foraging
+  LUSH_LILAC: "Foraging",
   LILAC: "Foraging",
   PEONY: "Foraging",
   ROSE_BUSH: "Foraging",
+  DOUBLE_PLANT: "Foraging",
+
+  // Farming
   SUNFLOWER: "Farming",
   POPPY: "Farming",
   DANDELION: "Farming",
@@ -47,6 +54,7 @@ const CATEGORY_OVERRIDES: Record<string, string> = {
  */
 const CATEGORY_ITEM_IDS: Record<string, string> = {
   "End Stone": "ENDSTONE",
+  "Lush Lilac": "DOUBLE_PLANT",
   "Lilac": "DOUBLE_PLANT",
   "Peony": "DOUBLE_PLANT",
   "Rose Bush": "DOUBLE_PLANT",
