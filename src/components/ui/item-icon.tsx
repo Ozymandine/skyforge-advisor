@@ -9,7 +9,16 @@ interface ItemIconProps {
   className?: string;
 }
 
+/**
+ * Maps SkyBlock custom item IDs to their corresponding vanilla texture or FurfSky filename
+ */
 const ITEM_ALIASES: Record<string, string> = {
+  // Utility & Event Items -> Base Vanilla Textures
+  gift_compass: "compass",
+  skyblock_menu: "nether_star",
+  redstone_dust: "redstone",
+
+  // Dragon Fragments
   unstable_fragment: "unstable_dragon_fragment",
   strong_fragment: "strong_dragon_fragment",
   wise_fragment: "wise_dragon_fragment",
@@ -18,6 +27,8 @@ const ITEM_ALIASES: Record<string, string> = {
   old_fragment: "old_dragon_fragment",
   protector_fragment: "protector_dragon_fragment",
   holy_fragment: "holy_dragon_fragment",
+
+  // Custom Skulls / Talismans / Equipment
   petrified_oak_slab: "oak_slab",
   skeleton_talisman: "skeleton_talisman",
   ender_necklace: "ender_necklace",
@@ -41,35 +52,41 @@ function getTextureSources(id?: string, name?: string, texturePath?: string): st
     return [`/items/${rawId}_skill.png`];
   }
 
-  // Strip prefixes (reforges like 'soft_', 'sharp_', etc.)
+  // Clean raw ID (remove reforge prefixes like 'soft_', 'sharp_', etc.)
   let cleanId = rawId
     .replace(/^(soft|sharp|heavy|heroic|spicy|godly|rapid|fabled|withered|rebound)_/, "")
     .replace(/^enchanted_/, "")
     .replace(/^minecraft:/, "")
     .replace(/[^a-z0-9_]/g, "");
 
-  if (ITEM_ALIASES[cleanId]) {
-    cleanId = ITEM_ALIASES[cleanId];
-  }
+  // Apply explicit alias if defined
+  const mappedId = ITEM_ALIASES[cleanId] || cleanId;
 
-  // Slug from display name (e.g. "Skeleton Talisman" -> "skeleton_talisman")
+  // Clean display name slug
   const nameSlug = rawName
     .replace(/^(soft|sharp|heavy|heroic|spicy|godly|rapid|fabled|withered|rebound)\s+/i, "")
     .replace(/\s+/g, "_")
     .replace(/[^a-z0-9_]/g, "");
 
+  // Extract the last word of the item name for a base vanilla fallback (e.g. "Gift Compass" -> "compass")
+  const baseType = nameSlug.split("_").pop() || "";
+
   return [
-    // 1. Primary: Local FurfSky textures by ID
+    // 1. FurfSky by raw/cleaned ID
     `/items/${cleanId}.png`,
-    // 2. Primary Alt: Local FurfSky textures by clean name
+    // 2. FurfSky by mapped alias
+    `/items/${mappedId}.png`,
+    // 3. FurfSky by display name slug
     `/items/${nameSlug}.png`,
-    // 3. Secondary: Local MC Item Gallery vanilla textures
+    // 4. Local Vanilla Gallery by mapped ID
+    `/vanilla/${mappedId}.png`,
+    // 5. Local Vanilla Gallery by clean ID
     `/vanilla/${cleanId}.png`,
-    `/vanilla/${nameSlug}.png`,
-    // 4. PrismarineJS Vanilla Textures CDN Fallback
-    `https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.20.1/items/${cleanId}.png`,
-    // 5. MC-Heads Fallback
-    `https://mc-heads.net/item/${cleanId}`,
+    // 6. Base material fallback (e.g., /vanilla/compass.png)
+    `/vanilla/${baseType}.png`,
+    // 7. External CDN Fallback
+    `https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.20.1/items/${mappedId}.png`,
+    `https://mc-heads.net/item/${mappedId}`,
   ];
 }
 
@@ -93,8 +110,7 @@ export function ItemIcon({ id, name, texturePath, enchanted, className }: ItemIc
 
     let animationFrameId: number;
     const img = new Image();
-    
-    // Only attempt crossOrigin if loading from external domain
+
     if (currentSrc.startsWith("http")) {
       img.crossOrigin = "anonymous";
     }
@@ -148,7 +164,6 @@ export function ItemIcon({ id, name, texturePath, enchanted, className }: ItemIc
 
         render(performance.now());
       } catch (err) {
-        // Fallback to standard <img> rendering if canvas drawing fails
         setUseCanvas(false);
       }
     };
