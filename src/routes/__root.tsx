@@ -1,3 +1,9 @@
+{/* Placed at the top of src/routes/__root.tsx */}
+<div style={{ position: 'fixed', top: 10, right: 10, zIndex: 9999, background: 'red', padding: 10 }}>
+  <p style={{ color: 'white', fontSize: 12 }}>Vercel Public Test:</p>
+  <img src="/items/farming_skill.png" alt="Test" width={32} height={32} />
+</div>
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
