@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
+import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
 import { Chip, PageHero, Panel, ProgressBar, StatRow } from "@/components/layout/app-shell";
-import { collectionCategories } from "@/data/mock";
+import { usePlayer } from "@/hooks/use-account";
+import { formatFull } from "@/lib/skyblock";
 
 export const Route = createFileRoute("/collections")({
   head: () => ({
@@ -10,12 +12,12 @@ export const Route = createFileRoute("/collections")({
       { title: "Collections — SkyBlock Assistant" },
       {
         name: "description",
-        content: "Categorized collection tier tracking and unlock completion percentages.",
+        content: "Categorized collection tracking and live completion progress for your SkyBlock profile.",
       },
       { property: "og:title", content: "Collections — SkyBlock Assistant" },
       {
         property: "og:description",
-        content: "Track collection tiers and unlock completion across every category.",
+        content: "Track collection categories and item progress from your connected SkyBlock profile.",
       },
     ],
   }),
@@ -23,12 +25,40 @@ export const Route = createFileRoute("/collections")({
 });
 
 function Collections() {
+  const { data, isLoading, error, connected } = usePlayer();
   const [active, setActive] = useState("All");
-  const categories =
-    active === "All" ? collectionCategories : collectionCategories.filter((c) => c.name === active);
 
-  const unlocked = collectionCategories.reduce((n, c) => n + c.unlocked, 0);
-  const total = collectionCategories.reduce((n, c) => n + c.total, 0);
+  const collections = data?.collections ?? [];
+
+  const categories = useMemo(() => {
+    const map = new Map<
+      string,
+      { name: string; total: number; items: { name: string; amount: number }[] }
+    >();
+
+    for (const collection of collections) {
+      const existing = map.get(collection.category);
+      if (existing) {
+        existing.total += collection.amount;
+        existing.items.push({ name: collection.name, amount: collection.amount });
+      } else {
+        map.set(collection.category, {
+          name: collection.category,
+          total: collection.amount,
+          items: [{ name: collection.name, amount: collection.amount }],
+        });
+      }
+    }
+
+    return Array.from(map.values()).sort((a, b) => b.total - a.total);
+  }, [collections]);
+
+  const visibleCategories =
+    active === "All"
+      ? categories
+      : categories.filter((category) => category.name === active);
+
+  const totalAmount = collections.reduce((sum, collection) => sum + collection.amount, 0);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -38,58 +68,84 @@ function Collections() {
         description="Every collection category, tier unlock and completion percentage in one place."
       />
 
-      <StatRow
-        stats={[
-          { label: "Categories", value: String(collectionCategories.length), sub: "Tracked groups" },
-          { label: "Unlocked", value: `${unlocked} / ${total}`, sub: "Collection records" },
-          {
-            label: "Completion",
-            value: `${Math.round((unlocked / total) * 100)}%`,
-            sub: "Across all categories",
-          },
-          { label: "Tier unlocks", value: "166 / 484", sub: "Individual tiers" },
-        ]}
-      />
+      {!connected && <ConnectPrompt what="your live collections" />}
+      {connected && isLoading && <LoadState>Loading collections from Hypixel…</LoadState>}
+      {connected && error && <ErrorState error={error} />}
 
-      <div className="flex flex-wrap gap-2">
-        {["All", ...collectionCategories.map((c) => c.name)].map((c) => (
-          <Chip key={c} active={active === c} onClick={() => setActive(c)}>
-            {c}
-          </Chip>
-        ))}
-      </div>
+      {connected && data && (
+        <>
+          <StatRow
+            stats={[
+              { label: "Categories", value: String(categories.length), sub: "Tracked groups" },
+              { label: "Collection rows", value: String(collections.length), sub: "Unique items" },
+              { label: "Total amount", value: formatFull(totalAmount), sub: "Collected quantity" },
+              {
+                label: "Profile",
+                value: data.username,
+                sub: data.profiles.find((p) => p.profileId === data.activeProfileId)?.cuteName ?? "",
+              },
+            ]}
+          />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {categories.map((cat) => (
-          <Panel key={cat.name}>
-            <div className="flex items-baseline justify-between">
-              <h2 className="text-xl font-semibold">{cat.name}</h2>
-              <p className="text-xs text-muted-foreground">
-                {cat.unlocked} / {cat.total} unlocked
+          <div className="flex flex-wrap gap-2">
+            {["All", ...categories.map((category) => category.name)].map((category) => (
+              <Chip key={category} active={active === category} onClick={() => setActive(category)}>
+                {category}
+              </Chip>
+            ))}
+          </div>
+
+          {visibleCategories.length === 0 ? (
+            <Panel>
+              <p className="text-sm text-muted-foreground">
+                No collection data is available for this profile. Make sure collection sharing is
+                enabled in SkyBlock and refresh the page.
               </p>
-            </div>
-            <div className="mt-4">
-              <ProgressBar pct={(cat.unlocked / cat.total) * 100} />
-            </div>
-            <ul className="mt-6 space-y-3">
-              {cat.items.map((item) => (
-                <li key={item.name} className="glass-soft rounded-xl px-4 py-3">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <p className="text-sm font-medium">
-                      {item.name}{" "}
-                      <span className="text-xs text-muted-foreground">Tier {item.tier}</span>
+            </Panel>
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {visibleCategories.map((category) => (
+                <Panel key={category.name}>
+                  <div className="flex items-baseline justify-between">
+                    <h2 className="text-xl font-semibold">{category.name}</h2>
+                    <p className="text-xs text-muted-foreground">
+                      {formatFull(category.total)} total
                     </p>
-                    <p className="font-mono text-xs text-muted-foreground">{item.amount}</p>
                   </div>
-                  <div className="mt-2.5">
-                    <ProgressBar pct={item.pct} />
+                  <div className="mt-4">
+                    <ProgressBar
+                      pct={
+                        category.items.length > 0
+                          ? Math.min(
+                              100,
+                              Math.round(
+                                (category.items.reduce((sum, item) => sum + item.amount, 0) /
+                                  totalAmount) *
+                                  100,
+                              ),
+                            )
+                          : 0
+                      }
+                    />
                   </div>
-                </li>
+                  <ul className="mt-6 space-y-3">
+                    {category.items.map((item) => (
+                      <li key={item.name} className="glass-soft rounded-xl px-4 py-3">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <p className="text-sm font-medium">{item.name}</p>
+                          <p className="font-mono text-xs text-muted-foreground">
+                            {formatFull(item.amount)}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </Panel>
               ))}
-            </ul>
-          </Panel>
-        ))}
-      </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

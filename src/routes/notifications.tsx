@@ -1,9 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Bell, Coins, Gavel, RefreshCw, Sparkles, Target } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Chip, PageHero, Panel } from "@/components/layout/app-shell";
-import { notifications as seed } from "@/data/mock";
+import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
+import { usePlayer } from "@/hooks/use-account";
+
+const icons: Record<string, typeof Bell> = {
+  market: Coins,
+  auction: Gavel,
+  goal: Target,
+  skill: Sparkles,
+  sync: RefreshCw,
+};
+
+type NotificationItem = {
+  title: string;
+  body: string;
+  time: string;
+  kind: string;
+  unread: boolean;
+};
 
 export const Route = createFileRoute("/notifications")({
   head: () => ({
@@ -23,24 +40,20 @@ export const Route = createFileRoute("/notifications")({
   component: Notifications,
 });
 
-const icons: Record<string, typeof Bell> = {
-  market: Coins,
-  auction: Gavel,
-  goal: Target,
-  skill: Sparkles,
-  sync: RefreshCw,
-};
-
 function Notifications() {
-  const [items, setItems] = useState(seed);
+  const { connected, isLoading, error } = usePlayer();
+  const [items, setItems] = useState<NotificationItem[]>([]);
   const [filter, setFilter] = useState("All");
 
-  const filtered =
-    filter === "All"
-      ? items
-      : filter === "Unread"
-        ? items.filter((i) => i.unread)
-        : items.filter((i) => i.kind === filter.toLowerCase());
+  const filtered = useMemo(
+    () =>
+      filter === "All"
+        ? items
+        : filter === "Unread"
+        ? items.filter((item) => item.unread)
+        : items.filter((item) => item.kind === filter.toLowerCase()),
+    [filter, items],
+  );
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -50,47 +63,59 @@ function Notifications() {
         description="Market flips, outbid warnings, skill milestones and goal completions."
         actions={
           <button
-            onClick={() => setItems((n) => n.map((i) => ({ ...i, unread: false })))}
-            className="rounded-xl border border-border bg-secondary/50 px-4 py-2 text-sm transition-colors hover:border-ring/40"
+            onClick={() => setItems((current) => current.map((item) => ({ ...item, unread: false })))}
+            disabled={items.length === 0}
+            className="rounded-xl border border-border bg-secondary/50 px-4 py-2 text-sm transition-colors hover:border-ring/40 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Mark all read
           </button>
         }
       />
 
-      <div className="flex flex-wrap gap-2">
-        {["All", "Unread", "Market", "Auction", "Goal", "Skill", "Sync"].map((f) => (
-          <Chip key={f} active={filter === f} onClick={() => setFilter(f)}>
-            {f}
-          </Chip>
-        ))}
-      </div>
+      {!connected && <ConnectPrompt what="your profile notifications" />}
+      {connected && isLoading && <LoadState>Loading notifications…</LoadState>}
+      {connected && error && <ErrorState error={error} />}
 
-      <Panel>
-        <ul className="space-y-3">
-          {filtered.map((n) => {
-            const Icon = icons[n.kind] ?? Bell;
-            return (
-              <li key={n.title} className="glass-soft flex gap-4 rounded-2xl p-5">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
-                  <Icon className="size-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="text-sm font-medium">{n.title}</p>
-                    <p className="shrink-0 text-xs text-muted-foreground">{n.time}</p>
+      {connected && !isLoading && !error && (
+        <Panel>
+          <div className="flex flex-wrap gap-2">
+            {["All", "Unread", "Market", "Auction", "Goal", "Skill", "Sync"].map((f) => (
+              <Chip key={f} active={filter === f} onClick={() => setFilter(f)}>
+                {f}
+              </Chip>
+            ))}
+          </div>
+
+          <ul className="space-y-3">
+            {filtered.map((notification) => {
+              const Icon = icons[notification.kind] ?? Bell;
+              return (
+                <li key={notification.title} className="glass-soft flex gap-4 rounded-2xl p-5">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                    <Icon className="size-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="text-sm font-medium">{notification.title}</p>
+                      <p className="shrink-0 text-xs text-muted-foreground">{notification.time}</p>
+                    </div>
+                    <p className="mt-1.5 text-sm text-muted-foreground">{notification.body}</p>
                   </div>
-                  <p className="mt-1.5 text-sm text-muted-foreground">{n.body}</p>
-                </div>
-                {n.unread && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />}
+                  {notification.unread && (
+                    <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
+                  )}
+                </li>
+              );
+            })}
+
+            {filtered.length === 0 && (
+              <li className="py-8 text-center text-sm text-muted-foreground">
+                No notifications yet. Connect your account and enable live alerts to see activity here.
               </li>
-            );
-          })}
-          {filtered.length === 0 && (
-            <li className="py-8 text-center text-sm text-muted-foreground">Nothing here yet.</li>
-          )}
-        </ul>
-      </Panel>
+            )}
+          </ul>
+        </Panel>
+      )}
     </div>
   );
 }

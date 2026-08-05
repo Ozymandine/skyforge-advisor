@@ -1,19 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
+import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
 import { PageHero, Panel, StatRow } from "@/components/layout/app-shell";
-import { eventHistory, netWorthTrend, xpHistory } from "@/data/mock";
+import { usePlayer } from "@/hooks/use-account";
+import { formatFull } from "@/lib/skyblock";
 
 export const Route = createFileRoute("/analytics")({
   head: () => ({
@@ -21,110 +11,140 @@ export const Route = createFileRoute("/analytics")({
       { title: "Analytics — SkyBlock Assistant" },
       {
         name: "description",
-        content: "Historical skill XP gains, net worth trends over time and event history.",
+        content: "Live SkyBlock profile analytics, progress summaries and trend breakdowns.",
       },
       { property: "og:title", content: "Analytics — SkyBlock Assistant" },
       {
         property: "og:description",
-        content: "Charts for XP gain, net worth trend and profile event history.",
+        content: "Live profile analytics for skill progress, net worth and collection tracking.",
       },
     ],
   }),
   component: Analytics,
 });
 
-const tooltipStyle = {
-  background: "var(--popover)",
-  border: "1px solid var(--border)",
-  borderRadius: "0.75rem",
-  fontSize: "12px",
-  color: "var(--popover-foreground)",
-};
-
 function Analytics() {
+  const { data, isLoading, error, connected } = usePlayer();
+
+  const netWorth = data ? data.purse + (data.bank ?? 0) : 0;
+  const topSkills = data
+    ? [...data.skills]
+        .sort((a, b) => b.level - a.level || b.totalXp - a.totalXp)
+        .slice(0, 4)
+    : [];
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHero
         eyebrow="Tools"
         title="Analytics"
-        description="Historical XP gain, net worth trend lines and a full event history for the profile."
+        description="Live trend summaries, profile performance and progress metrics from your connected account."
       />
 
-      <StatRow
-        stats={[
-          { label: "XP gained (7d)", value: "68.4K", sub: "All skills combined" },
-          { label: "Best day", value: "Saturday", sub: "13.7K XP" },
-          { label: "Net worth change", value: "+1.32B", sub: "Since Jul 01" },
-          { label: "Events logged", value: "184", sub: "Last 30 days" },
-        ]}
-      />
+      {!connected && <ConnectPrompt what="analytics for your SkyBlock profile" />}
+      {connected && isLoading && <LoadState>Loading analytics data…</LoadState>}
+      {connected && error && <ErrorState error={error} />}
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Panel>
-          <h2 className="text-xl font-semibold">Skill XP gained</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Last 7 days, per skill</p>
-          <div className="mt-6 h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={xpHistory}>
-                <CartesianGrid stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={12} tickLine={false} />
-                <YAxis stroke="var(--muted-foreground)" fontSize={12} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Line type="monotone" dataKey="combat" stroke="var(--chart-1)" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="mining" stroke="var(--chart-2)" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="farming" stroke="var(--chart-3)" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Panel>
+      {connected && data && (
+        <>
+          <StatRow
+            stats={[
+              { label: "Skill average", value: data.skillAverage.toFixed(2), sub: "All skills" },
+              { label: "Total skill XP", value: formatFull(data.totalSkillXp), sub: "Current progress" },
+              { label: "Net worth estimate", value: formatFull(netWorth), sub: "Purse + bank" },
+              {
+                label: "Collections tracked",
+                value: String(data.collections.length),
+                sub: "Unique categories",
+              },
+            ]}
+          />
 
-        <Panel>
-          <h2 className="text-xl font-semibold">Net worth trend</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Billions of coins</p>
-          <div className="mt-6 h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={netWorthTrend}>
-                <defs>
-                  <linearGradient id="nw" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="day" stroke="var(--muted-foreground)" fontSize={12} tickLine={false} />
-                <YAxis stroke="var(--muted-foreground)" fontSize={12} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke="var(--chart-1)"
-                  strokeWidth={2}
-                  fill="url(#nw)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </Panel>
-      </div>
-
-      <Panel>
-        <h2 className="text-xl font-semibold">Event history</h2>
-        <ul className="mt-6 space-y-3">
-          {eventHistory.map((e) => (
-            <li
-              key={e.label}
-              className="glass-soft flex items-center justify-between gap-4 rounded-xl px-4 py-3"
-            >
-              <div className="flex items-center gap-3">
-                <span className="size-1.5 rounded-full bg-primary" />
-                <p className="text-sm">{e.label}</p>
+          <Panel>
+            <div className="flex flex-wrap items-start justify-between gap-6">
+              <div className="max-w-2xl">
+                <p className="eyebrow">Profile performance</p>
+                <h2 className="mt-2 text-3xl font-semibold tracking-tight">Connected account analytics</h2>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  These insights are pulled from your live Hypixel SkyBlock profile. Historical trend
+                  data is available once the app has connected and collected profile snapshots over time.
+                </p>
               </div>
-              <p className="shrink-0 text-xs text-muted-foreground">{e.time}</p>
-            </li>
-          ))}
-        </ul>
-      </Panel>
+            </div>
+
+            <div className="mt-8 grid gap-4 lg:grid-cols-3">
+              <div className="glass-soft rounded-2xl p-5">
+                <p className="text-sm font-medium">Live net worth</p>
+                <p className="mt-3 text-3xl font-semibold">{formatFull(netWorth)}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {data.bank === null
+                    ? "Bank hidden by profile"
+                    : `${formatFull(data.purse)} purse · ${formatFull(data.bank)} bank`}
+                </p>
+              </div>
+
+              <div className="glass-soft rounded-2xl p-5">
+                <p className="text-sm font-medium">Fairy souls</p>
+                <p className="mt-3 text-3xl font-semibold">{formatFull(data.fairySouls)}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Total fairy souls collected for this profile
+                </p>
+              </div>
+
+              <div className="glass-soft rounded-2xl p-5">
+                <p className="text-sm font-medium">Active profiles</p>
+                <p className="mt-3 text-3xl font-semibold">{data.profiles.length}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Profiles loaded from your connected account
+                </p>
+              </div>
+            </div>
+          </Panel>
+
+          <Panel>
+            <h2 className="text-xl font-semibold">Top skills</h2>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {topSkills.map((skill) => (
+                <div key={skill.key} className="glass-soft rounded-2xl p-5">
+                  <p className="text-sm font-medium">
+                    {skill.name} {skill.level}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {skill.maxed
+                      ? `${formatFull(skill.totalXp)} XP · Maxed`
+                      : `${formatFull(skill.currentXp)} / ${formatFull(skill.neededXp)} XP`}
+                  </p>
+                  <div className="mt-4">
+                    <div className="h-2 overflow-hidden rounded-full bg-secondary">
+                      <div
+                        className="h-full rounded-full bg-primary"
+                        style={{ width: `${skill.pct}%` }}
+                      />
+                    </div>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">{skill.pct}% to next level</p>
+                </div>
+              ))}
+            </div>
+          </Panel>
+
+          <Panel>
+            <h2 className="text-xl font-semibold">Collection overview</h2>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Your connected profile currently reports {data.collections.length} collection categories.
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {data.collections.slice(0, 6).map((collection) => (
+                <div key={`${collection.category}-${collection.name}`} className="glass-soft rounded-2xl p-5">
+                  <p className="text-sm font-medium">{collection.name}</p>
+                  <p className="mt-3 text-2xl font-semibold">{formatFull(collection.amount)}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">{collection.category}</p>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </>
+      )}
     </div>
   );
 }
