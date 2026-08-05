@@ -9,14 +9,13 @@ interface ItemIconProps {
   className?: string;
 }
 
-/**
- * Maps SkyBlock custom item IDs to their corresponding vanilla texture or FurfSky filename
- */
 const ITEM_ALIASES: Record<string, string> = {
-  // Utility & Event Items -> Base Vanilla Textures
+  // Utility & Sacks
   gift_compass: "compass",
   skyblock_menu: "nether_star",
   redstone_dust: "redstone",
+  husbandry_sack: "husbandry_sack_1",
+  gemstone_sack: "gemstone_sack_1",
 
   // Dragon Fragments
   unstable_fragment: "unstable_dragon_fragment",
@@ -28,10 +27,14 @@ const ITEM_ALIASES: Record<string, string> = {
   protector_fragment: "protector_dragon_fragment",
   holy_fragment: "holy_dragon_fragment",
 
-  // Custom Skulls / Talismans / Equipment
+  // Accessories & Equipment
   petrified_oak_slab: "oak_slab",
   skeleton_talisman: "skeleton_talisman",
   ender_necklace: "ender_necklace",
+  tarantula_ring: "tarantula_ring",
+  tarantula_silk: "tarantula_silk",
+  arack: "arack",
+  primordial_eye: "primordial_eye",
 };
 
 function getTextureSources(id?: string, name?: string, texturePath?: string): string[] {
@@ -42,7 +45,7 @@ function getTextureSources(id?: string, name?: string, texturePath?: string): st
 
   if (!rawId && !rawName) return [];
 
-  // Skill Icons
+  // Skills
   const skillKeys = [
     "farming", "mining", "combat", "foraging", "fishing",
     "enchanting", "alchemy", "taming", "carpentry", "runecrafting",
@@ -52,39 +55,41 @@ function getTextureSources(id?: string, name?: string, texturePath?: string): st
     return [`/items/${rawId}_skill.png`];
   }
 
-  // Clean raw ID (remove reforge prefixes like 'soft_', 'sharp_', etc.)
+  // 1. Clean ID (Strip reforge prefixes & sack tier prefixes like 'beginner_')
   let cleanId = rawId
     .replace(/^(soft|sharp|heavy|heroic|spicy|godly|rapid|fabled|withered|rebound)_/, "")
+    .replace(/^(beginner|small|medium|large|large_tier|greater)_/, "")
     .replace(/^enchanted_/, "")
     .replace(/^minecraft:/, "")
     .replace(/[^a-z0-9_]/g, "");
 
-  // Apply explicit alias if defined
   const mappedId = ITEM_ALIASES[cleanId] || cleanId;
 
-  // Clean display name slug
-  const nameSlug = rawName
-    .replace(/^(soft|sharp|heavy|heroic|spicy|godly|rapid|fabled|withered|rebound)\s+/i, "")
-    .replace(/\s+/g, "_")
-    .replace(/[^a-z0-9_]/g, "");
+  // 2. Clean Name Variations (Handle apostrophes: "Arachne's" -> "arachne" vs "arachnes")
+  const baseName = rawName.replace(/^(soft|sharp|heavy|heroic|spicy|godly|rapid|fabled|withered|rebound)\s+/i, "");
+  
+  // Variation A: Strip apostrophe ('s -> s)
+  const slugWithS = baseName.replace(/'/g, "").replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+  // Variation B: Remove 's completely ('s -> "")
+  const slugNoS = baseName.replace(/'s/g, "").replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
 
-  // Extract the last word of the item name for a base vanilla fallback (e.g. "Gift Compass" -> "compass")
-  const baseType = nameSlug.split("_").pop() || "";
+  // Base fallback word (e.g. "Tarantula Ring" -> "ring")
+  const baseType = slugNoS.split("_").pop() || "";
 
   return [
-    // 1. FurfSky by raw/cleaned ID
+    // FurfSky variants
     `/items/${cleanId}.png`,
-    // 2. FurfSky by mapped alias
     `/items/${mappedId}.png`,
-    // 3. FurfSky by display name slug
-    `/items/${nameSlug}.png`,
-    // 4. Local Vanilla Gallery by mapped ID
+    `/items/${slugWithS}.png`,
+    `/items/${slugNoS}.png`,
+    
+    // Vanilla Local Gallery variants
     `/vanilla/${mappedId}.png`,
-    // 5. Local Vanilla Gallery by clean ID
     `/vanilla/${cleanId}.png`,
-    // 6. Base material fallback (e.g., /vanilla/compass.png)
+    `/vanilla/${slugNoS}.png`,
     `/vanilla/${baseType}.png`,
-    // 7. External CDN Fallback
+    
+    // External CDN Fallbacks
     `https://raw.githubusercontent.com/PrismarineJS/minecraft-assets/master/data/1.20.1/items/${mappedId}.png`,
     `https://mc-heads.net/item/${mappedId}`,
   ];
