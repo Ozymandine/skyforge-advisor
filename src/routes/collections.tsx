@@ -24,6 +24,57 @@ export const Route = createFileRoute("/collections")({
   component: Collections,
 });
 
+// Helper to convert tier numbers to Roman Numerals (e.g., 7 -> VII)
+function toRoman(num: number): string {
+  const map: [number, string][] = [
+    [10, "X"],
+    [9, "IX"],
+    [5, "V"],
+    [4, "IV"],
+    [1, "I"],
+  ];
+  let res = "";
+  for (const [val, roman] of map) {
+    while (num >= val) {
+      res += roman;
+      num -= val;
+    }
+  }
+  return res || "I";
+}
+
+// Estimates tier & next level target based on collected quantity
+function getCollectionTier(amount: number) {
+  if (amount <= 0) return { tier: "Tier I", pct: 0, nextGoal: 50 };
+  
+  // Logarithmic estimation scale for generic collection thresholds
+  const tiers = [50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000];
+  let currentTier = 1;
+  let prevGoal = 0;
+  let nextGoal = tiers[0]!;
+
+  for (let i = 0; i < tiers.length; i++) {
+    if (amount >= tiers[i]!) {
+      currentTier = i + 1;
+      prevGoal = tiers[i]!;
+      nextGoal = tiers[i + 1] ?? tiers[i]! * 2;
+    } else {
+      nextGoal = tiers[i]!;
+      break;
+    }
+  }
+
+  const range = nextGoal - prevGoal;
+  const progress = amount - prevGoal;
+  const pct = Math.min(100, Math.max(5, Math.round((progress / range) * 100)));
+
+  return {
+    tier: `Tier ${toRoman(currentTier)}`,
+    pct,
+    nextGoal,
+  };
+}
+
 function Collections() {
   const { data, isLoading, error, connected } = usePlayer();
   const [active, setActive] = useState("All");
@@ -104,44 +155,47 @@ function Collections() {
             </Panel>
           ) : (
             <div className="grid gap-4 lg:grid-cols-2">
-              {visibleCategories.map((category) => (
-                <Panel key={category.name}>
-                  <div className="flex items-baseline justify-between">
-                    <h2 className="text-xl font-semibold">{category.name}</h2>
-                    <p className="text-xs text-muted-foreground">
-                      {formatFull(category.total)} total
-                    </p>
-                  </div>
-                  <div className="mt-4">
-                    <ProgressBar
-                      pct={
-                        category.items.length > 0
-                          ? Math.min(
-                              100,
-                              Math.round(
-                                (category.items.reduce((sum, item) => sum + item.amount, 0) /
-                                  totalAmount) *
-                                  100,
-                              ),
-                            )
-                          : 0
-                      }
-                    />
-                  </div>
-                  <ul className="mt-6 space-y-3">
-                    {category.items.map((item) => (
-                      <li key={item.name} className="glass-soft rounded-xl px-4 py-3">
-                        <div className="flex items-baseline justify-between gap-3">
-                          <p className="text-sm font-medium">{item.name}</p>
-                          <p className="font-mono text-xs text-muted-foreground">
-                            {formatFull(item.amount)}
-                          </p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </Panel>
-              ))}
+              {visibleCategories.map((category) => {
+                const unlockedCount = category.items.filter((i) => i.amount > 0).length;
+                return (
+                  <Panel key={category.name}>
+                    <div className="flex items-baseline justify-between">
+                      <h2 className="text-xl font-semibold">{category.name}</h2>
+                      <p className="text-xs text-muted-foreground">
+                        {unlockedCount} / {category.items.length} unlocked
+                      </p>
+                    </div>
+
+                    <div className="mt-2">
+                      <ProgressBar
+                        pct={Math.round((unlockedCount / (category.items.length || 1)) * 100)}
+                      />
+                    </div>
+
+                    <ul className="mt-6 space-y-3">
+                      {category.items.map((item) => {
+                        const { tier, pct } = getCollectionTier(item.amount);
+                        return (
+                          <li key={item.name} className="glass-soft rounded-xl px-4 py-3 space-y-2">
+                            <div className="flex items-baseline justify-between gap-3">
+                              <p className="text-sm font-medium">
+                                {item.name}{" "}
+                                <span className="text-xs font-normal text-muted-foreground">
+                                  {tier}
+                                </span>
+                              </p>
+                              <p className="font-mono text-xs text-muted-foreground">
+                                {formatFull(item.amount)}
+                              </p>
+                            </div>
+                            <ProgressBar pct={pct} />
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </Panel>
+                );
+              })}
             </div>
           )}
         </>
