@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "generate:item-registry": "node scripts/generate-item-registry.mjs"
+    "generate:item-registry": "node scripts/generate-item-registry.mjs",
+    "item-icon:audit": "node scripts/audit-item-icon-matches.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

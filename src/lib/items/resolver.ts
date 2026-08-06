@@ -1,5 +1,5 @@
 import { ITEM_ALIASES, REFORGE_PREFIX } from "./aliases";
-import { getRegisteredItemTexture, getRegisteredVanillaTexture } from "./registry";
+import { getGeneratedItemMatch, getRegisteredItemTexture, getRegisteredVanillaTexture } from "./registry";
 import type { ResolvedTexture, SkyBlockItem } from "./types";
 
 const cache = new Map<string, ResolvedTexture>();
@@ -47,6 +47,8 @@ export function resolveItemTexture(item: SkyBlockItem): ResolvedTexture {
   if (!id && !name) return finish(undefined, "placeholder");
   if (skillKeys.has(id)) return finish(`/items/${id}_skill.png`, "exact-id");
 
+  const generatedPaths = [...new Set([id, name, ...spellingKeys(id), ...spellingKeys(name)].filter(Boolean))].map(getGeneratedItemMatch).filter(Boolean) as string[];
+
   const mappedKeys = [ITEM_ALIASES[id], ITEM_ALIASES[name], ...spellingKeys(id).flatMap((key) => [ITEM_ALIASES[key]]), ...spellingKeys(name).flatMap((key) => [ITEM_ALIASES[key]])].filter(Boolean) as string[];
   const itemKeys = [...new Set([
     ...spellingKeys(id).flatMap((key) => [...baseTextureKeys(key), ...fallbackKeys(key)]),
@@ -68,7 +70,7 @@ export function resolveItemTexture(item: SkyBlockItem): ResolvedTexture {
     if (path) vanillaPaths.push(path);
   }
 
-  const orderedPaths = [...localPaths.map(({ path }) => path), ...vanillaPaths];
+  const orderedPaths = [...localPaths.map(({ path }) => path), ...generatedPaths, ...vanillaPaths];
   if (id) {
     const skyCrypt = `https://raw.githubusercontent.com/SkyCryptWebsite/SkyCryptWebsite/main/public/head/${id}`;
     attempted.push(`skycrypt:${id}`);
