@@ -12,16 +12,20 @@ const normalizeKey = (value) =>
     .replace(/\s+/g, "_");
 
 const root = fileURLToPath(new URL("..", import.meta.url));
+const buildRegistry = async (directory, prefix) => {
+  const files = (await readdir(directory)).filter((file) => /\.(png|jpg|jpeg|webp)$/i.test(file));
+  const entries = files.flatMap((file) => {
+    const baseName = file.replace(/\.[^.]+$/, "");
+    const path = `${prefix}/${file}`;
+    return [[baseName.toLowerCase(), path], [normalizeKey(baseName), path]];
+  });
+  return Object.fromEntries(entries.sort(([a], [b]) => a.localeCompare(b)));
+};
+
 const itemsDir = join(root, "public", "items");
-const files = (await readdir(itemsDir)).filter((file) => /\.(png|jpg|jpeg|webp)$/i.test(file));
-const entries = files.flatMap((file) => {
-  const baseName = file.replace(/\.[^.]+$/, "");
-  const path = `/items/${file}`;
-  return [
-    [baseName.toLowerCase(), path],
-    [normalizeKey(baseName), path],
-  ];
-});
-const registry = Object.fromEntries(entries.sort(([a], [b]) => a.localeCompare(b)));
-await writeFile(join(root, "src", "lib", "items", "generated-items.json"), `${JSON.stringify(registry, null, 2)}\n`, "utf8");
-console.log(`Generated ${Object.keys(registry).length} item texture entries from ${relative(root, itemsDir)}`);
+const vanillaDir = join(root, "public", "vanilla");
+const items = await buildRegistry(itemsDir, "/items");
+const vanilla = await buildRegistry(vanillaDir, "/vanilla");
+await writeFile(join(root, "src", "lib", "items", "generated-items.json"), `${JSON.stringify(items, null, 2)}\n`, "utf8");
+await writeFile(join(root, "src", "lib", "items", "generated-vanilla.json"), `${JSON.stringify(vanilla, null, 2)}\n`, "utf8");
+console.log(`Generated ${Object.keys(items).length} item and ${Object.keys(vanilla).length} vanilla texture entries`);

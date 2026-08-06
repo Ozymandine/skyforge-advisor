@@ -18,11 +18,16 @@ const skills = new Set(["farming", "mining", "combat", "foraging", "fishing", "e
 
 function sourcesFor(item: SkyBlockItem): string[] {
   const resolved = resolveItemTexture(item);
+  const local = [resolved.src, ...(resolved.candidates ?? []), "/vanilla/barrier.png"].filter(Boolean) as string[];
   const id = normalizeItemKey(item.id);
-  const name = normalizeItemKey(item.name);
-  const local = [resolved.src, `/items/${id}.png`, `/items/${name}.png`, `/vanilla/${id}.png`, `/vanilla/${name}.png`].filter(Boolean) as string[];
   const remote = id ? [`https://raw.githubusercontent.com/SkyCryptWebsite/SkyCryptWebsite/main/public/head/${id}`, `https://mc-heads.net/item/${id}`] : [];
   return [...new Set([...local, ...remote])];
+}
+
+function isAnimatedSheet(src: string, image: HTMLImageElement): boolean {
+  const width = image.naturalWidth;
+  const height = image.naturalHeight;
+  return src.startsWith("/items/") && !src.includes("_model") && width >= 8 && width <= 64 && height > width && height % width === 0 && height / width <= 32;
 }
 
 export function ItemIcon({ id, name, texturePath, enchanted, className, item, debug = false }: ItemIconProps) {
@@ -77,7 +82,7 @@ export function ItemIcon({ id, name, texturePath, enchanted, className, item, de
         ctx.imageSmoothingEnabled = false;
 
         const frameSize = image.naturalWidth || 16;
-        const totalFrames = Math.max(1, Math.floor(image.naturalHeight / frameSize));
+        const totalFrames = isAnimatedSheet(currentSrc, image) ? Math.floor(image.naturalHeight / frameSize) : 1;
         canvas.width = frameSize;
         canvas.height = frameSize;
 
@@ -124,7 +129,7 @@ export function ItemIcon({ id, name, texturePath, enchanted, className, item, de
   return (
     <div className={cn("relative inline-flex shrink-0 items-center justify-center overflow-hidden", className)} title={debug && status === "error" ? `Missing Texture\nID: ${resolvedItem.id}\nName: ${resolvedItem.name}\nAttempted: ${sources.join(", ")}` : undefined}>
       {status === "error" || !currentSrc ? (
-        <div className="size-full rounded-md border border-border/40 bg-secondary/30 flex items-center justify-center font-mono text-[9px] text-muted-foreground/60">{debug ? "Missing Texture" : "?"}</div>
+        <img src="/vanilla/barrier.png" alt={normalizedName} className="size-full object-contain pixelated opacity-70" />
       ) : (
         <>
           <canvas

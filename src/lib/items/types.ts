@@ -20,7 +20,7 @@ export type TextureSource =
 
 export interface ResolvedTexture {
   src?: string;
+  candidates?: string[];
   source: TextureSource;
   attempted: string[];
 }
-
