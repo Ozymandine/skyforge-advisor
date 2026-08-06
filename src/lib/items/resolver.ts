@@ -4,7 +4,7 @@ import type { ResolvedTexture, SkyBlockItem } from "./types";
 
 const cache = new Map<string, ResolvedTexture>();
 const skillKeys = new Set(["farming", "mining", "combat", "foraging", "fishing", "enchanting", "alchemy", "taming", "carpentry", "runecrafting", "social", "hunting"]);
-const vanillaAliases: Record<string, string> = { redstone: "redstone", "redstone dust": "redstone", ink_sack: "ink_sac", skull: "player_head" };
+const vanillaAliases: Record<string, string> = { redstone_dust: "redstone", ink_sack: "ink_sac", skull: "player_head" };
 
 export function normalizeItemKey(value: string): string {
   return value.toLowerCase().trim().replace(/^minecraft:/, "").replace(/[^a-z0-9_ ]/g, "").trim().replace(/\s+/g, "_");
@@ -12,6 +12,16 @@ export function normalizeItemKey(value: string): string {
 
 function fallbackKeys(key: string): string[] {
   return [key, key.replace(REFORGE_PREFIX, ""), key.replace(/^enchanted_/, ""), key.replace(/^(beginner|small|medium|large|large_tier|greater)_/, "")];
+}
+
+function baseTextureKeys(key: string): string[] {
+  const bases = [
+    key.replace(/_pulling(?:_\d+)?$/, ""),
+    key.replace(/_fired$/, ""),
+    key.replace(/_etherwarp(?:_(?:open|teleport|transmission))?$/, ""),
+    key.replace(/_(?:berserk|archer|mage|tank|healer|swordsman)$/, ""),
+  ];
+  return [...new Set(bases)].filter((base) => base && base !== key);
 }
 
 export function resolveItemTexture(item: SkyBlockItem): ResolvedTexture {
@@ -24,7 +34,7 @@ export function resolveItemTexture(item: SkyBlockItem): ResolvedTexture {
   const attempted: string[] = [];
   const candidates: string[] = [];
   const finish = (src: string | undefined, source: ResolvedTexture["source"]): ResolvedTexture => {
-    const result: ResolvedTexture = { src, candidates: [...new Set(candidates)], source, attempted: [...attempted] };
+    const result: ResolvedTexture = { ...(src ? { src } : {}), candidates: [...new Set(candidates)], source, attempted: [...attempted] };
     cache.set(cacheKey, result);
     return result;
   };
@@ -33,14 +43,19 @@ export function resolveItemTexture(item: SkyBlockItem): ResolvedTexture {
   if (!id && !name) return finish(undefined, "placeholder");
   if (skillKeys.has(id)) return finish(`/items/${id}_skill.png`, "exact-id");
 
-  const aliasKeys = [ITEM_ALIASES[id], ITEM_ALIASES[name]].filter(Boolean) as string[];
-  const itemKeys = [...new Set([...fallbackKeys(id), ...fallbackKeys(name), ...aliasKeys])].filter(Boolean);
+  const mappedKeys = [ITEM_ALIASES[id], ITEM_ALIASES[name]].filter(Boolean) as string[];
+  const itemKeys = [...new Set([
+    ...fallbackKeys(id), ...fallbackKeys(name),
+    ...mappedKeys.flatMap((key) => fallbackKeys(key)),
+    ...baseTextureKeys(id), ...baseTextureKeys(name),
+    ...mappedKeys.flatMap((key) => baseTextureKeys(key)),
+  ])].filter(Boolean);
   for (const key of itemKeys) {
     attempted.push(`local-items:${key}`);
     const path = getRegisteredItemTexture(key);
     if (path) {
       candidates.push(path);
-      return finish(path, key === id ? "exact-id" : aliasKeys.includes(key) ? "alias" : "registry");
+      return finish(path, key === id ? "exact-id" : mappedKeys.includes(key) ? "alias" : "registry");
     }
   }
 

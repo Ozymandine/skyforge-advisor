@@ -83,6 +83,7 @@ export function ItemIcon({ id, name, texturePath, enchanted, className, item, de
 
         const frameSize = image.naturalWidth || 16;
         const totalFrames = isAnimatedSheet(currentSrc, image) ? Math.floor(image.naturalHeight / frameSize) : 1;
+        const hasUnsafeAspectRatio = image.naturalWidth > image.naturalHeight || (image.naturalWidth > 64 && image.naturalWidth === image.naturalHeight);
         canvas.width = frameSize;
         canvas.height = frameSize;
 
@@ -106,7 +107,7 @@ export function ItemIcon({ id, name, texturePath, enchanted, className, item, de
           }
         };
 
-        setUseCanvas(totalFrames > 1);
+        setUseCanvas(totalFrames > 1 && !hasUnsafeAspectRatio);
         render(performance.now());
       } catch {
         setUseCanvas(false);

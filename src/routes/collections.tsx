@@ -55,6 +55,16 @@ const CATEGORY_OVERRIDES: Record<string, string> = {
  * Map collection names to texture asset IDs
  */
 const CATEGORY_ITEM_IDS: Record<string, string> = {
+  ENDSTONE: "ENDSTONE",
+  LUSHLILAC: "LUSHLILAC",
+  LILAC: "LILAC",
+  PEONY: "PEONY",
+  ROSEBUSH: "ROSEBUSH",
+  SUNFLOWER: "SUNFLOWER",
+  REDSTONEDUST: "REDSTONE_DUST",
+  SUGARCANE: "SUGAR_CANE",
+  LAPISLAZULI: "LAPIS_LAZULI",
+/*
   "End Stone": "ENDSTONE",
   "Lush Lilac": "DOUBLE_PLANT",
   "Lushlilac": "DOUBLE_PLANT",
@@ -65,6 +75,7 @@ const CATEGORY_ITEM_IDS: Record<string, string> = {
   "Redstone Dust": "REDSTONE",
   "Sugar Cane": "SUGAR_CANE",
   "Lapis Lazuli": "INK_SACK_4",
+*/
 };
 
 // Helper to convert tier numbers to Roman Numerals (e.g., 7 -> VII)
@@ -223,8 +234,8 @@ function Collections() {
                     <ul className="mt-6 space-y-3">
                       {category.items.map((item) => {
                         const { tier, pct } = getCollectionTier(item.amount);
-                        const itemId =
-                          CATEGORY_ITEM_IDS[item.name] || item.name.toUpperCase().replace(/\s+/g, "_");
+                        const itemKey = item.name.toUpperCase().replace(/[^A-Z0-9]/g, "");
+                        const itemId = CATEGORY_ITEM_IDS[itemKey] || item.name.toUpperCase().replace(/[^A-Z0-9]+/g, "_");
 
                         return (
                           <li
