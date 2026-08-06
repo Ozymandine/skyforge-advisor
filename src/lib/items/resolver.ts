@@ -7,7 +7,11 @@ const skillKeys = new Set(["farming", "mining", "combat", "foraging", "fishing",
 const vanillaAliases: Record<string, string> = { redstone_dust: "redstone", ink_sack: "ink_sac", skull: "player_head" };
 
 export function normalizeItemKey(value: string): string {
-  return value.toLowerCase().trim().replace(/^minecraft:/, "").replace(/[^a-z0-9_ ]/g, "").trim().replace(/\s+/g, "_");
+  return value.toLowerCase().trim().replace(/^minecraft:/, "").replace(/[’']s\b/g, "").replace(/[^a-z0-9_ ]/g, "").trim().replace(/\s+/g, "_");
+}
+
+function spellingKeys(key: string): string[] {
+  return key.endsWith("s") ? [key, key.slice(0, -1)] : [key];
 }
 
 function fallbackKeys(key: string): string[] {
@@ -43,9 +47,9 @@ export function resolveItemTexture(item: SkyBlockItem): ResolvedTexture {
   if (!id && !name) return finish(undefined, "placeholder");
   if (skillKeys.has(id)) return finish(`/items/${id}_skill.png`, "exact-id");
 
-  const mappedKeys = [ITEM_ALIASES[id], ITEM_ALIASES[name]].filter(Boolean) as string[];
+  const mappedKeys = [ITEM_ALIASES[id], ITEM_ALIASES[name], ...spellingKeys(id).flatMap((key) => [ITEM_ALIASES[key]]), ...spellingKeys(name).flatMap((key) => [ITEM_ALIASES[key]])].filter(Boolean) as string[];
   const itemKeys = [...new Set([
-    ...fallbackKeys(id), ...fallbackKeys(name),
+    ...spellingKeys(id).flatMap(fallbackKeys), ...spellingKeys(name).flatMap(fallbackKeys),
     ...mappedKeys.flatMap((key) => fallbackKeys(key)),
     ...baseTextureKeys(id), ...baseTextureKeys(name),
     ...mappedKeys.flatMap((key) => baseTextureKeys(key)),

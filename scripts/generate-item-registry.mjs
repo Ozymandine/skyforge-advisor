@@ -13,7 +13,7 @@ const normalizeKey = (value) =>
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const buildRegistry = async (directory, prefix) => {
-  const files = (await readdir(directory)).filter((file) => /\.(png|jpg|jpeg|webp)$/i.test(file));
+  const files = (await readdir(directory)).filter((file) => /\.(png|jpg|jpeg|webp)$/i.test(file) && !/_model\.(png|jpg|jpeg|webp)$/i.test(file));
   const entries = files.flatMap((file) => {
     const baseName = file.replace(/\.[^.]+$/, "");
     const path = `${prefix}/${file}`;
