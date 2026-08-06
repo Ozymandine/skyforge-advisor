@@ -192,6 +192,7 @@ type AuctionsResponse = {
   lastUpdated: number;
   auctions: {
     uuid: string;
+    item_id?: string;
     item_name: string;
     tier: string;
     bin: boolean;
@@ -260,6 +261,7 @@ export async function getAuctions(pages = 6): Promise<{
       const lb = lowestBin.get(key) ?? null;
       return {
         uuid: a.uuid,
+        ...(a.item_id ? { id: a.item_id } : {}),
         name: a.item_name,
         rarity: a.tier,
         bin: a.bin,

@@ -49,37 +49,35 @@ export function resolveItemTexture(item: SkyBlockItem): ResolvedTexture {
 
   const mappedKeys = [ITEM_ALIASES[id], ITEM_ALIASES[name], ...spellingKeys(id).flatMap((key) => [ITEM_ALIASES[key]]), ...spellingKeys(name).flatMap((key) => [ITEM_ALIASES[key]])].filter(Boolean) as string[];
   const itemKeys = [...new Set([
-    ...spellingKeys(id).flatMap(fallbackKeys), ...spellingKeys(name).flatMap(fallbackKeys),
-    ...mappedKeys.flatMap((key) => fallbackKeys(key)),
-    ...baseTextureKeys(id), ...baseTextureKeys(name),
-    ...mappedKeys.flatMap((key) => baseTextureKeys(key)),
+    ...spellingKeys(id).flatMap((key) => [...baseTextureKeys(key), ...fallbackKeys(key)]),
+    ...spellingKeys(name).flatMap((key) => [...baseTextureKeys(key), ...fallbackKeys(key)]),
+    ...mappedKeys.flatMap((key) => [...baseTextureKeys(key), ...fallbackKeys(key)]),
   ])].filter(Boolean);
+  const localPaths: Array<{ path: string; key: string }> = [];
   for (const key of itemKeys) {
     attempted.push(`local-items:${key}`);
     const path = getRegisteredItemTexture(key);
-    if (path) {
-      candidates.push(path);
-      return finish(path, key === id ? "exact-id" : mappedKeys.includes(key) ? "alias" : "registry");
-    }
+    if (path) localPaths.push({ path, key });
   }
 
   const vanillaKeys = [...new Set([...itemKeys, vanillaAliases[id], vanillaAliases[name]].filter(Boolean) as string[])];
+  const vanillaPaths: string[] = [];
   for (const key of vanillaKeys) {
     attempted.push(`vanilla:${key}`);
     const path = getRegisteredVanillaTexture(key);
-    if (path) {
-      candidates.push(path);
-      return finish(path, "vanilla");
-    }
+    if (path) vanillaPaths.push(path);
   }
 
+  const orderedPaths = [...localPaths.map(({ path }) => path), ...vanillaPaths];
   if (id) {
     const skyCrypt = `https://raw.githubusercontent.com/SkyCryptWebsite/SkyCryptWebsite/main/public/head/${id}`;
     attempted.push(`skycrypt:${id}`);
-    candidates.push(skyCrypt);
-    return finish(skyCrypt, "skycrypt");
+    orderedPaths.push(skyCrypt, `https://mc-heads.net/item/${id}`);
   }
-  return finish(getRegisteredVanillaTexture("barrier"), "placeholder");
+  orderedPaths.push(getRegisteredVanillaTexture("barrier") ?? "/vanilla/barrier.png");
+  candidates.push(...orderedPaths);
+  const first = localPaths[0];
+  return finish(first?.path ?? vanillaPaths[0] ?? orderedPaths[0], first ? (first.key === id ? "exact-id" : mappedKeys.includes(first.key) ? "alias" : "registry") : vanillaPaths.length ? "vanilla" : "skycrypt");
 }
 
 export function clearTextureCache() {

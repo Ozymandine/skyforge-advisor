@@ -162,7 +162,7 @@ function AuctionHouse() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <ItemIcon id={a.name} name={a.name} className="size-8" />
+                      <ItemIcon id={a.id ?? a.name} name={a.name} className="size-8" />
                       <div className="min-w-0">
                         <p className="truncate text-base font-semibold">{a.name}</p>
                         <div className="mt-1.5 flex items-center gap-2">

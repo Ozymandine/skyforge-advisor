@@ -151,6 +151,7 @@ export type BazaarProduct = {
 
 export type AuctionEntry = {
   uuid: string;
+  id?: string;
   name: string;
   rarity: string;
   bin: boolean;
