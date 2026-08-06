@@ -98,7 +98,7 @@ function Inventory() {
                     >
                       {it && (
                         <div className="flex h-full flex-col items-center justify-between">
-                          <ItemIcon id={it.id} name={it.name} className="size-8 my-auto" />
+                          <ItemIcon item={it} className="size-8 my-auto" />
                           <span className="self-end font-mono text-[10px] font-semibold text-muted-foreground">
                             x{it.count}
                           </span>
@@ -116,7 +116,7 @@ function Inventory() {
               {item ? (
                 <>
                   <div className="mt-3 flex items-center gap-3">
-                    <ItemIcon id={item.id} name={item.name} className="size-12 shrink-0" />
+                    <ItemIcon item={item} className="size-12 shrink-0" />
                     <div className="min-w-0">
                       <h3 className="text-xl font-semibold truncate">{item.name}</h3>
                       <div className="mt-1 flex items-center gap-2">

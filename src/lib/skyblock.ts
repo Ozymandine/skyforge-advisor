@@ -166,6 +166,7 @@ export type InventoryItem = {
   slot: number;
   name: string;
   id: string;
+  texture?: string;
   rarity: string;
   count: number;
   lore: string[];

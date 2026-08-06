@@ -424,6 +424,41 @@ function getCollectionCategory(itemId: string): string {
   return "Misc";
 }
 
+function nbtObject(value: NbtValue | undefined): Record<string, NbtValue> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const object = value as Record<string, NbtValue>;
+  const wrapped = object["value"];
+  if (wrapped && typeof wrapped === "object" && !Array.isArray(wrapped)) {
+    return wrapped as Record<string, NbtValue>;
+  }
+  return object;
+}
+
+function nbtArray(value: NbtValue | undefined): NbtValue[] {
+  if (Array.isArray(value)) return value;
+  const object = nbtObject(value);
+  const wrapped = object?.["value"];
+  return Array.isArray(wrapped) ? wrapped : [];
+}
+
+function textureFromTag(tag: Record<string, NbtValue>): string | undefined {
+  const skullOwner = nbtObject(tag["SkullOwner"]);
+  const properties = nbtObject(skullOwner?.["Properties"]);
+  const textures = nbtArray(properties?.["textures"]);
+  const firstTexture = nbtObject(textures[0]);
+  const value = firstTexture?.["Value"] ?? firstTexture?.["value"];
+  if (typeof value !== "string" || !value) return undefined;
+
+  try {
+    const decoded = JSON.parse(Buffer.from(value, "base64").toString("utf8")) as {
+      textures?: { SKIN?: { url?: string } };
+    };
+    return decoded.textures?.SKIN?.url;
+  } catch {
+    return value.startsWith("http") ? value : `https://textures.minecraft.net/texture/${value}`;
+  }
+}
+
 async function parseContainer(
   base64: string | undefined,
   id: string,
@@ -442,10 +477,12 @@ async function parseContainer(
       const extra = (tag["ExtraAttributes"] ?? {}) as Record<string, NbtValue>;
       const lore = ((display["Lore"] ?? []) as NbtValue[]).map((l) => stripColors(String(l)));
       const name = stripColors(String(display["Name"] ?? extra["id"] ?? "Unknown Item"));
+      const texture = textureFromTag(tag);
       items.push({
         slot: index,
         name,
         id: String(extra["id"] ?? "UNKNOWN"),
+        ...(texture ? { texture } : {}),
         rarity: rarityFromLore(lore),
         count: Number(it["Count"] ?? 1),
         lore,
