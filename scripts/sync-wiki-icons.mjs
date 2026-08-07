@@ -64,32 +64,58 @@ async function getJson(url) {
 }
 
 async function findWikiImage(item) {
-  const keys = [...new Set([item.id, normalize(item.id), normalize(item.name), wikiName(normalize(item.name)), item.name])].filter(Boolean);
+  const keys = [
+    ...new Set([
+      item.id,
+      normalize(item.id),
+      normalize(item.name),
+      wikiName(normalize(item.name)),
+      item.name,
+    ]),
+  ].filter(Boolean);
   const titles = keys.flatMap((key) => [
-      `File:${key}.png`,
-      `File:${wikiName(key)}.png`,
-      `File:${key}.webp`,
-      `File:${wikiName(key)}.webp`,
-    ]);
+    `File:${key}.png`,
+    `File:${wikiName(key)}.png`,
+    `File:${key}.webp`,
+    `File:${wikiName(key)}.webp`,
+  ]);
   const query = new URLSearchParams({
-      action: "query",
-      titles: titles.join("|"),
-      prop: "imageinfo",
-      iiprop: "url",
-      format: "json",
-      formatversion: "2",
+    action: "query",
+    titles: titles.join("|"),
+    prop: "imageinfo",
+    iiprop: "url",
+    format: "json",
+    formatversion: "2",
   });
   const data = await getJson(`${wikiApi}?${query}`);
   const page = data.query?.pages?.find((candidate) => candidate.imageinfo?.[0]?.url);
   if (page?.imageinfo?.[0]?.url) return { url: page.imageinfo[0].url, title: page.title };
 
-  const pageQuery = new URLSearchParams({ action: "query", titles: item.name, prop: "pageimages|images", piprop: "original", pithumbsize: "64", imlimit: "20", format: "json", formatversion: "2" });
+  const pageQuery = new URLSearchParams({
+    action: "query",
+    titles: item.name,
+    prop: "pageimages|images",
+    piprop: "original",
+    pithumbsize: "64",
+    imlimit: "20",
+    format: "json",
+    formatversion: "2",
+  });
   const pageData = await getJson(`${wikiApi}?${pageQuery}`);
   const wikiPage = pageData.query?.pages?.[0];
   if (wikiPage?.original?.source) return { url: wikiPage.original.source, title: wikiPage.title };
-  const file = wikiPage?.images?.find((candidate) => /\.(png|webp|jpg|jpeg)$/i.test(candidate.title ?? ""));
+  const file = wikiPage?.images?.find((candidate) =>
+    /\.(png|webp|jpg|jpeg)$/i.test(candidate.title ?? ""),
+  );
   if (file?.title) {
-    const infoQuery = new URLSearchParams({ action: "query", titles: file.title, prop: "imageinfo", iiprop: "url", format: "json", formatversion: "2" });
+    const infoQuery = new URLSearchParams({
+      action: "query",
+      titles: file.title,
+      prop: "imageinfo",
+      iiprop: "url",
+      format: "json",
+      formatversion: "2",
+    });
     const info = await getJson(`${wikiApi}?${infoQuery}`);
     const url = info.query?.pages?.[0]?.imageinfo?.[0]?.url;
     if (url) return { url, title: file.title };
@@ -174,10 +200,16 @@ async function worker() {
 
 await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
 
-const localFiles = new Set((await readdir(itemsDir)).filter((file) => file.toLowerCase().endsWith(".png")).map((file) => file.toLowerCase()));
+const localFiles = new Set(
+  (await readdir(itemsDir))
+    .filter((file) => file.toLowerCase().endsWith(".png"))
+    .map((file) => file.toLowerCase()),
+);
 const aliases = {};
 for (const item of missing) {
-  const target = aliasKeys(item.id, item.name).map((key) => `${key}.png`).find((file) => localFiles.has(file));
+  const target = aliasKeys(item.id, item.name)
+    .map((key) => `${key}.png`)
+    .find((file) => localFiles.has(file));
   if (target) aliases[normalize(item.id)] = target;
 }
 
