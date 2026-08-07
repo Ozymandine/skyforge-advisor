@@ -7,20 +7,20 @@ import {
 import type { ResolvedTexture, SkyBlockItem } from "./types";
 
 const cache = new Map<string, ResolvedTexture>();
-const skillKeys = new Set([
-  "farming",
-  "mining",
-  "combat",
-  "foraging",
-  "fishing",
-  "enchanting",
-  "alchemy",
-  "taming",
-  "carpentry",
-  "runecrafting",
-  "social",
-  "hunting",
-]);
+const skillIcons: Record<string, string> = {
+  farming: "/vanilla/wheat.png",
+  mining: "/vanilla/diamond_pickaxe.png",
+  combat: "/vanilla/diamond_sword.png",
+  foraging: "/vanilla/oak_log.png",
+  fishing: "/vanilla/fishing_rod.png",
+  enchanting: "/vanilla/enchanting_table.png",
+  alchemy: "/vanilla/brewing_stand.png",
+  taming: "/vanilla/bone.png",
+  carpentry: "/vanilla/crafting_table.png",
+  runecrafting: "/vanilla/book.png",
+  social: "/vanilla/player_head.png",
+  hunting: "/vanilla/bow.png",
+};
 const vanillaAliases: Record<string, string> = {
   redstone_dust: "redstone",
   ink_sack: "ink_sac",
@@ -32,6 +32,7 @@ export function normalizeItemKey(value: string): string {
     .toLowerCase()
     .trim()
     .replace(/^minecraft:/, "")
+    .replace(/[:/.-]+/g, "_")
     .replace(/[’']s\b/g, "")
     .replace(/[^a-z0-9_ ]/g, "")
     .trim()
@@ -61,6 +62,39 @@ function baseTextureKeys(key: string): string[] {
   return [...new Set(bases)].filter((base) => base && base !== key);
 }
 
+function familyFallbackTextures(id: string): string[] {
+  if (id.startsWith("enchantment_")) {
+    const key = id.startsWith("enchantment_ultimate_")
+      ? "enchanted_book_ultimate"
+      : "enchanted_book";
+    const book = getRegisteredItemTexture(key);
+    return book ? [book] : [];
+  }
+
+  // The Bazaar can list newly released product IDs before they are available in
+  // Hypixel's item-resource catalog. Use the current texture service first,
+  // then retain a local family sprite if that service is unavailable.
+  const localFallback = id.startsWith("shard_")
+    ? getRegisteredItemTexture("attribute_shard")
+    : id.startsWith("essence_")
+      ? getRegisteredItemTexture("true_essence")
+      : undefined;
+  if (!localFallback) return [];
+
+  return [
+    `https://api.eliteskyblock.com/textures/items/${encodeURIComponent(id.toUpperCase())}`,
+    localFallback,
+  ];
+}
+
+function currentCatalogFallback(rawId: string): string[] {
+  const id = rawId.trim();
+  // Only send canonical SkyBlock IDs to the live texture catalog. Display
+  // names such as "Unreal Machine Gun Bow" are intentionally excluded.
+  if (!/^[A-Z0-9:.-]+$/.test(id)) return [];
+  return [`https://api.eliteskyblock.com/textures/items/${encodeURIComponent(id)}`];
+}
+
 export function resolveItemTexture(item: SkyBlockItem): ResolvedTexture {
   const id = normalizeItemKey(item.id);
   const name = normalizeItemKey(item.name);
@@ -83,7 +117,7 @@ export function resolveItemTexture(item: SkyBlockItem): ResolvedTexture {
 
   if (item.texture) return finish(item.texture, "manual-override");
   if (!id && !name) return finish(undefined, "placeholder");
-  if (skillKeys.has(id)) return finish(`/items/${id}_skill.png`, "exact-id");
+  if (skillIcons[id]) return finish(skillIcons[id], "exact-id");
 
   const generatedPaths = [
     ...new Set([id, name, ...spellingKeys(id), ...spellingKeys(name)].filter(Boolean)),
@@ -121,13 +155,28 @@ export function resolveItemTexture(item: SkyBlockItem): ResolvedTexture {
     if (path) vanillaPaths.push(path);
   }
 
-  const orderedPaths = [...localPaths.map(({ path }) => path), ...generatedPaths, ...vanillaPaths];
+  const familyFallbacks = familyFallbackTextures(id);
+  if (familyFallbacks.length) attempted.push(`family-fallback:${id}`);
+  const catalogFallbacks = currentCatalogFallback(item.id);
+  if (catalogFallbacks.length) attempted.push(`catalog-fallback:${item.id}`);
+  const orderedPaths = [
+    ...localPaths.map(({ path }) => path),
+    ...generatedPaths,
+    ...vanillaPaths,
+    ...familyFallbacks,
+    ...catalogFallbacks,
+  ];
   orderedPaths.push(getRegisteredVanillaTexture("barrier") ?? "/vanilla/barrier.png");
   candidates.push(...orderedPaths);
   const first = localPaths[0];
   const generated = generatedPaths[0];
   return finish(
-    first?.path ?? generated ?? vanillaPaths[0] ?? "/vanilla/barrier.png",
+    first?.path ??
+      generated ??
+      vanillaPaths[0] ??
+      familyFallbacks[0] ??
+      catalogFallbacks[0] ??
+      "/vanilla/barrier.png",
     first
       ? first.key === id
         ? "exact-id"
@@ -138,7 +187,9 @@ export function resolveItemTexture(item: SkyBlockItem): ResolvedTexture {
         ? "registry"
         : vanillaPaths.length
           ? "vanilla"
-          : "placeholder",
+          : familyFallbacks.length || catalogFallbacks.length
+            ? "alias"
+            : "placeholder",
   );
 }
 

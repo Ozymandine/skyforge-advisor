@@ -1,10 +1,3 @@
-{/* Temporary test tag */}
-<div className="flex items-center gap-2 p-4 bg-secondary/50 rounded-xl">
-  <p className="text-xs font-mono">Direct test:</p>
-  <img src="/items/farming_skill.png" alt="Test" className="size-8 pixelated" />
-</div>
-
-
 import { createFileRoute } from "@tanstack/react-router";
 
 import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";

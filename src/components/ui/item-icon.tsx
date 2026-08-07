@@ -14,27 +14,78 @@ interface ItemIconProps {
 }
 
 const imageCache = new Map<string, boolean>();
-const skills = new Set([
-  "farming",
-  "mining",
-  "combat",
-  "foraging",
-  "fishing",
-  "enchanting",
-  "alchemy",
-  "taming",
-  "carpentry",
-  "runecrafting",
-  "social",
-  "hunting",
-]);
 
 function sourcesFor(item: SkyBlockItem): string[] {
-  const resolved = resolveItemTexture(item);
-  const local = [resolved.src, ...(resolved.candidates ?? []), "/vanilla/barrier.png"].filter(
-    Boolean,
-  ) as string[];
-  return [...new Set(local.filter((src) => !src.startsWith("http")))];
+  const { texture, ...itemWithoutTexture } = item;
+  const resolved = resolveItemTexture(itemWithoutTexture);
+  const barrier = "/vanilla/barrier.png";
+  const registered = [resolved.src, ...(resolved.candidates ?? [])].filter(
+    (src): src is string => Boolean(src) && src !== barrier,
+  );
+  const hasItemSpecificSprite = ["exact-id", "alias", "registry"].includes(resolved.source);
+  const ordered = hasItemSpecificSprite
+    ? [...registered, texture]
+    : [texture, ...registered];
+  return [...new Set([...ordered.filter((src): src is string => Boolean(src)), barrier])];
+}
+
+type HeadFace = {
+  position: string;
+  transform: string;
+};
+
+const minecraftHeadFaces: HeadFace[] = [
+  { position: "14.285714% 14.285714%", transform: "translateZ(7px)" },
+  { position: "42.857143% 14.285714%", transform: "rotateY(180deg) translateZ(7px)" },
+  { position: "0 14.285714%", transform: "rotateY(90deg) translateZ(7px)" },
+  { position: "28.571429% 14.285714%", transform: "rotateY(-90deg) translateZ(7px)" },
+  { position: "14.285714% 0", transform: "rotateX(90deg) translateZ(7px)" },
+  { position: "28.571429% 0", transform: "rotateX(-90deg) translateZ(7px)" },
+];
+
+function isMinecraftSkin(src: string): boolean {
+  return /^https:\/\/textures\.minecraft\.net\/texture\/[a-f0-9]+\/?$/i.test(src);
+}
+
+function isCompactorHeadAtlas(src: string, image: HTMLImageElement): boolean {
+  // Resource-pack compactors are player-head textures. A 64px square keeps
+  // this classification narrow so future, ordinary compactor sprites render
+  // as normal images.
+  return (
+    /^\/items\/[a-z0-9_]*compactor[a-z0-9_]*\.png$/i.test(src) &&
+    image.naturalWidth === 64 &&
+    image.naturalHeight === 64
+  );
+}
+
+function MinecraftHead({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  const faceStyle = {
+    backgroundImage: `url("${src}")`,
+    backgroundSize: "800% 800%",
+    imageRendering: "pixelated" as const,
+  };
+
+  return (
+    <span
+      role="img"
+      aria-label={alt}
+      className={cn("relative block size-full", className)}
+      style={{ perspective: "48px" }}
+    >
+      <span
+        className="absolute inset-[17%] block"
+        style={{ transform: "rotateX(-24deg) rotateY(38deg)", transformStyle: "preserve-3d" }}
+      >
+        {minecraftHeadFaces.map((face) => (
+          <span
+            key={face.transform}
+            className="absolute inset-0 block"
+            style={{ ...faceStyle, backgroundPosition: face.position, transform: face.transform }}
+          />
+        ))}
+      </span>
+    </span>
+  );
 }
 
 function sheetInfo(
@@ -48,8 +99,6 @@ function sheetInfo(
     return { frameSize: width, columns: 1, rows: height / width };
   if (height >= 8 && height <= 64 && width > height && width % height === 0 && width / height <= 32)
     return { frameSize: height, columns: width / height, rows: 1 };
-  if (width === height && width >= 64 && width % 16 === 0 && width / 16 >= 4)
-    return { frameSize: 16, columns: width / 16, rows: height / 16 };
   return null;
 }
 
@@ -86,19 +135,21 @@ export function ItemIcon({
     [enchanted, item, normalizedId, normalizedName, texturePath],
   );
   const sources = React.useMemo(() => {
-    if (skills.has(normalizedId)) return [`/items/${normalizedId}_skill.png`];
     return sourcesFor(resolvedItem);
-  }, [normalizedId, resolvedItem]);
+  }, [resolvedItem]);
   const sourceSignature = React.useMemo(() => sources.join("|"), [sources]);
   const [sourceIndex, setSourceIndex] = React.useState(0);
   const [status, setStatus] = React.useState<"loading" | "loaded" | "error">("loading");
   const [useCanvas, setUseCanvas] = React.useState(false);
+  const [useMinecraftHead, setUseMinecraftHead] = React.useState(false);
   const currentSrc = sources[sourceIndex];
+  const shouldGlint = enchanted || normalizedId.startsWith("enchantment_");
 
   React.useEffect(() => {
     setSourceIndex(0);
     setStatus("loading");
     setUseCanvas(false);
+    setUseMinecraftHead(false);
   }, [sourceSignature]);
 
   React.useEffect(() => {
@@ -113,7 +164,6 @@ export function ItemIcon({
       return;
     }
     const image = new Image();
-    if (currentSrc.startsWith("http")) image.crossOrigin = "anonymous";
     image.onload = () => {
       if (cancelled) return;
       if (shouldSkipImage(currentSrc, image)) {
@@ -122,6 +172,9 @@ export function ItemIcon({
         else setStatus("error");
         return;
       }
+
+      const rendersAsHead = isMinecraftSkin(currentSrc) || isCompactorHeadAtlas(currentSrc, image);
+      setUseMinecraftHead(rendersAsHead);
 
       const canvas = canvasRef.current;
       const sheet = sheetInfo(currentSrc, image);
@@ -228,21 +281,33 @@ export function ItemIcon({
             className={cn(
               "size-full object-contain pixelated transition-transform duration-75 hover:scale-110 drop-shadow-sm",
               (!useCanvas || status === "loading") && "hidden",
-              enchanted && "brightness-125 contrast-125 drop-shadow-[0_0_6px_rgba(168,85,247,0.7)]",
+              shouldGlint && "brightness-125 contrast-125 drop-shadow-[0_0_6px_rgba(168,85,247,0.7)]",
               className,
             )}
           />
-          <img
-            src={currentSrc}
-            alt={normalizedName}
-            loading="lazy"
-            className={cn(
-              "size-full object-contain pixelated transition-transform duration-75 hover:scale-110 drop-shadow-sm",
-              (useCanvas || status === "loading") && "hidden",
-              enchanted && "brightness-125 contrast-125 drop-shadow-[0_0_6px_rgba(168,85,247,0.7)]",
-              className,
-            )}
-          />
+          {useMinecraftHead ? (
+            <MinecraftHead
+              src={currentSrc}
+              alt={normalizedName}
+              className={cn(
+                "transition-transform duration-75 hover:scale-110 drop-shadow-sm",
+                (useCanvas || status === "loading") && "hidden",
+                shouldGlint && "brightness-125 contrast-125 drop-shadow-[0_0_6px_rgba(168,85,247,0.7)]",
+              )}
+            />
+          ) : (
+            <img
+              src={currentSrc}
+              alt={normalizedName}
+              loading="lazy"
+              className={cn(
+                "size-full object-contain pixelated transition-transform duration-75 hover:scale-110 drop-shadow-sm",
+                (useCanvas || status === "loading") && "hidden",
+                shouldGlint && "brightness-125 contrast-125 drop-shadow-[0_0_6px_rgba(168,85,247,0.7)]",
+                className,
+              )}
+            />
+          )}
         </>
       )}
     </div>

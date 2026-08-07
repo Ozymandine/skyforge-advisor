@@ -51,33 +51,6 @@ const CATEGORY_OVERRIDES: Record<string, string> = {
   DANDELION: "Farming",
 };
 
-/**
- * Map collection names to texture asset IDs
- */
-const CATEGORY_ITEM_IDS: Record<string, string> = {
-  ENDSTONE: "ENDSTONE",
-  LUSHLILAC: "LUSHLILAC",
-  LILAC: "LILAC",
-  PEONY: "PEONY",
-  ROSEBUSH: "ROSEBUSH",
-  SUNFLOWER: "SUNFLOWER",
-  REDSTONEDUST: "REDSTONE_DUST",
-  SUGARCANE: "SUGAR_CANE",
-  LAPISLAZULI: "LAPIS_LAZULI",
-/*
-  "End Stone": "ENDSTONE",
-  "Lush Lilac": "DOUBLE_PLANT",
-  "Lushlilac": "DOUBLE_PLANT",
-  "Lilac": "DOUBLE_PLANT",
-  "Peony": "DOUBLE_PLANT",
-  "Rose Bush": "DOUBLE_PLANT",
-  "Sunflower": "DOUBLE_PLANT",
-  "Redstone Dust": "REDSTONE",
-  "Sugar Cane": "SUGAR_CANE",
-  "Lapis Lazuli": "INK_SACK_4",
-*/
-};
-
 // Helper to convert tier numbers to Roman Numerals (e.g., 7 -> VII)
 function toRoman(num: number): string {
   const map: [number, string][] = [
@@ -137,7 +110,7 @@ function Collections() {
   const categories = useMemo(() => {
     const map = new Map<
       string,
-      { name: string; total: number; items: { name: string; amount: number }[] }
+      { name: string; total: number; items: { id: string; name: string; amount: number }[] }
     >();
 
     for (const collection of collections) {
@@ -150,12 +123,12 @@ function Collections() {
       const existing = map.get(categoryName);
       if (existing) {
         existing.total += collection.amount;
-        existing.items.push({ name: collection.name, amount: collection.amount });
+        existing.items.push({ id: collection.id, name: collection.name, amount: collection.amount });
       } else {
         map.set(categoryName, {
           name: categoryName,
           total: collection.amount,
-          items: [{ name: collection.name, amount: collection.amount }],
+          items: [{ id: collection.id, name: collection.name, amount: collection.amount }],
         });
       }
     }
@@ -234,9 +207,6 @@ function Collections() {
                     <ul className="mt-6 space-y-3">
                       {category.items.map((item) => {
                         const { tier, pct } = getCollectionTier(item.amount);
-                        const itemKey = item.name.toUpperCase().replace(/[^A-Z0-9]/g, "");
-                        const itemId = CATEGORY_ITEM_IDS[itemKey] || item.name.toUpperCase().replace(/[^A-Z0-9]+/g, "_");
-
                         return (
                           <li
                             key={item.name}
@@ -246,7 +216,7 @@ function Collections() {
                               <div className="flex items-center gap-3 min-w-0">
                                 <div className="size-6 shrink-0 flex items-center justify-center">
                                   <ItemIcon
-                                    id={itemId}
+                                    id={item.id}
                                     name={item.name}
                                     className="size-6 hover:scale-100 transition-none"
                                   />

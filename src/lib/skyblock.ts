@@ -152,6 +152,7 @@ export type BazaarProduct = {
 export type AuctionEntry = {
   uuid: string;
   id?: string;
+  texture?: string;
   name: string;
   rarity: string;
   bin: boolean;
@@ -200,7 +201,7 @@ export type PlayerData = {
   purse: number;
   bank: number | null;
   containers: InventoryContainer[];
-  collections: { name: string; category: string; amount: number }[];
+  collections: { id: string; name: string; category: string; amount: number }[];
   fairySouls: number;
   lastSave: number;
 };

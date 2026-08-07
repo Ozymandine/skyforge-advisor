@@ -7,6 +7,9 @@ export const ITEM_ALIASES: Record<string, string> = {
   gemstone_sack: "backpack_gray",
   gift_compass: "royal_compass",
   redstone_dust: "redstone_rune",
+  // The item is named "Ruby Drill TX-15" in auction data, while its
+  // resource-pack icon is stored under the base Ruby Drill key.
+  ruby_drill_tx_15: "ruby_drill",
   lushlilac: "double_plant",
   lush_lilac: "double_plant",
   lilac: "double_plant",

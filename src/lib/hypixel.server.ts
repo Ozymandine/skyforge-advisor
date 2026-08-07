@@ -192,6 +192,9 @@ type AuctionsResponse = {
   lastUpdated: number;
   auctions: {
     uuid: string;
+    // The live endpoint currently returns a base64 string, while older API
+    // responses use { type, data }. Both contain a gzipped NBT item stack.
+    item_bytes?: string | { type?: number; data?: string };
     item_id?: string;
     item_name: string;
     tier: string;
@@ -204,6 +207,95 @@ type AuctionsResponse = {
     item_lore: string;
   }[];
 };
+
+type AuctionItemIdentity = Pick<AuctionEntry, "id" | "texture">;
+type AuctionCandidate = {
+  entry: AuctionEntry;
+  uuid: string;
+  itemBytes: AuctionsResponse["auctions"][number]["item_bytes"];
+};
+
+const auctionItemCache = new Map<string, { at: number; identity: AuctionItemIdentity }>();
+const AUCTION_ITEM_CACHE_TTL_MS = 15 * 60_000;
+const AUCTION_ICON_LIMIT = 240;
+const AUCTION_ITEM_DECODE_CONCURRENCY = 8;
+
+function itemBytesData(itemBytes: AuctionsResponse["auctions"][number]["item_bytes"]): string | undefined {
+  if (typeof itemBytes === "string") return itemBytes;
+  if (typeof itemBytes?.data === "string") return itemBytes.data;
+  return undefined;
+}
+
+async function extractAuctionItemIdentity(
+  itemBytes: AuctionsResponse["auctions"][number]["item_bytes"],
+): Promise<AuctionItemIdentity> {
+  const data = itemBytesData(itemBytes);
+  if (!data) return {};
+
+  try {
+    // Auction item_bytes is base64-encoded gzip NBT. Hypixel stores the
+    // SkyBlock ID at i[0].tag.ExtraAttributes.id, rather than in the listing.
+    const root = await decodeNbt(data);
+    const itemStack = nbtObject(nbtArray(root["i"])[0]);
+    const tag = nbtObject(itemStack?.["tag"]);
+    const extra = nbtObject(tag?.["ExtraAttributes"]);
+    const id = extra?.["id"];
+    const texture = tag ? textureFromTag(tag) : undefined;
+
+    return {
+      ...(typeof id === "string" && id ? { id } : {}),
+      ...(texture ? { texture } : {}),
+    };
+  } catch {
+    // A malformed listing should only lose its icon, never fail the feed.
+    return {};
+  }
+}
+
+function pruneAuctionItemCache(now: number) {
+  for (const [uuid, cached] of auctionItemCache) {
+    if (now - cached.at > AUCTION_ITEM_CACHE_TTL_MS) auctionItemCache.delete(uuid);
+  }
+}
+
+async function auctionItemIdentity(
+  uuid: string,
+  itemBytes: AuctionsResponse["auctions"][number]["item_bytes"],
+): Promise<AuctionItemIdentity> {
+  const now = Date.now();
+  const cached = auctionItemCache.get(uuid);
+  if (cached && now - cached.at <= AUCTION_ITEM_CACHE_TTL_MS) return cached.identity;
+
+  const identity = await extractAuctionItemIdentity(itemBytes);
+  auctionItemCache.set(uuid, { at: now, identity });
+  return identity;
+}
+
+async function hydrateAuctionEntries(candidates: AuctionCandidate[]): Promise<AuctionEntry[]> {
+  const entries = candidates.map(({ entry }) => entry);
+  let next = 0;
+
+  const worker = async () => {
+    for (;;) {
+      const index = next++;
+      const candidate = candidates[index];
+      if (!candidate) return;
+
+      const identity = await auctionItemIdentity(candidate.uuid, candidate.itemBytes);
+      const id = candidate.entry.id ?? identity.id;
+      entries[index] = {
+        ...candidate.entry,
+        ...(id ? { id } : {}),
+        ...(identity.texture ? { texture: identity.texture } : {}),
+      };
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(AUCTION_ITEM_DECODE_CONCURRENCY, candidates.length) }, worker),
+  );
+  return entries;
+}
 
 export async function getAuctions(pages = 6): Promise<{
   lastUpdated: number;
@@ -255,24 +347,34 @@ export async function getAuctions(pages = 6): Promise<{
     }
 
     const now = Date.now();
-    const entries: AuctionEntry[] = raw.map((a) => {
+    pruneAuctionItemCache(now);
+    const candidates: AuctionCandidate[] = raw.map((a) => {
       const key = `${a.item_name}|${a.tier}`;
       const price = a.bin ? a.starting_bid : Math.max(a.highest_bid_amount, a.starting_bid);
       const lb = lowestBin.get(key) ?? null;
       return {
         uuid: a.uuid,
-        ...(a.item_id ? { id: a.item_id } : {}),
-        name: a.item_name,
-        rarity: a.tier,
-        bin: a.bin,
-        price,
-        lowestBin: lb,
-        profit: lb !== null ? lb - price : 0,
-        endsInMs: a.end - now,
-        bids: Array.isArray(a.bids) ? a.bids.length : 0,
-        category: a.category ? titleCase(a.category) : "Misc",
+        itemBytes: a.item_bytes,
+        entry: {
+          uuid: a.uuid,
+          ...(a.item_id ? { id: a.item_id } : {}),
+          name: a.item_name,
+          rarity: a.tier,
+          bin: a.bin,
+          price,
+          lowestBin: lb,
+          profit: lb !== null ? lb - price : 0,
+          endsInMs: a.end - now,
+          bids: Array.isArray(a.bids) ? a.bids.length : 0,
+          category: a.category ? titleCase(a.category) : "Misc",
+        },
       };
     });
+    const entries = await hydrateAuctionEntries(
+      candidates
+        .sort((a, b) => b.entry.profit - a.entry.profit || b.entry.price - a.entry.price)
+        .slice(0, AUCTION_ICON_LIMIT),
+    );
 
     return {
       lastUpdated: first.lastUpdated || now,
@@ -455,9 +557,11 @@ function textureFromTag(tag: Record<string, NbtValue>): string | undefined {
     const decoded = JSON.parse(Buffer.from(value, "base64").toString("utf8")) as {
       textures?: { SKIN?: { url?: string } };
     };
-    return decoded.textures?.SKIN?.url;
+    return decoded.textures?.SKIN?.url?.replace(/^http:/, "https:");
   } catch {
-    return value.startsWith("http") ? value : `https://textures.minecraft.net/texture/${value}`;
+    return value.startsWith("http")
+      ? value.replace(/^http:/, "https:")
+      : `https://textures.minecraft.net/texture/${value}`;
   }
 }
 
@@ -572,6 +676,7 @@ export async function getPlayerData(
     const names = await nameLookup();
     const collections = Object.entries(collectionRaw)
       .map(([id, amount]) => ({
+        id,
         name: names.get(id) ?? titleCase(id),
         category: getCollectionCategory(id), // <-- Map to proper skill group!
         amount: Number(amount) || 0,
