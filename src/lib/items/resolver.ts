@@ -71,15 +71,11 @@ export function resolveItemTexture(item: SkyBlockItem): ResolvedTexture {
   }
 
   const orderedPaths = [...localPaths.map(({ path }) => path), ...generatedPaths, ...vanillaPaths];
-  if (id) {
-    const skyCrypt = `https://raw.githubusercontent.com/SkyCryptWebsite/SkyCryptWebsite/main/public/head/${id}`;
-    attempted.push(`skycrypt:${id}`);
-    orderedPaths.push(skyCrypt, `https://mc-heads.net/item/${id}`);
-  }
   orderedPaths.push(getRegisteredVanillaTexture("barrier") ?? "/vanilla/barrier.png");
   candidates.push(...orderedPaths);
   const first = localPaths[0];
-  return finish(first?.path ?? vanillaPaths[0] ?? orderedPaths[0], first ? (first.key === id ? "exact-id" : mappedKeys.includes(first.key) ? "alias" : "registry") : vanillaPaths.length ? "vanilla" : "skycrypt");
+  const generated = generatedPaths[0];
+  return finish(first?.path ?? generated ?? vanillaPaths[0] ?? "/vanilla/barrier.png", first ? (first.key === id ? "exact-id" : mappedKeys.includes(first.key) ? "alias" : "registry") : generated ? "registry" : vanillaPaths.length ? "vanilla" : "placeholder");
 }
 
 export function clearTextureCache() {

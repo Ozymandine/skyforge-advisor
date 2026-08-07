@@ -19,15 +19,17 @@ const skills = new Set(["farming", "mining", "combat", "foraging", "fishing", "e
 function sourcesFor(item: SkyBlockItem): string[] {
   const resolved = resolveItemTexture(item);
   const local = [resolved.src, ...(resolved.candidates ?? []), "/vanilla/barrier.png"].filter(Boolean) as string[];
-  const id = normalizeItemKey(item.id);
-  const remote = id ? [`https://raw.githubusercontent.com/SkyCryptWebsite/SkyCryptWebsite/main/public/head/${id}`, `https://mc-heads.net/item/${id}`] : [];
-  return [...new Set([...local, ...remote])];
+  return [...new Set(local.filter((src) => !src.startsWith("http")))];
 }
 
-function isAnimatedSheet(src: string, image: HTMLImageElement): boolean {
+function sheetInfo(src: string, image: HTMLImageElement): { frameSize: number; columns: number; rows: number } | null {
+  if (!src.startsWith("/items/") || src.includes("_model")) return null;
   const width = image.naturalWidth;
   const height = image.naturalHeight;
-  return src.startsWith("/items/") && !src.includes("_model") && width >= 8 && width <= 64 && height > width && height % width === 0 && height / width <= 32;
+  if (width >= 8 && width <= 64 && height > width && height % width === 0 && height / width <= 32) return { frameSize: width, columns: 1, rows: height / width };
+  if (height >= 8 && height <= 64 && width > height && width % height === 0 && width / height <= 32) return { frameSize: height, columns: width / height, rows: 1 };
+  if (width === height && width >= 64 && width % 16 === 0 && width / 16 >= 4) return { frameSize: 16, columns: width / 16, rows: height / 16 };
+  return null;
 }
 
 export function ItemIcon({ id, name, texturePath, enchanted, className, item, debug = false }: ItemIconProps) {
@@ -81,9 +83,10 @@ export function ItemIcon({ id, name, texturePath, enchanted, className, item, de
       try {
         ctx.imageSmoothingEnabled = false;
 
-        const frameSize = image.naturalWidth || 16;
-        const totalFrames = isAnimatedSheet(currentSrc, image) ? Math.floor(image.naturalHeight / frameSize) : 1;
-        const hasUnsafeAspectRatio = image.naturalWidth > image.naturalHeight || (image.naturalWidth > 64 && image.naturalWidth === image.naturalHeight);
+        const sheet = sheetInfo(currentSrc, image);
+        const frameSize = sheet?.frameSize ?? (image.naturalWidth || 16);
+        const totalFrames = sheet ? sheet.columns * sheet.rows : 1;
+        const hasUnsafeAspectRatio = image.naturalWidth > image.naturalHeight;
         canvas.width = frameSize;
         canvas.height = frameSize;
 
@@ -94,20 +97,22 @@ export function ItemIcon({ id, name, texturePath, enchanted, className, item, de
         const render = (now: number) => {
           if (cancelled) return;
 
-          if (totalFrames > 1 && now - lastTime >= frameInterval) {
+          if (totalFrames > 1 && sheet && now - lastTime >= frameInterval) {
             currentFrame = (currentFrame + 1) % totalFrames;
             lastTime = now;
           }
 
           ctx.clearRect(0, 0, frameSize, frameSize);
-          ctx.drawImage(image, 0, currentFrame * frameSize, frameSize, frameSize, 0, 0, frameSize, frameSize);
+          const column = sheet ? currentFrame % sheet.columns : 0;
+          const row = sheet ? Math.floor(currentFrame / sheet.columns) : 0;
+          ctx.drawImage(image, column * frameSize, row * frameSize, frameSize, frameSize, 0, 0, frameSize, frameSize);
 
           if (totalFrames > 1) {
             animationFrameId = requestAnimationFrame(render);
           }
         };
 
-        setUseCanvas(totalFrames > 1 && !hasUnsafeAspectRatio);
+        setUseCanvas(Boolean(sheet) && !hasUnsafeAspectRatio);
         render(performance.now());
       } catch {
         setUseCanvas(false);
