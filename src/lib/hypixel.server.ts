@@ -78,9 +78,25 @@ type ItemsResponse = {
   items: {
     id: string;
     name: string;
+    material?: string;
     tier?: string;
     category?: string;
     npc_sell_price?: number;
+
+    stats?: Record<string, number>;
+
+    description?: string;
+    lore?: string[];
+    abilities?: {
+      name?: string;
+      description?: string | string[];
+      mana_cost?: number;
+      cooldown?: number;
+    }[];
+
+    requirements?: unknown[];
+
+    [key: string]: unknown;
   }[];
 };
 
@@ -93,12 +109,50 @@ export async function getItems(): Promise<LiveItem[]> {
     if (!data || !Array.isArray(data.items)) return [];
 
     const items = data.items.map((i) => ({
-      id: i.id,
-      name: i.name ?? titleCase(i.id),
-      rarity: i.tier ?? "COMMON",
-      category: i.category ? titleCase(i.category) : "Misc",
-      npcSell: typeof i.npc_sell_price === "number" ? i.npc_sell_price : null,
-    }));
+  id: i.id,
+  name: i.name ?? titleCase(i.id),
+  material: i.material,
+  rarity: i.tier ?? "COMMON",
+  category: i.category ? titleCase(i.category) : "Misc",
+  npcSell:
+    typeof i.npc_sell_price === "number"
+      ? i.npc_sell_price
+      : null,
+
+  description:
+    typeof i.description === "string"
+      ? i.description
+      : Array.isArray(i.lore)
+        ? i.lore
+        : undefined,
+
+  stats:
+    i.stats && typeof i.stats === "object"
+      ? i.stats as Record<string, number>
+      : undefined,
+
+  abilities: Array.isArray(i.abilities)
+    ? i.abilities
+        .filter(
+          (ability): ability is {
+            name?: string;
+            description?: string | string[];
+            mana_cost?: number;
+            cooldown?: number;
+          } => !!ability && typeof ability === "object",
+        )
+        .map((ability) => ({
+          name: ability.name ?? "Ability",
+          description: ability.description ?? "",
+          ...(typeof ability.mana_cost === "number"
+            ? { manaCost: ability.mana_cost }
+            : {}),
+          ...(typeof ability.cooldown === "number"
+            ? { cooldown: ability.cooldown }
+            : {}),
+        }))
+    : undefined,
+}));
     itemsCache = { at: Date.now(), items };
     return items;
   } catch (err) {

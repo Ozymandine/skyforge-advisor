@@ -125,12 +125,73 @@ export const RARITY_ORDER = [
   "VERY_SPECIAL",
 ];
 
+export type WikiItemStat = {
+  name: string;
+  value: number | string;
+};
+
+export type WikiRecipeIngredient = {
+  id: string;
+  name: string;
+  amount: number;
+};
+
+export type WikiRecipe = {
+  ingredients: WikiRecipeIngredient[];
+  craftingType?: string;
+  outputAmount?: number;
+};
+
+export type WikiAbility = {
+  name: string;
+  description: string | string[];
+  manaCost?: number;
+  cooldown?: number;
+};
+
+export type WikiRequirement = {
+  type: string;
+  level?: number;
+  value?: string;
+};
+
 export type LiveItem = {
   name: string;
   id: string;
+
+  // Core item information
+  material?: string;
   rarity: string;
   category: string;
   npcSell: number | null;
+
+  // Item description / lore
+  description?: string | string[];
+
+  // Combat / item stats
+  stats?: Record<string, number>;
+
+  // Abilities
+  abilities?: WikiAbility[];
+
+  // Requirements
+  requirements?: WikiRequirement[];
+
+  // Crafting
+  recipe?: WikiRecipe;
+
+  // Acquisition
+  obtainedFrom?: string[];
+
+  // Progression
+  collection?: string;
+  minionSource?: string;
+  npcSource?: string;
+  upgradePath?: string[];
+
+  // External / supplementary information
+  museumValue?: number | null;
+  wikiUrl?: string;
 };
 
 export type BazaarProduct = {
