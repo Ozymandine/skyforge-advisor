@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "generate:item-registry": "node scripts/generate-item-registry.mjs",
-    "item-icon:audit": "node scripts/audit-item-icon-matches.mjs"
+    "item-icon:audit": "node scripts/audit-item-icon-matches.mjs",
+    "sync:wiki-icons": "node scripts/sync-wiki-icons.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
