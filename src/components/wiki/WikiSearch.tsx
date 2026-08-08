@@ -3,22 +3,20 @@ import { Chip } from "@/components/layout/app-shell";
 
 interface WikiSearchProps {
   query: string;
-  setQuery: (value: string) => void;
+  onQueryChange: (value: string) => void;
   category: string;
-  setCategory: (value: string) => void;
+  onCategoryChange: (value: string) => void;
   categories: string[];
   itemCount: number;
-  formatNumber: (value: number) => string;
 }
 
 export function WikiSearch({
   query,
-  setQuery,
+  onQueryChange,
   category,
-  setCategory,
+  onCategoryChange,
   categories,
   itemCount,
-  formatNumber,
 }: WikiSearchProps) {
   return (
     <>
@@ -26,8 +24,9 @@ export function WikiSearch({
         <Search className="size-4 text-muted-foreground" />
 
         <input
+          type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => onQueryChange(e.target.value)}
           placeholder={`Search ${itemCount.toLocaleString()} items...`}
           className="w-full bg-transparent text-sm outline-none"
         />
@@ -38,7 +37,7 @@ export function WikiSearch({
           <Chip
             key={c}
             active={category === c}
-            onClick={() => setCategory(c)}
+            onClick={() => onCategoryChange(c)}
           >
             {c}
           </Chip>

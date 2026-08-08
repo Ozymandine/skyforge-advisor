@@ -159,38 +159,45 @@ export type LiveItem = {
   name: string;
   id: string;
 
-  // Core item information
   material?: string;
   rarity: string;
   category: string;
-  npcSell: number | null;
 
-  // Item description / lore
+  lore?: string[];
   description?: string | string[];
-
-  // Combat / item stats
   stats?: Record<string, number>;
-
-  // Abilities
   abilities?: WikiAbility[];
-
-  // Requirements
   requirements?: WikiRequirement[];
 
-  // Crafting
+  npcSell: number | null;
+
+  bazaar?: {
+    buyPrice: number;
+    sellPrice: number;
+    buyVolume: number;
+    sellVolume: number;
+    buyMovingWeek: number;
+    sellMovingWeek: number;
+  };
+
+  auctionHouse?: {
+    lowestBin: number | null;
+    averageBin: number | null;
+    listings: number;
+  };
+
   recipe?: WikiRecipe;
 
-  // Acquisition
   obtainedFrom?: string[];
-
-  // Progression
   collection?: string;
   minionSource?: string;
   npcSource?: string;
+
   upgradePath?: string[];
 
-  // External / supplementary information
   museumValue?: number | null;
+  enchantments?: string[];
+  reforges?: string[];
   wikiUrl?: string;
 };
 

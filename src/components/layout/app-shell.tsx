@@ -269,18 +269,19 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="relative min-h-screen">
       {/* Live Video Background: Full Fill, Minimal Overlay & Very Subtle Blur */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden select-none">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="size-full object-cover"
-        >
-          <source src={headerVideo} type="video/mp4" />
-        </video>
-        {/* Minimal tint & 2px blur so the video stays crisp and bright */}
-        <div className="absolute inset-0 bg-background/20 backdrop-blur-[2px]" />
-      </div>
+  <video
+    autoPlay
+    loop
+    muted
+    playsInline
+    suppressHydrationWarning
+    className="size-full object-cover"
+  >
+    <source src={headerVideo} type="video/mp4" />
+  </video>
+
+  <div className="absolute inset-0 bg-background/20 backdrop-blur-[2px]" />
+</div>
 
       <div className="flex">
         <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
