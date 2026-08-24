@@ -1,0 +1,171 @@
+/* SkyCrypt Pixelated Rendering Rule */
+.pixelated {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+@keyframes playSpriteSheet {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 100%;
+  }
+}
+
+/* ==========================================================================
+   Motion system — entrance animations, skeletons, tickers, glows
+   ========================================================================== */
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes tickerScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 12px rgba(52, 211, 153, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(52, 211, 153, 0.35);
+  }
+}
+
+@keyframes floatSlow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-fade-slide-up {
+  animation: fadeSlideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out both;
+}
+
+.animate-page-in {
+  animation: pageIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.4s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: floatSlow 5s ease-in-out infinite;
+}
+
+/* Staggered entrance helper — set --stagger-index on children */
+.stagger > * {
+  animation: fadeSlideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--stagger-delay, 60ms) * var(--stagger-index, 0));
+}
+
+/* Shimmer skeleton */
+.skeleton-shimmer {
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0.04) 40%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.04) 60%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* Live economy ticker */
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: tickerScroll 45s linear infinite;
+}
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+/* Light theme — hide the dark gameplay video background */
+.light video {
+  display: none !important;
+}
+.light body {
+  background: oklch(0.96 0.008 240) !important;
+}
+
+/* Solid theme variant — opaque panels, no backdrop blur */
+.theme-solid .backdrop-blur-xl,
+.theme-solid .backdrop-blur-md,
+.theme-solid .backdrop-blur-2xl {
+  backdrop-filter: none !important;
+}
+.theme-solid video {
+  display: none !important;
+}
+.theme-solid body {
+  background: #0b0e14 !important;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-slide-up,
+  .animate-fade-in,
+  .animate-page-in,
+  .animate-pulse-glow,
+  .animate-float-slow,
+  .stagger > *,
+  .ticker-track,
+  .skeleton-shimmer {
+    animation: none !important;
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "SkyForge — SkyBlock Assistant",
+  "short_name": "SkyForge",
+  "description": "Live Hypixel SkyBlock dashboard: bazaar flips, auction analysis, profile analytics.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0E121B",
+  "theme_color": "#34d399",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+export const ITEM_ALIASES: Record<string, string> = {
+  husbandry_sack: "backpack_brown",
+  beginner_husbandry_sack: "backpack_brown",
+  small_husbandry_sack: "backpack_brown",
+  medium_husbandry_sack: "backpack_brown",
+  large_husbandry_sack: "backpack_brown",
+  gemstone_sack: "backpack_gray",
+  gift_compass: "royal_compass",
+  redstone_dust: "redstone_rune",
+  // The item is named "Ruby Drill TX-15" in auction data, while its
+  // resource-pack icon is stored under the base Ruby Drill key.
+  ruby_drill_tx_15: "ruby_drill",
+  lushlilac: "double_plant",
+  lush_lilac: "double_plant",
+  lilac: "double_plant",
+  end_stone: "endstone",
+  fig_log: "toil_log",
+  figlog: "toil_log",
+  lapis_lazuli: "lapis_crystal",
+  lapis: "lapis_crystal",
+  ink_sack_4: "lapis_crystal",
+  slimeball: "compact_ooze",
+  slime_ball: "compact_ooze",
+  aote: "aspect_of_the_end",
+  aotv: "aspect_of_the_void",
+  aotd: "aspect_of_the_dragons",
+  primordial_eye: "gazing_pearl",
+  petrified_oak_slab: "hardened_wood",
+  tarantula_ring: "tarantula_talisman",
+  arack: "spider_sword",
+  shriveled_bracelet: "adaptive_belt",
+  unstable_fragment: "unstable_dragon_fragment",
+  strong_fragment: "strong_dragon_fragment",
+  wise_fragment: "wise_dragon_fragment",
+  young_fragment: "young_dragon_fragment",
+  superior_fragment: "superior_dragon_fragment",
+  old_fragment: "old_dragon_fragment",
+  protector_fragment: "protector_dragon_fragment",
+  holy_fragment: "holy_dragon_fragment",
+};
+
+export const REFORGE_PREFIX =
+  /^(gentle|odd|fast|fair|epic|sharp|heroic|spicy|legendary|dirty|filded|salty|treacherous|deadly|fine|grand|hasty|neat|rapid|unreal|awkward|rich|clean|fierce|heavy|mythic|pure|smart|titanic|wise|bizarre|demonic|forceful|hurtful|keen|strong|unpleasant|zealous|godly|soft|fabled|withered|rebound)(?:_|\s+)/i;
