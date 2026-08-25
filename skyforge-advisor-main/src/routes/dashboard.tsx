@@ -16,6 +16,7 @@ import {
   TYPICAL_CONTAINER_COUNT,
 } from "@/lib/constants";
 import { formatFull } from "@/lib/skyblock";
+import { calculateSkyBlockLevel } from "@/lib/skyblock-level";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -59,6 +60,8 @@ function Dashboard() {
   const profile = data?.profiles.find((p) => p.profileId === data.activeProfileId);
 
   const netWorth = data ? data.purse + (data.bank ?? 0) : 0;
+
+  const sbLevel = useMemo(() => calculateSkyBlockLevel(data), [data]);
 
   const collectionCategories = useMemo(
     () => Array.from(new Set(data?.collections.map((c) => c.category) ?? [])),
@@ -160,7 +163,12 @@ function Dashboard() {
                   <p className="eyebrow uppercase tracking-wider text-xs text-muted-foreground">
                     SkyBlock Profile
                   </p>
-                  <h1 className="mt-1 text-5xl font-bold tracking-tight">{data.username}</h1>
+                  <div className="flex items-center gap-3">
+                    <h1 className="mt-1 text-5xl font-bold tracking-tight">{data.username}</h1>
+                    <span className="mt-1 flex items-center gap-1 rounded-xl border border-sky-400/40 bg-sky-500/15 px-3 py-1 font-mono text-sm font-black text-sky-300 shadow-md">
+                      LVL {sbLevel.level}
+                    </span>
+                  </div>
                   <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground sm:justify-start">
                     <span>{profile?.cuteName ?? "Active profile"}</span>
                     <span className="glass-soft rounded-full px-2.5 py-0.5 text-xs font-medium">
@@ -212,6 +220,67 @@ function Dashboard() {
                 }
                 sublabel="skill average"
               />
+            </div>
+          </Panel>
+
+          {/* 15-Source SkyBlock Level Breakdown Panel */}
+          <Panel className="relative overflow-hidden border-sky-500/20 bg-gradient-to-br from-sky-500/[0.04] via-transparent to-emerald-500/[0.02]">
+            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-5">
+              <div>
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center justify-center rounded-xl border border-sky-400/40 bg-sky-500/15 px-3 py-1 font-mono text-xl font-black text-sky-300 shadow-lg shadow-sky-500/10">
+                    LVL {sbLevel.level}
+                  </span>
+                  <div>
+                    <h2 className="text-2xl font-bold tracking-tight text-white">
+                      SkyBlock Level Engine
+                    </h2>
+                    <p className="text-xs text-white/50">
+                      Total XP: {sbLevel.totalXp.toLocaleString()} XP · {sbLevel.xpToNextLevel} XP to Level {sbLevel.level + 1}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <span className="font-mono text-xs font-bold text-sky-400">
+                    {sbLevel.progressPct}%
+                  </span>
+                  <p className="text-[10px] text-white/40">to Level {sbLevel.level + 1}</p>
+                </div>
+                <div className="w-32">
+                  <ProgressBar pct={sbLevel.progressPct} />
+                </div>
+              </div>
+            </div>
+
+            {/* 15-Source Grid */}
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+              {sbLevel.categories.map((cat) => (
+                <div
+                  key={cat.id}
+                  className="rounded-xl border border-white/5 bg-white/[0.02] p-3.5 backdrop-blur transition-all duration-75 hover:border-sky-500/30 hover:bg-white/[0.05]"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-white/80">{cat.name}</span>
+                    <span className="font-mono text-xs font-bold text-sky-400">
+                      +{cat.levelContribution} LVL
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-baseline justify-between text-xs">
+                    <span className="font-mono font-bold text-white/90">
+                      {cat.currentXp.toLocaleString()} XP
+                    </span>
+                    <span className="text-[10px] text-white/40">
+                      / {cat.maxEstimatedXp.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="mt-2">
+                    <ProgressBar pct={Math.min(100, Math.round((cat.currentXp / cat.maxEstimatedXp) * 100))} />
+                  </div>
+                  <p className="mt-2 truncate text-[10px] text-white/40">{cat.details}</p>
+                </div>
+              ))}
             </div>
           </Panel>
 

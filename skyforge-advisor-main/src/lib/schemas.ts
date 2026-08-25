@@ -227,6 +227,63 @@ export const playerDataSchema = z.object({
       ),
     })
     .optional(),
+  bestiary: z
+    .object({
+      totalKills: z.number(),
+      totalDeaths: z.number(),
+      totalTiersUnlocked: z.number(),
+      maxTiers: z.number(),
+      milestone: z.number(),
+      milestoneProgressPct: z.number(),
+      families: z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          totalKills: z.number(),
+          totalDeaths: z.number(),
+          tiersUnlocked: z.number(),
+          maxTiers: z.number(),
+          mobs: z.array(
+            z.object({
+              id: z.string(),
+              name: z.string(),
+              kills: z.number(),
+              deaths: z.number(),
+              tier: z.number(),
+              maxTier: z.number(),
+              nextTierKills: z.number().nullable(),
+              bracket: z.number(),
+            }),
+          ),
+        }),
+      ),
+    })
+    .optional(),
+  slayerOverview: z
+    .object({
+      totalXp: z.number(),
+      totalKills: z.number(),
+      bosses: z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          level: z.number(),
+          maxLevel: z.number(),
+          currentXp: z.number(),
+          neededXp: z.number(),
+          totalKills: z.number(),
+          tierKills: z.record(z.string(), z.number()),
+          unlockedPassives: z.array(z.string()),
+        }),
+      ),
+      passives: z.object({
+        health: z.number(),
+        critDamage: z.number(),
+        speed: z.number(),
+        extraEffects: z.array(z.string()),
+      }),
+    })
+    .optional(),
 });
 
 export type PlayerDataValidated = z.infer<typeof playerDataSchema>;

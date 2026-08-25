@@ -187,33 +187,118 @@ function Skills() {
             </Panel>
           )}
 
-          {/* Slayers */}
-          {data?.slayers && data.slayers.length > 0 && (
-            <Panel>
-              <div className="flex flex-wrap items-baseline justify-between gap-3">
-                <h2 className="text-xl font-semibold">Slayers</h2>
-                <p className="text-xs text-muted-foreground">Kills, tiers and XP per boss</p>
+          {/* Slayers & Permanent Stat Passives */}
+          {data?.slayerOverview && (
+            <Panel className="relative overflow-hidden border-rose-500/20 bg-gradient-to-br from-rose-500/[0.03] via-transparent to-amber-500/[0.02]">
+              <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-white/10 pb-4">
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight text-white">Slayer Progression & Passives</h2>
+                  <p className="text-xs text-white/50">
+                    {data.slayerOverview.totalXp.toLocaleString()} total Slayer XP · {data.slayerOverview.totalKills.toLocaleString()} total boss kills
+                  </p>
+                </div>
+                {/* Permanent Passives Badges */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-xs font-bold text-red-400">
+                    +{data.slayerOverview.passives.health} HP
+                  </span>
+                  <span className="rounded-lg border border-blue-500/30 bg-blue-500/10 px-2.5 py-1 text-xs font-bold text-blue-400">
+                    +{data.slayerOverview.passives.critDamage}% Crit Dmg
+                  </span>
+                  <span className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-bold text-emerald-400">
+                    +{data.slayerOverview.passives.speed} Speed
+                  </span>
+                </div>
               </div>
 
-              <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {data.slayers.map((slayer) => (
-                  <li
-                    key={`${slayer.name}-${slayer.tier}`}
-                    className="glass-soft flex items-center justify-between gap-3 rounded-xl px-4 py-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{slayer.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Tier {slayer.tier}
-                        {slayer.xp ? ` · ${formatFull(slayer.xp)} XP` : ""}
+              {/* Boss Cards Grid */}
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {data.slayerOverview.bosses.map((boss) => {
+                  const pct = boss.neededXp > 0 ? Math.min(100, Math.round((boss.currentXp / boss.neededXp) * 100)) : 100;
+                  return (
+                    <div
+                      key={boss.id}
+                      className="rounded-xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur transition-all hover:border-rose-500/30 hover:bg-white/[0.04]"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-white">{boss.name}</span>
+                        <span className="rounded-lg border border-rose-500/40 bg-rose-500/15 px-2 py-0.5 font-mono text-xs font-black text-rose-300">
+                          LVL {boss.level}
+                        </span>
+                      </div>
+                      <div className="mt-3 flex items-baseline justify-between text-xs">
+                        <span className="font-mono text-white/80">
+                          {boss.currentXp.toLocaleString()} XP
+                        </span>
+                        <span className="text-[10px] text-white/40">
+                          {boss.neededXp > 0 ? `Next: ${boss.neededXp.toLocaleString()} XP` : "MAXED"}
+                        </span>
+                      </div>
+                      <div className="mt-2">
+                        <ProgressBar pct={pct} />
+                      </div>
+                      <div className="mt-3 flex items-center justify-between border-t border-white/5 pt-2 text-[11px] text-white/50">
+                        <span>Total Kills</span>
+                        <span className="font-mono font-bold text-white/80">{boss.totalKills.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Panel>
+          )}
+
+          {/* Bestiary Mob Tiers & Family Progression */}
+          {data?.bestiary && data.bestiary.totalKills > 0 && (
+            <Panel className="relative overflow-hidden border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.03] via-transparent to-cyan-500/[0.02]">
+              <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-white/10 pb-4">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center justify-center rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-3 py-1 font-mono text-lg font-black text-emerald-300">
+                      Milestone {data.bestiary.milestone}
+                    </span>
+                    <div>
+                      <h2 className="text-xl font-bold tracking-tight text-white">Bestiary Family Milestones</h2>
+                      <p className="text-xs text-white/50">
+                        {data.bestiary.totalKills.toLocaleString()} mob kills · {data.bestiary.totalTiersUnlocked} / {data.bestiary.maxTiers} tiers unlocked
                       </p>
                     </div>
-                    <p className="shrink-0 font-mono text-sm font-semibold text-primary">
-                      {slayer.kills.toLocaleString()}
-                    </p>
-                  </li>
-                ))}
-              </ul>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-white/40">Next Milestone:</span>
+                  <div className="w-24">
+                    <ProgressBar pct={data.bestiary.milestoneProgressPct} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Family Breakdown Cards */}
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {data.bestiary.families.filter((f) => f.totalKills > 0).map((family) => {
+                  const pct = family.maxTiers > 0 ? Math.min(100, Math.round((family.tiersUnlocked / family.maxTiers) * 100)) : 0;
+                  return (
+                    <div
+                      key={family.id}
+                      className="rounded-xl border border-white/5 bg-white/[0.02] p-3.5 backdrop-blur"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white">{family.name}</span>
+                        <span className="font-mono text-xs font-bold text-emerald-400">
+                          {family.tiersUnlocked} / {family.maxTiers} Tiers
+                        </span>
+                      </div>
+                      <div className="mt-2 flex items-baseline justify-between text-[11px]">
+                        <span className="font-mono text-white/70">{family.totalKills.toLocaleString()} kills</span>
+                        <span className="text-white/40">{pct}%</span>
+                      </div>
+                      <div className="mt-2">
+                        <ProgressBar pct={pct} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </Panel>
           )}
 

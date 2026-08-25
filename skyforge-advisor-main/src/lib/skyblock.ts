@@ -421,6 +421,8 @@ export type PlayerData = {
   lifetimeStats?: LifetimeStats;
   communityUpgrades?: { upgrade: string; level: number }[];
   sacks?: SacksData;
+  bestiary?: import("./bestiary").BestiaryData;
+  slayerOverview?: import("./slayer").SlayerOverview;
 };
 
 export type SackItem = {
