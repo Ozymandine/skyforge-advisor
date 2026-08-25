@@ -39,6 +39,8 @@ import {
   fetchApiHealth,
 } from "@/lib/hypixel.functions";
 import { markAllRead, useNotificationFeed } from "@/hooks/use-notification-feed";
+import { applyTheme, getTheme, onThemeChange, setTheme as setThemeStored } from "@/lib/theme";
+import { getPref, onPrefsChange } from "@/lib/prefs";
 import { formatNumber, type BazaarProduct } from "@/lib/skyblock";
 import { cn } from "@/lib/utils";
 import {
@@ -260,6 +262,19 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
 
 /** Live economy ticker — top bazaar flips + ending-soon BIN flips. */
 function EconomyTicker() {
+  const [enabled, setEnabled] = useState(true);
+
+  useEffect(() => {
+    setEnabled(getPref("ticker", true));
+    return onPrefsChange(() => setEnabled(getPref("ticker", true)));
+  }, []);
+
+  if (!enabled) return null;
+
+  return <TickerContent />;
+}
+
+function TickerContent() {
   const bazaar = useQuery({
     queryKey: ["bazaar"],
     queryFn: () => fetchBazaar(),
@@ -323,18 +338,6 @@ function EconomyTicker() {
 
 const THEME_STORAGE = "theme";
 
-function applyTheme(theme: string) {
-  const root = document.documentElement;
-  root.classList.remove("dark", "light", "theme-solid");
-  if (theme === "system") {
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    root.classList.add(prefersDark ? "dark" : "light");
-  } else {
-    root.classList.add(theme === "light" ? "light" : "dark");
-  }
-  if (theme === "solid") root.classList.add("theme-solid");
-}
-
 function Header({
   onOpenSearch,
   onOpenNav,
@@ -349,17 +352,20 @@ function Header({
   const [theme, setTheme] = useState<string>("dark");
 
   useEffect(() => {
-    const stored = localStorage.getItem(THEME_STORAGE) ?? "dark";
-    setTheme(stored);
-    applyTheme(stored);
+    setTheme(getTheme());
+    applyTheme(getTheme());
+    return onThemeChange(setTheme);
   }, []);
 
   const cycleTheme = () => {
     const order = ["dark", "solid", "light", "system"];
     const next = order[(order.indexOf(theme) + 1) % order.length]!;
+    setThemeState(next);
+  };
+
+  const setThemeState = (next: string) => {
     setTheme(next);
-    localStorage.setItem(THEME_STORAGE, next);
-    applyTheme(next);
+    setThemeStored(next);
   };
 
   // Expose theme cycling to the command palette.
@@ -584,7 +590,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           <source src={headerVideo} type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-background/20 backdrop-blur-[2px]" />
+        <div className="absolute inset-0 bg-background/75 backdrop-blur-[3px]" />
       </div>
 
       <div className="flex">
@@ -873,7 +879,7 @@ export function Panel({ className, children }: { className?: string; children: R
   return (
     <section
       className={cn(
-        "animate-fade-slide-up rounded-3xl border border-white/10 bg-slate-950/30 p-6 backdrop-blur-xl shadow-2xl transition-all duration-100 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:bg-slate-950/40",
+        "animate-fade-slide-up rounded-3xl border border-white/10 bg-slate-950/75 p-6 backdrop-blur-xl shadow-2xl transition-all duration-100 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:bg-slate-950/80",
         className,
       )}
     >
@@ -894,7 +900,7 @@ export function StatTile({ label, value, sub }: { label: string; value: string; 
 
 export function StatRow({ stats }: { stats: { label: string; value: string; sub: string }[] }) {
   return (
-    <div className="grid grid-cols-1 divide-y divide-white/10 rounded-3xl border border-white/10 bg-slate-950/30 backdrop-blur-xl shadow-2xl sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x lg:divide-white/10">
+    <div className="grid grid-cols-1 divide-y divide-white/10 rounded-3xl border border-white/10 bg-slate-950/75 backdrop-blur-xl shadow-2xl sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x lg:divide-white/10">
       {stats.map((s) => (
         <StatTile key={s.label} {...s} />
       ))}

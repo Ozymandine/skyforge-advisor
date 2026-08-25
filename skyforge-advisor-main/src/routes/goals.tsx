@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, Plus, Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Check, Plus, Sparkles, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { PageHero, Panel, ProgressBar } from "@/components/layout/app-shell";
 import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
@@ -81,7 +81,91 @@ type Goal = {
 type Task = {
   label: string;
   done: boolean;
+  /** Default quests are curated; user-added ones are custom. */
+  custom?: boolean;
 };
+
+/** Curated default quests — always offered unless removed by the user. */
+const DEFAULT_TASKS: Record<"daily" | "weekly", string[]> = {
+  daily: [
+    "Complete 3 daily commissions",
+    "Check the Bazaar flip board",
+    "Claim minion earnings",
+    "Do one slayer quest",
+  ],
+  weekly: [
+    "Grind a dungeon floor",
+    "Kill a Tier 4+ slayer",
+    "Farm for 30 minutes",
+    "Hunt for underpriced BINs on the Auction House",
+  ],
+};
+
+function dayKey(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function weekKey(): string {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 1);
+  const week = Math.ceil(((now.getTime() - start.getTime()) / 86_400_000 + start.getDay() + 1) / 7);
+  return `${now.getFullYear()}-W${week}`;
+}
+
+const TASKS_STORAGE = "sba.tasks";
+
+type StoredTasks = {
+  day: string;
+  week: string;
+  /** Per-list task state. Removed default labels tracked so they stay gone. */
+  daily: Task[];
+  weekly: Task[];
+  removed: { daily: string[]; weekly: string[] };
+};
+
+function loadTasks(): StoredTasks {
+  const day = dayKey();
+  const week = weekKey();
+  let stored: StoredTasks | null = null;
+  try {
+    const raw = localStorage.getItem(TASKS_STORAGE);
+    stored = raw ? (JSON.parse(raw) as StoredTasks) : null;
+  } catch {
+    stored = null;
+  }
+
+  // Reset daily tasks on a new day, weekly tasks on a new week.
+  const dailyCarry = stored && stored.day === day ? stored.daily : [];
+  const weeklyCarry = stored && stored.week === week ? stored.weekly : [];
+  const removed = stored?.removed ?? { daily: [], weekly: [] };
+
+  const build = (list: "daily" | "weekly", carry: Task[]): Task[] => {
+    const custom = carry.filter((t) => t.custom);
+    const defaults = DEFAULT_TASKS[list]
+      .filter((label) => !removed[list].includes(label))
+      .map((label) => ({
+        label,
+        done: carry.some((t) => t.label === label && t.done),
+      }));
+    return [...defaults, ...custom];
+  };
+
+  return {
+    day,
+    week,
+    daily: build("daily", dailyCarry),
+    weekly: build("weekly", weeklyCarry),
+    removed,
+  };
+}
+
+function saveTasks(tasks: StoredTasks): void {
+  try {
+    localStorage.setItem(TASKS_STORAGE, JSON.stringify(tasks));
+  } catch {
+    // Storage unavailable — in-memory only.
+  }
+}
 
 export const Route = createFileRoute("/goals")({
   head: () => ({
@@ -106,16 +190,65 @@ function Goals() {
   const recommendations = useRecommendations();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [draft, setDraft] = useState("");
-  const [tasks, setTasks] = useState<{ daily: Task[]; weekly: Task[] }>({
-    daily: [],
-    weekly: [],
+  const [tasks, setTasks] = useState<{ daily: Task[]; weekly: Task[] }>(() => {
+    const stored = loadTasks();
+    return { daily: stored.daily, weekly: stored.weekly };
   });
+  const [removed, setRemoved] = useState<{ daily: string[]; weekly: string[] }>(() => {
+    return loadTasks().removed;
+  });
+  const [draftTask, setDraftTask] = useState<{ daily: string; weekly: string }>({
+    daily: "",
+    weekly: "",
+  });
+
+  // Persist (and roll over day/week) whenever tasks change.
+  useEffect(() => {
+    const stored = loadTasks();
+    saveTasks({
+      day: stored.day,
+      week: stored.week,
+      daily: tasks.daily,
+      weekly: tasks.weekly,
+      removed,
+    });
+  }, [tasks, removed]);
+
+  // Roll over to a new day/week at midnight or on return visits.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const stored = loadTasks();
+      setTasks({ daily: stored.daily, weekly: stored.weekly });
+      setRemoved(stored.removed);
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const toggle = (list: "daily" | "weekly", idx: number) =>
     setTasks((current) => ({
       ...current,
       [list]: current[list].map((task, i) => (i === idx ? { ...task, done: !task.done } : task)),
     }));
+
+  const removeTask = (list: "daily" | "weekly", idx: number) => {
+    const task = tasks[list][idx];
+    if (!task) return;
+    // Removing a default quest keeps it gone for the rest of the day/week.
+    if (!task.custom) {
+      setRemoved((current) => ({ ...current, [list]: [...current[list], task.label] }));
+    }
+    setTasks((current) => ({ ...current, [list]: current[list].filter((_, i) => i !== idx) }));
+  };
+
+  const addTask = (list: "daily" | "weekly") => {
+    const label = draftTask[list].trim();
+    if (!label) return;
+    setTasks((current) => ({
+      ...current,
+      [list]: [...current[list], { label, done: false, custom: true }],
+    }));
+    setDraftTask((current) => ({ ...current, [list]: "" }));
+  };
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -216,35 +349,63 @@ function Goals() {
               {(["daily", "weekly"] as const).map((list) => (
                 <Panel key={list}>
                   <h2 className="text-lg font-semibold capitalize">{list} tasks</h2>
-                  {tasks[list].length === 0 ? (
-                    <p className="mt-4 text-sm text-muted-foreground">
-                      No {list} tasks yet. Add a goal to create a task list.
-                    </p>
-                  ) : (
-                    <ul className="mt-4 space-y-2">
-                      {tasks[list].map((task, index) => (
-                        <li key={task.label}>
-                          <button
-                            onClick={() => toggle(list, index)}
-                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent"
+                  <ul className="mt-4 space-y-2">
+                    {tasks[list].map((task, index) => (
+                      <li key={task.label} className="group flex items-center gap-1">
+                        <button
+                          onClick={() => toggle(list, index)}
+                          className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent"
+                        >
+                          <span
+                            className={`flex size-4.5 shrink-0 items-center justify-center rounded-md border ${
+                              task.done
+                                ? "border-primary bg-primary/20 text-primary"
+                                : "border-border"
+                            }`}
                           >
-                            <span
-                              className={`flex size-4.5 shrink-0 items-center justify-center rounded-md border ${
-                                task.done
-                                  ? "border-primary bg-primary/20 text-primary"
-                                  : "border-border"
-                              }`}
-                            >
-                              {task.done && <Check className="size-3" />}
-                            </span>
-                            <span className={task.done ? "text-muted-foreground line-through" : ""}>
-                              {task.label}
-                            </span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                            {task.done && <Check className="size-3" />}
+                          </span>
+                          <span
+                            className={`min-w-0 truncate ${
+                              task.done ? "text-muted-foreground line-through" : ""
+                            }`}
+                          >
+                            {task.label}
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => removeTask(list, index)}
+                          aria-label={`Remove task: ${task.label}`}
+                          className="shrink-0 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-white/10 hover:text-danger group-hover:opacity-100"
+                        >
+                          <X className="size-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                    {tasks[list].length === 0 && (
+                      <li className="px-3 py-2 text-sm text-muted-foreground">
+                        All tasks done or removed — add your own below.
+                      </li>
+                    )}
+                  </ul>
+                  <div className="mt-3 flex gap-2">
+                    <input
+                      value={draftTask[list]}
+                      onChange={(e) =>
+                        setDraftTask((current) => ({ ...current, [list]: e.target.value }))
+                      }
+                      onKeyDown={(e) => e.key === "Enter" && addTask(list)}
+                      placeholder="Add a task..."
+                      className="min-w-0 flex-1 rounded-xl border border-input bg-secondary/40 px-3 py-2 text-sm outline-none placeholder:text-muted-foreground"
+                    />
+                    <button
+                      onClick={() => addTask(list)}
+                      disabled={!draftTask[list].trim()}
+                      className="flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/15 px-3 py-2 text-sm font-medium text-primary disabled:opacity-50"
+                    >
+                      <Plus className="size-4" /> Add
+                    </button>
+                  </div>
                 </Panel>
               ))}
             </div>

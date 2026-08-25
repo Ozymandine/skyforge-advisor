@@ -16,7 +16,6 @@ const SkillRadarChart = lazy(async () => {
     ResponsiveContainer,
     Tooltip,
   } = await import("recharts");
-
   function Composed({ skills }: { skills: RadarSkill[] }) {
     const data = skills.map((s) => ({
       skill: s.name,
@@ -29,38 +28,40 @@ const SkillRadarChart = lazy(async () => {
       typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches;
 
     return (
-      <RadarChart data={data} outerRadius="72%">
-        <PolarGrid stroke="rgba(255,255,255,0.08)" />
-        <PolarAngleAxis
-          dataKey="skill"
-          tick={
-            isSmall
-              ? { fontSize: 0, fill: "transparent" }
-              : { fontSize: 10, fill: "rgba(255,255,255,0.45)" }
-          }
-        />
-        <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
-        <Tooltip
-          formatter={(value, _name, entry) => {
-            const payload = (entry as { payload?: { level?: number } } | undefined)?.payload;
-            return [`${payload?.level ?? "?"} (${String(value)}%)`, "Level"];
-          }}
-          contentStyle={{
-            background: "rgba(2,6,23,0.9)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: 12,
-            fontSize: 12,
-          }}
-        />
-        <Radar
-          dataKey="pct"
-          stroke="#34d399"
-          strokeWidth={2}
-          fill="#34d399"
-          fillOpacity={0.25}
-          animationDuration={900}
-        />
-      </RadarChart>
+      <ResponsiveContainer width="100%" height="100%">
+        <RadarChart data={data} outerRadius="72%">
+          <PolarGrid stroke="rgba(255,255,255,0.08)" />
+          <PolarAngleAxis
+            dataKey="skill"
+            tick={
+              isSmall
+                ? { fontSize: 0, fill: "transparent" }
+                : { fontSize: 10, fill: "rgba(255,255,255,0.45)" }
+            }
+          />
+          <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
+          <Tooltip
+            formatter={(value, _name, entry) => {
+              const payload = (entry as { payload?: { level?: number } } | undefined)?.payload;
+              return [`${payload?.level ?? "?"} (${String(value)}%)`, "Level"];
+            }}
+            contentStyle={{
+              background: "rgba(2,6,23,0.9)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: 12,
+              fontSize: 12,
+            }}
+          />
+          <Radar
+            dataKey="pct"
+            stroke="#34d399"
+            strokeWidth={2}
+            fill="#34d399"
+            fillOpacity={0.25}
+            animationDuration={900}
+          />
+        </RadarChart>
+      </ResponsiveContainer>
     );
   }
 

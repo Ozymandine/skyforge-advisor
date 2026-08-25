@@ -132,7 +132,7 @@ function Landing() {
   return (
     <div className="mx-auto max-w-7xl space-y-14 pb-8">
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-950/40 px-6 py-16 text-center backdrop-blur-xl sm:px-12">
+      <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-950/75 px-6 py-16 text-center backdrop-blur-xl sm:px-12">
         <div className="pointer-events-none absolute -right-32 -top-32 size-96 rounded-full bg-emerald-500/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 -left-32 size-96 rounded-full bg-cyan-500/10 blur-3xl" />
 

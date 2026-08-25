@@ -83,16 +83,16 @@
   --radius: 0.9rem;
   --background: oklch(0.19 0.014 240);
   --foreground: oklch(0.97 0.005 240);
-  --card: oklch(0.24 0.016 243 / 0.62);
+  --card: oklch(0.24 0.016 243 / 0.82);
   --card-foreground: oklch(0.97 0.005 240);
   --popover: oklch(0.22 0.016 243);
   --popover-foreground: oklch(0.97 0.005 240);
   --primary: oklch(0.75 0.18 152);
   --primary-foreground: oklch(0.18 0.03 155);
-  --secondary: oklch(0.3 0.016 243 / 0.7);
+  --secondary: oklch(0.3 0.016 243 / 0.85);
   --secondary-foreground: oklch(0.95 0.005 240);
-  --muted: oklch(0.3 0.014 243 / 0.55);
-  --muted-foreground: oklch(0.72 0.014 245);
+  --muted: oklch(0.3 0.014 243 / 0.8);
+  --muted-foreground: oklch(0.78 0.012 245);
   --accent: oklch(0.34 0.018 243 / 0.8);
   --accent-foreground: oklch(0.97 0.005 240);
   --destructive: oklch(0.62 0.21 25);
@@ -203,7 +203,7 @@
 }
 
 @utility glass-soft {
-  background-color: var(--muted);
+  background-color: oklch(0.22 0.016 243 / 0.82);
   border: 1px solid var(--border);
   backdrop-filter: blur(18px) saturate(130%);
 }

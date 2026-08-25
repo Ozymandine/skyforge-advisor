@@ -50,15 +50,27 @@ function sourcesFor(item: SkyBlockItem): string[] {
   const resolved = resolveItemTexture(itemWithoutTexture);
   const barrier = "/vanilla/barrier.png";
 
+  // User preference: when texture-pack fallback is off, skip vanilla
+  // fallback textures and let the icon fall through to the SVG placeholder.
+  const fallbackEnabled =
+    typeof window === "undefined" || window.localStorage.getItem("sba.textureFallback") !== "0";
+
   const registered = [resolved.src, ...(resolved.candidates ?? [])].filter(
     (src): src is string => Boolean(src) && src !== barrier,
   );
 
   const hasItemSpecificSprite = ["exact-id", "alias", "registry"].includes(resolved.source);
 
-  const ordered = hasItemSpecificSprite ? [...registered, texture] : [texture, ...registered];
+  const ordered = hasItemSpecificSprite
+    ? [...registered, ...(fallbackEnabled ? [texture] : [])]
+    : [texture, ...registered].filter((src) => fallbackEnabled || src !== texture);
 
-  return [...new Set([...ordered.filter((src): src is string => Boolean(src)), barrier])];
+  return [
+    ...new Set([
+      ...ordered.filter((src): src is string => Boolean(src)),
+      ...(fallbackEnabled ? [barrier] : []),
+    ]),
+  ];
 }
 
 function isMinecraftSkin(src: string): boolean {
@@ -409,7 +421,26 @@ export function ItemIcon({
       }
     >
       {status === "error" || !currentSrc ? (
-        <img src="/vanilla/barrier.png" alt={normalizedName} className={visualClassName} />
+        <span
+          aria-label={normalizedName}
+          className={cn(
+            "flex items-center justify-center rounded-sm border border-white/10 bg-white/5 text-white/30",
+            visualClassName,
+          )}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="size-1/2"
+            aria-hidden="true"
+          >
+            {/* Simple 3D-cube silhouette: generic "unknown item" marker */}
+            <path d="M12 2 21 7v10l-9 5-9-5V7l9-5Z" strokeLinejoin="round" />
+            <path d="M3.3 7.3 12 12l8.7-4.7M12 12v10" strokeLinejoin="round" />
+          </svg>
+        </span>
       ) : (
         <>
           <canvas

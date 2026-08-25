@@ -213,6 +213,8 @@ export type AuctionEntry = {
   rarity: string;
   bin: boolean;
   price: number;
+  /** Current top bid for non-BIN auctions (null for BIN). */
+  topBid: number | null;
   lowestBin: number | null;
   profit: number;
   endsInMs: number;

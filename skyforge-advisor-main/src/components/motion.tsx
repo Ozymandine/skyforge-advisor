@@ -171,7 +171,7 @@ export function Skeleton({ className }: { className?: string }) {
 
 export function SkeletonStatRow({ count = 4 }: { count?: number }) {
   return (
-    <div className="grid grid-cols-1 gap-4 rounded-3xl border border-white/10 bg-slate-950/30 p-6 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 rounded-3xl border border-white/10 bg-slate-950/75 p-6 sm:grid-cols-2 lg:grid-cols-4">
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="space-y-3 px-2 py-3">
           <Skeleton className="h-3 w-20" />

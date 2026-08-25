@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 
 import { PageHero, Panel } from "@/components/layout/app-shell";
 import { Switch } from "@/components/ui/switch";
+import { getPref, onPrefsChange, setPref } from "@/lib/prefs";
+import { getTheme, setTheme as setThemeStored } from "@/lib/theme";
 import { usePlayer, useAccount } from "@/hooks/use-account";
 import { formatFull } from "@/lib/skyblock";
 
@@ -51,13 +53,29 @@ function Settings() {
   const [name, setName] = useState("");
   const [textureFallback, setTextureFallback] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [ticker, setTicker] = useState(true);
+  const [theme, setTheme] = useState("dark");
 
   useEffect(() => {
     if (account.hydrated) {
       setKey(account.apiKey);
       setName(account.username);
     }
+    setTextureFallback(getPref("textureFallback", true));
+    setReducedMotion(getPref("reducedMotion", false));
+    setTicker(getPref("ticker", true));
+    setTheme(getTheme());
+    return onPrefsChange(() => {
+      setTextureFallback(getPref("textureFallback", true));
+      setReducedMotion(getPref("reducedMotion", false));
+      setTicker(getPref("ticker", true));
+    });
   }, [account.hydrated, account.apiKey, account.username]);
+
+  // Apply reduced motion globally when toggled.
+  useEffect(() => {
+    document.documentElement.classList.toggle("force-reduced-motion", reducedMotion);
+  }, [reducedMotion]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -184,20 +202,52 @@ function Settings() {
       <Panel>
         <h2 className="text-xl font-semibold">Appearance</h2>
         <Row title="Theme" description="Dark glass is the default and only tuned theme.">
-          <select className="rounded-xl border border-input bg-secondary/40 px-4 py-2 text-sm outline-none">
-            <option>Dark glass</option>
-            <option>Dark solid</option>
-            <option>System</option>
+          <select
+            value={theme}
+            onChange={(e) => {
+              setTheme(e.target.value);
+              setThemeStored(e.target.value);
+            }}
+            className="rounded-xl border border-input bg-secondary/40 px-4 py-2 text-sm outline-none"
+          >
+            <option value="dark">Dark glass</option>
+            <option value="solid">Dark solid</option>
+            <option value="light">Light</option>
+            <option value="system">System</option>
           </select>
+        </Row>
+        <Row
+          title="Economy ticker"
+          description="Show the live market ticker strip at the top of every page."
+        >
+          <Switch
+            checked={ticker}
+            onCheckedChange={(v) => {
+              setTicker(v);
+              setPref("ticker", v);
+            }}
+          />
         </Row>
         <Row
           title="Texture pack fallback"
           description="Render vanilla textures when a custom pack asset is missing."
         >
-          <Switch checked={textureFallback} onCheckedChange={setTextureFallback} />
+          <Switch
+            checked={textureFallback}
+            onCheckedChange={(v) => {
+              setTextureFallback(v);
+              setPref("textureFallback", v);
+            }}
+          />
         </Row>
         <Row title="Reduced motion" description="Disable panel and chart transitions.">
-          <Switch checked={reducedMotion} onCheckedChange={setReducedMotion} />
+          <Switch
+            checked={reducedMotion}
+            onCheckedChange={(v) => {
+              setReducedMotion(v);
+              setPref("reducedMotion", v);
+            }}
+          />
         </Row>
       </Panel>
     </div>

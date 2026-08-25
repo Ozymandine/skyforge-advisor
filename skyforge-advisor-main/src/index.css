@@ -171,6 +171,14 @@
   }
 }
 
+/* User-forced reduced motion (Settings toggle) */
+.force-reduced-motion *,
+.force-reduced-motion *::after,
+.force-reduced-motion *::before {
+  animation: none !important;
+  transition-duration: 0.01ms !important;
+}
+
 /* ==========================================================================
    FORGE DESIGN SYSTEM — Minecraft-native premium utilities
    ========================================================================== */

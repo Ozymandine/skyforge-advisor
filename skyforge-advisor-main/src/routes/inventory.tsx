@@ -173,7 +173,11 @@ function Inventory() {
                           title={slotItem?.name ?? "Empty"}
                         >
                           {slotItem ? (
-                            <ItemIcon id={slotItem.id} name={slotItem.name} className="size-full" />
+                            <ItemIcon
+                              id={slotItem.id}
+                              name={slotItem.name}
+                              className="size-[85%]"
+                            />
                           ) : null}
                         </button>
                       );
@@ -181,7 +185,7 @@ function Inventory() {
                   </div>
                 </Panel>
 
-                <Panel>
+                <Panel className="bg-slate-950/85">
                   {item ? (
                     <>
                       <div className="flex items-center gap-3">
@@ -194,11 +198,46 @@ function Inventory() {
                       {item.count > 1 && (
                         <p className="mt-2 text-sm text-muted-foreground">Quantity: {item.count}</p>
                       )}
-                      <div className="mt-4 space-y-1 font-mono text-xs leading-5 text-muted-foreground">
-                        {item.lore.map((line, index) => (
-                          <RenderMinecraftLore key={index} text={line} />
-                        ))}
-                      </div>
+
+                      {/* Structured tooltip: stat block, flavor text, ability */}
+                      {(() => {
+                        const statLines = item.lore.filter((l) => /^[^:]+:\s*\S/.test(l));
+                        const flavorLines = item.lore.filter(
+                          (l) => l.trim() && !/^[^:]+:\s*\S/.test(l),
+                        );
+                        return (
+                          <>
+                            {statLines.length > 0 && (
+                              <dl className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-black/30 p-3">
+                                {statLines.map((line, index) => {
+                                  const [label, ...rest] = line.split(":");
+                                  return (
+                                    <div
+                                      key={index}
+                                      className="flex items-baseline justify-between gap-3 font-mono text-xs"
+                                    >
+                                      <dt className="shrink-0 text-muted-foreground">{label}:</dt>
+                                      <dd className="min-w-0 text-right">
+                                        <RenderMinecraftLore text={rest.join(":").trim()} />
+                                      </dd>
+                                    </div>
+                                  );
+                                })}
+                              </dl>
+                            )}
+
+                            {flavorLines.length > 0 && (
+                              <div className="mt-3 space-y-1.5 text-xs leading-relaxed text-muted-foreground">
+                                {flavorLines.map((line, index) => (
+                                  <p key={index}>
+                                    <RenderMinecraftLore text={line} />
+                                  </p>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
 
                       {/* NBT extras: structured enchant/reforge/gem/star data */}
                       {(item.enchantments ||

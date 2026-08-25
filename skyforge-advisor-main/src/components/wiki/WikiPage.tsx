@@ -8,7 +8,6 @@ import {
   ChevronDown,
   ChevronRight,
   BarChart3,
-  Database,
   Coins,
   ShoppingCart,
   Store,
@@ -160,7 +159,7 @@ const RARITIES = [
   "VERY SPECIAL",
 ] as const;
 
-const MAX_RENDERED_RESULTS = 500;
+const MAX_RENDERED_RESULTS = 1000;
 
 const RARITY_META: Record<
   string,
@@ -362,6 +361,8 @@ export function WikiPage({
 }: WikiPageProps) {
   const [internalSearch, setInternalSearch] = useState("");
   const [internalCategory, setInternalCategory] = useState("All");
+  // Internal pagination: the route sends a large batch; we render in chunks.
+  const [renderLimit, setRenderLimit] = useState(MAX_RENDERED_RESULTS);
 
   // Controlled when the parent supplies query/category, else internal state.
   const search = query ?? internalSearch;
@@ -478,20 +479,18 @@ export function WikiPage({
 
   const activeFilterCount = (selectedCategory !== "All" ? 1 : 0) + (selectedRarity ? 1 : 0);
 
-  const renderedItems = filteredItems.slice(0, MAX_RENDERED_RESULTS);
+  const renderedItems = filteredItems.slice(0, renderLimit);
 
   const hasMoreResults = filteredItems.length > renderedItems.length;
 
   const loadMoreBlock = hasMoreResults ? (
     <div className="mt-5 flex items-center justify-center">
-      <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-card/70 px-4 py-2.5 text-xs text-muted-foreground">
-        <Database size={14} aria-hidden="true" />
-
-        <span>
-          Refine your search to narrow down the {filteredItems.length.toLocaleString()} matching
-          results.
-        </span>
-      </div>
+      <button
+        onClick={() => setRenderLimit((v) => v + 1000)}
+        className="rounded-full border border-primary/40 bg-primary/15 px-6 py-2 text-sm font-medium text-primary transition-all duration-75 ease-out hover:scale-[1.03] hover:bg-primary/25 active:scale-95"
+      >
+        Load more ({(filteredItems.length - renderedItems.length).toLocaleString()} remaining)
+      </button>
     </div>
   ) : null;
 
@@ -777,7 +776,8 @@ export function WikiPage({
 
             {hasMoreResults && (
               <p className="mt-0.5 text-xs text-muted-foreground/70">
-                Showing the first {MAX_RENDERED_RESULTS.toLocaleString()} results
+                Showing {renderedItems.length.toLocaleString()} of{" "}
+                {filteredItems.length.toLocaleString()} results
               </p>
             )}
           </div>

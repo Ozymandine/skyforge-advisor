@@ -128,7 +128,7 @@ function AuctionHouse() {
     if (!data?.entries?.length) return;
     const hourBucket = Math.floor(Date.now() / (60 * 60 * 1000));
     const top = [...data.entries]
-      .filter((a) => a.bin && a.profit > 0)
+      .filter((a) => a.bin && a.profit > 0 && !!a.id)
       .sort((a, b) => b.profit - a.profit)
       .slice(0, 10);
     for (const a of top) {
@@ -138,7 +138,7 @@ function AuctionHouse() {
       void logFlip({
         data: {
           id,
-          itemId: a.id ?? a.name,
+          itemId: a.id!,
           price: a.price,
           expected: (a.lowestBin ?? a.price) * 0.9875,
           kind: "ah",
@@ -336,12 +336,14 @@ function AuctionHouse() {
                       profit: a.profit,
                     })
                   }
-                  className={`glass-soft relative w-full cursor-pointer rounded-2xl px-5 py-4 text-left transition-all duration-75 ease-out hover:scale-[1.01] hover:border-primary/30 ${
-                    hot ? "border-amber-400/40 shadow-[0_0_20px_rgba(251,191,36,0.12)]" : ""
+                  className={`relative w-full cursor-pointer rounded-2xl border bg-black/40 px-5 py-4 text-left backdrop-blur-md transition-all duration-75 ease-out hover:scale-[1.01] ${
+                    hot
+                      ? "border-amber-400/50 shadow-[0_0_24px_rgba(251,191,36,0.18)] hover:border-amber-400/70"
+                      : "border-amber-400/15 hover:border-amber-400/40"
                   }`}
                 >
                   {hot && (
-                    <span className="absolute -top-2.5 left-4 rounded-full border border-amber-400/50 bg-amber-400/15 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-300 backdrop-blur-md animate-pulse">
+                    <span className="font-pixel absolute -top-2.5 left-4 z-10 rounded-full border-2 border-amber-400/60 bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-200 backdrop-blur-md animate-pulse">
                       🔥 Hot flip
                     </span>
                   )}
@@ -357,23 +359,33 @@ function AuctionHouse() {
                         <p className="truncate text-base font-semibold">{a.name}</p>
                         <div className="mt-1.5 flex items-center gap-2">
                           <RarityTag rarity={a.rarity} />
-                          <span className="rounded-md border border-border px-1.5 py-0.5 text-[10px] tracking-widest text-muted-foreground">
+                          <span className="rounded-md border border-amber-400/30 bg-amber-400/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-widest text-amber-300">
                             {a.bin ? "BIN" : `AUCTION · ${a.bids} bids`}
                           </span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex shrink-0 flex-col items-end gap-1">
+                    <div className="flex shrink-0 flex-col items-end">
+                      <span className="font-pixel text-2xl font-bold leading-none text-amber-300">
+                        {formatNumber(a.price)}
+                      </span>
+                      <span className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        {a.bin ? "buy now" : "current bid"}
+                      </span>
                       {spark && spark.length >= 2 && (
                         <Suspense fallback={null}>
                           <HistorySparkline itemId={a.id!} />
                         </Suspense>
                       )}
-                      <p className="text-right text-sm font-semibold">{formatNumber(a.price)}</p>
+                      {a.profit > 0 && (
+                        <p className="text-right text-sm font-semibold text-emerald-400">
+                          +{formatNumber(a.profit)} flip
+                        </p>
+                      )}
                     </div>
                   </div>
 
-                  <dl className="mt-4 grid grid-cols-3 gap-2 text-xs">
+                  <dl className="mt-4 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
                     {[
                       ["Lowest BIN", a.lowestBin ? formatNumber(a.lowestBin) : "—"],
                       [
@@ -381,6 +393,14 @@ function AuctionHouse() {
                         a.profit > 0 ? `+${formatNumber(a.profit)}` : formatNumber(a.profit),
                       ],
                       ["Ends in", formatDuration(a.endsInMs)],
+                      [
+                        a.bin ? "Buy now" : "Top bid",
+                        !a.bin && a.topBid
+                          ? formatNumber(a.topBid)
+                          : a.bin
+                            ? formatNumber(a.price)
+                            : "—",
+                      ],
                     ].map(([k, v]) => (
                       <div key={k}>
                         <dt className="text-muted-foreground">{k}</dt>

@@ -67,7 +67,7 @@ export function ForgeCard({
   return (
     <div
       className={cn(
-        "pixel-frame relative bg-slate-950/40 backdrop-blur-xl p-5",
+        "pixel-frame relative bg-slate-950/75 backdrop-blur-xl p-5",
         rarity && RARITY_CLASS[rarity],
         hover && "pixel-frame-hover",
         className,
@@ -166,7 +166,7 @@ export function ForgeStat({
   highlight?: boolean;
 }) {
   return (
-    <div className="pixel-frame frame-common bg-slate-950/40 px-5 py-4">
+    <div className="pixel-frame frame-common bg-slate-950/75 px-5 py-4">
       <div className="flex items-center justify-between gap-2">
         <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
           {label}

@@ -741,7 +741,7 @@ export async function getItems(): Promise<WikiItem[]> {
 
       return {
         id: item.id,
-        name: item.name ?? titleCase(item.id),
+        name: (item.name ?? titleCase(item.id)).replace(/§./g, "").trim(),
 
         ...(item.material !== undefined ? { material: item.material } : {}),
         rarity: item.tier ?? "COMMON",
@@ -1257,6 +1257,8 @@ export async function getAuctions(pages = 6): Promise<{
 
           price,
 
+          topBid: auction.bin ? null : Math.max(auction.highest_bid_amount, 0) || null,
+
           lowestBin: lb,
 
           profit: lb !== null ? lb - price : 0,
@@ -1688,6 +1690,12 @@ async function parseContainer(
 
       const extra = nbtObject(tag["ExtraAttributes"]) ?? {};
 
+      // Empty slots have no item id — skip them entirely.
+      const itemId = extra["id"];
+      if (typeof itemId !== "string" || !itemId) {
+        return;
+      }
+
       const lore = nbtArray(display["Lore"]).map((line) => stripColors(String(line)));
 
       const rawName = display["Name"] ?? extra["id"] ?? "Unknown Item";
@@ -1726,7 +1734,7 @@ async function parseContainer(
 
         name,
 
-        id: String(extra["id"] ?? "UNKNOWN"),
+        id: itemId,
 
         ...(texture ? { texture } : {}),
 
@@ -2125,9 +2133,24 @@ export async function getPlayerData(
         }
       | undefined;
 
+    // HOTM has its own XP curve (roughly: tier N requires ~640 * N^2.6 XP).
+    function hotmTierFromXp(xp: number): number {
+      if (xp <= 0) return 0;
+      let tier = 0;
+      for (let t = 1; t <= 10; t++) {
+        if (xp >= 640 * Math.pow(t, 2.6)) tier = t;
+        else break;
+      }
+      return tier;
+    }
+
     let hotm: import("./skyblock").HotmStats | undefined;
-    if (miningCore) {
+    if (
+      miningCore &&
+      (Number(miningCore.experience ?? 0) > 0 || Object.keys(miningCore.nodes ?? {}).length > 0)
+    ) {
       const nodes: Record<string, number> = {};
+      let hotmLevelFromNodes = 0;
       for (const [key, value] of Object.entries(miningCore.nodes ?? {})) {
         if (key.endsWith("_level")) {
           const nodeKey = key.replace(/_level$/, "").replace(/^node_\d+_/, "");
@@ -2136,16 +2159,15 @@ export async function getPlayerData(
               ? value
               : Number((value as { level?: number } | undefined)?.level ?? 0);
           if (level > 0) nodes[nodeKey] = level;
+          // HOTM tier is stored directly as the hotm node level.
+          if (/^hotm$/.test(nodeKey)) hotmLevelFromNodes = level;
         }
       }
-      const tier = Math.max(
-        0,
-        ...Object.entries(miningCore.tiers_area ?? {}).map(([, v]) => Number(v) || 0),
-        computeSkill("MINING", Number(miningCore.experience ?? 0)).level,
-      );
+      const xp = Number(miningCore.experience ?? 0);
+      const tier = hotmLevelFromNodes > 0 ? hotmLevelFromNodes : hotmTierFromXp(xp);
       hotm = {
         tier,
-        xp: Number(miningCore.experience ?? 0),
+        xp,
         powders: {
           mithril: Number(miningCore.powders?.["mithril"] ?? 0),
           gemstone: Number(miningCore.powders?.["gemstone"] ?? 0),
