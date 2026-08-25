@@ -184,6 +184,10 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                       name={player.data?.username || account.username}
                     />
                     <div className="min-w-0">
+                      <p className="truncate text-xs font-bold text-foreground">
+                        {player.data?.username ?? (account.username || "Not connected")}
+                      </p>
+                      <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
                         <span
                           className={cn(
                             "size-1.5 rounded-full",
