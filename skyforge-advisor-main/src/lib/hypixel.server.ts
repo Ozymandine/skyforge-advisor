@@ -1724,10 +1724,20 @@ async function parseContainer(
         }
       }
 
-      const starsRaw = extra["dungeon_item_level"];
+      const starsRaw = extra["dungeon_item_level"] ?? extra["upgrade_level"];
       const hpbRaw = extra["hot_potato_count"];
 
       const scrollsRaw = nbtArray(extra["ability_scroll"]);
+
+      const attributesRaw = nbtObject(extra["attributes"]);
+      const attributes: Record<string, number> = {};
+      for (const [attrKey, attrLvl] of Object.entries(attributesRaw ?? {})) {
+        const num = Number(attrLvl);
+        if (Number.isFinite(num) && num > 0) attributes[attrKey] = num;
+      }
+
+      const artOfWarRaw = extra["art_of_war_count"];
+      const woodSingularityRaw = extra["wood_singularity_count"];
 
       items.push({
         slot: index,
@@ -1762,6 +1772,14 @@ async function parseContainer(
                 .map((s) => titleCase(String(s).replace(/_/g, " ")))
                 .slice(0, 3),
             }
+          : {}),
+
+        ...(Object.keys(attributes).length > 0 ? { attributes } : {}),
+
+        ...(typeof artOfWarRaw === "number" && artOfWarRaw > 0 ? { artOfWar: artOfWarRaw } : {}),
+
+        ...(typeof woodSingularityRaw === "number" && woodSingularityRaw > 0
+          ? { woodSingularity: woodSingularityRaw }
           : {}),
       });
     });
@@ -2368,12 +2386,39 @@ export async function getPlayerData(
       .filter((u) => u.upgrade)
       .map((u) => ({ upgrade: titleCase(String(u.upgrade)), level: Number(u.tier ?? 0) }));
 
-    const profile = member["profile"] as
-      | {
-          last_save?: number;
-        }
-      | undefined;
+    // Sacks counts decoder & valuation against live bazaar/NPC prices
+    const sacksRaw = (member["sacks_counts"] ?? (member["inventory"] as Record<string, unknown> | undefined)?.["sacks_counts"] ?? {}) as Record<string, number>;
+    let sacks: import("./skyblock").SacksData | undefined;
+    const sackEntries = Object.entries(sacksRaw).filter(([, count]) => typeof count === "number" && count > 0);
+    if (sackEntries.length > 0) {
+      const bazaar = await getBazaar().catch(() => null);
+      const bzMap = new Map<string, number>();
+      for (const prod of bazaar?.products ?? []) {
+        bzMap.set(prod.id, prod.sellPrice || prod.buyPrice || 0);
+      }
+      const itemsList = await getItems().catch(() => []);
+      const itemMeta = new Map(itemsList.map((it) => [it.id, it]));
+      const sackItems: import("./skyblock").SackItem[] = [];
+      let totalSacksValue = 0;
+      for (const [id, count] of sackEntries) {
+        const unitPrice = bzMap.get(id) ?? (itemMeta.get(id)?.npcSell ?? 0);
+        const val = Math.round(unitPrice * count);
+        totalSacksValue += val;
+        sackItems.push({
+          id,
+          name: names.get(id) ?? titleCase(id.replace(/_/g, " ")),
+          count,
+          value: val,
+        });
+      }
+      sackItems.sort((a, b) => b.value - a.value);
+      sacks = {
+        totalValue: totalSacksValue,
+        items: sackItems,
+      };
+    }
 
+    const profile = member["profile"] as { last_save?: number } | undefined;
     const lastSaveRaw = member["last_save"];
 
     const payload = {
@@ -2427,6 +2472,8 @@ export async function getPlayerData(
       ...(lifetimeStats ? { lifetimeStats } : {}),
 
       ...(communityUpgrades.length ? { communityUpgrades } : {}),
+
+      ...(sacks ? { sacks } : {}),
     };
 
     // Runtime-validate the normalized payload before it crosses the wire.

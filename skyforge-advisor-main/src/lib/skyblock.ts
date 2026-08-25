@@ -226,20 +226,26 @@ export type InventoryItem = {
   slot: number;
   name: string;
   id: string;
-  texture?: string;
+  texture?: string | undefined;
   rarity: string;
   count: number;
   lore: string[];
   /** Enchantment levels parsed from NBT ExtraAttributes. */
-  enchantments?: Record<string, number>;
-  reforge?: string;
+  enchantments?: Record<string, number> | undefined;
+  reforge?: string | undefined;
   /** Dungeon stars (0–10). */
-  stars?: number;
-  hotPotatoBooks?: number;
+  stars?: number | undefined;
+  hotPotatoBooks?: number | undefined;
   /** Gemstone slots filled, keyed by slot name. */
-  gems?: Record<string, string>;
+  gems?: Record<string, string> | undefined;
   /** Essence cost tier / ability scroll info when present. */
-  abilityScrolls?: string[];
+  abilityScrolls?: string[] | undefined;
+  /** Kuudra attributes (keyed by attribute id e.g. mana_pool, veteran) */
+  attributes?: Record<string, number> | undefined;
+  /** The Art of War applied (+5 Strength) */
+  artOfWar?: number | undefined;
+  /** Wood Singularity applied (+100 HP) */
+  woodSingularity?: number | undefined;
 };
 
 export type InventoryContainer = {
@@ -414,6 +420,19 @@ export type PlayerData = {
   experimentation?: ExperimentationStats;
   lifetimeStats?: LifetimeStats;
   communityUpgrades?: { upgrade: string; level: number }[];
+  sacks?: SacksData;
+};
+
+export type SackItem = {
+  id: string;
+  name: string;
+  count: number;
+  value: number;
+};
+
+export type SacksData = {
+  totalValue: number;
+  items: SackItem[];
 };
 
 export function formatDuration(ms: number): string {

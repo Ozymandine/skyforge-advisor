@@ -37,6 +37,9 @@ export const inventoryItemSchema = z.object({
   hotPotatoBooks: z.number().optional(),
   gems: z.record(z.string(), z.string()).optional(),
   abilityScrolls: z.array(z.string()).optional(),
+  attributes: z.record(z.string(), z.number()).optional(),
+  artOfWar: z.number().optional(),
+  woodSingularity: z.number().optional(),
 });
 
 export const inventoryContainerSchema = z.object({
@@ -211,6 +214,19 @@ export const playerDataSchema = z.object({
   experimentation: experimentationSchema.optional(),
   lifetimeStats: lifetimeStatsSchema.optional(),
   communityUpgrades: z.array(communityUpgradeSchema).optional(),
+  sacks: z
+    .object({
+      totalValue: z.number(),
+      items: z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          count: z.number(),
+          value: z.number(),
+        }),
+      ),
+    })
+    .optional(),
 });
 
 export type PlayerDataValidated = z.infer<typeof playerDataSchema>;

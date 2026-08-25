@@ -94,24 +94,63 @@ function NetWorth() {
     );
   };
 
+  const valueOfItem = (item: import("@/lib/skyblock").InventoryItem) => {
+    const rawBase = priceOf(item);
+    const valuation = estimateItemValue(item.lore, rawBase > 0 ? rawBase : null, {
+      enchantments: item.enchantments,
+      stars: item.stars,
+      hotPotatoBooks: item.hotPotatoBooks,
+      reforge: item.reforge,
+      gems: item.gems,
+      attributes: item.attributes,
+      abilityScrolls: item.abilityScrolls,
+      artOfWar: item.artOfWar,
+      woodSingularity: item.woodSingularity,
+    });
+    if (valuation.total !== null && valuation.total > 0) {
+      return valuation.total;
+    }
+    const upgrades =
+      valuation.enchantTotal +
+      valuation.bookTotal +
+      valuation.masterStarTotal +
+      valuation.gemTotal +
+      valuation.attributeTotal +
+      valuation.reforgeValue +
+      valuation.scrollTotal +
+      valuation.extrasTotal;
+    return Math.max(rawBase, upgrades);
+  };
+
   const containers = data?.containers ?? [];
 
-  // Value every container against live bazaar prices.
+  // Value every container against live bazaar prices and upgraded item valuation.
   const containerValues = useMemo(() => {
-    return containers
+    const list = containers
       .map((container) => ({
         id: container.id,
         label: container.label,
         items: container.items.length,
-        value: container.items.reduce((sum, item) => sum + priceOf(item), 0),
-      }))
-      .sort((a, b) => b.value - a.value);
+        value: container.items.reduce((sum, item) => sum + valueOfItem(item), 0),
+      }));
+
+    if (data?.sacks && data.sacks.totalValue > 0) {
+      list.push({
+        id: "sacks",
+        label: "Sacks & Storage",
+        items: data.sacks.items.length,
+        value: data.sacks.totalValue,
+      });
+    }
+
+    return list.sort((a, b) => b.value - a.value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [containers, priceIndex]);
+  }, [containers, data?.sacks, priceIndex]);
 
   const itemsValue = containerValues.reduce((sum, c) => sum + c.value, 0);
+  const sacksValue = data?.sacks?.totalValue ?? 0;
   const total = data ? data.purse + (data.bank ?? 0) + itemsValue : 0;
-  const containerItems = containers.reduce((sum, container) => sum + container.items.length, 0);
+  const containerItems = containers.reduce((sum, container) => sum + container.items.length, 0) + (data?.sacks?.items.length ?? 0);
   const bankPct = total > 0 ? Math.round(((data?.bank ?? 0) / total) * 100) : 0;
   const pursePct = total > 0 ? Math.round(((data?.purse ?? 0) / total) * 100) : 0;
   const itemsPct = total > 0 ? Math.round((itemsValue / total) * 100) : 0;
@@ -133,32 +172,40 @@ function NetWorth() {
 
   const history = useNetWorthHistory(data?.activeProfileId, total);
 
-  // Most valuable single items across every container, priced from the
-  // bazaar when possible, otherwise from lore-based upgrade estimates.
+  // Most valuable single items across every container & sacks, priced from the
+  // bazaar when possible, otherwise from exponential upgrade valuation.
   const topItems = useMemo(() => {
     const all = containers.flatMap((container) =>
       container.items
         .filter((item) => item.count > 0)
-        .map((item) => {
-          const market = priceOf(item);
-          const estimated = estimateItemValue(item.lore, null);
-          const upgradeValue =
-            estimated.enchantTotal +
-            estimated.bookTotal +
-            (estimated.base ?? 0) * 0.05 * estimated.stars;
-          return {
-            id: item.id,
-            name: item.name,
-            rarity: item.rarity,
-            count: item.count,
-            container: container.label,
-            value: Math.max(market, upgradeValue > 0 ? upgradeValue : 0),
-          };
-        }),
+        .map((item) => ({
+          id: item.id,
+          name: item.name,
+          rarity: item.rarity,
+          count: item.count,
+          container: container.label,
+          value: valueOfItem(item),
+        })),
     );
+
+    if (data?.sacks?.items) {
+      for (const sack of data.sacks.items) {
+        if (sack.value > 100_000) {
+          all.push({
+            id: sack.id,
+            name: sack.name,
+            rarity: "UNCOMMON",
+            count: sack.count,
+            container: "Sacks",
+            value: sack.value,
+          });
+        }
+      }
+    }
+
     return all.sort((a, b) => b.value - a.value).slice(0, 10);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [containers, priceIndex]);
+  }, [containers, data?.sacks, priceIndex]);
   const firstPoint = history[0];
   const growth =
     firstPoint && firstPoint.v > 0 ? ((total - firstPoint.v) / firstPoint.v) * 100 : null;
@@ -339,7 +386,7 @@ function NetWorth() {
                 </li>
                 <li>
                   <div className="flex items-baseline justify-between text-sm">
-                    <p className="font-medium">Items (bazaar-priced)</p>
+                    <p className="font-medium">Items (Upgraded & Bazaar)</p>
                     <p className="font-mono text-xs text-muted-foreground">
                       {formatFull(itemsValue)} · {itemsPct}%
                     </p>
@@ -348,6 +395,19 @@ function NetWorth() {
                     <ProgressBar pct={itemsPct} />
                   </div>
                 </li>
+                {sacksValue > 0 && (
+                  <li>
+                    <div className="flex items-baseline justify-between text-sm">
+                      <p className="font-medium">Sacks & Material Storage</p>
+                      <p className="font-mono text-xs text-muted-foreground">
+                        {formatFull(sacksValue)} · {total > 0 ? Math.round((sacksValue / total) * 100) : 0}%
+                      </p>
+                    </div>
+                    <div className="mt-2">
+                      <ProgressBar pct={total > 0 ? Math.round((sacksValue / total) * 100) : 0} />
+                    </div>
+                  </li>
+                )}
               </ul>
             </Panel>
 
