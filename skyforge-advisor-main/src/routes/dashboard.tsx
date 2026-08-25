@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { CircleCheck, Lock } from "lucide-react";
 import { useMemo } from "react";
 
@@ -6,6 +7,7 @@ import { ConnectPrompt, ErrorState } from "@/components/data-states";
 import { CountUp, ProgressRing, SkeletonPage, Stagger } from "@/components/motion";
 import { Panel, ProgressBar } from "@/components/layout/app-shell";
 import { ProfileShareCard } from "@/components/profile-share-card";
+import { fetchGuild, fetchStatus } from "@/lib/hypixel.functions";
 import { usePlayer } from "@/hooks/use-account";
 import {
   MAX_COLLECTION_CATEGORIES,
@@ -36,6 +38,23 @@ export const Route = createFileRoute("/dashboard")({
 
 function Dashboard() {
   const { data, isLoading, error, connected } = usePlayer();
+
+  // Guild + live online status (second-tier endpoints, cached server-side).
+  const guildQuery = useQuery({
+    queryKey: ["guild", data?.uuid],
+    queryFn: () => fetchGuild({ data: { uuid: data!.uuid } }),
+    enabled: !!data?.uuid,
+    staleTime: 10 * 60_000,
+  });
+  const statusQuery = useQuery({
+    queryKey: ["status", data?.uuid],
+    queryFn: () => fetchStatus({ data: { uuid: data!.uuid } }),
+    enabled: !!data?.uuid,
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+  });
+  const guild = guildQuery.data;
+  const status = statusQuery.data;
 
   const profile = data?.profiles.find((p) => p.profileId === data.activeProfileId);
 
@@ -148,6 +167,18 @@ function Dashboard() {
                       {profile?.gameMode ?? "Classic"}
                     </span>
                     <span>{profile?.members ?? 1} member(s)</span>
+                    {guild && (
+                      <span className="glass-soft rounded-full px-2.5 py-0.5 text-xs font-medium text-cyan-300">
+                        {guild.name}
+                        {guild.tag ? ` [${guild.tag}]` : ""}
+                      </span>
+                    )}
+                    {status?.online && (
+                      <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
+                        <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" />
+                        Online{status.game ? ` · ${status.game}` : ""}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <ProfileShareCard

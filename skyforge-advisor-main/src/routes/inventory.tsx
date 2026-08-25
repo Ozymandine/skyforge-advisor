@@ -43,7 +43,7 @@ export const Route = createFileRoute("/inventory")({
   component: Inventory,
 });
 
-type Mode = "containers" | "accessories" | "pets";
+type Mode = "containers" | "accessories" | "pets" | "profile";
 
 /* ============================================================================
  * PET XP TABLE (cumulative XP required to reach each level, 1-100)
@@ -111,6 +111,9 @@ function Inventory() {
         </Chip>
         <Chip active={mode === "pets"} onClick={() => setMode("pets")}>
           Pets
+        </Chip>
+        <Chip active={mode === "profile"} onClick={() => setMode("profile")}>
+          Museum & Achievements
         </Chip>
       </div>
 
@@ -196,6 +199,79 @@ function Inventory() {
                           <RenderMinecraftLore key={index} text={line} />
                         ))}
                       </div>
+
+                      {/* NBT extras: structured enchant/reforge/gem/star data */}
+                      {(item.enchantments ||
+                        item.reforge ||
+                        item.stars ||
+                        item.hotPotatoBooks ||
+                        item.gems ||
+                        item.abilityScrolls) && (
+                        <div className="mt-4 space-y-2 border-t border-white/10 pt-3">
+                          {item.reforge && (
+                            <p className="text-xs">
+                              <span className="text-muted-foreground">Reforge:</span>{" "}
+                              <span className="font-semibold text-foreground">{item.reforge}</span>
+                            </p>
+                          )}
+                          {item.enchantments && Object.keys(item.enchantments).length > 0 && (
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                Enchantments
+                              </p>
+                              <div className="mt-1 flex flex-wrap gap-1">
+                                {Object.entries(item.enchantments).map(([ench, level]) => (
+                                  <span
+                                    key={ench}
+                                    className="rounded-md border border-sky-400/25 bg-sky-400/10 px-1.5 py-0.5 text-[10px] font-medium text-sky-300"
+                                  >
+                                    {ench.replace(/_/g, " ")} {level}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {item.stars ? (
+                            <p className="text-xs">
+                              <span className="text-muted-foreground">Dungeon stars:</span>{" "}
+                              <span className="font-mono font-semibold text-amber-300">
+                                {"✪".repeat(item.stars)}
+                              </span>
+                            </p>
+                          ) : null}
+                          {item.hotPotatoBooks ? (
+                            <p className="text-xs">
+                              <span className="text-muted-foreground">Hot potato books:</span>{" "}
+                              <span className="font-mono font-semibold">{item.hotPotatoBooks}</span>
+                            </p>
+                          ) : null}
+                          {item.gems && Object.keys(item.gems).length > 0 && (
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                Gemstones
+                              </p>
+                              <div className="mt-1 flex flex-wrap gap-1">
+                                {Object.entries(item.gems).map(([slot, gem]) => (
+                                  <span
+                                    key={slot}
+                                    className="rounded-md border border-purple-400/25 bg-purple-400/10 px-1.5 py-0.5 text-[10px] text-purple-300"
+                                  >
+                                    {gem.replace(/_/g, " ")}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {item.abilityScrolls && item.abilityScrolls.length > 0 && (
+                            <p className="text-xs">
+                              <span className="text-muted-foreground">Scrolls:</span>{" "}
+                              <span className="font-semibold">
+                                {item.abilityScrolls.join(", ")}
+                              </span>
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </>
                   ) : (
                     <p className="text-sm text-muted-foreground">Select a slot to inspect it.</p>
@@ -209,7 +285,124 @@ function Inventory() {
 
       {mode === "accessories" && data && <AccessoriesSection />}
       {mode === "pets" && data && <PetsSection />}
+      {mode === "profile" && data && <ProfileSection />}
     </div>
+  );
+}
+
+/* ============================================================================
+ * PROFILE — museum, achievements, lifetime stats, co-op upgrades
+ * ========================================================================== */
+
+function ProfileSection() {
+  const { data } = usePlayer();
+
+  const hasAnything =
+    data?.museum ||
+    data?.achievements ||
+    data?.lifetimeStats ||
+    (data?.communityUpgrades && data.communityUpgrades.length > 0);
+
+  if (!hasAnything) {
+    return (
+      <Panel>
+        <p className="text-sm text-muted-foreground">
+          No museum, achievement or lifetime-stat data is available for this profile.
+        </p>
+      </Panel>
+    );
+  }
+
+  return (
+    <>
+      {data?.museum && (
+        <Panel>
+          <h2 className="text-xl font-semibold">Museum</h2>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {data.museum.donatedItems != null && (
+              <div className="glass-soft rounded-2xl p-5">
+                <p className="text-sm font-medium">Items donated</p>
+                <p className="mt-3 text-3xl font-semibold">{data.museum.donatedItems}</p>
+                <p className="mt-2 text-xs text-muted-foreground">Unique items in the museum</p>
+              </div>
+            )}
+            {data.museum.appraised != null && (
+              <div className="glass-soft rounded-2xl p-5">
+                <p className="text-sm font-medium">Appraised</p>
+                <p className="mt-3 text-3xl font-semibold">Yes</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Museum bonus applied to this profile
+                </p>
+              </div>
+            )}
+          </div>
+        </Panel>
+      )}
+
+      {data?.achievements && (
+        <Panel>
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="text-xl font-semibold">Achievements</h2>
+            <p className="font-mono text-sm font-bold text-primary">
+              {data.achievements.points.toLocaleString()} points
+            </p>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-1.5">
+            {Object.entries(data.achievements.categories)
+              .sort((a, b) => b[1] - a[1])
+              .map(([category, count]) => (
+                <span
+                  key={category}
+                  className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] capitalize"
+                >
+                  {category} <span className="font-mono font-bold text-primary">{count}</span>
+                </span>
+              ))}
+          </div>
+        </Panel>
+      )}
+
+      {data?.lifetimeStats && (
+        <Panel>
+          <h2 className="text-xl font-semibold">Lifetime stats</h2>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {data.lifetimeStats.kills != null && (
+              <div className="glass-soft rounded-2xl p-5">
+                <p className="text-sm font-medium">Kills</p>
+                <p className="mt-3 text-3xl font-semibold">
+                  {data.lifetimeStats.kills.toLocaleString()}
+                </p>
+              </div>
+            )}
+            {data.lifetimeStats.deaths != null && (
+              <div className="glass-soft rounded-2xl p-5">
+                <p className="text-sm font-medium">Deaths</p>
+                <p className="mt-3 text-3xl font-semibold">
+                  {data.lifetimeStats.deaths.toLocaleString()}
+                </p>
+              </div>
+            )}
+          </div>
+        </Panel>
+      )}
+
+      {data?.communityUpgrades && data.communityUpgrades.length > 0 && (
+        <Panel>
+          <h2 className="text-xl font-semibold">Co-op upgrades</h2>
+          <div className="mt-4 flex flex-wrap gap-1.5">
+            {data.communityUpgrades.map((upgrade) => (
+              <span
+                key={upgrade.upgrade}
+                className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px]"
+              >
+                {upgrade.upgrade}{" "}
+                <span className="font-mono font-bold text-primary">Tier {upgrade.level}</span>
+              </span>
+            ))}
+          </div>
+        </Panel>
+      )}
+    </>
   );
 }
 
