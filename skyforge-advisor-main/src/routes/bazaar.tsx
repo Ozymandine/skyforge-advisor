@@ -7,6 +7,7 @@ const BazaarHistoryChart = lazy(() => import("@/components/bazaar-history-chart"
 
 import { ErrorState, LoadState } from "@/components/data-states";
 import { Chip, PageHero, Panel, ProgressBar, StatRow } from "@/components/layout/app-shell";
+import { ForgeCard, ForgeProgress, type ForgeRarity } from "@/components/forge";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { Sparkline } from "@/components/ui/sparkline";
 import { useWatchlist } from "@/hooks/use-watchlist";
@@ -269,135 +270,129 @@ function BazaarCard({ product, hot = false }: { product: BazaarProduct; hot?: bo
       ? ((history[history.length - 1]!.v - history[0]!.v) / history[0]!.v) * 100
       : null;
 
+  // Margin strength drives the rarity frame — stronger flips glow harder.
+  const marginRarity: ForgeRarity =
+    i.margin >= 15 ? "legendary" : i.margin >= 8 ? "epic" : i.margin >= 3 ? "rare" : "common";
+
   return (
-    <div
-      className={`relative rounded-2xl border bg-black/30 p-5 backdrop-blur-md transition-all duration-75 ease-out hover:scale-[1.01] hover:border-primary/40 shadow-lg ${
-        hot ? "border-amber-400/40 shadow-[0_0_24px_rgba(251,191,36,0.15)]" : "border-white/10"
-      }`}
-    >
+    <div className="relative">
       {hot && (
-        <span className="absolute -top-2.5 left-4 flex items-center gap-1 rounded-full border border-amber-400/50 bg-amber-400/15 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-300 backdrop-blur-md animate-pulse">
+        <span className="font-pixel absolute -top-2.5 left-4 z-10 flex items-center gap-1 border-2 border-amber-400/60 bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-200 backdrop-blur-md animate-pulse">
           🔥 Hot flip
         </span>
       )}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <ItemIcon id={i.id} name={i.name} className="size-8" />
-          <div className="min-w-0">
-            <button
-              onClick={() => watchlist.toggle(i.id)}
-              title={watchlist.has(i.id) ? "Remove from watchlist" : "Add to watchlist"}
-              className="group flex min-w-0 cursor-pointer text-left"
-            >
-              <Star
-                className={`mt-1 mr-1.5 size-3.5 shrink-0 transition-all duration-75 ${
-                  watchlist.has(i.id)
-                    ? "fill-gold text-gold"
-                    : "text-muted-foreground opacity-40 group-hover:opacity-100"
-                }`}
-              />
-              <span>
-                <span className="block truncate text-base font-semibold group-hover:text-primary">
-                  {i.name}
+      <ForgeCard rarity={marginRarity} className="p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <ItemIcon id={i.id} name={i.name} className="size-8" />
+            <div className="min-w-0">
+              <button
+                onClick={() => watchlist.toggle(i.id)}
+                title={watchlist.has(i.id) ? "Remove from watchlist" : "Add to watchlist"}
+                className="group flex min-w-0 cursor-pointer text-left"
+              >
+                <Star
+                  className={`mt-1 mr-1.5 size-3.5 shrink-0 transition-all duration-75 ${
+                    watchlist.has(i.id)
+                      ? "fill-gold text-gold"
+                      : "text-muted-foreground opacity-40 group-hover:opacity-100"
+                  }`}
+                />
+                <span>
+                  <span className="block truncate text-base font-semibold group-hover:text-primary">
+                    {i.name}
+                  </span>
+                  <span className="block truncate font-mono text-[10px] text-muted-foreground">
+                    {i.id}
+                  </span>
                 </span>
-                <span className="block truncate font-mono text-[10px] text-muted-foreground">
-                  {i.id}
-                </span>
-              </span>
-            </button>
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="flex shrink-0 flex-col items-end">
-          <span
-            className={`font-mono text-2xl font-black leading-none ${
-              i.margin >= 10
-                ? "text-emerald-300"
-                : i.margin >= 3
-                  ? "text-emerald-400"
-                  : "text-muted-foreground"
-            }`}
-          >
-            +{i.margin.toFixed(1)}%
-          </span>
-          <span className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-            margin / flip
-          </span>
-          <Sparkline points={history} />
-          {trendPct !== null && (
-            <p
-              className={`text-[10px] font-semibold ${trendPct >= 0 ? "text-emerald-400" : "text-red-400"}`}
-            >
-              {trendPct >= 0 ? "▲" : "▼"} {Math.abs(trendPct).toFixed(1)}%
+          <div className="flex shrink-0 flex-col items-end">
+            <span className="font-pixel text-3xl font-bold leading-none text-emerald-300">
+              +{i.margin.toFixed(1)}%
+            </span>
+            <span className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+              margin / flip
+            </span>
+            <Sparkline points={history} />
+            {trendPct !== null && (
+              <p
+                className={`text-[10px] font-semibold ${trendPct >= 0 ? "text-emerald-400" : "text-red-400"}`}
+              >
+                {trendPct >= 0 ? "▲" : "▼"} {Math.abs(trendPct).toFixed(1)}%
+              </p>
+            )}
+            <p className="text-right text-sm font-semibold text-emerald-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+              +{formatNumber(i.profitPerHour)}/hr
             </p>
-          )}
-          <p className="text-right text-sm font-semibold text-emerald-400 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-            +{formatNumber(i.profitPerHour)}/hr
-          </p>
-        </div>
-      </div>
-
-      <dl className="mt-4 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-        {[
-          ["Buy", formatNumber(i.buyPrice)],
-          ["Sell", formatNumber(i.sellPrice)],
-          ["Spread", formatNumber(i.spread)],
-          ["Margin", `${i.margin.toFixed(1)}%`],
-        ].map(([k, v]) => (
-          <div key={k}>
-            <dt className="text-muted-foreground">{k}</dt>
-            <dd className="mt-0.5 font-mono font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-              {v}
-            </dd>
           </div>
-        ))}
-      </dl>
+        </div>
 
-      <div className="mt-4 space-y-2">
-        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-          <span className="w-16 shrink-0">Liquidity</span>
-          <div className="flex-1">
-            <ProgressBar pct={i.liquidity} />
+        <dl className="mt-4 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+          {[
+            ["Buy", formatNumber(i.buyPrice)],
+            ["Sell", formatNumber(i.sellPrice)],
+            ["Spread", formatNumber(i.spread)],
+            ["Margin", `${i.margin.toFixed(1)}%`],
+          ].map(([k, v]) => (
+            <div key={k}>
+              <dt className="text-muted-foreground">{k}</dt>
+              <dd className="mt-0.5 font-mono font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                {v}
+              </dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+            <span className="w-16 shrink-0">Liquidity</span>
+            <div className="flex-1">
+              <ForgeProgress pct={i.liquidity} shine={i.liquidity >= 80} />
+            </div>
+            <span className="w-8 text-right font-mono">{i.liquidity}</span>
           </div>
-          <span className="w-8 text-right font-mono">{i.liquidity}</span>
-        </div>
-        <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-          <span className="w-16 shrink-0">Health</span>
-          <div className="flex-1">
-            <ProgressBar pct={i.health} />
+          <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+            <span className="w-16 shrink-0">Health</span>
+            <div className="flex-1">
+              <ForgeProgress pct={i.health} shine={i.health >= 80} />
+            </div>
+            <span className="w-8 text-right font-mono">{i.health}</span>
           </div>
-          <span className="w-8 text-right font-mono">{i.health}</span>
         </div>
-      </div>
 
-      <button
-        onClick={() => setExpanded((v) => !v)}
-        className="mt-3 flex w-full items-center justify-between rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
-      >
-        <span>
-          Weekly volume {formatNumber(i.buyMovingWeek)} bought · {formatNumber(i.sellMovingWeek)}{" "}
-          sold
-        </span>
-        <span className="flex items-center gap-1">
-          {history.length >= 2 ? `${history.length} price points` : "Building history…"}
-          <ChevronDown
-            className={`size-3.5 transition-transform ${expanded ? "rotate-180" : ""}`}
-          />
-        </span>
-      </button>
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-3 flex w-full items-center justify-between rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+        >
+          <span>
+            Weekly volume {formatNumber(i.buyMovingWeek)} bought · {formatNumber(i.sellMovingWeek)}{" "}
+            sold
+          </span>
+          <span className="flex items-center gap-1">
+            {history.length >= 2 ? `${history.length} price points` : "Building history…"}
+            <ChevronDown
+              className={`size-3.5 transition-transform ${expanded ? "rotate-180" : ""}`}
+            />
+          </span>
+        </button>
 
-      {expanded && (
-        <div className="mt-2 h-44 w-full rounded-xl border border-white/10 bg-black/40 p-2">
-          <Suspense
-            fallback={
-              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-                Loading chart…
-              </div>
-            }
-          >
-            <BazaarHistoryChart productId={i.id} points={history} />
-          </Suspense>
-        </div>
-      )}
+        {expanded && (
+          <div className="mt-2 h-44 w-full rounded-xl border border-white/10 bg-black/40 p-2">
+            <Suspense
+              fallback={
+                <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+                  Loading chart…
+                </div>
+              }
+            >
+              <BazaarHistoryChart productId={i.id} points={history} />
+            </Suspense>
+          </div>
+        )}
+      </ForgeCard>
     </div>
   );
 }

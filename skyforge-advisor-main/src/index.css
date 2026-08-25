@@ -165,7 +165,124 @@
   .animate-float-slow,
   .stagger > *,
   .ticker-track,
-  .skeleton-shimmer {
+  .skeleton-shimmer,
+  .shine-sweep::after {
     animation: none !important;
+  }
+}
+
+/* ==========================================================================
+   FORGE DESIGN SYSTEM — Minecraft-native premium utilities
+   ========================================================================== */
+
+/* Pixel display font for headings/labels */
+.font-pixel {
+  font-family: var(--font-pixel, "Pixelify Sans", sans-serif);
+  letter-spacing: 0.04em;
+}
+
+/* Pixel-corner frame: crisp 2px border with notched (cut) corners. */
+.pixel-frame {
+  position: relative;
+  border: 2px solid var(--frame-color, rgba(255, 255, 255, 0.12));
+  clip-path: polygon(
+    0 8px,
+    8px 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+/* Rarity frame variants — set --frame-color per rarity. */
+.frame-common {
+  --frame-color: var(--r-common);
+}
+.frame-uncommon {
+  --frame-color: var(--r-uncommon);
+}
+.frame-rare {
+  --frame-color: var(--r-rare);
+}
+.frame-epic {
+  --frame-color: var(--r-epic);
+}
+.frame-legendary {
+  --frame-color: var(--r-legendary);
+}
+.frame-mythic {
+  --frame-color: var(--r-mythic);
+}
+.frame-divine {
+  --frame-color: var(--r-divine);
+}
+.frame-special {
+  --frame-color: var(--r-special);
+}
+
+/* Hover lift for pixel frames. */
+.pixel-frame-hover:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in oklch, var(--frame-color, white) 65%, transparent);
+  box-shadow: 0 8px 28px -8px color-mix(in oklch, var(--frame-color, black) 45%, transparent);
+}
+
+/* Signature forge gradient — reserved for live/valuable data. */
+.forge-gradient-text {
+  background: linear-gradient(100deg, var(--forge-from), var(--forge-via), var(--forge-to));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.forge-gradient-bar {
+  background: linear-gradient(90deg, var(--forge-from), var(--forge-via), var(--forge-to));
+}
+
+/* Shine sweep — animated diagonal glint across a filled bar/card. */
+.shine-sweep {
+  position: relative;
+  overflow: hidden;
+}
+.shine-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 60%
+  );
+  background-size: 250% 100%;
+  animation: shimmer 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Scroll reveal — pairs with IntersectionObserver in motion.tsx */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }

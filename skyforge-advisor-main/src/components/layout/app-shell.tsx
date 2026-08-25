@@ -117,7 +117,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       <div className="flex flex-col items-center justify-center px-4 pt-7 pb-4">
         {!collapsed ? (
           <div className="w-full text-center">
-            <span className="inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-3xl tracking-[0.18em] text-transparent select-none drop-shadow-[0_2px_20px_rgba(52,211,153,0.45)]">
+            <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-3xl tracking-[0.18em] text-transparent select-none drop-shadow-[0_2px_20px_rgba(52,211,153,0.45)]">
               SKYFORGE
             </span>
           </div>
@@ -859,7 +859,9 @@ export function PageHero({
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
         <p className="eyebrow">{eyebrow}</p>
-        <h1 className="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">{title}</h1>
+        <h1 className="font-pixel mt-2 text-4xl font-semibold tracking-wide sm:text-5xl">
+          {title}
+        </h1>
         <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{description}</p>
       </div>
       {actions}
