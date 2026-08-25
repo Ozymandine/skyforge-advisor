@@ -26,6 +26,7 @@ import {
   Sun,
   Moon,
   User,
+  Calendar,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -76,13 +77,14 @@ const nav = [
     items: [
       { to: "/bazaar", label: "Bazaar", icon: TrendingUp },
       { to: "/auction-house", label: "Auction House", icon: Hammer },
-      { to: "/flips", label: "Flip Accuracy", icon: Target },
+      { to: "/flips", label: "Market Flips & Margins", icon: Target },
       { to: "/net-worth", label: "Net Worth", icon: Coins },
     ],
   },
   {
     group: "Tools",
     items: [
+      { to: "/calendar", label: "Event Calendar", icon: Calendar },
       { to: "/advisor", label: "Advisor", icon: Gauge },
       { to: "/compare", label: "Compare Profiles", icon: Swords },
       { to: "/crafting", label: "Crafting Calculator", icon: Hammer },

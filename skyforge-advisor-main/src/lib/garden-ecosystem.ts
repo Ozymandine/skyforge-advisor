@@ -326,3 +326,4 @@ export const CROP_TUNING_GUIDES: CropTuningGuide[] = [
     notes: "Same layout as wheat/carrot; 5-wide rows with Soul Sand.",
   },
 ];
+
