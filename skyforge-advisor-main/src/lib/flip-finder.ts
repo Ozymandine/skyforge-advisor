@@ -91,18 +91,16 @@ export function calculateVelocityIndex(
   activeCompetitors: number,
   marginPct: number,
 ): VelocityRating {
-  // If margin is high (>20%) but 24h volume is under 5, this is a classic paper-margin trap
   if (dailyVolume < 5 && marginPct > 20) {
     return {
       score: 10,
       label: "Trap",
       isTrap: true,
-      estimatedMinutesToSell: 720, // 12+ hours
+      estimatedMinutesToSell: 720,
       reason: "High paper margin with almost 0 real daily sales. Very high risk of stuck capital.",
     };
   }
 
-  // Calculate competition ratio (sales per competitor)
   const comp = Math.max(1, activeCompetitors);
   const hourlySales = dailyVolume / 24;
   const salesRatio = hourlySales / comp;
@@ -157,7 +155,6 @@ export function detectPriceManipulation(
     return { isManipulated: false, confidence: "none", reason: null };
   }
 
-  // Check 1: Price is inflated > 2.5x historical median
   if (currentPrice > historicalMedian * 2.5 && currentPrice > 500_000) {
     return {
       isManipulated: true,
@@ -166,7 +163,6 @@ export function detectPriceManipulation(
     };
   }
 
-  // Check 2: Fake undercut (single listing way below median with no other competition)
   if (currentPrice < historicalMedian * 0.35 && competitorPrices.length <= 1) {
     return {
       isManipulated: true,
@@ -351,3 +347,4 @@ export function getBazaarCommand(itemId: string): string {
 export function getCraftCommand(itemId: string): string {
   return `/recipe ${itemId.toLowerCase().replace(/_/g, " ")}`;
 }
+

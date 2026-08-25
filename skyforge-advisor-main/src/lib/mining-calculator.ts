@@ -134,3 +134,4 @@ export function calculateMiningStats(setup: MiningSetupInput = DEFAULT_MINING_SE
     },
   };
 }
+

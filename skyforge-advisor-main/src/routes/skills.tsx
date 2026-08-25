@@ -14,6 +14,10 @@ import {
   Award,
   ChevronRight,
   Boxes,
+  Skull,
+  Crosshair,
+  Crown,
+  Key,
 } from "lucide-react";
 
 import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
@@ -27,6 +31,12 @@ import { calculateMiningStats } from "@/lib/mining-calculator";
 import { calculateMagicFind } from "@/lib/combat-calculator";
 import { calculateTrophyProgress } from "@/lib/fishing-calculator";
 import { getExperimentationOverview } from "@/lib/experimentation-calculator";
+import {
+  evaluatePartyFinderReadiness,
+  calculateMasterModeOdds,
+  FLOOR_CHEST_LOOT_TABLES,
+  getStarUpEstimates,
+} from "@/lib/dungeons-engine";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/skills")({
@@ -36,25 +46,39 @@ export const Route = createFileRoute("/skills")({
       {
         name: "description",
         content:
-          "Track every SkyBlock skill, Farming Fortune engine, Mining powder allocations, Magic Find rollups, and Crimson Isle Trophy Fish.",
+          "Track every SkyBlock skill, Catacombs tactical hub, Farming Fortune engine, Mining powder allocations, Magic Find rollups, and Crimson Isle Trophy Fish.",
       },
       { property: "og:title", content: "Skills & Specialization Suites — SkyForge Advisor" },
       {
         property: "og:description",
-        content: "Complete skill mastery hubs with specialized calculators for Farming, Mining, Combat, and Fishing.",
+        content: "Complete skill mastery hubs with specialized calculators for Dungeons, Farming, Mining, Combat, and Fishing.",
       },
     ],
   }),
   component: SkillsRoute,
 });
 
-type SkillTab = "overview" | "farming" | "mining" | "combat" | "fishing" | "experiments";
+type SkillTab = "overview" | "dungeons" | "farming" | "mining" | "combat" | "fishing" | "experiments";
 
 function SkillsRoute() {
   const { data, isLoading, error, connected } = usePlayer();
   const [activeTab, setActiveTab] = useState<SkillTab>("overview");
 
   // Specialized Engine Rollups
+  const cataLvl = data?.dungeons?.catacombsLevel ?? 30;
+  const secretsFound = data?.dungeons?.secretsFound ?? 12_500;
+  const totalRuns =
+    (data?.dungeons?.floors?.reduce((sum, f) => sum + f.completions, 0) ?? 0) +
+    (data?.dungeons?.masterMode?.reduce((sum, f) => sum + f.completions, 0) ?? 0) || 1200;
+
+  const partyFinderEval = useMemo(
+    () => evaluatePartyFinderReadiness(cataLvl, secretsFound, totalRuns, "F7"),
+    [cataLvl, secretsFound, totalRuns]
+  );
+
+  const masterModeOdds = useMemo(() => calculateMasterModeOdds(cataLvl, true, true), [cataLvl]);
+  const starUpEstimates = useMemo(() => getStarUpEstimates(2800), []);
+
   const farmingLvl = data?.skills.find((s) => s.key === "FARMING")?.level ?? 40;
   const gardenLvl = data?.garden?.level ?? 10;
   const farmingCalc = useMemo(
@@ -124,7 +148,7 @@ function SkillsRoute() {
       <PageHero
         eyebrow="Progression Intelligence"
         title="Skills & Specialization Suites"
-        description="Skill levels, Farming Fortune engines, Mining powder allocations, Magic Find calculators, and Trophy Fish suites."
+        description="Skill levels, Catacombs tactical breakdowns, Farming Fortune engines, Mining powder allocations, and Trophy Fish suites."
       />
 
       {!connected && <ConnectPrompt what="your real skill levels" />}
@@ -136,7 +160,8 @@ function SkillsRoute() {
           {/* Sub-Navigation Tabs */}
           <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-4">
             {[
-              { id: "overview", label: "Skills & Dungeons", icon: Sparkles },
+              { id: "overview", label: "Skills Constellation", icon: Sparkles },
+              { id: "dungeons", label: "Catacombs & Master Mode", icon: Skull },
               { id: "farming", label: "Farming Fortune & Yields", icon: Wheat },
               { id: "mining", label: "Mining Speed & Powder", icon: Pickaxe },
               { id: "combat", label: "Combat & Magic Find", icon: Swords },
@@ -163,7 +188,7 @@ function SkillsRoute() {
             })}
           </div>
 
-          {/* TAB 1: SKILLS & DUNGEONS OVERVIEW */}
+          {/* TAB 1: SKILLS OVERVIEW */}
           {activeTab === "overview" && (
             <div className="space-y-6">
               <Panel>
@@ -229,43 +254,156 @@ function SkillsRoute() {
                   ))}
                 </div>
               </Panel>
+            </div>
+          )}
 
-              {/* Dungeons & Master Mode */}
+          {/* TAB 2: CATACOMBS & MASTER MODE TACTICAL HUB */}
+          {activeTab === "dungeons" && (
+            <div className="space-y-6">
+              {/* Party Finder Readiness */}
+              <Panel className="border-sky-500/20 bg-gradient-to-br from-sky-500/[0.04] via-transparent to-purple-500/[0.02]">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+                  <div className="flex items-center gap-3">
+                    <span className={cn("rounded-xl border px-3 py-1 font-mono text-sm font-black", partyFinderEval.badgeClass)}>
+                      {partyFinderEval.readinessRating === "Carry" && "👑 S+ CARRY"}
+                      {partyFinderEval.readinessRating === "Qualified" && "🟢 QUALIFIED"}
+                      {partyFinderEval.readinessRating === "Borderline" && "🟡 BORDERLINE"}
+                      {partyFinderEval.readinessRating === "Undergeared" && "🔴 UNDERGEARED"}
+                    </span>
+                    <div>
+                      <h2 className="text-xl font-bold text-white">Party Finder Reliability & Secrets Pace</h2>
+                      <p className="text-xs text-white/50">{partyFinderEval.feedback}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+                  <div className="rounded-xl border border-white/5 bg-black/30 p-3">
+                    <p className="text-xs text-white/50">Catacombs Level</p>
+                    <p className="font-mono text-lg font-bold text-sky-300 mt-1">Cata {partyFinderEval.cataLevel}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/5 bg-black/30 p-3">
+                    <p className="text-xs text-white/50">Total Secrets Found</p>
+                    <p className="font-mono text-lg font-bold text-purple-300 mt-1">{partyFinderEval.totalSecrets.toLocaleString()}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/5 bg-black/30 p-3">
+                    <p className="text-xs text-white/50">Secrets per Run</p>
+                    <p className="font-mono text-lg font-bold text-emerald-300 mt-1">{partyFinderEval.secretsPerRun} s/r</p>
+                  </div>
+                  <div className="rounded-xl border border-white/5 bg-black/30 p-3">
+                    <p className="text-xs text-white/50">Secret Benchmark</p>
+                    <p className="font-mono text-lg font-bold text-amber-300 mt-1">{partyFinderEval.secretBenchmark}</p>
+                  </div>
+                </div>
+              </Panel>
+
+              {/* Master Mode Clearance Odds */}
+              <Panel>
+                <h2 className="text-xl font-bold text-white mb-4">Master Mode Floor Clearance Odds (M1–M7)</h2>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {masterModeOdds.map((m) => (
+                    <div
+                      key={m.floor}
+                      className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur transition-all hover:border-purple-500/30"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-white">{m.name}</h3>
+                        <span className={cn(
+                          "rounded-lg border px-2 py-0.5 text-[10px] font-mono font-bold",
+                          m.clearanceOddsPct >= 80 ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" :
+                          m.clearanceOddsPct >= 50 ? "border-amber-500/30 text-amber-400 bg-amber-500/10" :
+                          "border-red-500/30 text-red-400 bg-red-500/10"
+                        )}>
+                          {m.clearanceOddsPct}% Clearance Odds
+                        </span>
+                      </div>
+                      <p className="text-xs text-white/50 mt-2">Prerequisite: Cata {m.recommendedCata}+</p>
+                      <p className="text-[11px] text-white/40 mt-1 font-mono">Gear: {m.gearCheck}</p>
+                    </div>
+                  ))}
+                </div>
+              </Panel>
+
+              {/* Floor Drop Chest Profitability & Expected Value */}
+              <Panel>
+                <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Floor Drop Chest Profitability & EV</h2>
+                    <p className="text-xs text-white/50">Expected net coin returns per S+ run after chest unlock costs</p>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  {FLOOR_CHEST_LOOT_TABLES.map((floor) => (
+                    <div
+                      key={floor.floor}
+                      className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur"
+                    >
+                      <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                        <div>
+                          <h3 className="text-sm font-bold text-white">{floor.name}</h3>
+                          <span className="font-mono text-xs font-bold text-emerald-400">
+                            ~+{formatFull(floor.expectedValuePerRun)} EV / run
+                          </span>
+                        </div>
+                        <span className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-mono font-bold text-white/80">
+                          {floor.floor}
+                        </span>
+                      </div>
+
+                      <div className="mt-3 space-y-1.5">
+                        {floor.topDrops.map((drop) => (
+                          <div
+                            key={drop.name}
+                            className="flex items-center justify-between rounded-lg bg-black/30 px-3 py-1.5 text-xs"
+                          >
+                            <span className="text-white/80">{drop.name} ({drop.fractionString})</span>
+                            <span className="font-mono font-bold text-emerald-300">
+                              +{formatFull(drop.netProfit)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Panel>
+
+              {/* Essence Star-Up Estimator */}
+              <Panel>
+                <h2 className="text-xl font-bold text-white mb-4">Essence & Master Star (6–10) Star-Up Costs</h2>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {starUpEstimates.map((s) => (
+                    <div
+                      key={s.itemType}
+                      className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur"
+                    >
+                      <h3 className="text-sm font-bold text-white">{s.itemType}</h3>
+                      <p className="text-xs text-white/50 mt-1">
+                        1–5 Stars: {s.stars1to5Cost} {s.essenceType}
+                      </p>
+                      <p className="text-xs text-white/50">
+                        6–10 Stars: Master Stars 1–5 (~280M)
+                      </p>
+                      <div className="mt-3 border-t border-white/10 pt-2 flex justify-between text-xs">
+                        <span className="text-white/40">Total Star Value:</span>
+                        <span className="font-mono font-bold text-amber-300">~{formatFull(s.totalCoinsValue)} coins</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Panel>
+
+              {/* Dungeon Floor Maps */}
               {data?.dungeons && (
                 <Panel>
                   <div className="flex flex-wrap items-baseline justify-between gap-3">
-                    <h2 className="text-xl font-semibold">Dungeons</h2>
-                    <p className="text-xs text-muted-foreground">Catacombs progression</p>
+                    <h2 className="text-xl font-semibold">Floor Maps</h2>
+                    <p className="text-xs text-muted-foreground">Catacombs & Master Mode ladder</p>
                   </div>
 
                   <div className="mt-4">
-                    <StatRow
-                      stats={[
-                        {
-                          label: "Catacombs level",
-                          value: String(data.dungeons.catacombsLevel),
-                          sub: `${formatFull(data.dungeons.catacombsXp)} XP`,
-                        },
-                        {
-                          label: "Secrets found",
-                          value: formatFull(data.dungeons.secretsFound),
-                          sub: "Lifetime total",
-                        },
-                        ...(data.dungeons.classes && data.dungeons.classes.length > 0
-                          ? [
-                              {
-                                label: "Dungeon classes",
-                                value: String(data.dungeons.classes.length),
-                                sub: "Active classes tracked",
-                              },
-                            ]
-                          : []),
-                      ]}
-                    />
-                  </div>
-
-                  <div className="mt-6">
-                    <p className="eyebrow mb-3">Floor map</p>
+                    <p className="eyebrow mb-3">The Catacombs (Normal)</p>
                     <DungeonFloorMap floors={data.dungeons.floors} />
                   </div>
 
@@ -284,7 +422,7 @@ function SkillsRoute() {
             </div>
           )}
 
-          {/* TAB 2: FARMING FORTUNE & YIELDS */}
+          {/* TAB 3: FARMING FORTUNE & YIELDS */}
           {activeTab === "farming" && (
             <div className="space-y-6">
               <Panel className="border-amber-500/20 bg-gradient-to-br from-amber-500/[0.04] via-transparent to-orange-500/[0.02]">
@@ -356,7 +494,7 @@ function SkillsRoute() {
             </div>
           )}
 
-          {/* TAB 3: MINING SPEED & POWDER */}
+          {/* TAB 4: MINING SPEED & POWDER */}
           {activeTab === "mining" && (
             <div className="space-y-6">
               <Panel className="border-cyan-500/20 bg-gradient-to-br from-cyan-500/[0.04] via-transparent to-blue-500/[0.02]">
@@ -400,7 +538,7 @@ function SkillsRoute() {
             </div>
           )}
 
-          {/* TAB 4: COMBAT & MAGIC FIND */}
+          {/* TAB 5: COMBAT & MAGIC FIND */}
           {activeTab === "combat" && (
             <div className="space-y-6">
               <Panel className="border-purple-500/20 bg-gradient-to-br from-purple-500/[0.04] via-transparent to-pink-500/[0.02]">
@@ -469,7 +607,7 @@ function SkillsRoute() {
             </div>
           )}
 
-          {/* TAB 5: CRIMSON TROPHY FISH */}
+          {/* TAB 6: CRIMSON TROPHY FISH */}
           {activeTab === "fishing" && (
             <div className="space-y-6">
               <Panel className="border-rose-500/20 bg-gradient-to-br from-rose-500/[0.04] via-transparent to-red-500/[0.02]">
@@ -522,7 +660,7 @@ function SkillsRoute() {
             </div>
           )}
 
-          {/* TAB 6: EXPERIMENTS & SLAYERS */}
+          {/* TAB 7: EXPERIMENTS & SLAYERS */}
           {activeTab === "experiments" && (
             <div className="space-y-6">
               {/* Slayer Passives */}
@@ -610,3 +748,4 @@ function SkillsRoute() {
     </div>
   );
 }
+

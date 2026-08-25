@@ -39,3 +39,4 @@ export function getExperimentationOverview(enchantingLevel = 60): Experimentatio
     t7Enchants: SUPERPAIRS_T7_ENCHANTS,
   };
 }
+
