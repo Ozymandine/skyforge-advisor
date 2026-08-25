@@ -15,6 +15,7 @@ import { Route as AdvisorRouteImport } from './routes/advisor'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AuctionHouseRouteImport } from './routes/auction-house'
 import { Route as BazaarRouteImport } from './routes/bazaar'
+import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as CompareRouteImport } from './routes/compare'
 import { Route as ConnectRouteImport } from './routes/connect'
@@ -59,6 +60,11 @@ const AuctionHouseRoute = AuctionHouseRouteImport.update({
 const BazaarRoute = BazaarRouteImport.update({
   id: '/bazaar',
   path: '/bazaar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarRoute = CalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CollectionsRoute = CollectionsRouteImport.update({
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/auction-house': typeof AuctionHouseRoute
   '/bazaar': typeof BazaarRoute
+  '/calendar': typeof CalendarRoute
   '/collections': typeof CollectionsRoute
   '/compare': typeof CompareRoute
   '/connect': typeof ConnectRoute
@@ -167,6 +174,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/auction-house': typeof AuctionHouseRoute
   '/bazaar': typeof BazaarRoute
+  '/calendar': typeof CalendarRoute
   '/collections': typeof CollectionsRoute
   '/compare': typeof CompareRoute
   '/connect': typeof ConnectRoute
@@ -191,6 +199,7 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/auction-house': typeof AuctionHouseRoute
   '/bazaar': typeof BazaarRoute
+  '/calendar': typeof CalendarRoute
   '/collections': typeof CollectionsRoute
   '/compare': typeof CompareRoute
   '/connect': typeof ConnectRoute
@@ -216,6 +225,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auction-house'
     | '/bazaar'
+    | '/calendar'
     | '/collections'
     | '/compare'
     | '/connect'
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auction-house'
     | '/bazaar'
+    | '/calendar'
     | '/collections'
     | '/compare'
     | '/connect'
@@ -262,6 +273,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auction-house'
     | '/bazaar'
+    | '/calendar'
     | '/collections'
     | '/compare'
     | '/connect'
@@ -286,6 +298,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   AuctionHouseRoute: typeof AuctionHouseRoute
   BazaarRoute: typeof BazaarRoute
+  CalendarRoute: typeof CalendarRoute
   CollectionsRoute: typeof CollectionsRoute
   CompareRoute: typeof CompareRoute
   ConnectRoute: typeof ConnectRoute
@@ -344,6 +357,13 @@ declare module '@tanstack/react-router' {
       path: '/bazaar'
       fullPath: '/bazaar'
       preLoaderRoute: typeof BazaarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendar': {
+      id: '/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof CalendarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/collections': {
@@ -471,6 +491,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   AuctionHouseRoute: AuctionHouseRoute,
   BazaarRoute: BazaarRoute,
+  CalendarRoute: CalendarRoute,
   CollectionsRoute: CollectionsRoute,
   CompareRoute: CompareRoute,
   ConnectRoute: ConnectRoute,

@@ -286,7 +286,6 @@ export function calculateBestiary(
     let familyMaxTiers = 0;
 
     const mobs: BestiaryMob[] = familyDef.mobs.map((mobDef) => {
-      // Lookup by exact id or variations (e.g. "zombie", "zombie_villager")
       const kills =
         killsMap[mobDef.id] ??
         killsMap[`kills_${mobDef.id}`] ??

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { MAX_COLLECTION_CATEGORIES, MAX_FAIRY_SOULS, MAX_SKILL_AVERAGE } from "@/lib/constants";
-import { computeSkill, formatFull, formatNumber, titleCase, type PlayerData } from "@/lib/skyblock";
-import { calculateBestiary, calculateMobTier } from "@/lib/bestiary";
-import { calculateSlayerOverview, computeSlayerLevel } from "@/lib/slayer";
-import { calculateSkyBlockLevel } from "@/lib/skyblock-level";
+import { MAX_COLLECTION_CATEGORIES, MAX_FAIRY_SOULS, MAX_SKILL_AVERAGE } from "../src/lib/constants";
+import { computeSkill, formatFull, formatNumber, titleCase, type PlayerData } from "../src/lib/skyblock";
+import { calculateBestiary, calculateMobTier } from "../src/lib/bestiary";
+import { calculateSlayerOverview, computeSlayerLevel } from "../src/lib/slayer";
+import { calculateSkyBlockLevel } from "../src/lib/skyblock-level";
 
 describe("formatNumber", () => {
   it("formats compact suffixes", () => {
