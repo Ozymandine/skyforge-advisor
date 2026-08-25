@@ -4,15 +4,45 @@ import { useMemo } from "react";
 
 import { ErrorState, LoadState } from "@/components/data-states";
 import { WikiItemIcon } from "@/components/wiki/WikiItemIcon";
+import CoflnetPriceChart from "@/components/wiki/CoflnetPriceChart";
 import { cn } from "@/lib/utils";
 import { titleCase } from "@/lib/skyblock";
-
+import { SITE_URL } from "@/lib/constants";
 import { fetchItemDetail } from "@/lib/hypixel.functions";
 
 export const Route = createFileRoute("/wiki/$itemId")({
-  head: () => ({
-    meta: [{ title: "Item Encyclopedia — SkyBlock Assistant" }],
-  }),
+  loader: async ({ params }) => {
+    try {
+      return await fetchItemDetail({ data: params.itemId });
+    } catch {
+      return null;
+    }
+  },
+  head: ({ loaderData, params }) => {
+    const item = loaderData?.item;
+    const title = item
+      ? `${item.name} — SkyForge Encyclopedia`
+      : `${titleCase(params.itemId.replace(/_/g, " "))} — SkyForge Encyclopedia`;
+    const desc = item
+      ? `${item.name} (${item.rarity} ${item.category}) SkyBlock stats, crafting recipe, live bazaar rates, and lowest BIN auction prices.`
+      : `SkyBlock item details, stats, recipes, and market history for ${params.itemId}.`;
+    const iconUrl = `${SITE_URL}/items/${encodeURIComponent(params.itemId)}.png`;
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: desc },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc },
+        { property: "og:image", content: iconUrl },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: desc },
+        { name: "twitter:image", content: iconUrl },
+      ],
+    };
+  },
   component: ItemEncyclopediaPage,
 });
 
@@ -307,6 +337,11 @@ function ItemEncyclopediaPage() {
           </Section>
         ) : null}
       </div>
+
+      {/* Historical Price Chart (Coflnet 30/90 Days) */}
+      <Section title="Market Price History & Trends">
+        <CoflnetPriceChart itemId={item.id} itemName={item.name} />
+      </Section>
 
       <div className="pt-2">
         <Link to="/wiki" className="text-sm text-white/50 transition hover:text-white">

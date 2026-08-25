@@ -5,46 +5,49 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { PageHero, Panel } from "@/components/layout/app-shell";
+import { DEVELOPER_DASHBOARD_URL } from "@/lib/constants";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About & Data — SkyForge" },
+      { title: "About SkyForge — Zero Invented Numbers" },
       {
         name: "description",
         content:
-          "Where SkyForge's data comes from (Hypixel API + NEU), how API keys are handled, and how estimates are labeled.",
+          "SkyForge is a real-time SkyBlock advisor and tracker. Direct from the Hypixel API, zero estimation where real numbers exist, BYOK privacy.",
       },
     ],
   }),
-  component: About,
+  component: AboutPage,
 });
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <Panel>
-      <h2 className="text-xl font-semibold">{title}</h2>
+    <section className="glass rounded-3xl p-6 sm:p-8">
+      <h2 className="text-xl font-bold tracking-tight text-foreground">{title}</h2>
       <div className="mt-4 space-y-3 text-sm leading-relaxed text-muted-foreground">{children}</div>
-    </Panel>
+    </section>
   );
 }
 
-function About() {
+function AboutPage() {
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-4xl space-y-8">
       <PageHero
-        eyebrow="Transparency"
-        title="About & data"
-        description="Exactly what this site uses, where it comes from, and what stays on your device."
+        eyebrow="Provenance & Philosophy"
+        title="About SkyForge"
+        description="A real-time SkyBlock companion built on the principles of precision, live market samples, and complete client-side privacy."
       />
 
-      <Section title="Where the data comes from">
+      <Section title="Zero invented numbers">
         <p>
-          Everything shown is derived from two sources: the{" "}
-          <span className="font-medium text-foreground">official Hypixel API</span> (items, Bazaar,
-          Auction House, player profiles) and the{" "}
-          <span className="font-medium text-foreground">NotEnoughUpdates community dataset</span>{" "}
-          (recipes, item lore, stats, abilities, requirements, crafting grids).
+          SkyBlock players make multi-million coin decisions based on tool data. When a tool
+          guesses, players lose coins.
+        </p>
+        <p>
+          SkyForge is built on a strict rule: every stat, recipe, multiplier, and price is either
+          pulled directly from the official Hypixel API, verified against game constants, or
+          computed from live market samples.
         </p>
         <p>
           When a value is unknown, we show a dash or "Not available" — we never invent numbers.
@@ -58,12 +61,12 @@ function About() {
           To load your profile, SkyForge uses a Hypixel API key. You generate it yourself in one
           click at{" "}
           <a
-            href="https://developer.hypixel.net/api-key"
+            href={DEVELOPER_DASHBOARD_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary hover:underline"
+            className="text-primary hover:underline font-medium"
           >
-            developer.hypixel.net/api-key
+            developer.hypixel.net/dashboard
           </a>{" "}
           — it's free and tied to your Minecraft account.
         </p>

@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { getPref, onPrefsChange, setPref } from "@/lib/prefs";
 import { getTheme, setTheme as setThemeStored } from "@/lib/theme";
 import { usePlayer, useAccount } from "@/hooks/use-account";
+import { DEVELOPER_DASHBOARD_URL } from "@/lib/constants";
 import { formatFull } from "@/lib/skyblock";
 
 export const Route = createFileRoute("/settings")({
@@ -91,12 +92,12 @@ function Settings() {
           Your key is stored only in this browser and used solely to call the Hypixel API. Generate
           one in a single click at{" "}
           <a
-            href="https://developer.hypixel.net/api-key"
+            href={DEVELOPER_DASHBOARD_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary hover:underline"
+            className="text-primary hover:underline font-medium"
           >
-            developer.hypixel.net/api-key
+            developer.hypixel.net/dashboard
           </a>
           .
         </p>

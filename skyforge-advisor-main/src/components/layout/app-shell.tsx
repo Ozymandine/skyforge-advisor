@@ -179,16 +179,11 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
               {!collapsed ? (
                 <>
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 font-mono text-xs font-bold">
-                      {(player.data?.username || account.username || "SB")
-                        .slice(0, 2)
-                        .toUpperCase()}
-                    </div>
+                    <PlayerHeadAvatar
+                      uuid={player.data?.uuid}
+                      name={player.data?.username || account.username}
+                    />
                     <div className="min-w-0">
-                      <p className="truncate text-xs font-bold text-foreground">
-                        {player.data?.username ?? (account.username || "Not connected")}
-                      </p>
-                      <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
                         <span
                           className={cn(
                             "size-1.5 rounded-full",

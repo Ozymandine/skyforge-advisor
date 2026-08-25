@@ -10,6 +10,7 @@ import { ExternalLink, KeyRound, CheckCircle2, AlertCircle } from "lucide-react"
 
 import { PageHero, Panel } from "@/components/layout/app-shell";
 import { useAccount, usePlayer } from "@/hooks/use-account";
+import { DEVELOPER_DASHBOARD_URL } from "@/lib/constants";
 
 export const Route = createFileRoute("/connect")({
   head: () => ({
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/connect")({
   component: Connect,
 });
 
-const GET_KEY_URL = "https://developer.hypixel.net/api-key";
+const GET_KEY_URL = DEVELOPER_DASHBOARD_URL;
 
 function Connect() {
   const account = useAccount();

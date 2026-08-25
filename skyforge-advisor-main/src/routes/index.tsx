@@ -25,6 +25,7 @@ import {
   fetchFlipAccuracy,
   fetchNews,
 } from "@/lib/hypixel.functions";
+import { DEVELOPER_DASHBOARD_URL } from "@/lib/constants";
 import { formatNumber } from "@/lib/skyblock";
 
 export const Route = createFileRoute("/")({
@@ -156,7 +157,7 @@ function Landing() {
             <Sparkles className="size-4" /> Connect your profile
           </Link>
           <a
-            href="https://developer.hypixel.net/api-key"
+            href={DEVELOPER_DASHBOARD_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.02] hover:text-foreground"
