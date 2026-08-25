@@ -100,6 +100,52 @@ const nav = [
   },
 ] as const;
 
+function PlayerHeadAvatar({
+  uuid,
+  name,
+  size = 36,
+  className,
+}: {
+  uuid?: string | undefined;
+  name?: string | undefined;
+  size?: number | undefined;
+  className?: string | undefined;
+}) {
+  const [failed, setFailed] = useState(false);
+  const identifier = uuid || name;
+  const initials = (name || "SB").slice(0, 2).toUpperCase();
+
+  if (!identifier || failed) {
+    return (
+      <div
+        className={cn(
+          "flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 font-mono text-xs font-bold",
+          className,
+        )}
+      >
+        {initials}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-emerald-500/25 bg-emerald-500/15",
+        className,
+      )}
+    >
+      <img
+        src={`https://mc-heads.net/avatar/${encodeURIComponent(identifier)}/${size}`}
+        alt={name || "Player avatar"}
+        loading="lazy"
+        onError={() => setFailed(true)}
+        className="size-full object-cover"
+      />
+    </div>
+  );
+}
+
 function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const account = useAccount();
   const player = usePlayer();
