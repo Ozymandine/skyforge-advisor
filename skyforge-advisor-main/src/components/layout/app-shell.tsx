@@ -23,7 +23,6 @@ import {
   TrendingUp,
   ChevronDown,
   Check,
-  Calendar,
   Sun,
   Moon,
   User,
@@ -84,7 +83,6 @@ const nav = [
   {
     group: "Tools",
     items: [
-      { to: "/calendar", label: "Event Calendar", icon: Calendar },
       { to: "/advisor", label: "Advisor", icon: Gauge },
       { to: "/compare", label: "Compare Profiles", icon: Swords },
       { to: "/crafting", label: "Crafting Calculator", icon: Hammer },

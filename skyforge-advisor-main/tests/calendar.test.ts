@@ -109,3 +109,4 @@ describe("T1.19: audio-chimes config", () => {
     expect(DEFAULT_ALARM_SETTINGS.chimeType).toBe("crystal");
   });
 });
+
