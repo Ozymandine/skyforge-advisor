@@ -228,6 +228,16 @@ export type InventoryItem = {
   rarity: string;
   count: number;
   lore: string[];
+  /** Enchantment levels parsed from NBT ExtraAttributes. */
+  enchantments?: Record<string, number>;
+  reforge?: string;
+  /** Dungeon stars (0–10). */
+  stars?: number;
+  hotPotatoBooks?: number;
+  /** Gemstone slots filled, keyed by slot name. */
+  gems?: Record<string, string>;
+  /** Essence cost tier / ability scroll info when present. */
+  abilityScrolls?: string[];
 };
 
 export type InventoryContainer = {
@@ -274,6 +284,11 @@ export type PetInfo = {
   rarity: string;
   level: number;
   xp: number;
+  /** True when this pet is currently summoned. */
+  active?: boolean;
+  heldItem?: string;
+  skin?: string;
+  candyUsed?: number;
 };
 
 export type DungeonFloor = {
@@ -287,13 +302,88 @@ export type DungeonStats = {
   catacombsXp: number;
   secretsFound: number;
   floors: DungeonFloor[];
+  /** Master Mode floors (M1–M7), when the player has data for them. */
+  masterMode?: DungeonFloor[];
+  masterModeLevel?: number;
+  masterModeXp?: number;
+  /** Dungeon class levels (healer/mage/berserk/archer/tank). */
+  classes?: { name: string; level: number; selected: boolean }[];
+  /** Milestone completions (tier milestones across floors). */
+  milestones?: number;
 };
 
 export type SlayerStats = {
   name: string;
   tier: number;
   kills: number;
+  /** Slayer XP earned for this boss/tier, when present. */
+  xp?: number;
 }[];
+
+export type HotmStats = {
+  tier: number;
+  xp: number;
+  /** Powder totals by type. */
+  powders: { mithril: number; gemstone: number; glacite: number };
+  /** Heart of the Mountain node levels (keyed by node id). */
+  nodes: Record<string, number>;
+};
+
+export type GardenStats = {
+  level: number;
+  xp: number;
+  /** Crop milestones: crop id → milestone value. */
+  cropMilestones: Record<string, number>;
+  visitorsServed?: number;
+  compost?: number;
+};
+
+export type CrimsonStats = {
+  /** Dojo faction points by challenge id. */
+  dojo: Record<string, number>;
+  /** Kuudra completion counts keyed by tier type (normal/hot/fiery/burning). */
+  kuudra: Record<string, number>;
+  faction?: string;
+  reputation?: number;
+};
+
+export type RiftStats = {
+  motes?: number;
+  /** Arbitrary rift progress values keyed by milestone id. */
+  progress: Record<string, number>;
+};
+
+export type MuseumStats = {
+  donatedItems?: number;
+  /** Museum value/bonus flags when present. */
+  appraised?: number;
+};
+
+export type AchievementStats = {
+  points: number;
+  /** Per-category completed counts. */
+  categories: Record<string, number>;
+};
+
+export type JacobStats = {
+  gold: number;
+  silver: number;
+  bronze: number;
+  platinum?: number;
+  diamond?: number;
+  /** Per-crop contest bests, keyed by crop id. */
+  perCrop: Record<string, number>;
+};
+
+export type ExperimentationStats = {
+  /** Serums/simons claim counts keyed by experiment id. */
+  claims: Record<string, number>;
+};
+
+export type LifetimeStats = {
+  kills?: number;
+  deaths?: number;
+};
 
 export type PlayerData = {
   username: string;
@@ -312,6 +402,16 @@ export type PlayerData = {
   dungeons?: DungeonStats;
   slayers?: SlayerStats;
   pets?: PetInfo[];
+  hotm?: HotmStats;
+  garden?: GardenStats;
+  crimson?: CrimsonStats;
+  rift?: RiftStats;
+  museum?: MuseumStats;
+  achievements?: AchievementStats;
+  jacob?: JacobStats;
+  experimentation?: ExperimentationStats;
+  lifetimeStats?: LifetimeStats;
+  communityUpgrades?: { upgrade: string; level: number }[];
 };
 
 export function formatDuration(ms: number): string {

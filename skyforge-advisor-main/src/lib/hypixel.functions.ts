@@ -1,6 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { fetchPlayerInputSchema } from "./schemas";
+import { z as zod } from "zod";
 import type { AlertRule } from "./market-history.server";
+
+const uuidSchema = zod.object({ uuid: zod.string().trim().min(16).max(40) });
 
 export const fetchBazaar = createServerFn({ method: "GET" }).handler(async () => {
   const { getBazaar } = await import("./hypixel.server");
@@ -174,6 +177,81 @@ export const fetchDiscordWebhook = createServerFn({ method: "GET" }).handler(asy
   const { getDiscordWebhook: get } = await import("./market-history.server");
   return get();
 });
+
+// --- Second-tier player endpoints -------------------------------------------
+
+export const fetchGuild = createServerFn({ method: "POST" })
+  .validator((input: unknown) => uuidSchema.parse(input ?? {}))
+  .handler(async ({ data }) => {
+    const { getGuild } = await import("./hypixel.server");
+    return getGuild(data.uuid);
+  });
+
+export const fetchStatus = createServerFn({ method: "POST" })
+  .validator((input: unknown) => uuidSchema.parse(input ?? {}))
+  .handler(async ({ data }) => {
+    const { getStatus } = await import("./hypixel.server");
+    return getStatus(data.uuid);
+  });
+
+export const fetchFriendsCount = createServerFn({ method: "POST" })
+  .validator((input: unknown) => uuidSchema.parse(input ?? {}))
+  .handler(async ({ data }) => {
+    const { getFriendsCount } = await import("./hypixel.server");
+    return getFriendsCount(data.uuid);
+  });
+
+export const fetchBankTransactions = createServerFn({ method: "POST" })
+  .validator((input: unknown) => uuidSchema.parse(input ?? {}))
+  .handler(async ({ data }) => {
+    const { getBankTransactions } = await import("./hypixel.server");
+    return getBankTransactions(data.uuid);
+  });
+
+// --- Site-wide resources ------------------------------------------------------
+
+export const fetchElection = createServerFn({ method: "GET" }).handler(async () => {
+  const { getElection } = await import("./hypixel.server");
+  return getElection();
+});
+
+export const fetchNews = createServerFn({ method: "GET" }).handler(async () => {
+  const { getNews } = await import("./hypixel.server");
+  return getNews();
+});
+
+export const fetchFireSale = createServerFn({ method: "GET" }).handler(async () => {
+  const { getFireSale } = await import("./hypixel.server");
+  return getFireSale();
+});
+
+// --- Third-party enrichment: Coflnet long-range price history ----------------
+
+export const fetchExternalPriceHistory = createServerFn({ method: "POST" })
+  .validator((input: unknown) => input as { itemId: string; days?: number })
+  .handler(async ({ data }) => {
+    if (!data?.itemId) return { points: [], source: "none" as const };
+    const days = Math.min(Math.max(data.days ?? 30, 1), 90);
+    try {
+      const res = await fetch(
+        `https://api.coflnet.com/skyblock/price/${encodeURIComponent(data.itemId)}/history/compact`,
+        { signal: AbortSignal.timeout(8000) },
+      );
+      if (!res.ok) return { points: [], source: "none" as const };
+      const raw = (await res.json()) as Array<[number, number, number?]>;
+      const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+      const points = (Array.isArray(raw) ? raw : [])
+        .map((entry) => ({
+          t: Number(entry[0] ?? 0),
+          v: Number(entry[1] ?? 0),
+          s: Number(entry[2] ?? 0),
+        }))
+        .filter((p) => p.t >= cutoff && p.v > 0);
+      return { points, source: "coflnet" as const };
+    } catch {
+      return { points: [], source: "none" as const };
+    }
+  });
 
 export const fetchItems = createServerFn({ method: "GET" }).handler(async () => {
   const { getItems } = await import("./hypixel.server");

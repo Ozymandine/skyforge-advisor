@@ -157,6 +157,210 @@ async function getKeyedJson<T>(url: string, userKey?: string): Promise<T | null>
 }
 
 // ============================================================================
+// SECOND-TIER ENDPOINTS — guild, status, friends, bank, election, news
+// ============================================================================
+
+export type GuildInfo = {
+  name: string;
+  tag: string | null;
+  level: number;
+  rank: string | null;
+  members: number;
+};
+
+export async function getGuild(uuid: string): Promise<GuildInfo | null> {
+  const data = await getKeyedJson<{
+    guild?: {
+      name?: string;
+      tag?: string | null;
+      members?: Array<{ rank?: string; uuid?: string }>;
+      exp?: number;
+      level?: number;
+    };
+  }>(`${API}/guild?player=${uuid}`);
+  const guild = data?.guild;
+  if (!guild?.name) return null;
+  return {
+    name: guild.name,
+    tag: guild.tag ?? null,
+    level: Number(guild.level ?? 0),
+    rank: guild.members?.find((m) => m.uuid === uuid)?.rank ?? null,
+    members: guild.members?.length ?? 0,
+  };
+}
+
+export type PlayerStatus = {
+  online: boolean;
+  game?: string;
+  mode?: string;
+};
+
+export async function getStatus(uuid: string): Promise<PlayerStatus | null> {
+  const data = await getKeyedJson<{
+    session?: { online?: boolean; gameType?: string; mode?: string };
+  }>(`${API}/status?uuid=${uuid}`);
+  const session = data?.session;
+  if (!session) return null;
+  return {
+    online: Boolean(session.online),
+    ...(session.gameType ? { game: session.gameType } : {}),
+    ...(session.mode ? { mode: session.mode } : {}),
+  };
+}
+
+export async function getFriendsCount(uuid: string): Promise<number | null> {
+  const data = await getKeyedJson<{ records?: unknown[] }>(`${API}/friends?uuid=${uuid}`);
+  return Array.isArray(data?.records) ? data!.records!.length : null;
+}
+
+export type BankTransactions = {
+  balance: number | null;
+  transactions: Array<{ amount: number; timestamp: number; action: string }>;
+};
+
+export async function getBankTransactions(uuid: string): Promise<BankTransactions | null> {
+  const data = await getKeyedJson<{
+    balance?: number;
+    transactions?: Array<{
+      amount?: number;
+      timestamp?: string | number;
+      action?: string;
+    }>;
+  }>(`${API}/skyblock/bank?uuid=${uuid}`);
+  if (!data) return null;
+  return {
+    balance: typeof data.balance === "number" ? data.balance : null,
+    transactions: (data.transactions ?? []).slice(0, 10).map((t) => ({
+      amount: Number(t.amount ?? 0),
+      timestamp: typeof t.timestamp === "string" ? Number(t.timestamp) : Number(t.timestamp ?? 0),
+      action: String(t.action ?? "UNKNOWN"),
+    })),
+  };
+}
+
+// --- Global resources (site-wide, long cache) -------------------------------
+
+let electionCache: { at: number; data: unknown } | null = null;
+
+export async function getElection(): Promise<{
+  mayor?: { name?: string; key?: string; perks?: Array<{ name?: string; description?: string }> };
+  candidates?: Array<{ name?: string; perks?: Array<{ name?: string }> }>;
+  year?: number;
+} | null> {
+  if (electionCache && Date.now() - electionCache.at < 30 * 60_000) {
+    return electionCache.data as never;
+  }
+  const data = await getJson<Record<string, unknown>>(`${API}/resources/skyblock/election`);
+  if (!data) return null;
+  const result = {
+    ...(data["mayor"]
+      ? {
+          mayor: data["mayor"] as {
+            name?: string;
+            key?: string;
+            perks?: Array<{ name?: string; description?: string }>;
+          },
+        }
+      : {}),
+    ...(Array.isArray(data["candidates"])
+      ? {
+          candidates: data["candidates"] as Array<{
+            name?: string;
+            perks?: Array<{ name?: string }>;
+          }>,
+        }
+      : {}),
+    ...(typeof data["year"] === "number" ? { year: data["year"] as number } : {}),
+  };
+  electionCache = { at: Date.now(), data: result };
+  return result;
+}
+
+let newsCache: { at: number; data: unknown } | null = null;
+
+export async function getNews(): Promise<
+  Array<{ title?: string; text?: string; date?: string; link?: string }>
+> {
+  if (newsCache && Date.now() - newsCache.at < 60 * 60_000) {
+    return newsCache.data as never;
+  }
+  const data = await getJson<{ items?: Array<Record<string, unknown>> }>(
+    `${API}/resources/skyblock/news`,
+  );
+  const items = (data?.["items"] ?? []).flatMap((item) => {
+    const rec = item as Record<string, unknown>;
+    const out: Array<{ title?: string; text?: string; date?: string; link?: string }> = [{}];
+    if (typeof rec["title"] === "string") out[0]!.title = rec["title"];
+    if (typeof rec["text"] === "string") out[0]!.text = rec["text"];
+    const dateObj = rec["date"] as { date?: string } | undefined;
+    if (typeof dateObj?.["date"] === "string") out[0]!.date = dateObj["date"];
+    if (typeof rec["link"] === "string") out[0]!.link = rec["link"];
+    return out[0]!.title ? [out[0]!] : [];
+  });
+  newsCache = { at: Date.now(), data: items };
+  return items;
+}
+
+let fireSaleCache: { at: number; data: unknown } | null = null;
+
+export async function getFireSale(): Promise<
+  Array<{ item_id?: string; start?: number; end?: number }>
+> {
+  if (fireSaleCache && Date.now() - fireSaleCache.at < 30 * 60_000) {
+    return fireSaleCache.data as never;
+  }
+  const data = await getJson<{ sales?: Array<Record<string, unknown>> }>(
+    `${API}/resources/skyblock/fire_sale`,
+  );
+  const sales = (data?.["sales"] ?? []).flatMap((sale) => {
+    const rec = sale as Record<string, unknown>;
+    const out: Array<{ item_id?: string; start?: number; end?: number }> = [{}];
+    if (typeof rec["item_id"] === "string") out[0]!.item_id = rec["item_id"];
+    if (typeof rec["start"] === "number") out[0]!.start = rec["start"];
+    if (typeof rec["end"] === "number") out[0]!.end = rec["end"];
+    return out[0]!.item_id ? [out[0]!] : [];
+  });
+  fireSaleCache = { at: Date.now(), data: sales };
+  return sales;
+}
+
+// --- Official XP/tier tables (accuracy upgrade over hardcoded tables) -------
+
+let officialSkillsCache: { at: number; data: unknown } | null = null;
+
+export async function getOfficialSkillTables(): Promise<Record<
+  string,
+  { maxLevel?: number; levels?: number[] }
+> | null> {
+  if (officialSkillsCache && Date.now() - officialSkillsCache.at < 24 * 60 * 60_000) {
+    return officialSkillsCache.data as never;
+  }
+  const data = await getJson<{
+    skills?: Record<string, { maxLevel?: number; levels?: number[] }>;
+  }>(`${API}/resources/skyblock/skills`);
+  if (!data?.skills) return null;
+  officialSkillsCache = { at: Date.now(), data: data.skills };
+  return data.skills;
+}
+
+let officialCollectionsCache: { at: number; data: unknown } | null = null;
+
+export async function getOfficialCollectionTiers(): Promise<Record<
+  string,
+  { tiers?: number[] }
+> | null> {
+  if (officialCollectionsCache && Date.now() - officialCollectionsCache.at < 24 * 60 * 60_000) {
+    return officialCollectionsCache.data as never;
+  }
+  const data = await getJson<{
+    collections?: Record<string, { tiers?: number[] }>;
+  }>(`${API}/resources/skyblock/collections`);
+  if (!data?.collections) return null;
+  officialCollectionsCache = { at: Date.now(), data: data.collections };
+  return data.collections;
+}
+
+// ============================================================================
 // UUID
 // ============================================================================
 
@@ -1491,13 +1695,35 @@ async function parseContainer(
       const name = stripColors(String(rawName));
 
       const texture = textureFromTag(tag);
-
       const rawCount = it["Count"];
 
       const count = typeof rawCount === "number" ? rawCount : Number(rawCount ?? 1);
 
+      // NBT ExtraAttributes: enchantments, reforge, gems, stars, HPBs.
+      const enchantmentsRaw = nbtObject(extra["enchantments"]);
+      const enchantments: Record<string, number> = {};
+      for (const [ench, level] of Object.entries(enchantmentsRaw ?? {})) {
+        const num = Number(level);
+        if (Number.isFinite(num) && num > 0) enchantments[ench] = num;
+      }
+
+      const reforgeRaw = extra["modifier"];
+      const gemsRaw = nbtObject(extra["gems"]);
+      const gems: Record<string, string> = {};
+      for (const [slot, gem] of Object.entries(gemsRaw ?? {})) {
+        if (typeof gem === "string" && gem && !/_gem$/.test(slot)) {
+          gems[slot] = gem;
+        }
+      }
+
+      const starsRaw = extra["dungeon_item_level"];
+      const hpbRaw = extra["hot_potato_count"];
+
+      const scrollsRaw = nbtArray(extra["ability_scroll"]);
+
       items.push({
         slot: index,
+
         name,
 
         id: String(extra["id"] ?? "UNKNOWN"),
@@ -1509,6 +1735,26 @@ async function parseContainer(
         count: Number.isFinite(count) ? count : 1,
 
         lore,
+
+        ...(Object.keys(enchantments).length > 0 ? { enchantments } : {}),
+
+        ...(typeof reforgeRaw === "string" && reforgeRaw
+          ? { reforge: titleCase(reforgeRaw.replace(/_/g, " ")) }
+          : {}),
+
+        ...(typeof starsRaw === "number" && starsRaw > 0 ? { stars: starsRaw } : {}),
+
+        ...(typeof hpbRaw === "number" && hpbRaw > 0 ? { hotPotatoBooks: hpbRaw } : {}),
+
+        ...(Object.keys(gems).length > 0 ? { gems } : {}),
+
+        ...(scrollsRaw.length > 0
+          ? {
+              abilityScrolls: scrollsRaw
+                .map((s) => titleCase(String(s).replace(/_/g, " ")))
+                .slice(0, 3),
+            }
+          : {}),
       });
     });
 
@@ -1544,6 +1790,10 @@ type ProfilesResponse = {
 
     banking?: {
       balance?: number;
+    };
+
+    community_upgrades?: {
+      upgrades?: Array<{ upgrade?: string; tier?: number }>;
     };
 
     members: Record<string, Record<string, unknown>>;
@@ -1714,38 +1964,102 @@ export async function getPlayerData(
               experience?: number;
               tier_completions?: Record<string, number>;
               best_score?: Record<string, number>;
+              highest_tier_completions?: Record<string, number>;
+            };
+            master_catacombs?: {
+              experience?: number;
+              tier_completions?: Record<string, number>;
+              best_score?: Record<string, number>;
             };
           };
+          secrets?: number;
+          player_classes?: Record<string, { experience?: number }>;
+          selected_dungeon_class?: string;
+          dungeon_xp?: number;
+          milestone_completions?: number;
+        }
+      | undefined;
+
+    const dungeonsRoot = member["dungeons"] as
+      | {
+          dungeon_types?: {
+            catacombs?: {
+              experience?: number;
+              tier_completions?: Record<string, number>;
+              best_score?: Record<string, number>;
+            };
+            master_catacombs?: {
+              experience?: number;
+              tier_completions?: Record<string, number>;
+              best_score?: Record<string, number>;
+            };
+          };
+          secrets?: number;
+          player_classes?: Record<string, { experience?: number }>;
+          selected_dungeon_class?: string;
+          milestone_completions?: number;
         }
       | undefined;
 
     const catacombs = dungeonsRaw?.dungeon_types?.catacombs;
+    const masterCatacombs = dungeonsRoot?.dungeon_types?.master_catacombs;
+
+    const floorEntries = (
+      completions: Record<string, number> | undefined,
+      best: Record<string, number> | undefined,
+      prefix: string,
+    ) =>
+      Object.entries(completions ?? {})
+        .filter(([tier]) => tier !== "total" && tier !== "master_mode")
+        .map(([tier, completions]) => ({
+          name: `${prefix}${tier}`,
+          completions: Number(completions) || 0,
+          bestScore: Number(best?.[tier] ?? 0),
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+    const dungeonClasses = Object.entries(dungeonsRoot?.player_classes ?? {}).map(
+      ([key, data]) => ({
+        name: titleCase(key),
+        level: computeSkill("COMBAT", Number(data?.experience ?? 0)).level,
+        selected: dungeonsRoot?.selected_dungeon_class === key,
+      }),
+    );
 
     const dungeons = catacombs
       ? {
           catacombsLevel: computeSkill("COMBAT", Number(catacombs.experience ?? 0)).level,
           catacombsXp: Number(catacombs.experience ?? 0),
-          secretsFound: Number(
-            (member["dungeons"] as { secrets?: number } | undefined)?.secrets ?? 0,
-          ),
-          floors: Object.entries(catacombs.tier_completions ?? {})
-            .filter(([tier]) => tier !== "total" && tier !== "master_mode")
-            .map(([tier, completions]) => ({
-              name: `Floor ${tier}`,
-              completions: Number(completions) || 0,
-              bestScore: Number(catacombs.best_score?.[tier] ?? 0),
-            }))
-            .sort((a, b) => a.name.localeCompare(b.name)),
+          secretsFound: Number(dungeonsRoot?.secrets ?? 0),
+          floors: floorEntries(catacombs.tier_completions, catacombs.best_score, "Floor "),
+          ...(masterCatacombs
+            ? {
+                masterMode: floorEntries(
+                  masterCatacombs.tier_completions,
+                  masterCatacombs.best_score,
+                  "M",
+                ),
+                masterModeLevel: computeSkill("COMBAT", Number(masterCatacombs.experience ?? 0))
+                  .level,
+                masterModeXp: Number(masterCatacombs.experience ?? 0),
+              }
+            : {}),
+          ...(dungeonClasses.length ? { classes: dungeonClasses } : {}),
+          ...(Number(dungeonsRoot?.milestone_completions ?? 0) > 0
+            ? { milestones: Number(dungeonsRoot?.milestone_completions) }
+            : {}),
         }
       : undefined;
 
-    // Slayers: total kills per boss per tier.
+    // Slayers: kills per boss per tier + XP + claimed levels.
     const slayerRaw = member["slayer_bosses"] as
       | Record<
           string,
           {
             claimed_levels?: Record<string, unknown>;
             boss_kills_tier?: Record<string, number>;
+            xp?: number;
+            claimed_xp?: Record<string, number>;
           }
         >
       | undefined;
@@ -1764,10 +2078,13 @@ export async function getPlayerData(
         name: SLAYER_NAMES[key] ?? titleCase(key),
         tier: Number(tier),
         kills: Number(kills) || 0,
+        ...(Number(data.claimed_xp?.[tier] ?? 0) > 0
+          ? { xp: Number(data.claimed_xp?.[tier]) }
+          : {}),
       })),
     );
 
-    // Pets: name, rarity and level from pet XP.
+    // Pets: name, rarity, level, XP + extras (active/held/skin/candy).
     const petsRaw = member["pets_data"] as
       | {
           pets?: Array<{
@@ -1775,7 +2092,12 @@ export async function getPlayerData(
             name?: string;
             tier?: string;
             experience?: number;
+            heldItem?: string | null;
+            skin?: string | null;
+            candyUsed?: number;
+            uuid?: string;
           }>;
+          current?: string | null;
         }
       | undefined;
 
@@ -1785,8 +2107,244 @@ export async function getPlayerData(
         rarity: String(pet.tier ?? "COMMON"),
         level: computePetLevel(Number(pet.experience ?? 0)),
         xp: Number(pet.experience ?? 0),
+        ...(petsRaw?.current && pet.uuid && petsRaw.current === pet.uuid ? { active: true } : {}),
+        ...(pet.heldItem ? { heldItem: titleCase(String(pet.heldItem).replace(/_/g, " ")) } : {}),
+        ...(pet.skin ? { skin: String(pet.skin) } : {}),
+        ...(Number(pet.candyUsed ?? 0) > 0 ? { candyUsed: Number(pet.candyUsed) } : {}),
       }))
       .sort((a, b) => b.level - a.level || b.xp - a.xp);
+
+    // Heart of the Mountain (mining core).
+    const miningCore = member["mining_core"] as
+      | {
+          nodes?: Record<string, number | { level?: number }>;
+          powders?: Record<string, number>;
+          experience?: number;
+          tiers_area?: Record<string, number>;
+          selected_pickaxe_uid?: string;
+        }
+      | undefined;
+
+    let hotm: import("./skyblock").HotmStats | undefined;
+    if (miningCore) {
+      const nodes: Record<string, number> = {};
+      for (const [key, value] of Object.entries(miningCore.nodes ?? {})) {
+        if (key.endsWith("_level")) {
+          const nodeKey = key.replace(/_level$/, "").replace(/^node_\d+_/, "");
+          const level =
+            typeof value === "number"
+              ? value
+              : Number((value as { level?: number } | undefined)?.level ?? 0);
+          if (level > 0) nodes[nodeKey] = level;
+        }
+      }
+      const tier = Math.max(
+        0,
+        ...Object.entries(miningCore.tiers_area ?? {}).map(([, v]) => Number(v) || 0),
+        computeSkill("MINING", Number(miningCore.experience ?? 0)).level,
+      );
+      hotm = {
+        tier,
+        xp: Number(miningCore.experience ?? 0),
+        powders: {
+          mithril: Number(miningCore.powders?.["mithril"] ?? 0),
+          gemstone: Number(miningCore.powders?.["gemstone"] ?? 0),
+          glacite: Number(miningCore.powders?.["glacite"] ?? 0),
+        },
+        nodes,
+      };
+    }
+
+    // Garden.
+    const gardenRaw = member["garden"] as
+      | {
+          garden_experience?: number;
+          crop_milestones?: Record<string, number>;
+          visitors_served?: number;
+          composts?: number;
+        }
+      | undefined;
+
+    const garden: import("./skyblock").GardenStats | undefined = gardenRaw
+      ? {
+          level: computeSkill("FARMING", Number(gardenRaw.garden_experience ?? 0)).level,
+          xp: Number(gardenRaw.garden_experience ?? 0),
+          cropMilestones: Object.fromEntries(
+            Object.entries(gardenRaw.crop_milestones ?? {})
+              .filter(([, v]) => Number(v) > 0)
+              .map(([k, v]) => [k.replace(/^CROP_/, "").toLowerCase(), Number(v)]),
+          ),
+          ...(Number(gardenRaw.visitors_served ?? 0) > 0
+            ? { visitorsServed: Number(gardenRaw.visitors_served) }
+            : {}),
+          ...(Number(gardenRaw.composts ?? 0) > 0 ? { compost: Number(gardenRaw.composts) } : {}),
+        }
+      : undefined;
+
+    // Crimson Isle (nether island): dojo, Kuudra, factions.
+    const nether = member["nether_island_player_data"] as
+      | {
+          dojo?: Record<string, { player_score?: number }>;
+          kuudra_completed_tiers?: Record<string, number>;
+          matriarch?: Record<string, unknown>;
+        }
+      | undefined;
+
+    const dojo: Record<string, number> = {};
+    for (const [key, value] of Object.entries(nether?.dojo ?? {})) {
+      const score = Number((value as { player_score?: number } | undefined)?.player_score ?? 0);
+      if (score > 0) dojo[key.replace(/^dojo_|_time$|_success$/, "")] = score;
+    }
+    const kuudra: Record<string, number> = {};
+    for (const [key, value] of Object.entries(nether?.kuudra_completed_tiers ?? {})) {
+      if (Number(value) > 0) kuudra[key] = Number(value);
+    }
+
+    const crimson: import("./skyblock").CrimsonStats | undefined =
+      Object.keys(dojo).length > 0 || Object.keys(kuudra).length > 0
+        ? {
+            dojo,
+            kuudra,
+            ...(typeof member["nether_faction"] === "string"
+              ? { faction: titleCase(String(member["nether_faction"])) }
+              : {}),
+          }
+        : undefined;
+
+    // Rift.
+    const riftRaw = member["rift"] as
+      | {
+          gallery?: Record<string, unknown>;
+          castle?: Record<string, unknown>;
+          village?: Record<string, unknown>;
+          dead_cats?: Record<string, unknown>;
+          serpent_bondmagic?: Record<string, unknown>;
+          motes?: number;
+        }
+      | undefined;
+
+    let rift: import("./skyblock").RiftStats | undefined;
+    if (riftRaw) {
+      const progress: Record<string, number> = {};
+      for (const [section, value] of Object.entries(riftRaw)) {
+        if (value && typeof value === "object") {
+          for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
+            if (typeof v === "number" && v > 0) progress[`${section}_${key}`] = v;
+          }
+        }
+      }
+      if (Object.keys(progress).length > 0 || Number(riftRaw.motes ?? 0) > 0) {
+        rift = {
+          ...(Number(riftRaw.motes ?? 0) > 0 ? { motes: Number(riftRaw.motes) } : {}),
+          progress,
+        };
+      }
+    }
+
+    // Museum (summary only — full contents need a separate call).
+    const museumRaw = member["museum"] as
+      | {
+          items?: Record<string, unknown>;
+          appraisal_date?: string;
+        }
+      | undefined;
+
+    const museum: import("./skyblock").MuseumStats | undefined = museumRaw
+      ? {
+          donatedItems: Object.keys(museumRaw.items ?? {}).length,
+          ...(museumRaw.appraisal_date ? { appraised: 1 } : {}),
+        }
+      : undefined;
+
+    // Achievements.
+    const achievementsRaw = member["achievements"] as Record<string, number> | undefined;
+
+    let achievements: import("./skyblock").AchievementStats | undefined;
+    if (achievementsRaw && Object.keys(achievementsRaw).length > 0) {
+      const categories: Record<string, number> = {};
+      let points = 0;
+      for (const [key, value] of Object.entries(achievementsRaw)) {
+        if (key.endsWith("_points")) {
+          points += Number(value) || 0;
+        } else if (Number(value) > 0) {
+          categories[key.replace(/_/g, " ")] = Number(value);
+        }
+      }
+      achievements = { points, categories };
+    }
+
+    // Jacob's farming contests.
+    const jacobRaw = member["jacob2"] as
+      | {
+          medals_inv?: {
+            bronze?: number;
+            silver?: number;
+            gold?: number;
+            platinum?: number;
+            diamond?: number;
+          };
+          per_crop?: Record<string, { best_contest?: number }>;
+        }
+      | undefined;
+
+    const jacob: import("./skyblock").JacobStats | undefined = jacobRaw?.medals_inv
+      ? {
+          gold: Number(jacobRaw.medals_inv.gold ?? 0),
+          silver: Number(jacobRaw.medals_inv.silver ?? 0),
+          bronze: Number(jacobRaw.medals_inv.bronze ?? 0),
+          ...(Number(jacobRaw.medals_inv.platinum ?? 0) > 0
+            ? { platinum: Number(jacobRaw.medals_inv.platinum) }
+            : {}),
+          ...(Number(jacobRaw.medals_inv.diamond ?? 0) > 0
+            ? { diamond: Number(jacobRaw.medals_inv.diamond) }
+            : {}),
+          perCrop: Object.fromEntries(
+            Object.entries(jacobRaw.per_crop ?? {})
+              .map(([crop, data]) => [
+                crop.replace(/^CROP_/, "").toLowerCase(),
+                Number(data?.best_contest ?? 0),
+              ])
+              .filter(([, v]) => Number(v) > 0),
+          ),
+        }
+      : undefined;
+
+    // Experimental table.
+    const expRaw = member["experimentation"] as
+      | {
+          simulators?: Record<string, { claims?: Record<string, number> }>;
+        }
+      | undefined;
+
+    let experimentation: import("./skyblock").ExperimentationStats | undefined;
+    if (expRaw?.simulators) {
+      const claims: Record<string, number> = {};
+      for (const [sim, data] of Object.entries(expRaw.simulators)) {
+        for (const [claim, count] of Object.entries(data.claims ?? {})) {
+          if (Number(count) > 0) claims[`${sim}_${claim}`] = Number(count);
+        }
+      }
+      if (Object.keys(claims).length > 0) experimentation = { claims };
+    }
+
+    // Lifetime stats.
+    const statsRaw = member["stats"] as Record<string, number> | undefined;
+
+    const lifetimeStats: import("./skyblock").LifetimeStats | undefined =
+      statsRaw && (Number(statsRaw["kills"] ?? 0) > 0 || Number(statsRaw["deaths"] ?? 0) > 0)
+        ? {
+            ...(Number(statsRaw["kills"] ?? 0) > 0 ? { kills: Number(statsRaw["kills"]) } : {}),
+            ...(Number(statsRaw["deaths"] ?? 0) > 0 ? { deaths: Number(statsRaw["deaths"]) } : {}),
+          }
+        : undefined;
+
+    // Co-op community upgrades (profile level).
+    const communityUpgradesRaw = chosen.community_upgrades as
+      { upgrades?: Array<{ upgrade?: string; tier?: number }> } | undefined;
+
+    const communityUpgrades = (communityUpgradesRaw?.upgrades ?? [])
+      .filter((u) => u.upgrade)
+      .map((u) => ({ upgrade: titleCase(String(u.upgrade)), level: Number(u.tier ?? 0) }));
 
     const profile = member["profile"] as
       | {
@@ -1827,6 +2385,26 @@ export async function getPlayerData(
       ...(slayers.length ? { slayers } : {}),
 
       ...(pets.length ? { pets } : {}),
+
+      ...(hotm ? { hotm } : {}),
+
+      ...(garden ? { garden } : {}),
+
+      ...(crimson ? { crimson } : {}),
+
+      ...(rift ? { rift } : {}),
+
+      ...(museum ? { museum } : {}),
+
+      ...(achievements ? { achievements } : {}),
+
+      ...(jacob ? { jacob } : {}),
+
+      ...(experimentation ? { experimentation } : {}),
+
+      ...(lifetimeStats ? { lifetimeStats } : {}),
+
+      ...(communityUpgrades.length ? { communityUpgrades } : {}),
     };
 
     // Runtime-validate the normalized payload before it crosses the wire.

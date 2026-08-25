@@ -31,6 +31,12 @@ export const inventoryItemSchema = z.object({
   rarity: z.string(),
   count: z.number(),
   lore: z.array(z.string()),
+  enchantments: z.record(z.string(), z.number()).optional(),
+  reforge: z.string().optional(),
+  stars: z.number().optional(),
+  hotPotatoBooks: z.number().optional(),
+  gems: z.record(z.string(), z.string()).optional(),
+  abilityScrolls: z.array(z.string()).optional(),
 });
 
 export const inventoryContainerSchema = z.object({
@@ -79,12 +85,26 @@ export const dungeonStatsSchema = z.object({
   catacombsXp: z.number(),
   secretsFound: z.number(),
   floors: z.array(dungeonFloorSchema),
+  masterMode: z.array(dungeonFloorSchema).optional(),
+  masterModeLevel: z.number().optional(),
+  masterModeXp: z.number().optional(),
+  classes: z
+    .array(
+      z.object({
+        name: z.string(),
+        level: z.number(),
+        selected: z.boolean(),
+      }),
+    )
+    .optional(),
+  milestones: z.number().optional(),
 });
 
 export const slayerEntrySchema = z.object({
   name: z.string(),
   tier: z.number(),
   kills: z.number(),
+  xp: z.number().optional(),
 });
 
 export const petSchema = z.object({
@@ -92,6 +112,76 @@ export const petSchema = z.object({
   rarity: z.string(),
   level: z.number(),
   xp: z.number(),
+  active: z.boolean().optional(),
+  heldItem: z.string().optional(),
+  skin: z.string().optional(),
+  candyUsed: z.number().optional(),
+});
+
+const recordNumber = z.record(z.string(), z.number());
+
+export const hotmSchema = z.object({
+  tier: z.number(),
+  xp: z.number(),
+  powders: z.object({
+    mithril: z.number(),
+    gemstone: z.number(),
+    glacite: z.number(),
+  }),
+  nodes: recordNumber,
+});
+
+export const gardenSchema = z.object({
+  level: z.number(),
+  xp: z.number(),
+  cropMilestones: recordNumber,
+  visitorsServed: z.number().optional(),
+  compost: z.number().optional(),
+});
+
+export const crimsonSchema = z.object({
+  dojo: recordNumber,
+  kuudra: recordNumber,
+  faction: z.string().optional(),
+  reputation: z.number().optional(),
+});
+
+export const riftSchema = z.object({
+  motes: z.number().optional(),
+  progress: recordNumber,
+});
+
+export const museumSchema = z.object({
+  donatedItems: z.number().optional(),
+  appraised: z.number().optional(),
+});
+
+export const achievementsSchema = z.object({
+  points: z.number(),
+  categories: recordNumber,
+});
+
+export const jacobSchema = z.object({
+  gold: z.number(),
+  silver: z.number(),
+  bronze: z.number(),
+  platinum: z.number().optional(),
+  diamond: z.number().optional(),
+  perCrop: recordNumber,
+});
+
+export const experimentationSchema = z.object({
+  claims: recordNumber,
+});
+
+export const lifetimeStatsSchema = z.object({
+  kills: z.number().optional(),
+  deaths: z.number().optional(),
+});
+
+export const communityUpgradeSchema = z.object({
+  upgrade: z.string(),
+  level: z.number(),
 });
 
 export const playerDataSchema = z.object({
@@ -111,6 +201,16 @@ export const playerDataSchema = z.object({
   dungeons: dungeonStatsSchema.optional(),
   slayers: z.array(slayerEntrySchema).optional(),
   pets: z.array(petSchema).optional(),
+  hotm: hotmSchema.optional(),
+  garden: gardenSchema.optional(),
+  crimson: crimsonSchema.optional(),
+  rift: riftSchema.optional(),
+  museum: museumSchema.optional(),
+  achievements: achievementsSchema.optional(),
+  jacob: jacobSchema.optional(),
+  experimentation: experimentationSchema.optional(),
+  lifetimeStats: lifetimeStatsSchema.optional(),
+  communityUpgrades: z.array(communityUpgradeSchema).optional(),
 });
 
 export type PlayerDataValidated = z.infer<typeof playerDataSchema>;
