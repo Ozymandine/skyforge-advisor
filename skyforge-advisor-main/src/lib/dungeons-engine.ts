@@ -230,9 +230,8 @@ export function evaluatePartyFinderReadiness(
   else if (secretsPerRun >= 5) secretBenchmark = "Average";
   else secretBenchmark = "Beginner";
 
-  // Check requirements by floor
   let minCata = 24;
-  if (targetFloor === "F7") minCata = 30; // PF standard for F7
+  if (targetFloor === "F7") minCata = 30;
   else if (targetFloor === "M6") minCata = 40;
   else if (targetFloor === "M7") minCata = 45;
 
@@ -351,8 +350,8 @@ export function getStarUpEstimates(witherEssencePrice = 2800): StarUpEstimate[] 
     {
       itemType: "Hyperion/Wither Blade",
       essenceType: "Wither Essence",
-      stars1to5Cost: 2850, // 2,850 Wither Essence
-      masterStarsCostCoins: 280_000_000, // Master Stars 6-10 (15M+25M+45M+75M+120M)
+      stars1to5Cost: 2850,
+      masterStarsCostCoins: 280_000_000,
       totalCoinsValue: Math.round(2850 * witherEssencePrice + 280_000_000),
     },
     {
@@ -371,4 +370,3 @@ export function getStarUpEstimates(witherEssencePrice = 2800): StarUpEstimate[] 
     },
   ];
 }
-

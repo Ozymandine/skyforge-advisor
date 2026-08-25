@@ -37,6 +37,12 @@ import {
   FLOOR_CHEST_LOOT_TABLES,
   getStarUpEstimates,
 } from "@/lib/dungeons-engine";
+import {
+  NOTABLE_GARDEN_VISITORS,
+  evaluateVisitorOffer,
+  PEST_TYPES,
+  CROP_TUNING_GUIDES,
+} from "@/lib/garden-ecosystem";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/skills")({
@@ -487,6 +493,110 @@ function SkillsRoute() {
                           </span>
                         </div>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </Panel>
+
+              {/* Garden Visitor Queue Profitability Matrix */}
+              <Panel>
+                <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Garden Visitor Queue Profitability Matrix</h2>
+                    <p className="text-xs text-white/50">Evaluates material costs vs Copper, Dedication IV, and Overgrown Grass value</p>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {NOTABLE_GARDEN_VISITORS.map((v) => {
+                    const evalResult = evaluateVisitorOffer(v, v.rarity === "SPECIAL" ? 50_000_000 : 150_000);
+                    return (
+                      <div
+                        key={v.name}
+                        className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur"
+                      >
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-bold text-white">{v.name}</h3>
+                          <span className="rounded-lg border border-sky-400/40 bg-sky-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-sky-300">
+                            {v.rarity}
+                          </span>
+                        </div>
+                        <div className="mt-3 space-y-1 text-xs text-white/60">
+                          <div className="flex justify-between">
+                            <span>Rewards:</span>
+                            <span className="font-mono text-amber-300">+{v.copperReward} Copper · +{formatNumber(v.farmingXp)} XP</span>
+                          </div>
+                          {v.rareDrop && (
+                            <div className="flex justify-between text-purple-300">
+                              <span>Rare Drop:</span>
+                              <span className="font-mono font-bold">{v.rareDrop.name} ({v.rareDrop.dropRate})</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between border-t border-white/10 pt-1.5 font-bold">
+                            <span className="text-white/80">Recommendation:</span>
+                            <span style={{ color: evalResult.color }}>{evalResult.recommendation}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Panel>
+
+              {/* Crop Pest Spawn Timers & Vinyl Drops */}
+              <Panel>
+                <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Crop Pest Spawn Intervals & Extermination</h2>
+                    <p className="text-xs text-white/50">Average ~3.5 min spawn intervals with max repellent · Vinyl drops & Fortune bonus</p>
+                  </div>
+                  <span className="rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-3 py-1 font-mono text-xs font-bold text-emerald-300">
+                    ~17 Pests / Hour
+                  </span>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+                  {PEST_TYPES.map((p) => (
+                    <div
+                      key={p.id}
+                      className="rounded-xl border border-white/5 bg-black/30 p-3"
+                    >
+                      <h3 className="text-xs font-bold text-white">{p.name}</h3>
+                      <p className="text-[10px] text-white/50 mt-1">Crops: {p.favoredCrops.join(", ")}</p>
+                      <div className="mt-2 flex justify-between text-[11px] font-mono">
+                        <span className="text-sky-300">{p.vinylDrop}</span>
+                        <span className="text-emerald-400">+{formatFull(p.baseDropCoins)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Panel>
+
+              {/* Optimal Crop Speed & Angle Tuning Guide */}
+              <Panel>
+                <h2 className="text-xl font-bold text-white mb-4">Optimal Crop Speed & Angle Tuning Guide (20 BPS Max)</h2>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {CROP_TUNING_GUIDES.map((g) => (
+                    <div
+                      key={g.crop}
+                      className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur"
+                    >
+                      <h3 className="text-sm font-bold text-white">{g.crop}</h3>
+                      <div className="mt-2 space-y-1 text-xs text-white/60">
+                        <div className="flex justify-between">
+                          <span>Optimal Speed:</span>
+                          <span className="font-mono font-bold text-amber-300">{g.optimalSpeed}% Speed</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Angles (Yaw / Pitch):</span>
+                          <span className="font-mono text-sky-300">{g.yawAngle} / {g.pitchAngle}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Recommended Tool:</span>
+                          <span className="font-mono text-white/80">{g.recommendedTool}</span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-white/40 mt-2 border-t border-white/10 pt-2">{g.notes}</p>
                     </div>
                   ))}
                 </div>
