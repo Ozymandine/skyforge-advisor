@@ -118,3 +118,4 @@ describe("T2.06: In-game Clipboard Commands", () => {
     expect(getCraftCommand("SUPER_COMPACTOR_3000")).toBe("/recipe super compactor 3000");
   });
 });
+

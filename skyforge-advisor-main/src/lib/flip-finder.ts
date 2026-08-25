@@ -276,7 +276,6 @@ export function generateCraftFlips(
 
     for (const ing of ingredientsList) {
       const bz = bazaarPrices.get(ing.id);
-      // Use Bazaar Instant Buy / Buy Order price
       const unitPrice = bz?.buyPrice || bz?.sellPrice || ahLowestBins.get(ing.id) || 0;
       if (unitPrice <= 0) {
         hasAllPrices = false;
@@ -295,7 +294,6 @@ export function generateCraftFlips(
 
     if (!hasAllPrices || totalCraftCost <= 0) continue;
 
-    // Check AH BIN first, then Bazaar
     const ahBin = ahLowestBins.get(targetId);
     const bzSell = bazaarPrices.get(targetId)?.sellPrice;
 
