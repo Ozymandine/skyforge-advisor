@@ -18,7 +18,13 @@ import {
 
 import { Panel } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
-import { fetchBazaar, fetchFlipAccuracy } from "@/lib/hypixel.functions";
+import {
+  fetchBazaar,
+  fetchElection,
+  fetchFireSale,
+  fetchFlipAccuracy,
+  fetchNews,
+} from "@/lib/hypixel.functions";
 import { formatNumber } from "@/lib/skyblock";
 
 export const Route = createFileRoute("/")({
@@ -94,6 +100,27 @@ function Landing() {
     staleTime: 60_000,
   });
 
+  // Site-wide Hypixel context: mayor, news, fire sale (long-cached).
+  const electionQuery = useQuery({
+    queryKey: ["election"],
+    queryFn: () => fetchElection(),
+    staleTime: 30 * 60_000,
+  });
+  const newsQuery = useQuery({
+    queryKey: ["sb-news"],
+    queryFn: () => fetchNews(),
+    staleTime: 60 * 60_000,
+  });
+  const fireSaleQuery = useQuery({
+    queryKey: ["fire-sale"],
+    queryFn: () => fetchFireSale(),
+    staleTime: 30 * 60_000,
+  });
+
+  const mayor = electionQuery.data?.mayor;
+  const news = (newsQuery.data ?? []).slice(0, 2);
+  const fireSale = (fireSaleQuery.data ?? []).slice(0, 4);
+
   const topFlips = (bazaarQuery.data?.products ?? [])
     .slice()
     .sort((a, b) => b.profitPerHour - a.profitPerHour)
@@ -156,6 +183,73 @@ function Landing() {
           ))}
         </div>
       </section>
+
+      {/* Hypixel context strip: mayor, fire sale, news */}
+      {(mayor || fireSale.length > 0 || news.length > 0) && (
+        <section className="grid gap-3 sm:grid-cols-3">
+          {mayor && (
+            <Panel className="p-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Current mayor
+              </p>
+              <p className="font-pixel mt-1.5 text-xl font-semibold text-amber-300">
+                {mayor.name ?? "—"}
+              </p>
+              {(mayor.perks ?? []).slice(0, 2).map((perk) => (
+                <p key={perk.name} className="mt-1 text-[11px] text-muted-foreground">
+                  <span className="font-semibold text-foreground/80">{perk.name}</span>
+                  {perk.description ? ` — ${perk.description}` : ""}
+                </p>
+              ))}
+            </Panel>
+          )}
+
+          {fireSale.length > 0 && (
+            <Panel className="p-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Fire sale
+              </p>
+              <div className="mt-2 space-y-2">
+                {fireSale.map((sale) => (
+                  <div key={sale.item_id} className="flex items-center gap-2">
+                    <ItemIcon id={sale.item_id!} name={sale.item_id!} className="size-6" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium capitalize">
+                        {sale.item_id!.replace(/_/g, " ").toLowerCase()}
+                      </p>
+                      {sale.end && (
+                        <p className="font-mono text-[10px] text-muted-foreground">
+                          ends {new Date(sale.end).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          )}
+
+          {news.length > 0 && (
+            <Panel className="p-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                SkyBlock news
+              </p>
+              <div className="mt-2 space-y-3">
+                {news.map((item) => (
+                  <div key={item.title}>
+                    <p className="text-xs font-semibold">{item.title}</p>
+                    {item.text && (
+                      <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">
+                        {item.text}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          )}
+        </section>
+      )}
 
       {/* Live proof: real flips right now */}
       <section>
