@@ -143,10 +143,47 @@ function Skills() {
                 />
               </div>
 
+              {/* Dungeon classes */}
+              {data.dungeons.classes && data.dungeons.classes.length > 0 && (
+                <div className="mt-6">
+                  <p className="eyebrow mb-3">Dungeon classes</p>
+                  <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
+                    {data.dungeons.classes.map((cls) => (
+                      <div
+                        key={cls.name}
+                        className={`rounded-xl px-4 py-3 text-center transition-all duration-75 ${
+                          cls.selected ? "border border-primary/40 bg-primary/15" : "glass-soft"
+                        }`}
+                      >
+                        <p className="text-sm font-semibold">{cls.name}</p>
+                        <p className="mt-1 font-mono text-lg font-bold text-primary">{cls.level}</p>
+                        {cls.selected && (
+                          <p className="mt-1 text-[9px] font-bold uppercase tracking-wider text-primary">
+                            Selected
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="mt-6">
                 <p className="eyebrow mb-3">Floor map</p>
                 <DungeonFloorMap floors={data.dungeons.floors} />
               </div>
+
+              {/* Master Mode */}
+              {data.dungeons.masterMode && data.dungeons.masterMode.length > 0 && (
+                <div className="mt-6">
+                  <p className="eyebrow mb-3">
+                    Master Mode
+                    {data.dungeons.masterModeLevel != null &&
+                      ` · Level ${data.dungeons.masterModeLevel}`}
+                  </p>
+                  <DungeonFloorMap floors={data.dungeons.masterMode} />
+                </div>
+              )}
             </Panel>
           )}
 
@@ -155,7 +192,7 @@ function Skills() {
             <Panel>
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <h2 className="text-xl font-semibold">Slayers</h2>
-                <p className="text-xs text-muted-foreground">Boss kills by tier</p>
+                <p className="text-xs text-muted-foreground">Kills, tiers and XP per boss</p>
               </div>
 
               <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -166,7 +203,10 @@ function Skills() {
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{slayer.name}</p>
-                      <p className="text-xs text-muted-foreground">Tier {slayer.tier}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Tier {slayer.tier}
+                        {slayer.xp ? ` · ${formatFull(slayer.xp)} XP` : ""}
+                      </p>
                     </div>
                     <p className="shrink-0 font-mono text-sm font-semibold text-primary">
                       {slayer.kills.toLocaleString()}
@@ -174,6 +214,199 @@ function Skills() {
                   </li>
                 ))}
               </ul>
+            </Panel>
+          )}
+
+          {/* Heart of the Mountain */}
+          {data?.hotm && (
+            <Panel>
+              <div className="flex flex-wrap items-baseline justify-between gap-3">
+                <h2 className="text-xl font-semibold">Heart of the Mountain</h2>
+                <p className="text-xs text-muted-foreground">Mining core progression</p>
+              </div>
+
+              <div className="mt-4">
+                <StatRow
+                  stats={[
+                    {
+                      label: "HOTM tier",
+                      value: String(data.hotm.tier),
+                      sub: `${formatFull(data.hotm.xp)} XP`,
+                    },
+                    {
+                      label: "Mithril powder",
+                      value: formatFull(data.hotm.powders.mithril),
+                      sub: "Spent + available",
+                    },
+                    {
+                      label: "Gemstone powder",
+                      value: formatFull(data.hotm.powders.gemstone),
+                      sub: "Crystal Hollows",
+                    },
+                    {
+                      label: "Glacite powder",
+                      value: formatFull(data.hotm.powders.glacite),
+                      sub: "Mineshafts",
+                    },
+                  ]}
+                />
+              </div>
+
+              {Object.keys(data.hotm.nodes).length > 0 && (
+                <div className="mt-5">
+                  <p className="eyebrow mb-3">Node levels</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(data.hotm.nodes)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([node, level]) => (
+                        <span
+                          key={node}
+                          className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] capitalize"
+                        >
+                          {node.replace(/_/g, " ")}{" "}
+                          <span className="font-mono font-bold text-primary">{level}</span>
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </Panel>
+          )}
+
+          {/* Garden */}
+          {data?.garden && (
+            <Panel>
+              <div className="flex flex-wrap items-baseline justify-between gap-3">
+                <h2 className="text-xl font-semibold">Garden</h2>
+                <p className="text-xs text-muted-foreground">Farming hub progression</p>
+              </div>
+
+              <div className="mt-4">
+                <StatRow
+                  stats={[
+                    {
+                      label: "Garden level",
+                      value: String(data.garden.level),
+                      sub: `${formatFull(data.garden.xp)} XP`,
+                    },
+                    ...(data.garden.visitorsServed != null
+                      ? [
+                          {
+                            label: "Visitors served",
+                            value: formatFull(data.garden.visitorsServed),
+                            sub: "Lifetime",
+                          },
+                        ]
+                      : []),
+                    ...(data.garden.compost != null
+                      ? [
+                          {
+                            label: "Composts",
+                            value: formatFull(data.garden.compost),
+                            sub: "Organic matter used",
+                          },
+                        ]
+                      : []),
+                    {
+                      label: "Crops tracked",
+                      value: String(Object.keys(data.garden.cropMilestones).length),
+                      sub: "With milestone data",
+                    },
+                  ]}
+                />
+              </div>
+
+              {Object.keys(data.garden.cropMilestones).length > 0 && (
+                <div className="mt-5 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-4">
+                  {Object.entries(data.garden.cropMilestones)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([crop, milestone]) => (
+                      <div
+                        key={crop}
+                        className="glass-soft flex items-center justify-between rounded-lg px-3 py-2 text-xs capitalize"
+                      >
+                        <span className="text-muted-foreground">{crop}</span>
+                        <span className="font-mono font-semibold">{formatFull(milestone)}</span>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </Panel>
+          )}
+
+          {/* Crimson Isle */}
+          {data?.crimson && (
+            <Panel>
+              <div className="flex flex-wrap items-baseline justify-between gap-3">
+                <h2 className="text-xl font-semibold">Crimson Isle</h2>
+                <p className="text-xs text-muted-foreground">
+                  {data.crimson.faction ? `${data.crimson.faction} faction` : "Dojo & Kuudra"}
+                </p>
+              </div>
+
+              {Object.keys(data.crimson.kuudra).length > 0 && (
+                <div className="mt-4">
+                  <p className="eyebrow mb-3">Kuudra completions</p>
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                    {Object.entries(data.crimson.kuudra).map(([tier, count]) => (
+                      <div key={tier} className="glass-soft rounded-xl px-4 py-3 text-center">
+                        <p className="text-xs capitalize text-muted-foreground">{tier}</p>
+                        <p className="mt-1 font-mono text-lg font-bold">{count}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {Object.keys(data.crimson.dojo).length > 0 && (
+                <div className="mt-5">
+                  <p className="eyebrow mb-3">Dojo scores</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(data.crimson.dojo)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([challenge, score]) => (
+                        <span
+                          key={challenge}
+                          className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] capitalize"
+                        >
+                          {challenge.replace(/_/g, " ")}{" "}
+                          <span className="font-mono font-bold text-primary">{score}</span>
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </Panel>
+          )}
+
+          {/* Rift */}
+          {data?.rift && (
+            <Panel>
+              <div className="flex flex-wrap items-baseline justify-between gap-3">
+                <h2 className="text-xl font-semibold">Rift</h2>
+                <p className="text-xs text-muted-foreground">Dimensional progress</p>
+              </div>
+              {data.rift.motes != null && (
+                <p className="mt-3 font-mono text-lg font-bold text-primary">
+                  {formatFull(data.rift.motes)}{" "}
+                  <span className="text-xs text-muted-foreground">motes</span>
+                </p>
+              )}
+              {Object.keys(data.rift.progress).length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {Object.entries(data.rift.progress)
+                    .slice(0, 20)
+                    .map(([key, value]) => (
+                      <span
+                        key={key}
+                        className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px]"
+                      >
+                        {key.replace(/_/g, " ")}:{" "}
+                        <span className="font-mono font-semibold">{formatNumber(value)}</span>
+                      </span>
+                    ))}
+                </div>
+              )}
             </Panel>
           )}
         </>
