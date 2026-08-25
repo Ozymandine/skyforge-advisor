@@ -370,3 +370,4 @@ export function getStarUpEstimates(witherEssencePrice = 2800): StarUpEstimate[] 
     },
   ];
 }
+

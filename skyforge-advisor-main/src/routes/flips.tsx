@@ -14,6 +14,12 @@ import {
   Boxes,
   ArrowRight,
   Filter,
+  RefreshCw,
+  Sparkles,
+  Coins,
+  Crown,
+  Dog,
+  Bot,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -33,31 +39,49 @@ import {
   getCraftCommand,
   type CraftFlip,
 } from "@/lib/flip-finder";
+import {
+  calculateCrossMarketArbitrage,
+  calculatePetLevelingOpportunities,
+  calculateMinionSetups,
+  getDarkAuctionCeilings,
+  getShensAuctionMatrix,
+} from "@/lib/arbitrage-engine";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/flips")({
   head: () => ({
     meta: [
-      { title: "Market Flips & Margin Intelligence — SkyForge Advisor" },
+      { title: "Market Flips & Arbitrage Matrix — SkyForge Advisor" },
       {
         name: "description",
         content:
-          "Real-time Bazaar spread flips, Auction House BIN undercuts, craft-flip margins, trap filters, and 1-click in-game commands.",
+          "Real-time Bazaar spread flips, Auction House undercuts, cross-market AH <-> BZ arbitrage, pet leveling margins, minion ROI, and Sirius bid ceilings.",
       },
-      { property: "og:title", content: "Market Flips & Margin Intelligence — SkyForge Advisor" },
+      { property: "og:title", content: "Market Flips & Arbitrage Matrix — SkyForge Advisor" },
       {
         property: "og:description",
-        content: "Live tax-adjusted flip finder, craft margins, and anti-manipulation spoof detectors.",
+        content: "Complete flip finder with cross-market arbitrage, pet leveling margins, and anti-manipulation spoof detectors.",
       },
     ],
   }),
   component: FlipsRoute,
 });
 
-type TabType = "bazaar" | "auctions" | "crafts" | "scorecard";
+type TabType =
+  | "bazaar"
+  | "auctions"
+  | "crafts"
+  | "arbitrage"
+  | "pets"
+  | "minions"
+  | "dark_auction"
+  | "scorecard";
+
+type BudgetTier = "all" | "low" | "mid" | "high" | "whale";
 
 function FlipsRoute() {
   const [activeTab, setActiveTab] = useState<TabType>("bazaar");
+  const [budgetTier, setBudgetTier] = useState<BudgetTier>("all");
   const [query, setQuery] = useState("");
   const [minProfit, setMinProfit] = useState<number>(50_000);
   const [minMargin, setMinMargin] = useState<number>(3);
@@ -95,6 +119,35 @@ function FlipsRoute() {
   const auctionsData = auctionsQuery.data;
   const accuracy = accuracyQuery.data;
 
+  // Process Maps
+  const bzMap = useMemo(() => {
+    const map = new Map<string, { buyPrice: number; sellPrice: number; weeklyVolume?: number }>();
+    for (const p of bazaarData?.products ?? []) {
+      map.set(p.id, { buyPrice: p.buyPrice, sellPrice: p.sellPrice, weeklyVolume: p.buyMovingWeek });
+    }
+    return map;
+  }, [bazaarData]);
+
+  const ahMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const a of auctionsData?.entries ?? []) {
+      if (a.bin && a.price > 0 && a.id) {
+        const existing = map.get(a.id);
+        if (!existing || a.price < existing) {
+          map.set(a.id, a.price);
+        }
+      }
+    }
+    return map;
+  }, [auctionsData]);
+
+  // Arbitrage Results
+  const crossArbitrage = useMemo(() => calculateCrossMarketArbitrage(bzMap, ahMap), [bzMap, ahMap]);
+  const petFlips = useMemo(() => calculatePetLevelingOpportunities(ahMap), [ahMap]);
+  const minionSetups = useMemo(() => calculateMinionSetups(), []);
+  const daCeilings = useMemo(() => getDarkAuctionCeilings(), []);
+  const shensMatrix = useMemo(() => getShensAuctionMatrix(), []);
+
   // Process Bazaar Flips
   const bazaarFlips = useMemo(() => {
     if (!bazaarData?.products) return [];
@@ -117,10 +170,17 @@ function FlipsRoute() {
           risk,
         };
       })
+      .filter((p) => {
+        if (budgetTier === "low") return p.buyPrice < 1_000_000;
+        if (budgetTier === "mid") return p.buyPrice >= 1_000_000 && p.buyPrice <= 25_000_000;
+        if (budgetTier === "high") return p.buyPrice > 25_000_000 && p.buyPrice <= 100_000_000;
+        if (budgetTier === "whale") return p.buyPrice > 100_000_000;
+        return true;
+      })
       .filter((p) => p.netProfit >= minProfit && p.marginPct >= minMargin)
       .filter((p) => (!hideTraps ? true : !p.velocity.isTrap))
       .sort((a, b) => b.netProfit - a.netProfit || b.marginPct - a.marginPct);
-  }, [bazaarData, query, minProfit, minMargin, hideTraps]);
+  }, [bazaarData, query, minProfit, minMargin, hideTraps, budgetTier]);
 
   // Process Auction Flips
   const auctionFlips = useMemo(() => {
@@ -148,31 +208,23 @@ function FlipsRoute() {
           risk,
         };
       })
+      .filter((a) => {
+        if (budgetTier === "low") return a.price < 1_000_000;
+        if (budgetTier === "mid") return a.price >= 1_000_000 && a.price <= 25_000_000;
+        if (budgetTier === "high") return a.price > 25_000_000 && a.price <= 100_000_000;
+        if (budgetTier === "whale") return a.price > 100_000_000;
+        return true;
+      })
       .filter((a) => a.netProfit >= minProfit && a.marginPct >= minMargin)
       .filter((a) => (!hideTraps ? true : !a.manipulation.isManipulated))
       .sort((a, b) => b.netProfit - a.netProfit);
-  }, [auctionsData, query, minProfit, minMargin, hideTraps]);
+  }, [auctionsData, query, minProfit, minMargin, hideTraps, budgetTier]);
 
   // Process Craft Flips
   const craftFlips = useMemo(() => {
     if (!bazaarData?.products) return [];
-
-    const bzMap = new Map<string, { buyPrice: number; sellPrice: number; weeklyVolume?: number }>();
     const names = new Map<string, string>();
-    for (const p of bazaarData.products) {
-      bzMap.set(p.id, { buyPrice: p.buyPrice, sellPrice: p.sellPrice, weeklyVolume: p.buyMovingWeek });
-      names.set(p.id, p.name);
-    }
-
-    const ahMap = new Map<string, number>();
-    for (const a of auctionsData?.entries ?? []) {
-      if (a.bin && a.price > 0 && a.id) {
-        const existing = ahMap.get(a.id);
-        if (!existing || a.price < existing) {
-          ahMap.set(a.id, a.price);
-        }
-      }
-    }
+    for (const p of bazaarData.products) names.set(p.id, p.name);
 
     const allCrafts = generateCraftFlips(bzMap, ahMap, names, 50);
     const q = query.toLowerCase();
@@ -181,24 +233,28 @@ function FlipsRoute() {
       .filter((c) => c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))
       .filter((c) => c.netProfit >= minProfit && c.marginPct >= minMargin)
       .filter((c) => (!hideTraps ? true : !c.velocity.isTrap));
-  }, [bazaarData, auctionsData, query, minProfit, minMargin, hideTraps]);
+  }, [bazaarData, bzMap, ahMap, query, minProfit, minMargin, hideTraps]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHero
         eyebrow="Market Intelligence"
-        title="Live Flips & Margin Finder"
-        description="Tax-adjusted profit calculations, volume velocity indices, live craft-flips, and 1-click in-game clipboard execution."
+        title="Flips & Arbitrage Matrix"
+        description="Bazaar spread flips, AH undercuts, cross-market arbitrage, pet leveling margins, minion ROI, and 1-click clipboard execution."
       />
 
-      {/* Navigation Tabs */}
+      {/* Navigation Sub-Tabs */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
         <div className="flex flex-wrap gap-2">
           {[
-            { id: "bazaar", label: "Bazaar Spread Flips", count: bazaarFlips.length, icon: TrendingUp },
-            { id: "auctions", label: "Auction House Undercuts", count: auctionFlips.length, icon: Hammer },
-            { id: "crafts", label: "Craft-Flip Margins", count: craftFlips.length, icon: Boxes },
-            { id: "scorecard", label: "Transparency Scorecard", count: null, icon: Scale },
+            { id: "bazaar", label: "Bazaar Flips", count: bazaarFlips.length, icon: TrendingUp },
+            { id: "auctions", label: "AH Undercuts", count: auctionFlips.length, icon: Hammer },
+            { id: "crafts", label: "Craft Margins", count: craftFlips.length, icon: Boxes },
+            { id: "arbitrage", label: "AH ↔ BZ Arbitrage", count: crossArbitrage.length, icon: RefreshCw },
+            { id: "pets", label: "Pet Leveling ROI", count: petFlips.length, icon: Dog },
+            { id: "minions", label: "Minion Setup Payback", count: minionSetups.length, icon: Bot },
+            { id: "dark_auction", label: "Sirius Bid Ceilings", count: daCeilings.length, icon: Crown },
+            { id: "scorecard", label: "Scorecard", count: null, icon: Scale },
           ].map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -207,16 +263,16 @@ function FlipsRoute() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as TabType)}
                 className={cn(
-                  "flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all",
+                  "flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all",
                   active
                     ? "border border-sky-400/40 bg-sky-500/20 text-white shadow-lg shadow-sky-500/10"
                     : "border border-white/5 bg-white/[0.02] text-white/60 hover:bg-white/[0.05] hover:text-white"
                 )}
               >
-                <Icon className="size-4 text-sky-400" />
+                <Icon className="size-3.5 text-sky-400" />
                 <span>{tab.label}</span>
                 {tab.count !== null && (
-                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-mono font-bold text-white/80">
+                  <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] font-mono font-bold text-white/80">
                     {tab.count}
                   </span>
                 )}
@@ -225,25 +281,29 @@ function FlipsRoute() {
           })}
         </div>
 
-        {/* Global Filters */}
-        {activeTab !== "scorecard" && (
-          <div className="flex flex-wrap items-center gap-3">
-            <input
-              type="text"
-              placeholder="Filter items..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="rounded-xl border border-white/10 bg-black/40 px-3 py-1.5 text-xs text-white placeholder:text-white/30 focus:border-sky-400 focus:outline-none"
-            />
-            <label className="flex items-center gap-1.5 text-xs text-white/70 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={hideTraps}
-                onChange={(e) => setHideTraps(e.target.checked)}
-                className="rounded border-white/20 accent-sky-400"
-              />
-              Hide Illiquid Traps
-            </label>
+        {/* Budget Preset Filter Controls */}
+        {(activeTab === "bazaar" || activeTab === "auctions") && (
+          <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-black/40 p-1">
+            {[
+              { id: "all", label: "All" },
+              { id: "low", label: "🟢 <1M" },
+              { id: "mid", label: "🟡 1M–25M" },
+              { id: "high", label: "🟣 25M–100M" },
+              { id: "whale", label: "🐋 >100M" },
+            ].map((b) => (
+              <button
+                key={b.id}
+                onClick={() => setBudgetTier(b.id as BudgetTier)}
+                className={cn(
+                  "rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all",
+                  budgetTier === b.id
+                    ? "bg-white/20 text-white font-bold"
+                    : "text-white/50 hover:text-white"
+                )}
+              >
+                {b.label}
+              </button>
+            ))}
           </div>
         )}
       </div>
@@ -280,7 +340,6 @@ function FlipsRoute() {
                       </span>
                     </div>
 
-                    {/* Price Breakdown */}
                     <div className="mt-4 space-y-1.5 rounded-xl bg-black/30 p-3 text-xs">
                       <div className="flex justify-between text-white/60">
                         <span>Buy Order (Cost):</span>
@@ -302,7 +361,6 @@ function FlipsRoute() {
                       </div>
                     </div>
 
-                    {/* Velocity Index */}
                     <div className="mt-3 flex items-center justify-between text-[11px]">
                       <span className="text-white/50">Sell Velocity:</span>
                       <span className="font-mono font-semibold text-sky-300">
@@ -311,7 +369,6 @@ function FlipsRoute() {
                     </div>
                   </div>
 
-                  {/* 1-Click Clipboard Execution */}
                   <button
                     onClick={() => copyToClipboard(cmd, flip.id)}
                     className={cn(
@@ -358,7 +415,6 @@ function FlipsRoute() {
                       </span>
                     </div>
 
-                    {/* Price Breakdown */}
                     <div className="mt-4 space-y-1.5 rounded-xl bg-black/30 p-3 text-xs">
                       <div className="flex justify-between text-white/60">
                         <span>Listing BIN Price:</span>
@@ -380,7 +436,6 @@ function FlipsRoute() {
                       </div>
                     </div>
 
-                    {/* Spoof Warning */}
                     {flip.manipulation.isManipulated && (
                       <div className="mt-3 flex items-start gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-[10px] text-red-300">
                         <AlertTriangle className="size-3.5 shrink-0 mt-0.5" />
@@ -389,7 +444,6 @@ function FlipsRoute() {
                     )}
                   </div>
 
-                  {/* 1-Click Clipboard Execution */}
                   <button
                     onClick={() => copyToClipboard(cmd, flip.uuid)}
                     className={cn(
@@ -409,7 +463,7 @@ function FlipsRoute() {
         </div>
       )}
 
-      {/* TAB 3: CRAFT-FLIP MARGIN FINDER */}
+      {/* TAB 3: CRAFT-FLIP MARGINS */}
       {activeTab === "crafts" && (
         <div className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
@@ -442,7 +496,6 @@ function FlipsRoute() {
                     </div>
                   </div>
 
-                  {/* Crafting Recipe Ingredients Checklist */}
                   <div className="mt-4">
                     <p className="text-xs font-semibold text-white/70 mb-2">Required Ingredients (Bazaar Buy Orders):</p>
                     <div className="space-y-1.5">
@@ -460,7 +513,6 @@ function FlipsRoute() {
                     </div>
                   </div>
 
-                  {/* Financial Rollup */}
                   <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3 text-xs">
                     <div>
                       <span className="text-white/50">Total Craft Cost:</span>{" "}
@@ -472,7 +524,6 @@ function FlipsRoute() {
                     </div>
                   </div>
 
-                  {/* Quick Copy Command */}
                   <button
                     onClick={() => copyToClipboard(cmd, flip.id)}
                     className={cn(
@@ -492,7 +543,211 @@ function FlipsRoute() {
         </div>
       )}
 
-      {/* TAB 4: TRANSPARENCY SCORECARD */}
+      {/* TAB 4: CROSS-MARKET ARBITRAGE */}
+      {activeTab === "arbitrage" && (
+        <div className="space-y-4">
+          <Panel>
+            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-white">Cross-Market AH ↔ Bazaar Arbitrage Matrix</h2>
+                <p className="text-xs text-white/50">Instant margin gaps between Bazaar orders and Auction House Lowest BIN</p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {crossArbitrage.map((a) => {
+                const isCopied = copiedId === a.id;
+                return (
+                  <div
+                    key={a.id}
+                    className="flex flex-col justify-between rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur transition-all hover:border-emerald-500/30"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-white">{a.name}</h3>
+                        <span className="rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-300">
+                          {a.marginPct}% ROI
+                        </span>
+                      </div>
+
+                      <div className="mt-3 space-y-1.5 rounded-xl bg-black/30 p-3 text-xs">
+                        <div className="flex justify-between text-white/60">
+                          <span>Buy on {a.buyMarket.toUpperCase()}:</span>
+                          <span className="font-mono text-white">{formatFull(a.buyPrice)}</span>
+                        </div>
+                        <div className="flex justify-between text-white/60">
+                          <span>Sell on {a.sellMarket.toUpperCase()}:</span>
+                          <span className="font-mono text-white">{formatFull(a.sellPrice)}</span>
+                        </div>
+                        <div className="flex justify-between border-t border-white/10 pt-1.5 font-bold">
+                          <span className="text-emerald-300">Net Profit:</span>
+                          <span className="font-mono text-emerald-400">+{formatFull(a.netProfit)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => copyToClipboard(a.commandBuy, a.id)}
+                      className={cn(
+                        "mt-4 flex w-full items-center justify-center gap-2 rounded-xl border py-2 text-xs font-bold transition-all",
+                        isCopied
+                          ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
+                          : "border-emerald-400/30 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25"
+                      )}
+                    >
+                      {isCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                      <span>{isCopied ? "Command Copied!" : `Copy ${a.commandBuy}`}</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </Panel>
+        </div>
+      )}
+
+      {/* TAB 5: PET LEVELING ROI */}
+      {activeTab === "pets" && (
+        <div className="space-y-4">
+          <Panel>
+            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-white">Pet Leveling Margins & ROI</h2>
+                <p className="text-xs text-white/50">Level 1 buy cost + candy/XP investment vs Level 100/200 resale price</p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {petFlips.map((pet) => (
+                <div
+                  key={pet.petName}
+                  className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-white">{pet.petName}</h3>
+                    <span className="rounded-lg border border-purple-500/40 bg-purple-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-purple-300">
+                      Lv 1 $\to$ {pet.maxLevel}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 space-y-1.5 rounded-xl bg-black/30 p-3 text-xs">
+                    <div className="flex justify-between text-white/60">
+                      <span>Lv 1 Base Cost:</span>
+                      <span className="font-mono text-white">{formatFull(pet.level1BuyPrice)}</span>
+                    </div>
+                    <div className="flex justify-between text-white/60">
+                      <span>Lv {pet.maxLevel} Market Resale:</span>
+                      <span className="font-mono text-white">{formatFull(pet.levelMaxSellPrice)}</span>
+                    </div>
+                    <div className="flex justify-between text-white/50 text-[11px]">
+                      <span>XP Required:</span>
+                      <span className="font-mono text-sky-300">{(pet.xpRequired / 1_000_000).toFixed(1)}M XP</span>
+                    </div>
+                    <div className="flex justify-between border-t border-white/10 pt-1.5 font-bold">
+                      <span className="text-emerald-300">Net Profit:</span>
+                      <span className="font-mono text-emerald-400">+{formatFull(pet.netProfit)} ({pet.roiPct}%)</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </div>
+      )}
+
+      {/* TAB 6: MINION SETUP PAYBACK */}
+      {activeTab === "minions" && (
+        <div className="space-y-4">
+          <Panel>
+            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-white">Full Minion Setup ROI & Payback Engine</h2>
+                <p className="text-xs text-white/50">Initial setup cost vs daily coin generation & days to break even</p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {minionSetups.map((m) => (
+                <div
+                  key={m.minionName}
+                  className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-white">{m.minionName} T{m.tier}</h3>
+                    <span className="rounded-lg border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-300">
+                      {m.paybackDays} Days Payback
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-white/50 mt-1">{m.upgradesUsed}</p>
+
+                  <div className="mt-3 space-y-1.5 rounded-xl bg-black/30 p-3 text-xs">
+                    <div className="flex justify-between text-white/60">
+                      <span>Setup Cost:</span>
+                      <span className="font-mono text-white">{formatFull(m.setupCostCoins)}</span>
+                    </div>
+                    <div className="flex justify-between text-white/60">
+                      <span>Daily Profit:</span>
+                      <span className="font-mono text-emerald-400">+{formatFull(m.dailyCoinProfit)} / day</span>
+                    </div>
+                    <div className="flex justify-between border-t border-white/10 pt-1.5 font-bold">
+                      <span className="text-sky-300">30-Day Profit:</span>
+                      <span className="font-mono text-sky-400">+{formatFull(m.tier30DayProfit)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </div>
+      )}
+
+      {/* TAB 7: SIRIUS DARK AUCTION BID CEILINGS */}
+      {activeTab === "dark_auction" && (
+        <div className="space-y-4">
+          <Panel>
+            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-white">Sirius Dark Auction Bid Ceiling Estimator</h2>
+                <p className="text-xs text-white/50">Maximum profitable bid limit with a 10% safety margin after AH listing fees</p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {daCeilings.map((item) => (
+                <div
+                  key={item.name}
+                  className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-white">{item.name}</h3>
+                    <span className="rounded-lg border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-300">
+                      Max Bid Cap
+                    </span>
+                  </div>
+
+                  <div className="mt-3 space-y-1.5 rounded-xl bg-black/30 p-3 text-xs">
+                    <div className="flex justify-between text-white/60">
+                      <span>AH Lowest BIN Value:</span>
+                      <span className="font-mono text-white">{formatFull(item.currentAhMarketValue)}</span>
+                    </div>
+                    <div className="flex justify-between text-amber-300 font-bold">
+                      <span>Max Safe Bid Ceiling:</span>
+                      <span className="font-mono">{formatFull(item.maxProfitableBid)}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-white/10 pt-1.5 font-bold">
+                      <span className="text-emerald-300">Target Profit Margin:</span>
+                      <span className="font-mono text-emerald-400">+{formatFull(item.projectedResaleProfit)} (10%)</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </div>
+      )}
+
+      {/* TAB 8: TRANSPARENCY SCORECARD */}
       {activeTab === "scorecard" && (
         <div className="space-y-6">
           {accuracy && accuracy.resolved > 0 ? (
