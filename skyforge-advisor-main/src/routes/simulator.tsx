@@ -196,7 +196,7 @@ export function SimulatorPage() {
                     const mob = MOB_TARGETS[key];
                     return (
                       <option key={key} value={key}>
-                        {mob.name} ({formatNumber(mob.maxHp)} HP · {mob.defense}% Def)
+                        {mob?.name ?? key} ({formatNumber(mob?.maxHp ?? 0)} HP · {mob?.defense ?? 0}% Def)
                       </option>
                     );
                   })}
@@ -428,7 +428,7 @@ export function SimulatorPage() {
             </p>
 
             <div className="space-y-3">
-              {result.upgradeSuggestions.map((sug, idx) => (
+              {result.upgradeSuggestions.map((sug: (typeof result.upgradeSuggestions)[number], idx: number) => (
                 <div
                   key={sug.title}
                   className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-2 transition-none hover:border-emerald-500/40 hover:bg-white/[0.06]"
@@ -491,3 +491,4 @@ export function SimulatorPage() {
     </div>
   );
 }
+

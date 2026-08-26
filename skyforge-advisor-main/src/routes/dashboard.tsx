@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { CircleCheck, Lock } from "lucide-react";
+import { CircleCheck, Lock, Bot, Swords, Skull, Sprout, ArrowRight } from "lucide-react";
 import { useMemo } from "react";
 
 import { ConnectPrompt, ErrorState } from "@/components/data-states";
@@ -224,6 +224,101 @@ function Dashboard() {
               />
             </div>
           </Panel>
+
+          {/* Flagship Hubs Quick-Launcher */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Link
+              to="/advisor"
+              className="group flex flex-col justify-between rounded-2xl border border-sky-500/30 bg-sky-500/10 p-4 transition-none hover:bg-sky-500/20 hover:border-sky-400"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <div className="flex size-8 items-center justify-center rounded-xl bg-sky-500/20 text-sky-300">
+                    <Bot className="size-4" />
+                  </div>
+                  <span className="rounded-md border border-sky-400/40 bg-sky-400/10 px-1.5 py-0.5 font-mono text-[9px] font-bold text-sky-300">
+                    NEW
+                  </span>
+                </div>
+                <h3 className="mt-3 text-sm font-bold text-white">Autonomous Advisor</h3>
+                <p className="mt-1 text-xs text-white/60">
+                  Full profile audit across MP, Slayers, Dungeons & Minions with 1-click in-game commands.
+                </p>
+              </div>
+              <div className="mt-3 flex items-center gap-1 text-xs font-bold text-sky-300">
+                <span>Launch Advisor</span> <ArrowRight className="size-3" />
+              </div>
+            </Link>
+
+            <Link
+              to="/simulator"
+              className="group flex flex-col justify-between rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 transition-none hover:bg-amber-500/20 hover:border-amber-400"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <div className="flex size-8 items-center justify-center rounded-xl bg-amber-500/20 text-amber-300">
+                    <Swords className="size-4" />
+                  </div>
+                  <span className="rounded-md border border-amber-400/40 bg-amber-400/10 px-1.5 py-0.5 font-mono text-[9px] font-bold text-amber-300">
+                    NEW
+                  </span>
+                </div>
+                <h3 className="mt-3 text-sm font-bold text-white">Damage & Gear Lab</h3>
+                <p className="mt-1 text-xs text-white/60">
+                  Live Hypixel damage simulator with Cata scaling, mob defense, and upgrade ROI optimizer.
+                </p>
+              </div>
+              <div className="mt-3 flex items-center gap-1 text-xs font-bold text-amber-300">
+                <span>Simulate Gear</span> <ArrowRight className="size-3" />
+              </div>
+            </Link>
+
+            <Link
+              to="/bosses"
+              className="group flex flex-col justify-between rounded-2xl border border-purple-500/30 bg-purple-500/10 p-4 transition-none hover:bg-purple-500/20 hover:border-purple-400"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <div className="flex size-8 items-center justify-center rounded-xl bg-purple-500/20 text-purple-300">
+                    <Skull className="size-4" />
+                  </div>
+                  <span className="rounded-md border border-purple-400/40 bg-purple-400/10 px-1.5 py-0.5 font-mono text-[9px] font-bold text-purple-300">
+                    NEW
+                  </span>
+                </div>
+                <h3 className="mt-3 text-sm font-bold text-white">Boss & Kuudra Tactics</h3>
+                <p className="mt-1 text-xs text-white/60">
+                  Voidgloom Seraph T1–T4 readiness audit and Infernal Kuudra role qualifications.
+                </p>
+              </div>
+              <div className="mt-3 flex items-center gap-1 text-xs font-bold text-purple-300">
+                <span>Audit Tactics</span> <ArrowRight className="size-3" />
+              </div>
+            </Link>
+
+            <Link
+              to="/garden"
+              className="group flex flex-col justify-between rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 transition-none hover:bg-emerald-500/20 hover:border-emerald-400"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <div className="flex size-8 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-300">
+                    <Sprout className="size-4" />
+                  </div>
+                  <span className="rounded-md border border-emerald-400/40 bg-emerald-400/10 px-1.5 py-0.5 font-mono text-[9px] font-bold text-emerald-300">
+                    NEW
+                  </span>
+                </div>
+                <h3 className="mt-3 text-sm font-bold text-white">Garden & Farming Fortune</h3>
+                <p className="mt-1 text-xs text-white/60">
+                  Farming Fortune breakdown, 10-crop coins/hr leaderboard, and Jacob's Contest brackets.
+                </p>
+              </div>
+              <div className="mt-3 flex items-center gap-1 text-xs font-bold text-emerald-300">
+                <span>View Garden ROI</span> <ArrowRight className="size-3" />
+              </div>
+            </Link>
+          </div>
 
           {/* 15-Source SkyBlock Level Breakdown Panel */}
           <Panel className="relative overflow-hidden border-sky-500/20 bg-gradient-to-br from-sky-500/[0.04] via-transparent to-emerald-500/[0.02]">

@@ -14,6 +14,10 @@ import {
   Sparkles,
   TrendingUp,
   User,
+  Swords,
+  Skull,
+  Sprout,
+  Bot,
 } from "lucide-react";
 
 import { Panel } from "@/components/layout/app-shell";
@@ -46,40 +50,63 @@ export const Route = createFileRoute("/")({
 
 const FEATURES = [
   {
-    to: "/dashboard",
-    icon: User,
-    title: "Profile command center",
-    body: "Skills, dungeons, slayers, fairy souls and inventory — live from Hypixel the moment you connect.",
+    to: "/advisor",
+    icon: Bot,
+    title: "Autonomous Progression Advisor",
+    body: "Real-time account audit across MP, Slayers, Dungeons, and Minions with 1-click in-game commands.",
+    badge: "NEW",
   },
   {
-    to: "/bazaar",
-    icon: TrendingUp,
-    title: "Bazaar & AH flips",
-    body: "Every listing scanned for margin, with liquidity scoring and BIN history sparklines.",
+    to: "/simulator",
+    icon: Swords,
+    title: "Damage & Gear Lab",
+    body: "Live Hypixel damage formula sandbox, Catacombs scaling, mob defenses, and cost-to-DPS optimizer.",
+    badge: "NEW",
+  },
+  {
+    to: "/bosses",
+    icon: Skull,
+    title: "Boss Tactics & Kuudra Hub",
+    body: "Voidgloom T1–T4 hitsphase/survival audit and Infernal Kuudra role qualifications with profit-per-key forecasts.",
+    badge: "NEW",
+  },
+  {
+    to: "/garden",
+    icon: Sprout,
+    title: "Garden & Farming Engine",
+    body: "Universal Farming Fortune breakdown, live coins/hr across 10 crops, and Jacob's Contest medal brackets.",
+    badge: "NEW",
   },
   {
     to: "/flips",
     icon: TargetIcon,
-    title: "Published accuracy score",
-    body: "Our flip suggestions are logged and re-priced against the real market. We publish the win rate — good or bad.",
+    title: "Live Flip Radar & Audio Sniper",
+    body: "Synthesized Web Audio Minecraft chimes, margin filters, liquidity scores, and 1-click clipboard execution.",
+    badge: "UPDATED",
+  },
+  {
+    to: "/dashboard",
+    icon: User,
+    title: "Profile Command Center",
+    body: "Skills, dungeons, slayers, fairy souls, and inventory decoded live from Hypixel.",
+  },
+  {
+    to: "/net-worth",
+    icon: Coins,
+    title: "Net Worth & Valuation",
+    body: "Every container and accessory priced against live Bazaar and AH order books.",
   },
   {
     to: "/wiki",
     icon: BookOpen,
-    title: "8,700+ item wiki",
+    title: "8,700+ Item Wiki",
     body: "Real stats, abilities, requirements and crafting grids from the NEU dataset, linked to live prices.",
   },
   {
     to: "/crafting",
     icon: Hammer,
-    title: "Crafting cost trees",
-    body: "Craft it or buy it? Full dependency trees priced to raw materials with the cheapest path highlighted.",
-  },
-  {
-    to: "/net-worth",
-    icon: Coins,
-    title: "Net worth & valuation",
-    body: "Every container priced against live markets, with a most-valuable-items leaderboard.",
+    title: "Crafting Cost Trees",
+    body: "Full dependency trees priced to raw materials with the cheapest craft path highlighted.",
   },
 ];
 
@@ -325,10 +352,17 @@ function Landing() {
             <Link
               key={feature.to}
               to={feature.to}
-              className="glass-soft group rounded-2xl p-5 transition-all duration-75 ease-out hover:scale-[1.02] hover:border-primary/40"
+              className="glass-soft group relative rounded-2xl p-5 transition-all duration-75 ease-out hover:scale-[1.02] hover:border-primary/40"
             >
-              <feature.icon className="size-5 text-primary" />
-              <p className="mt-3 font-semibold">{feature.title}</p>
+              <div className="flex items-center justify-between">
+                <feature.icon className="size-5 text-primary" />
+                {feature.badge && (
+                  <span className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-300">
+                    {feature.badge}
+                  </span>
+                )}
+              </div>
+              <p className="mt-3 font-semibold text-white">{feature.title}</p>
               <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{feature.body}</p>
               <span className="mt-3 flex items-center gap-1 text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
                 Open <ArrowRight className="size-3" />

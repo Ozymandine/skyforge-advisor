@@ -771,6 +771,26 @@ export function AppShell({ children }: { children: ReactNode }) {
             </CommandGroup>
           )}
 
+          <CommandGroup heading="Navigation & Tools">
+            {nav.map((section) =>
+              section.items.map((item) => (
+                <CommandItem
+                  key={item.to}
+                  value={`page ${item.label} ${item.to}`}
+                  onSelect={() => {
+                    setOpen(false);
+                    setSearch("");
+                    void navigate({ to: item.to });
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <item.icon className="size-4 text-emerald-400" />
+                  <span>{item.label}</span>
+                </CommandItem>
+              ))
+            )}
+          </CommandGroup>
+
           <CommandGroup heading="Quick actions">
             {search.trim().length >= 3 && (
               <CommandItem

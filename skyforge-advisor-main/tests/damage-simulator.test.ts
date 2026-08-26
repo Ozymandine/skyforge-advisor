@@ -39,3 +39,4 @@ describe("Damage Simulator Engine", () => {
     expect(mmResult.singleHitDamage).toBeGreaterThan(normalResult.singleHitDamage);
   });
 });
+

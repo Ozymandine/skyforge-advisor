@@ -20,3 +20,4 @@ describe("Boss Tactics Engine", () => {
     expect(audit.expectedNetProfitPerHour).toBeGreaterThan(0);
   });
 });
+

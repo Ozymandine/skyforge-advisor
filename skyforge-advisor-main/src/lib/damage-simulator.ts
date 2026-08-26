@@ -1,37 +1,29 @@
-export type ArmorPieceConfig = {
+export type ArmorPiece = {
   name: string;
-  reforge: string;
   stars: number;
-  masterStars: number;
-  gemstones: Array<{ type: string; quality: string }>;
-  health: number;
+  hp: number;
   defense: number;
   strength: number;
   critDamage: number;
   intelligence: number;
 };
 
-export type WeaponConfig = {
+export type WeaponStats = {
   name: string;
   damage: number;
   strength: number;
   critDamage: number;
   intelligence: number;
-  reforge: string;
   stars: number;
   masterStars: number;
   enchants: Record<string, number>;
-  gemstones: Array<{ type: string; quality: string }>;
 };
 
-export type PetConfig = {
+export type PetStats = {
   name: string;
-  rarity: string;
   level: number;
-  heldItem: string;
   strength: number;
   critDamage: number;
-  magicFind: number;
   health: number;
   defense: number;
 };
@@ -40,54 +32,126 @@ export type SimulatorLoadout = {
   combatLevel: number;
   catacombsLevel: number;
   magicalPower: number;
-  accessoryPowerTuning: string; // e.g. "Hurtful", "Silky", "Strong", "Sighted", "Bizarre"
-  helmet: ArmorPieceConfig;
-  chestplate: ArmorPieceConfig;
-  leggings: ArmorPieceConfig;
-  boots: ArmorPieceConfig;
-  weapon: WeaponConfig;
-  pet: PetConfig;
+  accessoryPowerTuning: string;
   insideDungeons: boolean;
   masterMode: boolean;
-  targetMob: "zombie" | "enderman" | "voidgloom_t4" | "kuudra_t5" | "necron_m7";
+  targetMob: keyof typeof MOB_TARGETS;
+  weapon: WeaponStats;
+  helmet: ArmorPiece;
+  chestplate: ArmorPiece;
+  leggings: ArmorPiece;
+  boots: ArmorPiece;
+  pet: PetStats;
 };
 
 export type SimulationResult = {
-  totalHealth: number;
-  totalDefense: number;
-  effectiveHealth: number;
-  totalStrength: number;
-  totalCritDamage: number;
-  totalIntelligence: number;
   singleHitDamage: number;
   firstStrikeDamage: number;
   dps: number;
+  effectiveHealth: number;
+  totalHealth: number;
+  totalDefense: number;
+  totalStrength: number;
+  totalCritDamage: number;
+  totalIntelligence: number;
   ferocity: number;
   abilityDamage: number;
   mobKillTimeSeconds: number;
   upgradeSuggestions: Array<{
     title: string;
+    description: string;
     dpsGainPct: number;
     estimatedCostCoins: number;
-    description: string;
   }>;
 };
 
-export const ACCESSORY_POWERS: Record<string, { strPerMp: number; cdPerMp: number; intPerMp: number; bonusName: string }> = {
-  Hurtful: { strPerMp: 0.15, cdPerMp: 0.35, intPerMp: 0, bonusName: "+Crit Damage" },
-  Silky: { strPerMp: 0.1, cdPerMp: 0.4, intPerMp: 0, bonusName: "Max Crit Damage" },
-  Strong: { strPerMp: 0.35, cdPerMp: 0.15, intPerMp: 0, bonusName: "+Strength" },
-  Forceful: { strPerMp: 0.4, cdPerMp: 0.1, intPerMp: 0, bonusName: "Max Strength" },
-  Sighted: { strPerMp: 0, cdPerMp: 0, intPerMp: 0.65, bonusName: "+Ability Power" },
-  Bizarre: { strPerMp: -0.1, cdPerMp: -0.1, intPerMp: 0.85, bonusName: "Max Intelligence" },
+export const ACCESSORY_POWERS: Record<
+  string,
+  { name: string; bonusName: string; strPerMp: number; cdPerMp: number; intPerMp: number }
+> = {
+  Hurtful: {
+    name: "Hurtful",
+    bonusName: "Crit Damage Focus",
+    strPerMp: 0.15,
+    cdPerMp: 0.38,
+    intPerMp: 0,
+  },
+  Silky: {
+    name: "Silky",
+    bonusName: "Crit Damage Peak",
+    strPerMp: 0.05,
+    cdPerMp: 0.45,
+    intPerMp: 0,
+  },
+  Strong: {
+    name: "Strong",
+    bonusName: "Balanced Str/CD",
+    strPerMp: 0.28,
+    cdPerMp: 0.28,
+    intPerMp: 0,
+  },
+  Forceful: {
+    name: "Forceful",
+    bonusName: "Strength Focus",
+    strPerMp: 0.42,
+    cdPerMp: 0.12,
+    intPerMp: 0,
+  },
+  Shaded: {
+    name: "Shaded",
+    bonusName: "All-Rounder",
+    strPerMp: 0.22,
+    cdPerMp: 0.32,
+    intPerMp: 0,
+  },
+  Sighted: {
+    name: "Sighted",
+    bonusName: "Mage Intelligence",
+    strPerMp: 0,
+    cdPerMp: 0,
+    intPerMp: 0.55,
+  },
 };
 
-export const MOB_TARGETS = {
-  zombie: { name: "Graveyard Zombie", maxHp: 100, defense: 0, undead: true, enderman: false },
-  enderman: { name: "Zealot Bruiser (The End)", maxHp: 65_000, defense: 0, undead: false, enderman: true },
-  voidgloom_t4: { name: "Voidgloom Seraph T4", maxHp: 300_000_000, defense: 40, undead: false, enderman: true },
-  kuudra_t5: { name: "Infernal Kuudra T5", maxHp: 500_000_000, defense: 60, undead: false, enderman: false },
-  necron_m7: { name: "Necron (Master Mode 7)", maxHp: 1_200_000_000, defense: 75, undead: true, enderman: false },
+export const MOB_TARGETS: Record<
+  string,
+  { name: string; maxHp: number; defense: number; undead: boolean; enderman: boolean }
+> = {
+  graveyard_zombie: {
+    name: "Graveyard Zombie",
+    maxHp: 100,
+    defense: 0,
+    undead: true,
+    enderman: false,
+  },
+  zealot_bruiser: {
+    name: "Zealot Bruiser (End)",
+    maxHp: 65_000,
+    defense: 10,
+    undead: false,
+    enderman: true,
+  },
+  voidgloom_t4: {
+    name: "Voidgloom Seraph T4",
+    maxHp: 300_000_000,
+    defense: 45,
+    undead: false,
+    enderman: true,
+  },
+  kuudra_t5: {
+    name: "Infernal Kuudra (T5)",
+    maxHp: 1_200_000_000,
+    defense: 60,
+    undead: false,
+    enderman: false,
+  },
+  necron_m7: {
+    name: "Necron (Master Floor 7)",
+    maxHp: 1_800_000_000,
+    defense: 75,
+    undead: true,
+    enderman: false,
+  },
 };
 
 export function getDefaultLoadout(): SimulatorLoadout {
@@ -96,95 +160,83 @@ export function getDefaultLoadout(): SimulatorLoadout {
     catacombsLevel: 32,
     magicalPower: 650,
     accessoryPowerTuning: "Hurtful",
-    helmet: {
-      name: "Necron's Helmet",
-      reforge: "Ancient",
+    insideDungeons: true,
+    masterMode: false,
+    targetMob: "necron_m7",
+    weapon: {
+      name: "Giant's Sword (5★)",
+      damage: 500,
+      strength: 0,
+      critDamage: 0,
+      intelligence: 0,
       stars: 5,
       masterStars: 0,
-      gemstones: [{ type: "Jasper", quality: "Flawless" }],
-      health: 180,
+      enchants: {
+        sharpness: 6,
+        giant_killer: 6,
+        first_strike: 4,
+        execute: 5,
+        smite: 7,
+      },
+    },
+    helmet: {
+      name: "Necron's Helmet (5★)",
+      stars: 5,
+      hp: 180,
       defense: 120,
       strength: 40,
       critDamage: 30,
       intelligence: 0,
     },
     chestplate: {
-      name: "Necron's Chestplate",
-      reforge: "Ancient",
+      name: "Necron's Chestplate (5★)",
       stars: 5,
-      masterStars: 0,
-      gemstones: [{ type: "Jasper", quality: "Flawless" }],
-      health: 260,
-      defense: 160,
+      hp: 260,
+      defense: 180,
       strength: 40,
       critDamage: 30,
       intelligence: 0,
     },
     leggings: {
-      name: "Necron's Leggings",
-      reforge: "Ancient",
+      name: "Necron's Leggings (5★)",
       stars: 5,
-      masterStars: 0,
-      gemstones: [{ type: "Jasper", quality: "Flawless" }],
-      health: 230,
-      defense: 140,
+      hp: 220,
+      defense: 150,
       strength: 40,
       critDamage: 30,
       intelligence: 0,
     },
     boots: {
-      name: "Maxor's Boots",
-      reforge: "Ancient",
+      name: "Necron's Boots (5★)",
       stars: 5,
-      masterStars: 0,
-      gemstones: [{ type: "Jasper", quality: "Flawless" }],
-      health: 175,
-      defense: 110,
-      strength: 30,
-      critDamage: 40,
+      hp: 160,
+      defense: 100,
+      strength: 40,
+      critDamage: 30,
       intelligence: 0,
-    },
-    weapon: {
-      name: "Giant's Sword",
-      damage: 500,
-      strength: 0,
-      critDamage: 0,
-      intelligence: 0,
-      reforge: "Fabled",
-      stars: 5,
-      masterStars: 0,
-      enchants: {
-        sharpness: 6,
-        giant_killer: 6,
-        critical: 6,
-        first_strike: 5,
-        execute: 5,
-      },
-      gemstones: [{ type: "Jasper", quality: "Flawless" }],
     },
     pet: {
-      name: "Golden Dragon",
-      rarity: "LEGENDARY",
-      level: 100,
-      heldItem: "Minos Relic",
+      name: "Golden Dragon (Level 200)",
+      level: 200,
       strength: 50,
       critDamage: 50,
-      magicFind: 10,
       health: 0,
       defense: 0,
     },
-    insideDungeons: true,
-    masterMode: false,
-    targetMob: "necron_m7",
   };
 }
 
 export function calculateSimulation(loadout: SimulatorLoadout): SimulationResult {
-  const cataMultiplier = loadout.insideDungeons
-    ? 1 + loadout.catacombsLevel * 0.08 + (loadout.masterMode ? (loadout.weapon.masterStars + 1) * 0.05 : 0)
-    : 1;
+  // Catacombs Multiplier on Dungeon Gear
+  let cataMult = 1.0;
+  if (loadout.insideDungeons) {
+    cataMult = 1.0 + loadout.catacombsLevel * 0.08;
+    if (loadout.masterMode) {
+      cataMult *= 1.25;
+    }
+  }
 
-  // 1. Compute Stats from Armor
+  // 1. Armor Calculations
   const armorPieces = [loadout.helmet, loadout.chestplate, loadout.leggings, loadout.boots];
   let armorHp = 0;
   let armorDef = 0;
@@ -193,18 +245,20 @@ export function calculateSimulation(loadout: SimulatorLoadout): SimulationResult
   let armorInt = 0;
 
   for (const piece of armorPieces) {
-    const starMult = 1 + piece.stars * 0.02 + (loadout.masterMode ? piece.masterStars * 0.05 : 0);
-    const pieceMult = loadout.insideDungeons ? cataMultiplier * starMult : 1;
-    armorHp += piece.health * pieceMult;
-    armorDef += piece.defense * pieceMult;
-    armorStr += piece.strength * pieceMult;
-    armorCd += piece.critDamage * pieceMult;
-    armorInt += piece.intelligence * pieceMult;
+    const starMult = 1 + piece.stars * 0.02;
+    const effMult = loadout.insideDungeons ? cataMult * starMult : starMult;
+
+    armorHp += piece.hp * effMult;
+    armorDef += piece.defense * effMult;
+    armorStr += piece.strength * effMult;
+    armorCd += piece.critDamage * effMult;
+    armorInt += piece.intelligence * effMult;
   }
 
-  // 2. Weapon Stats
-  const weaponStarMult = 1 + loadout.weapon.stars * 0.02 + (loadout.masterMode ? loadout.weapon.masterStars * 0.05 : 0);
-  const weaponMult = loadout.insideDungeons ? cataMultiplier * weaponStarMult : 1;
+  // 2. Weapon Calculations
+  const weaponStarMult = 1 + loadout.weapon.stars * 0.02 + loadout.weapon.masterStars * 0.05;
+  const weaponMult = loadout.insideDungeons ? cataMult * weaponStarMult : weaponStarMult;
+
   const weaponDamage = loadout.weapon.damage * weaponMult;
   const weaponStr = loadout.weapon.strength * weaponMult;
   const weaponCd = loadout.weapon.critDamage * weaponMult;
@@ -250,7 +304,7 @@ export function calculateSimulation(loadout: SimulatorLoadout): SimulationResult
   if (loadout.weapon.enchants["giant_killer"]) additiveEnchants += Math.min(60, (loadout.weapon.enchants["giant_killer"] ?? 0) * 10);
   if (loadout.weapon.enchants["execute"]) additiveEnchants += 25;
 
-  const targetMob = MOB_TARGETS[loadout.targetMob] ?? MOB_TARGETS.necron_m7;
+  const targetMob = MOB_TARGETS[loadout.targetMob] ?? MOB_TARGETS["necron_m7"]!;
   if (targetMob.undead && loadout.weapon.enchants["smite"]) {
     additiveEnchants += (loadout.weapon.enchants["smite"] ?? 0) * 15;
   }
@@ -270,52 +324,58 @@ export function calculateSimulation(loadout: SimulatorLoadout): SimulationResult
   const singleHitDamage = Math.round(rawSingleHit * mobMitigation);
   const firstStrikeDamage = Math.round(rawFirstStrike * mobMitigation);
 
-  // Ferocity & Attack Speed
-  const ferocity = 25; // Base ferocity
-  const attacksPerSecond = 2.4; // 100% attack speed cap
-  const dps = Math.round(singleHitDamage * attacksPerSecond * (1 + ferocity / 100));
+  // Attack speed & Ferocity
+  const attackSpeedHitsPerSecond = 4.0; // 100% bonus attack speed cap
+  const ferocity = 35; // base ferocity
+  const ferocityMultiplier = 1 + ferocity / 100;
+  const dps = Math.round(singleHitDamage * attackSpeedHitsPerSecond * ferocityMultiplier);
 
-  // Time to kill mob
-  const mobKillTimeSeconds = targetMob.maxHp > 0 ? Math.max(0.1, Number((targetMob.maxHp / dps).toFixed(2))) : 0.1;
+  // Ability / Mage Scaling
+  const abilityDamage = Math.round(15_000 * (1 + totalIntelligence / 100) * (1 + (loadout.combatLevel * 0.5) / 100));
 
-  // Ability damage (Mage scaling)
-  const abilityDamage = Math.round((weaponDamage + 100) * (1 + totalIntelligence / 100) * (1 + loadout.combatLevel * 0.02));
+  const mobKillTimeSeconds = targetMob.maxHp > 0 ? Number((targetMob.maxHp / Math.max(1, dps)).toFixed(1)) : 0;
 
-  // Dynamic Upgrade Suggestions
-  const suggestions: SimulationResult["upgradeSuggestions"] = [
+  // Upgrade ROI Analyzer
+  const upgradeSuggestions = [
     {
-      title: "Upgrade to Master Stars (5★ -> 10★)",
-      dpsGainPct: 18.5,
-      estimatedCostCoins: 120_000_000,
-      description: "+25% extra dungeon stat scaling in Master Mode floors.",
+      title: "Tune to Hurtful / Silky Power",
+      description: "Optimizes MP ratio into Crit Damage to balance 1:1 Strength/CD formula scaling.",
+      dpsGainPct: 14.8,
+      estimatedCostCoins: 1_200_000,
     },
     {
-      title: "Tune Accessory Bag to Hurtful / Silky (+150 MP)",
-      dpsGainPct: 14.2,
-      estimatedCostCoins: 85_000_000,
-      description: "Direct +120 Crit Damage scaling for melee and bow builds.",
+      title: "+100 Magical Power (Talisman Enrichment)",
+      description: "Upgrade low-tier uncommon/rare accessories to reach next MP milestone.",
+      dpsGainPct: 11.2,
+      estimatedCostCoins: 18_000_000,
     },
     {
-      title: "Upgrade Pet to Level 200 Golden Dragon",
-      dpsGainPct: 32.0,
-      estimatedCostCoins: 1_200_000_000,
-      description: "+250% damage multiplier when 1B coins are stored in your Bank.",
+      title: "Legion V on Armor Set",
+      description: "Grants +0.28% all stats per nearby player/entity (up to +5.6% total stats in dungeons).",
+      dpsGainPct: 8.5,
+      estimatedCostCoins: 35_000_000,
+    },
+    {
+      title: "Master Stars (1✪ to 3✪)",
+      description: "Increases all weapon and armor base stats by +5% per Master Star inside Master Mode.",
+      dpsGainPct: 15.0,
+      estimatedCostCoins: 65_000_000,
     },
   ];
 
   return {
-    totalHealth,
-    totalDefense,
-    effectiveHealth,
-    totalStrength,
-    totalCritDamage,
-    totalIntelligence,
     singleHitDamage,
     firstStrikeDamage,
     dps,
+    effectiveHealth,
+    totalHealth,
+    totalDefense,
+    totalStrength,
+    totalCritDamage,
+    totalIntelligence,
     ferocity,
     abilityDamage,
     mobKillTimeSeconds,
-    upgradeSuggestions: suggestions,
+    upgradeSuggestions,
   };
 }
