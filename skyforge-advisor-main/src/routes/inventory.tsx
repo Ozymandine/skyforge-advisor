@@ -13,6 +13,7 @@ import {
 } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { MinecraftTooltip } from "@/components/ui/minecraft-tooltip";
+import { CharacterCanvas } from "@/components/ui/character-canvas";
 import { playClickSound, playSlotHoverSound, playSuccessChime } from "@/lib/sound-effects";
 import { RenderMinecraftLore } from "@/lib/minecraft-text";
 import { usePlayer } from "@/hooks/use-account";
@@ -217,7 +218,8 @@ function Inventory() {
                   </div>
                 </Panel>
 
-                <Panel className="bg-slate-950/85">
+                <div className="space-y-4">
+                  <Panel className="bg-slate-950/85">
                   {item ? (
                     <>
                       <div className="flex items-center gap-3">
@@ -348,6 +350,16 @@ function Inventory() {
                     <p className="text-sm text-muted-foreground">Select a slot to inspect it.</p>
                   )}
                 </Panel>
+
+                {/* 3D WebGL Character Model & Armor Preview */}
+                  <CharacterCanvas
+                    uuid={data?.uuid}
+                    username={data?.username}
+                    width={260}
+                    height={260}
+                    className="w-full shadow-xl ring-1 ring-white/10"
+                  />
+                </div>
               </div>
             </>
           )}

@@ -18,6 +18,7 @@ import {
 import { formatFull } from "@/lib/skyblock";
 import { calculateSkyBlockLevel } from "@/lib/skyblock-level";
 import { RankBadge } from "@/components/ui/rank-badge";
+import { CharacterCanvas } from "@/components/ui/character-canvas";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -202,6 +203,17 @@ function Dashboard() {
                     catacombsLevel: data.dungeons?.catacombsLevel ?? null,
                     collectionsCount: data.collections.length,
                   }}
+                />
+              </div>
+
+              {/* 3D WebGL Character Model */}
+              <div className="hidden lg:flex flex-col items-center">
+                <CharacterCanvas
+                  uuid={data.uuid}
+                  username={data.username}
+                  width={190}
+                  height={220}
+                  className="shadow-xl ring-1 ring-white/10"
                 />
               </div>
 
