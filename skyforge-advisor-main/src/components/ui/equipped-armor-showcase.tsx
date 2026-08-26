@@ -103,12 +103,11 @@ export function EquippedArmorShowcase({
           <ArmorSlotCard item={chestplate} label="Chestplate" defaultIcon="🥋" />
         </div>
 
-        {/* Center: 3D Animated Character Model with Equipped 3D Armor */}
+        {/* Center: 3D Animated Character Model */}
         <div className="flex flex-1 items-center justify-center">
           <CharacterCanvas
             uuid={uuid}
             username={username}
-            armorItems={armorItems}
             width={140}
             height={180}
             className="w-full"
