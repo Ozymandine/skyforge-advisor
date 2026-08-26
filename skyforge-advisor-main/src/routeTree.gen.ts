@@ -15,6 +15,7 @@ import { Route as AdvisorRouteImport } from './routes/advisor'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AuctionHouseRouteImport } from './routes/auction-house'
 import { Route as BazaarRouteImport } from './routes/bazaar'
+import { Route as BossesRouteImport } from './routes/bosses'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as CompareRouteImport } from './routes/compare'
@@ -23,11 +24,13 @@ import { Route as CraftingRouteImport } from './routes/crafting'
 import { Route as CronSampleRouteImport } from './routes/cron-sample'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as FlipsRouteImport } from './routes/flips'
+import { Route as GardenRouteImport } from './routes/garden'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as NetWorthRouteImport } from './routes/net-worth'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SimulatorRouteImport } from './routes/simulator'
 import { Route as SkillsRouteImport } from './routes/skills'
 import { Route as WikiRouteImport } from './routes/wiki'
 import { Route as WikiItemIdRouteImport } from './routes/wiki.$itemId'
@@ -60,6 +63,11 @@ const AuctionHouseRoute = AuctionHouseRouteImport.update({
 const BazaarRoute = BazaarRouteImport.update({
   id: '/bazaar',
   path: '/bazaar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BossesRoute = BossesRouteImport.update({
+  id: '/bosses',
+  path: '/bosses',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CalendarRoute = CalendarRouteImport.update({
@@ -102,6 +110,11 @@ const FlipsRoute = FlipsRouteImport.update({
   path: '/flips',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GardenRoute = GardenRouteImport.update({
+  id: '/garden',
+  path: '/garden',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GoalsRoute = GoalsRouteImport.update({
   id: '/goals',
   path: '/goals',
@@ -127,6 +140,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SimulatorRoute = SimulatorRouteImport.update({
+  id: '/simulator',
+  path: '/simulator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SkillsRoute = SkillsRouteImport.update({
   id: '/skills',
   path: '/skills',
@@ -150,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/auction-house': typeof AuctionHouseRoute
   '/bazaar': typeof BazaarRoute
+  '/bosses': typeof BossesRoute
   '/calendar': typeof CalendarRoute
   '/collections': typeof CollectionsRoute
   '/compare': typeof CompareRoute
@@ -158,11 +177,13 @@ export interface FileRoutesByFullPath {
   '/cron-sample': typeof CronSampleRoute
   '/dashboard': typeof DashboardRoute
   '/flips': typeof FlipsRoute
+  '/garden': typeof GardenRoute
   '/goals': typeof GoalsRoute
   '/inventory': typeof InventoryRoute
   '/net-worth': typeof NetWorthRoute
   '/notifications': typeof NotificationsRoute
   '/settings': typeof SettingsRoute
+  '/simulator': typeof SimulatorRoute
   '/skills': typeof SkillsRoute
   '/wiki': typeof WikiRouteWithChildren
   '/wiki/$itemId': typeof WikiItemIdRoute
@@ -174,6 +195,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/auction-house': typeof AuctionHouseRoute
   '/bazaar': typeof BazaarRoute
+  '/bosses': typeof BossesRoute
   '/calendar': typeof CalendarRoute
   '/collections': typeof CollectionsRoute
   '/compare': typeof CompareRoute
@@ -182,11 +204,13 @@ export interface FileRoutesByTo {
   '/cron-sample': typeof CronSampleRoute
   '/dashboard': typeof DashboardRoute
   '/flips': typeof FlipsRoute
+  '/garden': typeof GardenRoute
   '/goals': typeof GoalsRoute
   '/inventory': typeof InventoryRoute
   '/net-worth': typeof NetWorthRoute
   '/notifications': typeof NotificationsRoute
   '/settings': typeof SettingsRoute
+  '/simulator': typeof SimulatorRoute
   '/skills': typeof SkillsRoute
   '/wiki': typeof WikiRouteWithChildren
   '/wiki/$itemId': typeof WikiItemIdRoute
@@ -199,6 +223,7 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/auction-house': typeof AuctionHouseRoute
   '/bazaar': typeof BazaarRoute
+  '/bosses': typeof BossesRoute
   '/calendar': typeof CalendarRoute
   '/collections': typeof CollectionsRoute
   '/compare': typeof CompareRoute
@@ -207,11 +232,13 @@ export interface FileRoutesById {
   '/cron-sample': typeof CronSampleRoute
   '/dashboard': typeof DashboardRoute
   '/flips': typeof FlipsRoute
+  '/garden': typeof GardenRoute
   '/goals': typeof GoalsRoute
   '/inventory': typeof InventoryRoute
   '/net-worth': typeof NetWorthRoute
   '/notifications': typeof NotificationsRoute
   '/settings': typeof SettingsRoute
+  '/simulator': typeof SimulatorRoute
   '/skills': typeof SkillsRoute
   '/wiki': typeof WikiRouteWithChildren
   '/wiki/$itemId': typeof WikiItemIdRoute
@@ -225,6 +252,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auction-house'
     | '/bazaar'
+    | '/bosses'
     | '/calendar'
     | '/collections'
     | '/compare'
@@ -233,11 +261,13 @@ export interface FileRouteTypes {
     | '/cron-sample'
     | '/dashboard'
     | '/flips'
+    | '/garden'
     | '/goals'
     | '/inventory'
     | '/net-worth'
     | '/notifications'
     | '/settings'
+    | '/simulator'
     | '/skills'
     | '/wiki'
     | '/wiki/$itemId'
@@ -249,6 +279,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auction-house'
     | '/bazaar'
+    | '/bosses'
     | '/calendar'
     | '/collections'
     | '/compare'
@@ -257,11 +288,13 @@ export interface FileRouteTypes {
     | '/cron-sample'
     | '/dashboard'
     | '/flips'
+    | '/garden'
     | '/goals'
     | '/inventory'
     | '/net-worth'
     | '/notifications'
     | '/settings'
+    | '/simulator'
     | '/skills'
     | '/wiki'
     | '/wiki/$itemId'
@@ -273,6 +306,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/auction-house'
     | '/bazaar'
+    | '/bosses'
     | '/calendar'
     | '/collections'
     | '/compare'
@@ -281,11 +315,13 @@ export interface FileRouteTypes {
     | '/cron-sample'
     | '/dashboard'
     | '/flips'
+    | '/garden'
     | '/goals'
     | '/inventory'
     | '/net-worth'
     | '/notifications'
     | '/settings'
+    | '/simulator'
     | '/skills'
     | '/wiki'
     | '/wiki/$itemId'
@@ -298,6 +334,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   AuctionHouseRoute: typeof AuctionHouseRoute
   BazaarRoute: typeof BazaarRoute
+  BossesRoute: typeof BossesRoute
   CalendarRoute: typeof CalendarRoute
   CollectionsRoute: typeof CollectionsRoute
   CompareRoute: typeof CompareRoute
@@ -306,11 +343,13 @@ export interface RootRouteChildren {
   CronSampleRoute: typeof CronSampleRoute
   DashboardRoute: typeof DashboardRoute
   FlipsRoute: typeof FlipsRoute
+  GardenRoute: typeof GardenRoute
   GoalsRoute: typeof GoalsRoute
   InventoryRoute: typeof InventoryRoute
   NetWorthRoute: typeof NetWorthRoute
   NotificationsRoute: typeof NotificationsRoute
   SettingsRoute: typeof SettingsRoute
+  SimulatorRoute: typeof SimulatorRoute
   SkillsRoute: typeof SkillsRoute
   WikiRoute: typeof WikiRouteWithChildren
 }
@@ -357,6 +396,13 @@ declare module '@tanstack/react-router' {
       path: '/bazaar'
       fullPath: '/bazaar'
       preLoaderRoute: typeof BazaarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bosses': {
+      id: '/bosses'
+      path: '/bosses'
+      fullPath: '/bosses'
+      preLoaderRoute: typeof BossesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/calendar': {
@@ -415,6 +461,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FlipsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/garden': {
+      id: '/garden'
+      path: '/garden'
+      fullPath: '/garden'
+      preLoaderRoute: typeof GardenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/goals': {
       id: '/goals'
       path: '/goals'
@@ -448,6 +501,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/simulator': {
+      id: '/simulator'
+      path: '/simulator'
+      fullPath: '/simulator'
+      preLoaderRoute: typeof SimulatorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/skills': {
@@ -491,6 +551,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   AuctionHouseRoute: AuctionHouseRoute,
   BazaarRoute: BazaarRoute,
+  BossesRoute: BossesRoute,
   CalendarRoute: CalendarRoute,
   CollectionsRoute: CollectionsRoute,
   CompareRoute: CompareRoute,
@@ -499,11 +560,13 @@ const rootRouteChildren: RootRouteChildren = {
   CronSampleRoute: CronSampleRoute,
   DashboardRoute: DashboardRoute,
   FlipsRoute: FlipsRoute,
+  GardenRoute: GardenRoute,
   GoalsRoute: GoalsRoute,
   InventoryRoute: InventoryRoute,
   NetWorthRoute: NetWorthRoute,
   NotificationsRoute: NotificationsRoute,
   SettingsRoute: SettingsRoute,
+  SimulatorRoute: SimulatorRoute,
   SkillsRoute: SkillsRoute,
   WikiRoute: WikiRouteWithChildren,
 }

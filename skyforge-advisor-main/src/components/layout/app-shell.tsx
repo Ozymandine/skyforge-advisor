@@ -28,6 +28,8 @@ import {
   User,
   Calendar,
   Bot,
+  Skull,
+  Sprout,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -63,18 +65,22 @@ import {
 
 const nav = [
   {
-    group: "General",
+    group: "Overview",
     items: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/advisor", label: "Progression Advisor", icon: Bot },
+      { to: "/advisor", label: "Autonomous Advisor", icon: Bot },
+      { to: "/simulator", label: "Damage & Gear Lab", icon: Swords },
+      { to: "/bosses", label: "Boss Tactics & Kuudra", icon: Skull },
+      { to: "/net-worth", label: "Net Worth", icon: Coins },
     ],
   },
   {
     group: "Progression",
     items: [
       { to: "/skills", label: "Skills & Dungeons", icon: Sparkles },
+      { to: "/garden", label: "Garden & Farming", icon: Sprout },
       { to: "/collections", label: "Collections", icon: Compass },
-      { to: "/inventory", label: "Inventory, Pets & Accessories", icon: Boxes },
+      { to: "/inventory", label: "Inventory & Pets", icon: Boxes },
     ],
   },
   {
@@ -82,7 +88,7 @@ const nav = [
     items: [
       { to: "/bazaar", label: "Bazaar", icon: TrendingUp },
       { to: "/auction-house", label: "Auction House", icon: Hammer },
-      { to: "/flips", label: "Market Flips & Margins", icon: Target },
+      { to: "/flips", label: "Market Flips & Radar", icon: Target },
     ],
   },
   {

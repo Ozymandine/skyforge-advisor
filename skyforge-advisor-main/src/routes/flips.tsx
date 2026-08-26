@@ -20,14 +20,18 @@ import {
   Crown,
   Dog,
   Bot,
+  Volume2,
+  VolumeX,
+  Radio,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 import { PageHero, Panel, StatRow, ProgressBar } from "@/components/layout/app-shell";
 import { LoadState, ErrorState } from "@/components/data-states";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { fetchBazaar, fetchAuctions, fetchFlipAccuracy } from "@/lib/hypixel.functions";
 import { formatNumber, formatFull, type BazaarProduct, type AuctionEntry } from "@/lib/skyblock";
+import { playSnipeChime, playJackpotChime } from "@/lib/flip-audio";
 import {
   calculateNetProfit,
   calculateVelocityIndex,
@@ -87,10 +91,15 @@ function FlipsRoute() {
   const [minMargin, setMinMargin] = useState<number>(3);
   const [hideTraps, setHideTraps] = useState<boolean>(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(false);
+  const [sniperThreshold, setSniperThreshold] = useState<number>(3_000_000);
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
+    if (soundEnabled) {
+      playSnipeChime(0.5);
+    }
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -306,6 +315,36 @@ function FlipsRoute() {
             ))}
           </div>
         )}
+
+        {/* Live Audio Sniper Radar Toggle */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              const next = !soundEnabled;
+              setSoundEnabled(next);
+              if (next) playJackpotChime(0.5);
+            }}
+            className={cn(
+              "flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-none",
+              soundEnabled
+                ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-300 shadow-lg shadow-emerald-500/10"
+                : "border-white/10 bg-white/[0.04] text-white/60 hover:bg-white/10 hover:text-white"
+            )}
+            title="Play Minecraft audio chime when copying or finding top flips"
+          >
+            {soundEnabled ? (
+              <>
+                <Volume2 className="size-3.5 text-emerald-400" />
+                <span>Audio Radar: ON</span>
+              </>
+            ) : (
+              <>
+                <VolumeX className="size-3.5 text-white/40" />
+                <span>Audio Radar: OFF</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Loading States */}

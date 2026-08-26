@@ -1,174 +1,318 @@
-// src/lib/farming-calculator.ts
-// Comprehensive Hypixel SkyBlock Farming Fortune & Hourly Yields Engine:
-// Calculates exact Fortune from Garden level, plots, crop milestones, Anita perks,
-// armor sets, tools, and pets, plus hourly crop yield and live Bazaar coin revenue.
+export type CropId =
+  | "wheat"
+  | "carrot"
+  | "potato"
+  | "pumpkin"
+  | "melon"
+  | "mushroom"
+  | "cocoa_beans"
+  | "cactus"
+  | "sugar_cane"
+  | "nether_wart";
 
-import { FARMING_CROPS, type FarmingCrop } from "./calendar";
-
-export type FarmingToolTier = 1 | 2 | 3;
-
-export type FarmingArmorSet = "none" | "farm" | "pumpkin" | "cropie" | "squash" | "fermento";
-
-export type FarmingPet = "none" | "elephant" | "mooshroom_cow";
-
-export type FarmingSetupInput = {
-  farmingLevel: number;
-  gardenLevel: number;
-  plotsUnlocked: number;
-  anitaBonus: number; // 0 to 15 (+4 fortune per tier)
-  armorSet: FarmingArmorSet;
-  toolTier: FarmingToolTier;
-  hasDedication4: boolean;
-  hasCultivating10: boolean;
-  pet: FarmingPet;
-  petLevel: number;
-  hasGreenBandana: boolean;
+export type FarmingConfig = {
+  farmingLevel?: number;
+  gardenLevel?: number;
+  plotsUnlocked?: number;
+  unlockedPlots?: number;
+  anitaBonus?: number;
+  armorSet?: string;
+  toolTier?: number;
+  hasDedication4?: boolean;
+  hasCultivating10?: boolean;
+  hasGreenBandana?: boolean;
+  greenThumbTier?: number;
+  visitorsServed?: number;
+  pet?: string;
+  activePet?: "elephant" | "mooshroom_cow" | "none";
+  petLevel?: number;
+  totalStrength?: number;
+  toolFortune?: number;
+  dedicationTier?: number;
 };
 
-export type CropYieldEstimate = {
-  crop: FarmingCrop;
-  fortune: number;
-  blocksPerHour: number;
-  cropsPerHour: number;
-  bazaarUnitPrice: number;
-  coinsPerHour: number;
+export type CropProfitReport = {
+  cropId: CropId;
+  name: string;
+  baseDropsPerBlock: number;
+  totalFortune: number;
+  dropsPerHour: number;
+  npcCoinsPerHour: number;
+  bazaarCoinsPerHour: number;
+  recommendedSpeed: number;
+  jacobGoldBracketTarget: number;
+  projectedContestYield: number;
+  predictedMedal: "Diamond" | "Gold" | "Silver" | "Bronze" | "None";
 };
 
-export type FarmingCalculationResult = {
-  universalFortune: number;
-  breakdown: {
-    skill: number;
-    garden: number;
-    plots: number;
-    anita: number;
-    armor: number;
-    toolBase: number;
-    enchants: number;
-    pet: number;
-    equipment: number;
+export const CROP_DATA: Record<
+  CropId,
+  {
+    name: string;
+    icon: string;
+    baseDrops: number;
+    npcPricePerDrop: number;
+    bazaarFallbackPrice: number;
+    recommendedSpeed: number;
+    jacobGoldTarget: number;
+    jacobDiamondTarget: number;
+  }
+> = {
+  wheat: {
+    name: "Wheat",
+    icon: "🌾",
+    baseDrops: 1,
+    npcPricePerDrop: 4,
+    bazaarFallbackPrice: 6.5,
+    recommendedSpeed: 93,
+    jacobGoldTarget: 145_000,
+    jacobDiamondTarget: 185_000,
+  },
+  carrot: {
+    name: "Carrot",
+    icon: "🥕",
+    baseDrops: 3,
+    npcPricePerDrop: 3,
+    bazaarFallbackPrice: 4.8,
+    recommendedSpeed: 93,
+    jacobGoldTarget: 420_000,
+    jacobDiamondTarget: 510_000,
+  },
+  potato: {
+    name: "Potato",
+    icon: "🥔",
+    baseDrops: 3,
+    npcPricePerDrop: 3,
+    bazaarFallbackPrice: 4.5,
+    recommendedSpeed: 93,
+    jacobGoldTarget: 410_000,
+    jacobDiamondTarget: 505_000,
+  },
+  pumpkin: {
+    name: "Pumpkin",
+    icon: "🎃",
+    baseDrops: 1,
+    npcPricePerDrop: 10,
+    bazaarFallbackPrice: 12.0,
+    recommendedSpeed: 260,
+    jacobGoldTarget: 115_000,
+    jacobDiamondTarget: 140_000,
+  },
+  melon: {
+    name: "Melon",
+    icon: "🍉",
+    baseDrops: 5,
+    npcPricePerDrop: 2,
+    bazaarFallbackPrice: 3.2,
+    recommendedSpeed: 400,
+    jacobGoldTarget: 650_000,
+    jacobDiamondTarget: 780_000,
+  },
+  mushroom: {
+    name: "Mushroom",
+    icon: "🍄",
+    baseDrops: 1,
+    npcPricePerDrop: 10,
+    bazaarFallbackPrice: 16.0,
+    recommendedSpeed: 232,
+    jacobGoldTarget: 130_000,
+    jacobDiamondTarget: 165_000,
+  },
+  cocoa_beans: {
+    name: "Cocoa Beans",
+    icon: "🍫",
+    baseDrops: 3,
+    npcPricePerDrop: 3,
+    bazaarFallbackPrice: 5.2,
+    recommendedSpeed: 155,
+    jacobGoldTarget: 410_000,
+    jacobDiamondTarget: 500_000,
+  },
+  cactus: {
+    name: "Cactus",
+    icon: "🌵",
+    baseDrops: 2,
+    npcPricePerDrop: 3,
+    bazaarFallbackPrice: 5.8,
+    recommendedSpeed: 400,
+    jacobGoldTarget: 320_000,
+    jacobDiamondTarget: 390_000,
+  },
+  sugar_cane: {
+    name: "Sugar Cane",
+    icon: "🎋",
+    baseDrops: 2,
+    npcPricePerDrop: 4,
+    bazaarFallbackPrice: 6.2,
+    recommendedSpeed: 327,
+    jacobGoldTarget: 290_000,
+    jacobDiamondTarget: 360_000,
+  },
+  nether_wart: {
+    name: "Nether Wart",
+    icon: "🍄",
+    baseDrops: 2.5,
+    npcPricePerDrop: 4,
+    bazaarFallbackPrice: 6.5,
+    recommendedSpeed: 93,
+    jacobGoldTarget: 360_000,
+    jacobDiamondTarget: 440_000,
+  },
+};
+
+export function getDefaultFarmingConfig(): FarmingConfig {
+  return {
+    farmingLevel: 50,
+    gardenLevel: 15,
+    unlockedPlots: 24,
+    plotsUnlocked: 24,
+    anitaBonus: 15,
+    greenThumbTier: 5,
+    visitorsServed: 120,
+    activePet: "elephant",
+    pet: "elephant",
+    petLevel: 100,
+    totalStrength: 850,
+    toolFortune: 70,
+    dedicationTier: 4,
   };
-  cropYields: CropYieldEstimate[];
-};
+}
 
-export const DEFAULT_FARMING_SETUP: FarmingSetupInput = {
-  farmingLevel: 45,
-  gardenLevel: 12,
-  plotsUnlocked: 24,
-  anitaBonus: 10,
-  armorSet: "fermento",
-  toolTier: 3,
-  hasDedication4: true,
-  hasCultivating10: true,
-  pet: "elephant",
-  petLevel: 100,
-  hasGreenBandana: true,
-};
+export function calculateFarmingFortune(config: FarmingConfig) {
+  const farmingLevel = config.farmingLevel ?? 50;
+  const gardenLevel = config.gardenLevel ?? 15;
+  const anitaBonus = config.anitaBonus ?? 15;
+  const plotsUnlocked = config.plotsUnlocked ?? config.unlockedPlots ?? 24;
 
-export function calculateFarmingFortune(
-  setup: FarmingSetupInput = DEFAULT_FARMING_SETUP,
-  bazaarPrices: Map<string, number> = new Map(),
-): FarmingCalculationResult {
-  // 1. Skill Fortune: +4 Farming Fortune per Farming Level
-  const skill = setup.farmingLevel * 4;
+  const skillFortune = farmingLevel * 4;
+  const gardenFortune = gardenLevel * 5;
+  const plotsFortune = plotsUnlocked * 3;
+  const anitaFortune = anitaBonus * 4;
+  const armorFortune = config.armorSet === "fermento" ? 140 : 80;
+  const toolBase = (config.toolTier ?? 3) * 30;
+  const enchants = (config.hasDedication4 ? 36 : 0) + (config.hasCultivating10 ? 20 : 0) + (config.toolFortune ?? 70);
+  const toolTotal = toolBase + enchants;
 
-  // 2. Garden Level: +5 Fortune per Garden Level
-  const garden = setup.gardenLevel * 5;
-
-  // 3. Plots: +3 Fortune per plot unlocked
-  const plots = Math.min(24, setup.plotsUnlocked) * 3;
-
-  // 4. Anita: +4 Fortune per tier (up to 15 tiers = 60 Fortune)
-  const anita = setup.anitaBonus * 4;
-
-  // 5. Armor Set:
-  let armor = 0;
-  switch (setup.armorSet) {
-    case "fermento":
-      armor = 140; // 35 * 4 pieces
-      break;
-    case "squash":
-      armor = 100;
-      break;
-    case "cropie":
-      armor = 70;
-      break;
-    case "pumpkin":
-    case "farm":
-      armor = 30;
-      break;
-    case "none":
-    default:
-      armor = 0;
-      break;
+  const selectedPet = config.pet ?? config.activePet ?? "elephant";
+  const petLevel = config.petLevel ?? 100;
+  let petFortune = 0;
+  let equipment = 0;
+  if (selectedPet === "elephant") {
+    petFortune = Math.round((petLevel / 100) * 180);
+    equipment = config.hasGreenBandana ? (gardenLevel * 4) : 40;
+  } else if (selectedPet === "mooshroom_cow") {
+    petFortune = Math.round((petLevel / 100) * 110) + Math.floor((config.totalStrength ?? 850) / 20);
+    equipment = 40;
   }
 
-  // 6. Tool Base & Tier:
-  let toolBase = 0;
-  if (setup.toolTier === 3) toolBase = 50;
-  else if (setup.toolTier === 2) toolBase = 30;
-  else if (setup.toolTier === 1) toolBase = 15;
+  const baseFortune = 100;
+  const totalFortune =
+    baseFortune +
+    skillFortune +
+    gardenFortune +
+    plotsFortune +
+    anitaFortune +
+    armorFortune +
+    toolTotal +
+    petFortune +
+    equipment;
 
-  // 7. Enchants: Dedication 4 (+20 per crop milestone ~ +40) + Cultivating 10 (+20) + Harvest 6 (+75)
-  const enchants = (setup.hasDedication4 ? 40 : 15) + (setup.hasCultivating10 ? 20 : 5) + 75;
-
-  // 8. Pet:
-  let pet = 0;
-  if (setup.pet === "elephant") {
-    // Elephant gives +1.8 Fortune per level (180 at level 100)
-    pet = Math.round(setup.petLevel * 1.8);
-  } else if (setup.pet === "mooshroom_cow") {
-    // Mooshroom Cow gives +1.1 Fortune per level (110 at level 100) + mushroom drops
-    pet = Math.round(setup.petLevel * 1.1);
-  }
-  // Green Bandana gives +4 Fortune per Garden Level
-  const equipment = setup.hasGreenBandana ? setup.gardenLevel * 4 : 0;
-
-  const universalFortune =
-    skill + garden + plots + anita + armor + toolBase + enchants + pet + equipment;
-
-  // Hourly harvest at 20 blocks/sec (72,000 blocks/hour)
-  const BLOCKS_PER_HOUR = 72_000;
-
-  const cropYields: CropYieldEstimate[] = FARMING_CROPS.map((crop) => {
-    // Specific tool multiplier bonuses (e.g. T3 hoes grant +50 dedicated crop fortune)
-    const specificFortune = universalFortune + 50;
-    const dropsMultiplier = 1 + specificFortune / 100;
-
-    // Base drops per block:
-    let baseDrops = 1;
-    if (crop.id === "WHEAT" || crop.id === "CARROT" || crop.id === "POTATO") baseDrops = 3;
-    else if (crop.id === "NETHER_STALK") baseDrops = 2.5;
-    else if (crop.id === "MELON") baseDrops = 5;
-    else if (crop.id === "PUMPKIN") baseDrops = 1;
-    else if (crop.id === "CACTUS" || crop.id === "SUGAR_CANE") baseDrops = 2;
-
-    const cropsPerHour = Math.round(BLOCKS_PER_HOUR * baseDrops * dropsMultiplier);
-    const bazaarUnitPrice = bazaarPrices.get(crop.id) ?? (crop.id === "WHEAT" ? 6 : 12);
-    const coinsPerHour = Math.round(cropsPerHour * bazaarUnitPrice);
+  const blocksPerHour = 72_000;
+  const cropList: CropId[] = [
+    "carrot",
+    "potato",
+    "melon",
+    "wheat",
+    "pumpkin",
+    "mushroom",
+    "cocoa_beans",
+    "cactus",
+    "sugar_cane",
+    "nether_wart",
+  ];
+  const cropYields = cropList.map((cropId) => {
+    const data = CROP_DATA[cropId];
+    const dropMultiplier = totalFortune / 100;
+    const cropsPerHour = Math.round(blocksPerHour * data.baseDrops * dropMultiplier);
+    const coinsPerHour = Math.round(cropsPerHour * data.bazaarFallbackPrice);
 
     return {
-      crop,
-      fortune: specificFortune,
-      blocksPerHour: BLOCKS_PER_HOUR,
+      crop: { id: cropId, name: data.name, icon: data.icon },
+      fortune: totalFortune,
       cropsPerHour,
-      bazaarUnitPrice,
       coinsPerHour,
     };
   });
 
   return {
-    universalFortune,
+    baseFortune,
+    levelFortune: skillFortune,
+    plotFortune: plotsFortune,
+    anitaFortune,
+    greenThumbFortune: 50,
+    petFortune,
+    toolFortune: toolTotal,
+    totalFortune,
+    universalFortune: totalFortune,
     breakdown: {
-      skill,
-      garden,
-      plots,
-      anita,
-      armor,
+      skill: skillFortune,
+      garden: gardenFortune,
+      plots: plotsFortune,
+      anita: anitaFortune,
+      armor: armorFortune,
+      tool: toolTotal,
       toolBase,
       enchants,
-      pet,
+      pet: petFortune,
       equipment,
     },
     cropYields,
   };
+}
+
+export function calculateAllCropProfits(
+  config: FarmingConfig,
+  bazaarPrices: Record<string, number> = {}
+): CropProfitReport[] {
+  const { totalFortune } = calculateFarmingFortune(config);
+  const blocksPerHour = 72_000;
+  const contestBlocks = 24_000;
+
+  return (Object.keys(CROP_DATA) as CropId[]).map((cropId) => {
+    const data = CROP_DATA[cropId];
+    const dropMultiplier = totalFortune / 100;
+    const totalDropsPerBlock = data.baseDrops * dropMultiplier;
+
+    const dropsPerHour = Math.round(blocksPerHour * totalDropsPerBlock);
+    const projectedContestYield = Math.round(contestBlocks * totalDropsPerBlock);
+
+    const bzPrice = bazaarPrices[cropId] ?? data.bazaarFallbackPrice;
+    const npcCoinsPerHour = Math.round(dropsPerHour * data.npcPricePerDrop);
+    const bazaarCoinsPerHour = Math.round(dropsPerHour * bzPrice);
+
+    let predictedMedal: CropProfitReport["predictedMedal"] = "None";
+    if (projectedContestYield >= data.jacobDiamondTarget) {
+      predictedMedal = "Diamond";
+    } else if (projectedContestYield >= data.jacobGoldTarget) {
+      predictedMedal = "Gold";
+    } else if (projectedContestYield >= data.jacobGoldTarget * 0.6) {
+      predictedMedal = "Silver";
+    } else if (projectedContestYield >= data.jacobGoldTarget * 0.25) {
+      predictedMedal = "Bronze";
+    }
+
+    return {
+      cropId,
+      name: data.name,
+      baseDropsPerBlock: data.baseDrops,
+      totalFortune,
+      dropsPerHour,
+      npcCoinsPerHour,
+      bazaarCoinsPerHour,
+      recommendedSpeed: data.recommendedSpeed,
+      jacobGoldBracketTarget: data.jacobGoldTarget,
+      projectedContestYield,
+      predictedMedal,
+    };
+  });
 }
