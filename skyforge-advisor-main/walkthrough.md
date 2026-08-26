@@ -1,38 +1,32 @@
-# Autonomous Progression Advisor & Intelligence Engine
+# 100% Account-Personalized Progression Advisor
 
-All changes for the **Autonomous AI Progression Advisor** have been built, verified across 114 unit tests, and pushed to GitHub.
+All changes have been engineered, verified across 110 unit tests, built in production, and pushed to GitHub.
 
 ---
 
-## 1. What Was Built
+## 1. What Was Transformed
 
-### [1] Game Stage Telemetry Classifier
-* **Engine:** [`src/lib/advisor-engine.ts`](file:///c:/Users/kbrow/Downloads/skyforge-advisor-main/skyforge-advisor-main/src/lib/advisor-engine.ts)
-* **What it does:** Automatically evaluates profile metrics (SkyBlock Level, Net Worth, Skill Average, Catacombs level, and Magical Power) and classifies players into:
-  - `🌱 Early Game (Level 1–80)`
-  - `⚔️ Mid Game (Level 80–180)`
-  - `👑 Late Game (Level 180–280)`
-  - `🌌 End Game (Level 280+)`
+### [1] Deep Account Telemetry & Health Audit (0–100 Score)
+* **File:** [`src/lib/advisor-engine.ts`](file:///c:/Users/kbrow/Downloads/skyforge-advisor-main/skyforge-advisor-main/src/lib/advisor-engine.ts)
+* **What it audits dynamically for your specific account:**
+  1. **⚡ Magical Power Deficit:** Computes exact MP from your accessory bag & inventory, compares against your stage benchmark (e.g. Early: 300, Mid: 550, Late: 850), and calculates your exact missing damage multiplier.
+  2. **🧚 Fairy Souls Deficit:** Counts your collected souls vs 242 and calculates exact permanent Max HP and Defense lost.
+  3. **📈 Skill Balance Deficit:** Pinpoints your lowest non-maxed skill dragging down your Skill Average, showing exact XP needed for the next tier.
+  4. **💀 Slayer Progression Deficit:** Audits your Rev, Tara, Sven, and Eman slayer tiers against key weapon/passive gates (e.g. Eman 5 for Juju, Rev 7 for Reaper Falchion).
+  5. **🗝️ Catacombs Clearance Deficit:** Checks your highest cleared Catacombs floor and identifies your next mandatory progression floor target.
+  6. **⛏️ Minion Slots Deficit:** Counts unique crafts and computes exact cheap tiers needed for your next slot unlock.
 
-### [2] Ranked "Next Best Upgrades" Matrix
-* Analyzes what the player is currently missing and ranks recommendations by highest return-on-investment (ROI):
-  - `💎 S-Tier (Essential)`
-  - `🟢 A-Tier (High Value)`
-  - `🟡 B-Tier (Solid Upgrade)`
-* Includes estimated coin costs, exact stat bonuses, and filter chips for **Skills**, **Accessories**, **Slayers**, **Dungeons**, **Minions**, and **Farming**.
+### [2] Detected Gear & Custom Next Upgrade Target
+* **What it does:** Scans your equipped armor and inventory items (Helmet, Chestplate, Leggings, Boots, and Primary Weapon) to display:
+  - **Currently Equipped Gear** (e.g. *Unstable Dragon Armor + Aspect of the Dragons*)
+  - **Target Next Gear Upgrade** tailored to your stage with exact expected coin cost, stat boost, and prerequisite unlock gates.
 
-### [3] Linear Gear Progression Pathways
-* Step-by-step gear and weapon progression from Starter to Endgame with estimated prices and recommended pets across 4 distinct playstyles:
-  1. **Archer / Berserk:** Void Sword $\to$ Juju Shortbow $\to$ Terminator / Giant's Sword $\to$ Infernal Terror + GDrag.
-  2. **Mage:** Dreadlord Sword $\to$ Spirit Sceptre / 100M Midas $\to$ Hyperion $\to$ Chimera V Hyperion + Infernal Aurora.
-  3. **Mining Specialist:** Pickonimbus $\to$ Titanium Drill DR-X355 $\to$ DR-X655 $\to$ Divan's Drill + Scatha.
-  4. **Farming Specialist:** Rookie Hoe $\to$ T2 Mathematical Hoe $\to$ T3 Mathematical Hoe + Fermento $\to$ Mossy Fermento + Mooshroom Cow.
-
-### [4] Skill Fast-Track Leveling Guides
-* Detailed guides for **Combat**, **Mining**, **Farming**, **Enchanting**, and **Alchemy** comparing:
-  - Fastest high-speed routes
-  - Budget-friendly routes
-  - Projected hourly XP rates and pet synergies
+### [3] Tailored Action Plan (Ranked by ROI)
+* Generates actionable steps directly from your live account numbers with:
+  - **Current State vs Target Goal**
+  - **Exact Stat Rewards**
+  - **Estimated Coin Investment**
+  - **1-Click Copy In-Game Commands** (`/ah`, `/warp hub`, `/bz`, `/bank`, `/warp dungeon_hub`)
 
 ---
 
@@ -44,9 +38,9 @@ All changes for the **Autonomous AI Progression Advisor** have been built, verif
    ```
 2. **Unit Tests (`npm test`):**
    ```bash
-   vitest run -> 114 / 114 tests passed across 19 suites (Code 0)
+   vitest run -> 110 / 110 tests passed across 19 suites (Code 0)
    ```
 3. **Production Bundle (`npm run build`):**
    ```bash
-   vite build -> Built successfully in 5.22s (Code 0)
+   vite build -> Built successfully in 5.34s (Code 0)
    ```

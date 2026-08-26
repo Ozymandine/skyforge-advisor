@@ -64,6 +64,10 @@ const nav = [
   {
     group: "General",
     items: [
+      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/advisor", label: "Progression Advisor", icon: Bot },
+    ],
+  },
   {
     group: "Progression",
     items: [
