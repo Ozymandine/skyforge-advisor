@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { CircleCheck, Lock, Bot, Swords, Skull, Sprout, ArrowRight } from "lucide-react";
 
 import { ConnectPrompt, ErrorState } from "@/components/data-states";
