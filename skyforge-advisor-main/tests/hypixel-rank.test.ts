@@ -57,3 +57,4 @@ describe("Hypixel Rank Parsing & Formatting", () => {
     expect(non.tag).toBe("");
   });
 });
+

@@ -91,3 +91,4 @@ export function calculateBankInterest(currentBankBalance: number): {
     optimalBalanceForCap: tier.requiredPurseBalance,
   };
 }
+

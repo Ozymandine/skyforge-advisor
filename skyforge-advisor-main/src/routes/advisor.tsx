@@ -1,305 +1,317 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { ArrowRight } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  Sparkles,
+  Award,
+  ArrowRight,
+  TrendingUp,
+  ShieldCheck,
+  Zap,
+  Flame,
+  Boxes,
+  Swords,
+  Pickaxe,
+  Wheat,
+  FlaskConical,
+  Target,
+  ChevronRight,
+  Filter,
+  CheckCircle2,
+} from "lucide-react";
 
 import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
 import { PageHero, Panel, ProgressBar, StatRow } from "@/components/layout/app-shell";
+import { ItemIcon } from "@/components/ui/item-icon";
 import { usePlayer } from "@/hooks/use-account";
-import { formatFull } from "@/lib/skyblock";
-import { MAX_FAIRY_SOULS } from "@/lib/constants";
+import { formatFull, formatNumber } from "@/lib/skyblock";
+import { calculateSkyBlockLevel } from "@/lib/skyblock-level";
+import {
+  evaluateGameStage,
+  generateAdvisorActions,
+  CLASS_PROGRESSION_TREES,
+  SKILL_LEVELING_GUIDES,
+  type AdvisorAction,
+} from "@/lib/advisor-engine";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/advisor")({
   head: () => ({
     meta: [
-      { title: "Advisor — SkyBlock Assistant" },
+      { title: "Autonomous Progression Advisor — SkyForge" },
       {
         name: "description",
-        content: "Recommendation matrix for the cheapest cost-per-stat progression upgrades.",
+        content:
+          "Autonomous SkyBlock progression mentor: game stage classification, personalized next best upgrades, linear gear trees, and fast-track leveling guides.",
       },
-      { property: "og:title", content: "Advisor — SkyBlock Assistant" },
+      { property: "og:title", content: "Autonomous Progression Advisor — SkyForge" },
       {
         property: "og:description",
-        content: "What should I do next? Ranked by the lowest cost per stat and per level gained.",
+        content: "What should you do next? Personalized next best upgrades ranked by highest return on investment.",
       },
     ],
   }),
-  component: Advisor,
+  component: AdvisorRoute,
 });
 
-const priorityClass: Record<string, string> = {
-  High: "text-primary border-primary/40 bg-primary/15",
-  Medium: "text-gold border-gold/40 bg-gold/10",
-  Low: "text-muted-foreground border-border bg-secondary",
-};
+type FilterCategory = "all" | "Accessories" | "Slayers" | "Skills" | "Dungeons" | "Minions" | "Farming" | "Mining";
+type ClassTab = "Archer / Berserk" | "Mage" | "Mining Specialist" | "Farming Specialist";
 
-type RoadmapStep = {
-  title: string;
-  detail: string;
-  priority: keyof typeof priorityClass;
-  /** 0–100 progress toward completing this step (used for the bar). */
-  pct?: number;
-};
-
-/**
- * Generate a ranked progression roadmap from live profile data.
- * Ordered by impact-per-effort: cheap wins first, grinds last.
- */
-function buildRoadmap(data: NonNullable<ReturnType<typeof usePlayer>["data"]>): RoadmapStep[] {
-  const steps: RoadmapStep[] = [];
-
-  // 1. Fairy souls — free permanent stats.
-  const soulsLeft = MAX_FAIRY_SOULS - data.fairySouls;
-  if (soulsLeft > 0) {
-    steps.push({
-      title: `Collect ${soulsLeft} more fairy soul${soulsLeft > 1 ? "s" : ""}`,
-      detail: `Free permanent stats — you're at ${data.fairySouls}/${MAX_FAIRY_SOULS}. Use a guide mod or the wiki's Locations page.`,
-      priority: "High",
-      pct: Math.round((data.fairySouls / MAX_FAIRY_SOULS) * 100),
-    });
-  }
-
-  // 2. Skills closest to leveling — cheapest XP per level right now.
-  const nearLevel = data.skills
-    .filter((s) => !s.maxed)
-    .sort((a, b) => b.pct - a.pct)
-    .slice(0, 3);
-  for (const skill of nearLevel) {
-    steps.push({
-      title: `Push ${skill.name} to level ${skill.level + 1}`,
-      detail: `Only ${formatFull(skill.neededXp - skill.currentXp)} XP away (${skill.pct}% done) — the cheapest level available to you.`,
-      priority: skill.pct >= 75 ? "High" : "Medium",
-      pct: skill.pct,
-    });
-  }
-
-  // 3. Weakest non-maxed skills — biggest skill-average gains.
-  const weakest = data.skills.filter((s) => !s.maxed).sort((a, b) => a.level - b.level)[0];
-  if (weakest && weakest.level < 20) {
-    steps.push({
-      title: `Grind ${weakest.name} (level ${weakest.level})`,
-      detail: `Your lowest skill — raising it lifts your skill average (${data.skillAverage.toFixed(2)}) and unlocks gated content.`,
-      priority: "Medium",
-      pct: weakest.pct,
-    });
-  }
-
-  // 4. Dungeons: unlock the next floor, or push completions on the current one.
-  const dungeons = data.dungeons;
-  if (dungeons) {
-    const unlockedFloors = dungeons.floors.filter((f) => f.completions > 0);
-    const nextFloor = dungeons.floors.find((f) => f.completions === 0);
-    if (nextFloor) {
-      steps.push({
-        title: `Unlock ${nextFloor.name} in the Catacombs`,
-        detail: `Catacombs level ${dungeons.catacombsLevel} — completing ${nextFloor.name} unlocks better loot and XP tiers.`,
-        priority: "Medium",
-      });
-    } else if (unlockedFloors.length > 0) {
-      const current = unlockedFloors[unlockedFloors.length - 1]!;
-      steps.push({
-        title: `Grind ${current.name} completions`,
-        detail: `${current.completions} runs so far${current.bestScore ? ` · best score ${current.bestScore}` : ""} — dungeon XP raises your Catacombs level (${dungeons.catacombsLevel}).`,
-        priority: "Medium",
-        pct: Math.min(100, Math.round((current.completions / 100) * 100)),
-      });
-    }
-
-    // Secrets per run is the main gate for higher dungeon scores.
-    if (dungeons.secretsFound < 500) {
-      steps.push({
-        title: `Find more dungeon secrets (${dungeons.secretsFound} found)`,
-        detail:
-          "Secrets per run drives your D rating → S+ score and party appeal. A secrets mod makes this trivial.",
-        priority: "Low",
-      });
-    }
-  }
-
-  // 5. Slayers: push the lowest-tier bosses you've started.
-  const topSlayer = data.slayers?.slice().sort((a, b) => b.tier - a.tier || b.kills - a.kills)[0];
-  if (topSlayer && topSlayer.kills < 25) {
-    steps.push({
-      title: `${topSlayer.name} Tier ${topSlayer.tier}: ${25 - topSlayer.kills} more kills`,
-      detail:
-        "Slayer XP unlocks powerful perks and drops. Tier 4+ bosses are the long-term coin and XP source.",
-      priority: "Low",
-      pct: Math.round((topSlayer.kills / 25) * 100),
-    });
-  }
-
-  // 6. Collections with headroom.
-  const topCollection = data.collections?.[0];
-  if (topCollection) {
-    steps.push({
-      title: `Expand ${topCollection.name} collection`,
-      detail: `${data.collections.length} collections tracked — higher tiers unlock crafting recipes and minion slots.`,
-      priority: "Low",
-    });
-  }
-
-  // 7. Bank interest.
-  if (data.bank !== null && data.bank < 50_000_000) {
-    steps.push({
-      title: "Grow your bank balance",
-      detail: `Bank at ${formatFull(data.bank)} — daily interest compounds, and it's safe from death losses.`,
-      priority: "Low",
-    });
-  }
-
-  return steps.slice(0, 10);
-}
-
-function Advisor() {
+function AdvisorRoute() {
   const { data, isLoading, error, connected } = usePlayer();
+  const [selectedCategory, setSelectedCategory] = useState<FilterCategory>("all");
+  const [selectedClass, setSelectedClass] = useState<ClassTab>("Archer / Berserk");
 
-  const roadmap = useMemo(() => (data ? buildRoadmap(data) : []), [data]);
+  const netWorth = data ? data.purse + (data.bank ?? 0) : 0;
+  const sbLevel = useMemo(() => calculateSkyBlockLevel(data).level, [data]);
+  const cataLvl = data?.dungeons?.catacombsLevel ?? 0;
+  const skillAvg = data?.skillAverage ?? 0;
 
-  const topSkills = data?.skills
-    .slice()
-    .sort((a, b) => b.level - a.level)
-    .slice(0, 4);
+  // Evaluate Game Stage
+  const stageReport = useMemo(
+    () => evaluateGameStage(sbLevel, netWorth, skillAvg, cataLvl, 450),
+    [sbLevel, netWorth, skillAvg, cataLvl]
+  );
+
+  // Generate Personalized Recommendations
+  const actions = useMemo(() => generateAdvisorActions(data), [data]);
+
+  const filteredActions = useMemo(() => {
+    if (selectedCategory === "all") return actions;
+    return actions.filter((a) => a.category === selectedCategory);
+  }, [actions, selectedCategory]);
+
+  const activeTree = useMemo(
+    () => CLASS_PROGRESSION_TREES.find((t) => t.className === selectedClass) ?? CLASS_PROGRESSION_TREES[0]!,
+    [selectedClass]
+  );
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHero
-        eyebrow="Tools"
-        title="Advisor"
-        description="What should you do next? Ranked by the lowest cost per stat and per level gained."
+        eyebrow="AI Mentor"
+        title="Progression Advisor"
+        description="Autonomous progression intelligence: game stage assessment, personalized highest-ROI next actions, linear gear upgrade trees, and skill fast-tracks."
       />
 
-      {!connected && <ConnectPrompt what="your advisor summary" />}
-      {connected && isLoading && <LoadState>Loading profile data…</LoadState>}
+      {!connected && <ConnectPrompt what="your live profile for personalized recommendations" />}
+      {connected && isLoading && <LoadState>Analyzing profile telemetry & calculating upgrade ROI…</LoadState>}
       {connected && error && <ErrorState error={error} />}
 
-      {connected && data && (
+      {data && (
         <>
-          <StatRow
-            stats={[
-              { label: "Connected profile", value: data.username, sub: "Live Hypixel account" },
-              { label: "Skill average", value: data.skillAverage.toFixed(2), sub: "All skills" },
-              {
-                label: "Total skill XP",
-                value: formatFull(data.totalSkillXp),
-                sub: "Current progress",
-              },
-              {
-                label: "Liquid coins",
-                value: formatFull(data.purse),
-                sub: data.bank === null ? "Bank hidden" : `Bank ${formatFull(data.bank)}`,
-              },
-            ]}
-          />
-
-          <Panel>
-            <div className="flex flex-wrap items-start justify-between gap-6">
-              <div className="max-w-2xl">
-                <p className="eyebrow">Advisor summary</p>
-                <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                  Live recommendation overview
-                </h2>
-                <p className="mt-3 text-sm text-muted-foreground">
-                  This page shows your connected profile performance and highlights. Once connected,
-                  recommendations are generated from your actual SkyBlock profile data.
-                </p>
+          {/* SECTION 1: GAME STAGE CLASSIFICATION HERO */}
+          <Panel className="border-sky-500/20 bg-gradient-to-br from-sky-500/[0.04] via-transparent to-purple-500/[0.02]">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+              <div className="flex items-center gap-4">
+                <span className={cn("rounded-2xl border px-4 py-2 font-mono text-xl font-black shadow-lg", stageReport.badgeClass)}>
+                  {stageReport.stage}
+                </span>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Profile Game Stage Assessment</h2>
+                  <p className="text-xs text-white/50">{stageReport.stageSummary}</p>
+                </div>
               </div>
             </div>
 
-            <div className="mt-8 grid gap-4 lg:grid-cols-3">
-              <div className="glass-soft rounded-2xl p-5">
-                <p className="text-sm font-medium">Top skill</p>
-                <p className="mt-3 text-3xl font-semibold">
-                  {topSkills?.[0]?.name ?? "N/A"} {topSkills?.[0]?.level ?? ""}
-                </p>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Highest live skill level in this profile
-                </p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+              <div className="rounded-xl border border-white/5 bg-black/30 p-3">
+                <p className="text-xs text-white/50">SkyBlock Level</p>
+                <p className="font-mono text-lg font-bold text-sky-300 mt-1">Level {stageReport.sbLevel}</p>
               </div>
-              <div className="glass-soft rounded-2xl p-5">
-                <p className="text-sm font-medium">Available collections</p>
-                <p className="mt-3 text-3xl font-semibold">{data.collections?.length ?? 0}</p>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Unique collection categories tracked
-                </p>
+              <div className="rounded-xl border border-white/5 bg-black/30 p-3">
+                <p className="text-xs text-white/50">Estimated Net Worth</p>
+                <p className="font-mono text-lg font-bold text-emerald-400 mt-1">{formatFull(stageReport.netWorth)}</p>
               </div>
-              <div className="glass-soft rounded-2xl p-5">
-                <p className="text-sm font-medium">Active profiles</p>
-                <p className="mt-3 text-3xl font-semibold">{data.profiles?.length ?? 0}</p>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Profiles loaded from your account
-                </p>
+              <div className="rounded-xl border border-white/5 bg-black/30 p-3">
+                <p className="text-xs text-white/50">Skill Average</p>
+                <p className="font-mono text-lg font-bold text-purple-300 mt-1">{stageReport.skillAverage.toFixed(2)}</p>
+              </div>
+              <div className="rounded-xl border border-white/5 bg-black/30 p-3">
+                <p className="text-xs text-white/50">Catacombs Level</p>
+                <p className="font-mono text-lg font-bold text-amber-300 mt-1">Cata {stageReport.catacombsLevel}</p>
               </div>
             </div>
           </Panel>
 
+          {/* SECTION 2: PERSONALIZED NEXT BEST ACTIONS */}
           <Panel>
-            <h2 className="text-xl font-semibold">Progression roadmap</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Ranked next-steps generated from your live profile — cheapest wins first.
-            </p>
-            <ol className="mt-6 space-y-3">
-              {roadmap.map((step, index) => (
-                <li key={step.title} className="glass-soft rounded-2xl p-5">
-                  <div className="flex items-start gap-4">
-                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-border text-xs font-semibold text-muted-foreground">
-                      {index + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-medium">{step.title}</p>
-                        <span
-                          className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${priorityClass[step.priority]}`}
-                        >
-                          {step.priority}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-sm text-muted-foreground">{step.detail}</p>
-                      {step.pct !== undefined && (
-                        <div className="mt-3 max-w-sm">
-                          <ProgressBar pct={step.pct} />
-                        </div>
-                      )}
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4 mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-white">Personalized Next Best Upgrades (Ranked by ROI)</h2>
+                <p className="text-xs text-white/50">Highest impact-per-coin actions tailored to your current stats</p>
+              </div>
+
+              {/* Category Filter Chips */}
+              <div className="flex flex-wrap gap-1.5 rounded-xl border border-white/10 bg-black/40 p-1">
+                {[
+                  { id: "all", label: "All" },
+                  { id: "Skills", label: "Skills" },
+                  { id: "Accessories", label: "Accessories" },
+                  { id: "Slayers", label: "Slayers" },
+                  { id: "Dungeons", label: "Dungeons" },
+                  { id: "Minions", label: "Minions" },
+                  { id: "Farming", label: "Farming" },
+                ].map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => setSelectedCategory(c.id as FilterCategory)}
+                    className={cn(
+                      "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all",
+                      selectedCategory === c.id
+                        ? "bg-white/20 text-white font-bold"
+                        : "text-white/50 hover:text-white"
+                    )}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredActions.map((action) => (
+                <div
+                  key={action.id}
+                  className="flex flex-col justify-between rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur transition-all duration-75 hover:border-sky-500/30 hover:bg-white/[0.04]"
+                >
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-sm font-bold text-white leading-tight">{action.title}</h3>
+                      <span className="shrink-0 rounded-lg border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-300">
+                        {action.roiTier}
+                      </span>
                     </div>
-                    <ArrowRight className="mt-1 size-4 shrink-0 text-muted-foreground" />
+
+                    <p className="text-xs text-white/60 mt-2 leading-relaxed">{action.description}</p>
+
+                    <div className="mt-3 space-y-1 rounded-xl bg-black/30 p-2.5 text-xs font-mono">
+                      <div className="flex justify-between text-white/60">
+                        <span>Cost:</span>
+                        <span className="text-white">{action.estimatedCost}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-white/10 pt-1 text-emerald-400 font-bold">
+                        <span>Reward:</span>
+                        <span className="truncate ml-2">{action.statReward}</span>
+                      </div>
+                    </div>
                   </div>
-                </li>
+
+                  <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-2.5 text-[11px] text-white/40">
+                    <span>Category: {action.category}</span>
+                    {action.actionCommand && (
+                      <span className="font-mono text-sky-400">{action.actionCommand}</span>
+                    )}
+                  </div>
+                </div>
               ))}
-              {roadmap.length === 0 && (
-                <li className="py-6 text-center text-sm text-muted-foreground">
-                  Everything tracked is complete — incredible profile!
-                </li>
-              )}
-            </ol>
+            </div>
           </Panel>
 
+          {/* SECTION 3: LINEAR GEAR PROGRESSION TREES */}
           <Panel>
-            <h2 className="text-xl font-semibold">Top skills</h2>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {topSkills?.map((skill) => (
-                <div key={skill.key} className="glass-soft rounded-2xl p-5">
-                  <p className="text-sm font-medium">
-                    {skill.name} {skill.level}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {skill.maxed
-                      ? `${formatFull(skill.totalXp)} XP`
-                      : `${formatFull(skill.currentXp)} / ${formatFull(skill.neededXp)} XP`}
-                  </p>
-                  <div className="mt-4">
-                    <div className="h-2 overflow-hidden rounded-full bg-secondary">
-                      <div
-                        className="h-full rounded-full bg-primary"
-                        style={{ width: `${skill.pct}%` }}
-                      />
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4 mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-white">Linear Gear Progression Trees</h2>
+                <p className="text-xs text-white/50">Optimal gear progression from Starter to Endgame for every playstyle</p>
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                {CLASS_PROGRESSION_TREES.map((tree) => (
+                  <button
+                    key={tree.className}
+                    onClick={() => setSelectedClass(tree.className as ClassTab)}
+                    className={cn(
+                      "rounded-xl px-3 py-1.5 text-xs font-semibold transition-all",
+                      selectedClass === tree.className
+                        ? "border border-sky-400/40 bg-sky-500/20 text-white font-bold shadow-md"
+                        : "border border-white/5 bg-white/[0.02] text-white/60 hover:text-white"
+                    )}
+                  >
+                    {tree.className}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <p className="text-xs text-white/60 mb-4">{activeTree.description}</p>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {activeTree.steps.map((step, idx) => (
+                <div
+                  key={step.stage}
+                  className="relative rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur"
+                >
+                  <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                    <span className="font-mono text-xs font-bold text-sky-300">Step {idx + 1}</span>
+                    <span className="rounded bg-white/10 px-2 py-0.5 text-[10px] font-mono text-white/80">
+                      {step.stage}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 space-y-2 text-xs">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-white/40">Weapon</p>
+                      <p className="font-bold text-white mt-0.5">{step.weapon}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-white/40">Armor</p>
+                      <p className="font-bold text-white mt-0.5">{step.armor}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-white/40">Pet</p>
+                      <p className="font-mono text-amber-300 mt-0.5">{step.recommendedPet}</p>
+                    </div>
+                    <div className="border-t border-white/10 pt-2">
+                      <p className="text-[10px] uppercase tracking-wider text-white/40">Est. Price</p>
+                      <p className="font-mono font-bold text-emerald-400 mt-0.5">{step.estimatedPrice}</p>
                     </div>
                   </div>
                 </div>
               ))}
+            </div>
+          </Panel>
 
-              {!topSkills?.length && (
-                <p className="text-sm text-muted-foreground">
-                  No skill data available for this profile.
-                </p>
-              )}
+          {/* SECTION 4: SKILL FAST-TRACK LEVELING GUIDES */}
+          <Panel>
+            <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-white">Skill Fast-Track Leveling Guides</h2>
+                <p className="text-xs text-white/50">Fastest and most cost-effective methods to max out all core skills</p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {SKILL_LEVELING_GUIDES.map((guide) => (
+                <div
+                  key={guide.skill}
+                  className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur"
+                >
+                  <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{guide.icon}</span>
+                      <h3 className="text-sm font-bold text-white">{guide.skill}</h3>
+                    </div>
+                    <span className="rounded bg-white/10 px-2 py-0.5 text-[10px] font-mono text-emerald-400">
+                      {guide.hourlyXpRate}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 space-y-2 text-xs">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-sky-400 font-bold">Fastest Route</p>
+                      <p className="text-white/80 mt-0.5">{guide.fastestMethod}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-amber-400 font-bold">Budget Route</p>
+                      <p className="text-white/60 mt-0.5">{guide.budgetMethod}</p>
+                    </div>
+                    <div className="border-t border-white/10 pt-2">
+                      <p className="text-[10px] uppercase tracking-wider text-purple-400 font-bold">Recommended Pet</p>
+                      <p className="font-mono text-white/80 mt-0.5">{guide.recommendedPet}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </Panel>
         </>
