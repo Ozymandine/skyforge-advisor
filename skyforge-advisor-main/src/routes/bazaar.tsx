@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, RefreshCw, Search, Star } from "lucide-react";
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState, useDeferredValue } from "react";
 
 const BazaarHistoryChart = lazy(() => import("@/components/bazaar-history-chart"));
 
@@ -9,6 +9,7 @@ import { ErrorState, LoadState } from "@/components/data-states";
 import { Chip, PageHero, Panel, ProgressBar, StatRow } from "@/components/layout/app-shell";
 import { ForgeCard, ForgeProgress, type ForgeRarity } from "@/components/forge";
 import { ItemIcon } from "@/components/ui/item-icon";
+import { MinecraftTooltip } from "@/components/ui/minecraft-tooltip";
 import { Sparkline } from "@/components/ui/sparkline";
 import { useWatchlist } from "@/hooks/use-watchlist";
 import { mergeHistory, useServerHistory } from "@/hooks/use-market-history";
@@ -62,6 +63,7 @@ const PAGE_SIZE = 60;
 
 function Bazaar() {
   const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query);
   const [filter, setFilter] = useState<string>("All markets");
   const [sort, setSort] = useState<keyof typeof sorts>("Profit per hour");
   const [visible, setVisible] = useState(PAGE_SIZE);
@@ -114,7 +116,7 @@ function Bazaar() {
 
   const items = useMemo(() => {
     if (!data) return [];
-    const q = query.toLowerCase();
+    const q = deferredQuery.toLowerCase();
     return data.products
       .filter((i) => i.name.toLowerCase().includes(q) || i.id.toLowerCase().includes(q))
       .filter((i) => {
@@ -126,7 +128,7 @@ function Bazaar() {
         return true;
       })
       .sort(sorts[sort]);
-  }, [data, query, filter, sort, watchlist.items]);
+  }, [data, deferredQuery, filter, sort, watchlist.items]);
 
   // Reset pagination whenever the result set changes shape.
   const totalMatches = items.length;

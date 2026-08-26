@@ -379,3 +379,4 @@ export function calculateSimulation(loadout: SimulatorLoadout): SimulationResult
     upgradeSuggestions,
   };
 }
+

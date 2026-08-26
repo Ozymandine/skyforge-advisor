@@ -20,6 +20,7 @@ import { fetchBazaar } from "@/lib/hypixel.functions";
 import { PageHero, Panel, ProgressBar, StatRow } from "@/components/layout/app-shell";
 import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
 import { ItemIcon } from "@/components/ui/item-icon";
+import { MinecraftTooltip } from "@/components/ui/minecraft-tooltip";
 import { RarityTag } from "@/components/layout/app-shell";
 import { usePlayer } from "@/hooks/use-account";
 import { useNetWorthHistory } from "@/hooks/use-net-worth-history";
@@ -182,6 +183,7 @@ function NetWorth() {
           id: item.id,
           name: item.name,
           rarity: item.rarity,
+          lore: item.lore,
           count: item.count,
           container: container.label,
           value: valueOfItem(item),
@@ -195,6 +197,7 @@ function NetWorth() {
             id: sack.id,
             name: sack.name,
             rarity: "UNCOMMON",
+            lore: [],
             count: sack.count,
             container: "Sacks",
             value: sack.value,
@@ -281,7 +284,14 @@ function NetWorth() {
                     <span className="w-5 shrink-0 text-center font-mono text-xs font-bold text-muted-foreground">
                       {index + 1}
                     </span>
-                    <ItemIcon id={item.id} name={item.name} className="size-7 shrink-0" />
+                    <MinecraftTooltip
+                      name={item.name}
+                      rarity={item.rarity}
+                      lore={item.lore}
+                      estimatedValue={item.value}
+                    >
+                      <ItemIcon id={item.id} name={item.name} className="size-7 shrink-0 cursor-pointer" />
+                    </MinecraftTooltip>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{item.name}</p>
                       <p className="text-[10px] text-muted-foreground">{item.container}</p>

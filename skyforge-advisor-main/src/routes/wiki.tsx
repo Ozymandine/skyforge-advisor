@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useDeferredValue } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { ErrorState, LoadState } from "@/components/data-states";
@@ -83,6 +83,7 @@ function Wiki() {
   const navigate = useNavigate();
 
   const [query, setQuery] = useState(search.q ?? "");
+  const deferredQuery = useDeferredValue(query);
   const [category, setCategory] = useState<WikiCategory>("All");
 
   const [selectedId, setSelectedId] = useState<string | null>(search.item ?? null);
@@ -166,7 +167,7 @@ function Wiki() {
    * ------------------------------------------------------------------------ */
 
   const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = deferredQuery.trim().toLowerCase();
 
     return (
       allSearchableItems

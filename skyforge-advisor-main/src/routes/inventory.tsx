@@ -12,6 +12,8 @@ import {
   StatRow,
 } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
+import { MinecraftTooltip } from "@/components/ui/minecraft-tooltip";
+import { playClickSound, playSlotHoverSound, playSuccessChime } from "@/lib/sound-effects";
 import { RenderMinecraftLore } from "@/lib/minecraft-text";
 import { usePlayer } from "@/hooks/use-account";
 import {
@@ -23,6 +25,7 @@ import {
   type AccessoryRarity,
 } from "@/lib/accessory-data";
 import { formatNumber, formatFull } from "@/lib/skyblock";
+import { cn } from "@/lib/utils";
 import {
   getTopMpUpgrades,
   POWER_STONES,
@@ -163,28 +166,52 @@ function Inventory() {
                       pct={Math.round((current.items.length / Math.max(1, current.slots)) * 100)}
                     />
                   </div>
-                  <div className="mt-5 grid grid-cols-9 gap-1.5">
+                  <div className="mt-5 grid grid-cols-9 gap-2 rounded-2xl border border-white/10 bg-black/50 p-3 shadow-inner">
                     {Array.from({ length: current.slots }).map((_, slot) => {
                       const slotItem = current.items.find((i) => i.slot === slot);
                       return (
-                        <button
+                        <MinecraftTooltip
                           key={slot}
-                          onClick={() => slotItem && setSelected(slot)}
-                          className={`aspect-square rounded-lg border p-1 transition-all duration-75 ease-out hover:scale-105 ${
-                            selected === slot
-                              ? "border-primary bg-primary/10"
-                              : "border-border/60 bg-secondary/20 hover:border-primary/40"
-                          }`}
-                          title={slotItem?.name ?? "Empty"}
+                          name={slotItem?.name ?? "Empty Slot"}
+                          rarity={slotItem?.rarity ?? "COMMON"}
+                          lore={slotItem?.lore}
+                          disabled={!slotItem}
                         >
-                          {slotItem ? (
-                            <ItemIcon
-                              id={slotItem.id}
-                              name={slotItem.name}
-                              className="size-[85%]"
-                            />
-                          ) : null}
-                        </button>
+                          <button
+                            onClick={() => {
+                              if (slotItem) {
+                                playClickSound();
+                                setSelected(slot);
+                              }
+                            }}
+                            onMouseEnter={() => {
+                              if (slotItem) playSlotHoverSound();
+                            }}
+                            className={cn(
+                              "group relative flex aspect-square w-full items-center justify-center rounded-xl border p-1 transition-none select-none",
+                              selected === slot
+                                ? "border-emerald-400 bg-emerald-500/25 ring-2 ring-emerald-400/50 shadow-lg shadow-emerald-500/20"
+                                : slotItem
+                                  ? "border-white/10 bg-white/[0.04] hover:border-emerald-400/60 hover:bg-white/[0.08]"
+                                  : "border-white/5 bg-black/40 opacity-40 cursor-default"
+                            )}
+                          >
+                            {slotItem && (
+                              <>
+                                <ItemIcon
+                                  id={slotItem.id}
+                                  name={slotItem.name}
+                                  className="size-8 object-contain"
+                                />
+                                {slotItem.count > 1 && (
+                                  <span className="absolute bottom-1 right-1.5 font-mono text-[10px] font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">
+                                    {slotItem.count}
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </button>
+                        </MinecraftTooltip>
                       );
                     })}
                   </div>

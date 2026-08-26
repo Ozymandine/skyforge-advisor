@@ -25,3 +25,15 @@ export const DEVELOPER_DASHBOARD_URL = "https://developer.hypixel.net/dashboard"
 
 /** Public origin of this site — used for absolute og:image URLs. */
 export const SITE_URL = "https://skyforge-advisor.vercel.app";
+
+export const RARITY_COLORS: Record<string, string> = {
+  COMMON: "#ffffff",
+  UNCOMMON: "#55ff55",
+  RARE: "#5555ff",
+  EPIC: "#aa00aa",
+  LEGENDARY: "#ffaa00",
+  MYTHIC: "#ff55ff",
+  DIVINE: "#55ffff",
+  SPECIAL: "#ff5555",
+  VERY_SPECIAL: "#ff5555",
+};

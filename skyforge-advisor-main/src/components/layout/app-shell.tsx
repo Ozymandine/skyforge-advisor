@@ -661,14 +661,59 @@ export function AppShell({ children }: { children: ReactNode }) {
             onOpenNav={() => setNavOpen(true)}
             onCycleThemeRef={cycleThemeRef}
           />
-          <main key={pathname} className="animate-page-in px-4 pb-16 pt-6 sm:px-8">
+          <main key={pathname} className="animate-page-in px-4 pb-24 pt-6 sm:px-8 md:pb-16">
             {children}
           </main>
 
           {/* Footer: provenance + live API health */}
-          <footer className="border-t border-white/10 px-4 py-5 sm:px-8">
+          <footer className="border-t border-white/10 px-4 py-5 sm:px-8 pb-20 md:pb-5">
             <FooterContent />
           </footer>
+        </div>
+      </div>
+
+      {/* Mobile Floating Bottom Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-[#0B0E14]/90 p-2 backdrop-blur-xl md:hidden">
+        <div className="flex items-center justify-around">
+          <Link
+            to="/dashboard"
+            className="flex flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
+            activeProps={{ className: "text-emerald-400 font-bold" }}
+          >
+            <LayoutDashboard className="size-4" />
+            <span className="text-[10px]">Dashboard</span>
+          </Link>
+          <Link
+            to="/advisor"
+            className="flex flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
+            activeProps={{ className: "text-sky-400 font-bold" }}
+          >
+            <Bot className="size-4" />
+            <span className="text-[10px]">Advisor</span>
+          </Link>
+          <Link
+            to="/simulator"
+            className="flex flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
+            activeProps={{ className: "text-amber-400 font-bold" }}
+          >
+            <Swords className="size-4" />
+            <span className="text-[10px]">Damage</span>
+          </Link>
+          <Link
+            to="/flips"
+            className="flex flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
+            activeProps={{ className: "text-emerald-400 font-bold" }}
+          >
+            <Target className="size-4" />
+            <span className="text-[10px]">Flips</span>
+          </Link>
+          <button
+            onClick={() => setNavOpen(true)}
+            className="flex flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
+          >
+            <Menu className="size-4" />
+            <span className="text-[10px]">Menu</span>
+          </button>
         </div>
       </div>
 
