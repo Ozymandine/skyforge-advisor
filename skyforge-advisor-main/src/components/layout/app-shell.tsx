@@ -43,6 +43,7 @@ import { markAllRead, useNotificationFeed } from "@/hooks/use-notification-feed"
 import { applyTheme, getTheme, onThemeChange, setTheme as setThemeStored } from "@/lib/theme";
 import { getPref, onPrefsChange } from "@/lib/prefs";
 import { formatNumber, type BazaarProduct } from "@/lib/skyblock";
+import { RankBadge } from "@/components/ui/rank-badge";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -199,7 +200,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.02] hover:bg-white/10 hover:text-foreground active:scale-95",
+                      "hover-fast flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors duration-75 hover:bg-white/10 hover:text-foreground active:scale-[0.98]",
                       collapsed && "justify-center px-0",
                     )}
                     activeProps={{
@@ -221,7 +222,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       <div className="p-4">
         <DropdownMenu>
           <DropdownMenuTrigger className="w-full text-left outline-none">
-            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3.5 backdrop-blur-md transition-all duration-75 hover:bg-white/10 hover:border-emerald-500/30">
+            <div className="hover-fast flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3.5 backdrop-blur-md transition-colors duration-75 hover:bg-white/10 hover:border-emerald-500/30">
               {!collapsed ? (
                 <>
                   <div className="flex items-center gap-3 min-w-0">
@@ -230,9 +231,12 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                       name={player.data?.username || account.username}
                     />
                     <div className="min-w-0">
-                      <p className="truncate text-xs font-bold text-foreground">
-                        {player.data?.username ?? (account.username || "Not connected")}
-                      </p>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <RankBadge rankData={player.data?.hypixelPlayer} size="sm" />
+                        <p className="truncate text-xs font-bold text-foreground">
+                          {player.data?.username ?? (account.username || "Not connected")}
+                        </p>
+                      </div>
                       <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
                         <span
                           className={cn(

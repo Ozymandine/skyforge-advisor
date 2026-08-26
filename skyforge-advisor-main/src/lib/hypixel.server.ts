@@ -2438,6 +2438,18 @@ export async function getPlayerData(
     const bestiaryData = calculateBestiary(bestiaryKills, bestiaryRaw?.deaths);
     const slayerOverview = calculateSlayerOverview(slayerRaw);
 
+    const hypixelPlayer = await getKeyedJson<{
+      player?: {
+        rank?: string;
+        monthlyPackageRank?: string;
+        newPackageRank?: string;
+        packageRank?: string;
+        prefix?: string;
+        rankPlusColor?: string;
+        monthlyRankColor?: string;
+      };
+    }>(`${API}/player?uuid=${uuid}`).then((r) => r?.player).catch(() => null);
+
     const payload = {
       username: name,
       uuid,
@@ -2463,6 +2475,8 @@ export async function getPlayerData(
       fairySouls: Number(fairySoul?.total_collected ?? 0),
 
       lastSave: Number(profile?.last_save ?? lastSaveRaw ?? Date.now()),
+
+      ...(hypixelPlayer ? { hypixelPlayer } : {}),
 
       ...(dungeons ? { dungeons } : {}),
 

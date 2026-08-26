@@ -36,3 +36,4 @@ describe("T3.10: Rift Motes Export Economy", () => {
     expect(prism?.coinsPerMote).toBeGreaterThanOrEqual(500);
   });
 });
+

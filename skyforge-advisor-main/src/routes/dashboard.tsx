@@ -17,6 +17,7 @@ import {
 } from "@/lib/constants";
 import { formatFull } from "@/lib/skyblock";
 import { calculateSkyBlockLevel } from "@/lib/skyblock-level";
+import { RankBadge } from "@/components/ui/rank-badge";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -163,7 +164,8 @@ function Dashboard() {
                   <p className="eyebrow uppercase tracking-wider text-xs text-muted-foreground">
                     SkyBlock Profile
                   </p>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <RankBadge rankData={data.hypixelPlayer} size="lg" />
                     <h1 className="mt-1 text-5xl font-bold tracking-tight">{data.username}</h1>
                     <span className="mt-1 flex items-center gap-1 rounded-xl border border-sky-400/40 bg-sky-500/15 px-3 py-1 font-mono text-sm font-black text-sky-300 shadow-md">
                       LVL {sbLevel.level}

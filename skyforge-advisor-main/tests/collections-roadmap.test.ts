@@ -26,3 +26,4 @@ describe("T3.24: Personal Bank Interest Optimizer", () => {
     expect(interest.tier.tierName).toContain("Super Deluxe");
   });
 });
+

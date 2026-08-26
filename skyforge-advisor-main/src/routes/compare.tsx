@@ -12,7 +12,8 @@ import { ErrorState, LoadState } from "@/components/data-states";
 import { useAccount } from "@/hooks/use-account";
 import { fetchPlayer } from "@/lib/hypixel.functions";
 import { computeWeight, type WeightBreakdown } from "@/lib/weight";
-import { formatNumber, type PlayerData } from "@/lib/skyblock";
+import { formatNumber, formatFull, type PlayerData } from "@/lib/skyblock";
+import { RankBadge } from "@/components/ui/rank-badge";
 
 export const Route = createFileRoute("/compare")({
   head: () => ({
@@ -209,16 +210,39 @@ function WinnerBanner({ a, b }: { a: PlayerData; b: PlayerData }) {
 
   return (
     <Panel className="border-gold/30 bg-gradient-to-r from-gold/10 via-transparent to-transparent">
-      <div className="flex flex-wrap items-center gap-4">
-        <span className="flex size-14 items-center justify-center rounded-2xl border border-gold/40 bg-gold/15 text-gold shadow-[0_0_24px_rgba(250,204,21,0.25)]">
-          <Crown className="size-7" />
-        </span>
-        <div>
-          <p className="eyebrow">Weight winner</p>
-          <p className="mt-1 text-2xl font-bold">{winner.username}</p>
-          <p className="text-sm text-muted-foreground">
-            Leads by {leadPct}% on overall progression weight ({formatNumber(winWeight)} pts)
-          </p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <span className="flex size-14 items-center justify-center rounded-2xl border border-gold/40 bg-gold/15 text-gold shadow-[0_0_24px_rgba(250,204,21,0.25)]">
+            <Crown className="size-7" />
+          </span>
+          <div>
+            <p className="eyebrow">Overall Progression Winner</p>
+            <div className="flex items-center gap-2 mt-1">
+              <RankBadge rankData={winner.hypixelPlayer} />
+              <p className="text-2xl font-bold text-white">{winner.username}</p>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Leads by {leadPct}% on Senither weight ({formatNumber(winWeight)} pts)
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4 text-xs font-mono">
+          <div className="rounded-xl border border-white/5 bg-black/30 p-3 text-right">
+            <div className="flex items-center justify-end gap-1.5">
+              <RankBadge rankData={a.hypixelPlayer} size="sm" />
+              <span className="text-emerald-400 font-bold">{a.username}</span>
+            </div>
+            <p className="text-white/60 mt-1">{formatNumber(wa)} pts</p>
+          </div>
+          <span className="text-muted-foreground font-bold">VS</span>
+          <div className="rounded-xl border border-white/5 bg-black/30 p-3 text-left">
+            <div className="flex items-center gap-1.5">
+              <RankBadge rankData={b.hypixelPlayer} size="sm" />
+              <span className="text-cyan-300 font-bold">{b.username}</span>
+            </div>
+            <p className="text-white/60 mt-1">{formatNumber(wb)} pts</p>
+          </div>
         </div>
       </div>
     </Panel>

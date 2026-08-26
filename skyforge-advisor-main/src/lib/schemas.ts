@@ -284,6 +284,17 @@ export const playerDataSchema = z.object({
       }),
     })
     .optional(),
+  hypixelPlayer: z
+    .object({
+      rank: z.string().optional(),
+      monthlyPackageRank: z.string().optional(),
+      newPackageRank: z.string().optional(),
+      packageRank: z.string().optional(),
+      prefix: z.string().optional(),
+      rankPlusColor: z.string().optional(),
+      monthlyRankColor: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type PlayerDataValidated = z.infer<typeof playerDataSchema>;

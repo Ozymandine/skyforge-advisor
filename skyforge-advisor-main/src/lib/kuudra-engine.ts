@@ -198,3 +198,4 @@ export const KUUDRA_T5_CHEST_DROPS: KuudraChestDrop[] = [
   { name: "Kuudra Follower Relic", dropChance: "1.5%", marketValue: 45_000_000 },
   { name: "Attribute Shard (Dominance / Vitality)", dropChance: "15.0%", marketValue: 18_000_000 },
 ];
+

@@ -93,3 +93,4 @@ export const RIFT_EXPORT_ITEMS: RiftExportItem[] = [
   { name: "MC0-1 Microcontroller", motesCost: 100_000, realSkyBlockValueCoins: 42_000_000, coinsPerMote: 420 },
   { name: "Half-Eaten Carrot", motesCost: 15_000, realSkyBlockValueCoins: 4_500_000, coinsPerMote: 300 },
 ];
+

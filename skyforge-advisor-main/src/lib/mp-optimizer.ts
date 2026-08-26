@@ -149,3 +149,4 @@ export function getRecombPriorities(recombPrice = 9_000_000): RecombRecommendati
     { rarity: "COMMON", mpGained: 2, costPerMpGained: Math.round(recombPrice / 2), priorityRating: "LOW" },
   ];
 }
+

@@ -219,3 +219,11 @@
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
 }
+
+@utility hover-fast {
+  transition-property: color, background-color, border-color, box-shadow, opacity;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  transition-duration: 40ms;
+  will-change: background-color, color, border-color;
+  transform: translateZ(0);
+}
