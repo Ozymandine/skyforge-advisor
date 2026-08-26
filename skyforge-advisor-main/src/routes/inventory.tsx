@@ -22,7 +22,12 @@ import {
   normalizeAccessoryName,
   type AccessoryRarity,
 } from "@/lib/accessory-data";
-import { formatNumber } from "@/lib/skyblock";
+import { formatNumber, formatFull } from "@/lib/skyblock";
+import {
+  getTopMpUpgrades,
+  POWER_STONES,
+  getRecombPriorities,
+} from "@/lib/mp-optimizer";
 
 export const Route = createFileRoute("/inventory")({
   head: () => ({
@@ -631,6 +636,77 @@ function AccessoriesSection() {
             .join(", ")}
           ) plus your chosen reforge bonus.
         </p>
+      </Panel>
+
+      {/* Top Cost-per-MP Upgrade Recommendations */}
+      <Panel>
+        <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-white">Cheapest Magical Power (MP) Upgrades</h2>
+            <p className="text-xs text-white/50">Ranked by lowest coin cost per Magical Power point gained</p>
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {getTopMpUpgrades(new Set(owned.map((o) => o.name))).slice(0, 8).map((t) => (
+            <div key={t.id} className="rounded-xl border border-white/5 bg-black/30 p-3 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-white">{t.name}</span>
+                <span className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[10px] text-amber-300">
+                  +{t.mpValue} MP
+                </span>
+              </div>
+              <div className="mt-2 space-y-0.5 text-white/60">
+                <p>Est. Cost: <span className="font-mono text-white">{formatFull(t.costCoins)}</span></p>
+                <p className="font-mono font-bold text-emerald-400">~{formatFull(t.costPerMp)} / MP</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Panel>
+
+      {/* Power Stone Synergies */}
+      <Panel>
+        <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-white">Power Stone Synergy & Stats</h2>
+            <p className="text-xs text-white/50">Stat specialization profiles for Maxwell the Thaumaturgist</p>
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {POWER_STONES.map((ps) => (
+            <div key={ps.name} className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-white">{ps.name} Power</h3>
+                <span className="text-xs font-mono text-white/50">{ps.powerStoneItem}</span>
+              </div>
+              <p className="text-xs text-sky-300 mt-1 font-semibold">{ps.focusStats}</p>
+              <p className="text-[11px] text-white/40 mt-0.5">{ps.recommendedClass}</p>
+            </div>
+          ))}
+        </div>
+      </Panel>
+
+      {/* Recombobulator Priority Engine */}
+      <Panel>
+        <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-white">Recombobulator 3000 Priority Ranking</h2>
+            <p className="text-xs text-white/50">Optimal rarity tiers to recombobulate first for maximum MP return</p>
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-5">
+          {getRecombPriorities(9_000_000).map((r) => (
+            <div key={r.rarity} className="rounded-xl border border-white/5 bg-black/30 p-3 text-xs">
+              <span className="font-mono text-[10px] font-bold text-amber-400">{r.priorityRating}</span>
+              <h3 className="font-bold text-white mt-1">{r.rarity}</h3>
+              <p className="text-emerald-400 font-mono font-bold mt-1">+{r.mpGained} MP Gain</p>
+              <p className="text-white/40 text-[10px] mt-0.5">~{formatFull(r.costPerMpGained)} / MP</p>
+            </div>
+          ))}
+        </div>
       </Panel>
 
       {/* Owned */}

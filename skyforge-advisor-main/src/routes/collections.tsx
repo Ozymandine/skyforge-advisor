@@ -7,6 +7,7 @@ import { ItemIcon } from "@/components/ui/item-icon";
 import { TierTrack } from "@/components/progression-visuals";
 import { usePlayer } from "@/hooks/use-account";
 import { formatFull } from "@/lib/skyblock";
+import { calculateMinionSlotRoadmap, calculateBankInterest } from "@/lib/collections-roadmap";
 
 export const Route = createFileRoute("/collections")({
   head: () => ({
@@ -252,6 +253,56 @@ function Collections() {
               })}
             </div>
           )}
+
+          {/* Minion Slot Unlock Roadmap */}
+          <Panel className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.04] via-transparent to-teal-500/[0.02]">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+              <div>
+                <h2 className="text-xl font-bold text-white">Minion Slot Unlock Roadmap</h2>
+                <p className="text-xs text-white/50">Unique minion crafting thresholds for profile expansion</p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              {calculateMinionSlotRoadmap(510).milestones.slice(3).map((m) => (
+                <div key={m.slotsCount} className="rounded-xl border border-white/5 bg-black/30 p-3 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-white">{m.slotsCount} Slots</span>
+                    <span className={m.unlocked ? "text-emerald-400 font-bold" : "text-amber-400 font-bold"}>
+                      {m.unlocked ? "UNLOCKED" : `${m.uniqueCraftsRemaining} left`}
+                    </span>
+                  </div>
+                  <p className="text-white/50 text-[11px] mt-1">{m.uniqueCraftsRequired} unique crafts</p>
+                </div>
+              ))}
+            </div>
+          </Panel>
+
+          {/* Personal Bank Interest Optimizer */}
+          <Panel className="border-amber-500/20 bg-gradient-to-br from-amber-500/[0.04] via-transparent to-yellow-500/[0.02]">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+              <div>
+                <h2 className="text-xl font-bold text-white">Personal Bank Gold Interest Optimizer</h2>
+                <p className="text-xs text-white/50">Maximize 2% seasonal interest caps every 31 SkyBlock days</p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+              {[
+                { tier: "Starter", cap: 200_000, req: 10_000_000 },
+                { tier: "Gold", cap: 300_000, req: 15_000_000 },
+                { tier: "Deluxe", cap: 500_000, req: 25_000_000 },
+                { tier: "Super Deluxe", cap: 1_000_000, req: 50_000_000 },
+                { tier: "Premier", cap: 2_000_000, req: 100_000_000 },
+              ].map((b) => (
+                <div key={b.tier} className="rounded-xl border border-white/5 bg-black/30 p-3 text-xs">
+                  <h3 className="font-bold text-white">{b.tier} Account</h3>
+                  <p className="text-amber-300 font-mono font-bold mt-1">+{formatFull(b.cap)} Interest</p>
+                  <p className="text-white/40 text-[11px] mt-0.5">Optimal Balance: {formatFull(b.req)}</p>
+                </div>
+              ))}
+            </div>
+          </Panel>
         </>
       )}
     </div>
