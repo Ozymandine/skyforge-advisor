@@ -196,16 +196,20 @@
 }
 
 @utility glass-panel {
-  background-color: var(--surface);
+  background-color: oklch(0.2 0.015 243 / 0.92);
   border: 1px solid var(--border);
-  backdrop-filter: blur(28px) saturate(140%);
   box-shadow: var(--shadow-glass);
 }
 
 @utility glass-soft {
-  background-color: oklch(0.22 0.016 243 / 0.82);
+  background-color: oklch(0.22 0.016 243 / 0.88);
   border: 1px solid var(--border);
-  backdrop-filter: blur(18px) saturate(130%);
+}
+
+@utility panel-card {
+  background-color: oklch(0.18 0.015 243 / 0.94);
+  border: 1px solid oklch(0.98 0.005 240 / 0.08);
+  contain: content;
 }
 
 @utility eyebrow {
@@ -226,4 +230,10 @@
   transition-duration: 40ms;
   will-change: background-color, color, border-color;
   transform: translateZ(0);
+}
+
+@utility gpu-layer {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
 }

@@ -87,6 +87,70 @@ export type AdvisorPlayerInput = {
   hypixelPlayer?: import("./hypixel-rank").RawHypixelPlayerData | null | undefined;
 };
 
+function isAccessoryItem(item: InventoryItem): boolean {
+  const name = item.name.toLowerCase();
+  const id = (item.id || "").toLowerCase();
+  return (
+    name.includes("talisman") ||
+    name.includes("ring") ||
+    name.includes("artifact") ||
+    name.includes("relic") ||
+    name.includes("seal") ||
+    name.includes("crest") ||
+    name.includes("badge") ||
+    name.includes("heart") ||
+    name.includes("orb") ||
+    name.includes("feather") ||
+    name.includes("scarf") ||
+    name.includes("cloak") ||
+    name.includes("belt") ||
+    name.includes("gauntlet") ||
+    name.includes("glove") ||
+    name.includes("tome") ||
+    name.includes("melody's hair") ||
+    name.includes("shrimp") ||
+    name.includes("catacombs expert") ||
+    id.includes("talisman") ||
+    id.includes("ring") ||
+    id.includes("artifact") ||
+    id.includes("relic") ||
+    id.includes("accessory")
+  );
+}
+
+function getAccessoryFamily(item: InventoryItem): string {
+  return item.name
+    .toLowerCase()
+    .replace(/\b(tier\s+\d+|t\d+|relic|artifact|ring|talisman)\b/gi, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+export function computeAccurateMagicalPower(containers: Array<{ id: string; items: InventoryItem[] }> = []): number {
+  const bestByFamily = new Map<string, number>();
+
+  for (const c of containers) {
+    const isAccBag = c.id === "accessory_bag" || c.id === "talisman_bag";
+    for (const item of c.items) {
+      if (isAccBag || isAccessoryItem(item)) {
+        const rar = (item.rarity?.toUpperCase() ?? "COMMON") as AccessoryRarity;
+        const mpValue = MP_BY_RARITY[rar] ?? 3;
+        const family = getAccessoryFamily(item);
+        const existing = bestByFamily.get(family) ?? 0;
+        if (mpValue > existing) {
+          bestByFamily.set(family, mpValue);
+        }
+      }
+    }
+  }
+
+  let total = 0;
+  for (const val of bestByFamily.values()) {
+    total += val;
+  }
+  return total;
+}
+
 export function performProfileAudit(player?: AdvisorPlayerInput | null | undefined): ProfileAudit {
   const sbLevel = player ? calculateSkyBlockLevel(player as PlayerData).level : 25;
   const netWorth = player ? (player.purse ?? 0) + (player.bank ?? 0) : 10_000_000;
@@ -94,18 +158,8 @@ export function performProfileAudit(player?: AdvisorPlayerInput | null | undefin
   const cataLvl = player?.dungeons?.catacombsLevel ?? 0;
   const souls = player?.fairySouls ?? 0;
 
-  // Calculate actual Magical Power from accessory bag / inventory
-  let currentMp = 0;
-  for (const c of player?.containers ?? []) {
-    if (c.id === "accessory_bag" || c.id === "inventory" || c.id === "talisman_bag") {
-      for (const item of c.items) {
-        const rar = (item.rarity?.toUpperCase() ?? "COMMON") as AccessoryRarity;
-        if (MP_BY_RARITY[rar]) {
-          currentMp += MP_BY_RARITY[rar];
-        }
-      }
-    }
-  }
+  // Calculate deduplicated Magical Power
+  const currentMp = computeAccurateMagicalPower(player?.containers ?? []);
 
   // Determine Game Stage
   let stage: GameStage = "Early Game";
@@ -406,30 +460,48 @@ export type DetectedGearReport = {
 
 export function detectPlayerGear(player?: AdvisorPlayerInput | null | undefined): DetectedGearReport {
   const containers = player?.containers ?? [];
-  const armorItems = containers.find((c) => c.id === "armor")?.items ?? [];
-  const invItems = containers.find((c) => c.id === "inventory")?.items ?? [];
+  
+  // Collect all owned items across armor, wardrobe, inventory, and enderchest
+  const allGearItems: InventoryItem[] = [];
+  for (const c of containers) {
+    if (c.id === "armor" || c.id === "wardrobe" || c.id === "inventory" || c.id === "enderchest" || c.id === "storage") {
+      allGearItems.push(...c.items);
+    }
+  }
 
-  // Parse equipped pieces
-  const helmet = armorItems.find((i) => i.slot === 3 || i.name.toLowerCase().includes("helmet") || i.name.toLowerCase().includes("goggles"))?.name ?? "Glacite Helmet";
-  const chest = armorItems.find((i) => i.slot === 2 || i.name.toLowerCase().includes("chestplate"))?.name ?? "Glacite Chestplate";
-  const legs = armorItems.find((i) => i.slot === 1 || i.name.toLowerCase().includes("leggings"))?.name ?? "Glacite Leggings";
-  const boots = armorItems.find((i) => i.slot === 0 || i.name.toLowerCase().includes("boots"))?.name ?? "Glacite Boots";
+  // Weapon tier ranker
+  const getWeaponTier = (name: string): number => {
+    const n = name.toLowerCase();
+    if (n.includes("hyperion") || n.includes("astraea") || n.includes("scylla") || n.includes("valkyrie") || n.includes("terminator") || n.includes("claymore")) return 500;
+    if (n.includes("giant's sword") || n.includes("shadow fury") || n.includes("juju") || n.includes("felthorn") || n.includes("midas staff") || n.includes("reaper scythe") || n.includes("spirit sceptre")) return 400;
+    if (n.includes("livid") || n.includes("flower of truth") || n.includes("dragons") || n.includes("voidedge") || n.includes("dreadlord") || n.includes("bonzo")) return 300;
+    if (n.includes("aspect of the end") || n.includes("void sword") || n.includes("aurora staff") || n.includes("raider")) return 200;
+    if (n.includes("sword") || n.includes("bow") || n.includes("staff") || n.includes("dagger") || n.includes("blade")) return 100;
+    return 0;
+  };
 
-  // Find primary weapon
-  const weapon =
-    invItems.find((i) =>
-      i.name.toLowerCase().includes("sword") ||
-      i.name.toLowerCase().includes("bow") ||
-      i.name.toLowerCase().includes("staff") ||
-      i.name.toLowerCase().includes("aspect") ||
-      i.name.toLowerCase().includes("blade") ||
-      i.name.toLowerCase().includes("scythe") ||
-      i.name.toLowerCase().includes("hyperion") ||
-      i.name.toLowerCase().includes("terminator") ||
-      i.name.toLowerCase().includes("juju") ||
-      i.name.toLowerCase().includes("claymore") ||
-      i.name.toLowerCase().includes("dagger")
-    )?.name ?? "Aspect of the End";
+  // Armor tier ranker
+  const getArmorTier = (name: string): number => {
+    const n = name.toLowerCase();
+    if (n.includes("infernal") || n.includes("crimson") || n.includes("aurora") || n.includes("terror") || n.includes("fervor") || n.includes("hollow")) return 500;
+    if (n.includes("necron") || n.includes("storm") || n.includes("maxor") || n.includes("goldor") || n.includes("divan")) return 400;
+    if (n.includes("shadow assassin") || n.includes("frozen blaze") || n.includes("adaptive") || n.includes("werewolf")) return 300;
+    if (n.includes("superior") || n.includes("strong") || n.includes("unstable") || n.includes("wise") || n.includes("young") || n.includes("holy")) return 200;
+    if (n.includes("glacite") || n.includes("miner") || n.includes("lapis") || n.includes("hardened") || n.includes("goggles")) return 100;
+    return 50;
+  };
+
+  const helmets = allGearItems.filter((i) => i.name.toLowerCase().includes("helmet") || i.name.toLowerCase().includes("goggles") || i.name.toLowerCase().includes("crown") || i.name.toLowerCase().includes("fedora") || i.name.toLowerCase().includes("mask")).sort((a, b) => getArmorTier(b.name) - getArmorTier(a.name));
+  const chests = allGearItems.filter((i) => i.name.toLowerCase().includes("chestplate") || i.name.toLowerCase().includes("tunic") || i.name.toLowerCase().includes("jacket")).sort((a, b) => getArmorTier(b.name) - getArmorTier(a.name));
+  const legs = allGearItems.filter((i) => i.name.toLowerCase().includes("leggings") || i.name.toLowerCase().includes("trousers") || i.name.toLowerCase().includes("pants")).sort((a, b) => getArmorTier(b.name) - getArmorTier(a.name));
+  const bootsList = allGearItems.filter((i) => i.name.toLowerCase().includes("boots") || i.name.toLowerCase().includes("shoes") || i.name.toLowerCase().includes("oxfords")).sort((a, b) => getArmorTier(b.name) - getArmorTier(a.name));
+  const weapons = allGearItems.filter((i) => getWeaponTier(i.name) > 0).sort((a, b) => getWeaponTier(b.name) - getWeaponTier(a.name));
+
+  const helmet = helmets[0]?.name ?? "Glacite Helmet";
+  const chest = chests[0]?.name ?? "Glacite Chestplate";
+  const legPiece = legs[0]?.name ?? "Glacite Leggings";
+  const bootPiece = bootsList[0]?.name ?? "Glacite Boots";
+  const weapon = weapons[0]?.name ?? "Aspect of the End";
 
   const audit = performProfileAudit(player);
 
@@ -474,8 +546,8 @@ export function detectPlayerGear(player?: AdvisorPlayerInput | null | undefined)
   return {
     detectedHelmet: helmet,
     detectedChestplate: chest,
-    detectedLeggings: legs,
-    detectedBoots: boots,
+    detectedLeggings: legPiece,
+    detectedBoots: bootPiece,
     detectedWeapon: weapon,
     recommendedNextUpgrade: nextUpgrade,
   };

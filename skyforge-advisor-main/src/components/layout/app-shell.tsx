@@ -187,7 +187,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         <button
           onClick={onToggle}
           aria-label="Toggle sidebar"
-          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 py-2.5 text-muted-foreground backdrop-blur-md transition-all duration-75 ease-out hover:scale-[1.02] hover:bg-white/15 hover:text-foreground active:scale-95"
+          className="hover-fast flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 py-2.5 text-muted-foreground transition-colors duration-75 hover:bg-white/15 hover:text-foreground active:opacity-75"
         >
           {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
         </button>
@@ -204,15 +204,15 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "hover-fast flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors duration-75 hover:bg-white/10 hover:text-foreground active:scale-[0.98]",
+                      "hover-fast flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors duration-75 hover:bg-white/10 hover:text-foreground active:opacity-80",
                       collapsed && "justify-center px-0",
                     )}
                     activeProps={{
                       className:
-                        "bg-white/15 text-foreground ring-1 ring-white/20 font-medium backdrop-blur-md shadow-sm",
+                        "bg-white/15 text-foreground ring-1 ring-white/20 font-medium shadow-sm",
                     }}
                   >
-                    <item.icon className="size-4 shrink-0 transition-transform duration-75" />
+                    <item.icon className="size-4 shrink-0" />
                     {!collapsed && <span className="truncate">{item.label}</span>}
                   </Link>
                 </li>
@@ -439,11 +439,11 @@ function Header({
     );
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-surface-strong/40 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0E121B]/90 backdrop-blur-xl">
       <div className="flex items-center gap-4 px-4 py-3.5 sm:px-6">
         <button
           onClick={onOpenSearch}
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-muted-foreground backdrop-blur-md transition-all duration-75 ease-out hover:scale-[1.01] hover:border-white/20 hover:bg-white/10 active:scale-[0.98] sm:max-w-xl"
+          className="hover-fast flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-muted-foreground transition-colors duration-75 hover:border-white/20 hover:bg-white/10 active:opacity-80 sm:max-w-xl"
         >
           <Search className="size-4 shrink-0" />
           <span className="truncate">Search or type a command...</span>
@@ -457,7 +457,7 @@ function Header({
           {!player.data && (
             <Link
               to="/connect"
-              className="hidden items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/15 px-3 py-2 text-xs font-semibold text-primary transition-all duration-75 ease-out hover:scale-[1.03] hover:bg-primary/25 active:scale-95 sm:flex"
+              className="hover-fast hidden items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/15 px-3 py-2 text-xs font-semibold text-primary transition-colors duration-75 hover:bg-primary/25 active:opacity-80 sm:flex"
             >
               <KeyRound className="size-3.5" /> Connect
             </Link>
@@ -467,7 +467,7 @@ function Header({
           <button
             onClick={onOpenNav}
             aria-label="Open navigation"
-            className="rounded-lg p-2 text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.05] hover:bg-white/10 hover:text-foreground active:scale-95 lg:hidden"
+            className="hover-fast rounded-lg p-2 text-muted-foreground transition-colors duration-75 hover:bg-white/10 hover:text-foreground active:opacity-75 lg:hidden"
           >
             <Menu className="size-4" />
           </button>
@@ -476,14 +476,14 @@ function Header({
           <button
             onClick={() => player.refetch()}
             aria-label="Refresh data"
-            className="rounded-lg p-2 text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.05] hover:bg-white/10 hover:text-foreground active:scale-95"
+            className="hover-fast rounded-lg p-2 text-muted-foreground transition-colors duration-75 hover:bg-white/10 hover:text-foreground active:opacity-75"
           >
             <RefreshCw className={cn("size-4", player.isFetching && "animate-spin")} />
           </button>
 
           {/* Notifications Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger className="relative rounded-lg p-2 text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.05] hover:bg-white/10 hover:text-foreground active:scale-95 outline-none">
+            <DropdownMenuTrigger className="hover-fast relative rounded-lg p-2 text-muted-foreground transition-colors duration-75 hover:bg-white/10 hover:text-foreground active:opacity-75 outline-none">
               <Bell className="size-4" />
               {feed.unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-emerald-400 text-[9px] font-bold text-black ring-2 ring-background">
@@ -548,7 +548,7 @@ function Header({
           <button
             onClick={cycleTheme}
             aria-label="Toggle Theme"
-            className="rounded-lg p-2 text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.05] hover:bg-white/10 hover:text-foreground active:scale-95"
+            className="hover-fast rounded-lg p-2 text-muted-foreground transition-colors duration-75 hover:bg-white/10 hover:text-foreground active:opacity-75"
             title={`Theme: ${theme} (click to change)`}
           >
             {themeIcon}
@@ -558,7 +558,7 @@ function Header({
           <Link
             to="/settings"
             aria-label="Settings"
-            className="rounded-lg p-2 text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.05] hover:bg-white/10 hover:text-foreground active:scale-95"
+            className="hover-fast rounded-lg p-2 text-muted-foreground transition-colors duration-75 hover:bg-white/10 hover:text-foreground active:opacity-75"
           >
             <Settings className="size-4" />
           </Link>
@@ -629,7 +629,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="relative min-h-screen">
-      {/* Live Video Background: Full Fill, Minimal Overlay & Very Subtle Blur */}
+      {/* Live Video Background: Dedicated GPU layer with crisp solid vignette */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden select-none">
         <video
           autoPlay
@@ -639,11 +639,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           preload="metadata"
           poster="/favicon.ico"
           suppressHydrationWarning
-          className="size-full object-cover"
+          className="size-full object-cover gpu-layer opacity-60"
         >
           <source src={headerVideo} type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-background/75 backdrop-blur-[3px]" />
+        <div className="absolute inset-0 bg-[#0c1017]/85" />
       </div>
 
       <div className="flex">
@@ -932,7 +932,7 @@ export function Panel({ className, children }: { className?: string; children: R
   return (
     <section
       className={cn(
-        "animate-fade-slide-up rounded-3xl border border-white/10 bg-slate-950/75 p-6 backdrop-blur-xl shadow-2xl transition-all duration-100 ease-out hover:-translate-y-0.5 hover:border-primary/30 hover:bg-slate-950/80",
+        "panel-card rounded-3xl p-6 shadow-xl transition-colors duration-75 hover:border-white/20",
         className,
       )}
     >
