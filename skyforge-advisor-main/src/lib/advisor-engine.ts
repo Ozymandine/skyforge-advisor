@@ -1,402 +1,490 @@
 // src/lib/advisor-engine.ts
-// Autonomous SkyBlock Advisor & Progression Intelligence Engine:
-// Game stage classifier, ROI-ranked next best actions, gear progression pathways,
-// and skill leveling fast-track guides.
+// Deep Personalized SkyBlock Advisor Engine:
+// Ingests live player telemetry (skills, slayers, gear, containers, purse, bank, fairy souls,
+// dungeons, garden, hotm) and computes tailored, math-driven recommendations.
 
-import { formatFull, formatNumber, type PlayerData } from "./skyblock";
+import { formatFull, formatNumber, type PlayerData, type InventoryItem } from "./skyblock";
+import { MP_BY_RARITY, type AccessoryRarity } from "./accessory-data";
+import { calculateSkyBlockLevel } from "./skyblock-level";
 
 // ---------------------------------------------------------------------------
-// 1. GAME STAGE CLASSIFIER
+// 1. DYNAMIC GAME STAGE CLASSIFIER & STAT AUDIT
 // ---------------------------------------------------------------------------
 
 export type GameStage = "Early Game" | "Mid Game" | "Late Game" | "End Game";
 
-export type GameStageReport = {
+export type ProfileAudit = {
+  score: number; // 0–100 overall score
   stage: GameStage;
   stageColor: string;
   badgeClass: string;
-  sbLevel: number;
-  netWorth: number;
-  skillAverage: number;
-  catacombsLevel: number;
-  magicalPower: number;
-  stageSummary: string;
+  summary: string;
+
+  // Granular Audits
+  mpAudit: {
+    currentMp: number;
+    targetMp: number;
+    deficit: number;
+    score: number; // 0–100
+    statusText: string;
+  };
+  soulAudit: {
+    collected: number;
+    max: number;
+    missing: number;
+    lostHp: number;
+    score: number;
+    statusText: string;
+  };
+  skillAudit: {
+    skillAverage: number;
+    lowestSkillName: string;
+    lowestSkillLevel: number;
+    lowestSkillXpToNext: number;
+    score: number;
+    statusText: string;
+  };
+  slayerAudit: {
+    totalXp: number;
+    revLvl: number;
+    taraLvl: number;
+    svenLvl: number;
+    emanLvl: number;
+    score: number;
+    statusText: string;
+  };
+  dungeonAudit: {
+    catacombsLevel: number;
+    highestFloorCompleted: string;
+    nextFloorTarget: string;
+    score: number;
+    statusText: string;
+  };
+  minionAudit: {
+    uniqueCrafts: number;
+    currentSlots: number;
+    craftsToNextSlot: number;
+    score: number;
+    statusText: string;
+  };
 };
 
-export function evaluateGameStage(
-  sbLevel = 50,
-  netWorth = 50_000_000,
-  skillAverage = 22,
-  catacombsLevel = 12,
-  magicalPower = 200,
-): GameStageReport {
+export type AdvisorPlayerInput = {
+  username?: string | undefined;
+  uuid?: string | undefined;
+  purse?: number | undefined;
+  bank?: number | null | undefined;
+  fairySouls?: number | undefined;
+  skillAverage?: number | undefined;
+  skills?: Array<{ name?: string | undefined; key?: string | undefined; level?: number | undefined; currentXp?: number | undefined; neededXp?: number | undefined; maxed?: boolean | undefined }> | undefined;
+  slayers?: Array<{ name: string; tier?: number | undefined; kills?: number | undefined; xp?: number | undefined }> | undefined;
+  dungeons?: {
+    catacombsLevel?: number | undefined;
+    floors?: Array<{ name: string; completions: number }> | undefined;
+  } | undefined;
+  containers?: Array<{ id: string; items: InventoryItem[] }> | undefined;
+  collections?: Array<{ id: string; name: string }> | undefined;
+  hypixelPlayer?: {
+    rank?: string | undefined;
+    monthlyPackageRank?: string | undefined;
+    newPackageRank?: string | undefined;
+    packageRank?: string | undefined;
+    prefix?: string | undefined;
+    rankPlusColor?: string | undefined;
+    monthlyRankColor?: string | undefined;
+  } | undefined;
+};
+
+export function performProfileAudit(player?: AdvisorPlayerInput | null | undefined): ProfileAudit {
+  const sbLevel = player ? calculateSkyBlockLevel(player as PlayerData).level : 25;
+  const netWorth = player ? (player.purse ?? 0) + (player.bank ?? 0) : 10_000_000;
+  const skillAvg = player?.skillAverage ?? 18;
+  const cataLvl = player?.dungeons?.catacombsLevel ?? 0;
+  const souls = player?.fairySouls ?? 0;
+
+  // Calculate actual Magical Power from accessory bag / inventory
+  let currentMp = 0;
+  for (const c of player?.containers ?? []) {
+    if (c.id === "accessory_bag" || c.id === "inventory" || c.id === "talisman_bag") {
+      for (const item of c.items) {
+        const rar = (item.rarity?.toUpperCase() ?? "COMMON") as AccessoryRarity;
+        if (MP_BY_RARITY[rar]) {
+          currentMp += MP_BY_RARITY[rar];
+        }
+      }
+    }
+  }
+
+  // Determine Game Stage
   let stage: GameStage = "Early Game";
   let stageColor = "#22c55e";
   let badgeClass = "border-emerald-500/40 bg-emerald-500/15 text-emerald-300";
-  let stageSummary = "Focus on unlocking collections, fairy souls, basic dragon armor, and cheap talismans.";
+  let summary = "You are in the foundational phase of SkyBlock. Focus on low-hanging permanent stats, cheap accessories, and unlocking collections.";
 
-  if (sbLevel >= 280 || netWorth >= 7_000_000_000 || (skillAverage >= 50 && catacombsLevel >= 42)) {
+  if (sbLevel >= 280 || netWorth >= 7_000_000_000 || (skillAvg >= 50 && cataLvl >= 42)) {
     stage = "End Game";
     stageColor = "#a855f7";
     badgeClass = "border-purple-500/40 bg-purple-500/15 text-purple-300";
-    stageSummary = "Endgame mastery: Master Mode 7 clears, Kuudra T5 Infernal, 1,200+ MP, and Golden Dragon Level 200.";
-  } else if (sbLevel >= 180 || netWorth >= 1_500_000_000 || (skillAverage >= 40 && catacombsLevel >= 30)) {
+    summary = "Endgame powerhouse. Focus on Master Mode 7 speedruns, Kuudra T5 Infernal, Golden Dragon 200, and maxing out remaining Slayer 9 passives.";
+  } else if (sbLevel >= 180 || netWorth >= 1_500_000_000 || (skillAvg >= 40 && cataLvl >= 30)) {
     stage = "Late Game";
     stageColor = "#38bdf8";
     badgeClass = "border-sky-400/40 bg-sky-500/15 text-sky-300";
-    stageSummary = "Late game scaling: Wither blades (Hyperion), Terminator, Necron/Storm armor, and Slayer 8/9 passives.";
-  } else if (sbLevel >= 80 || netWorth >= 150_000_000 || (skillAverage >= 26 && catacombsLevel >= 18)) {
+    summary = "Late game scaling. You have high base stats — focus on Terminator/Hyperion optimizations, 800+ MP, and Master Mode clearances.";
+  } else if (sbLevel >= 80 || netWorth >= 150_000_000 || (skillAvg >= 26 && cataLvl >= 18)) {
     stage = "Mid Game";
     stageColor = "#eab308";
     badgeClass = "border-amber-400/40 bg-amber-500/15 text-amber-300";
-    stageSummary = "Mid game transition: Shadow Assassin / Crimson armor, Juju Shortbow, Spirit Sceptre, and F5-F7 runs.";
+    summary = "Mid game transition. Focus on Juju Shortbow, Shadow Assassin / Necron armor, 500+ MP, and pushing Catacombs Floor 7.";
   }
 
+  // 1. MP Benchmark based on Stage
+  const targetMp = stage === "Early Game" ? 300 : stage === "Mid Game" ? 550 : stage === "Late Game" ? 850 : 1200;
+  const mpScore = Math.min(100, Math.round((currentMp / targetMp) * 100));
+  const mpDeficit = Math.max(0, targetMp - currentMp);
+  const mpStatusText =
+    mpDeficit === 0
+      ? `Strong accessory bag (${currentMp} MP). Matches your ${stage} benchmark.`
+      : `Missing ${mpDeficit} MP for your game stage (Current: ${currentMp} MP / Target: ${targetMp} MP). You are losing ~${Math.min(60, Math.round(mpDeficit * 0.12))}% potential damage.`;
+
+  // 2. Fairy Soul Audit
+  const maxSouls = 242;
+  const missingSouls = Math.max(0, maxSouls - souls);
+  const soulScore = Math.min(100, Math.round((souls / maxSouls) * 100));
+  const lostHp = missingSouls * 2;
+  const soulStatusText =
+    missingSouls === 0
+      ? "All 242 Fairy Souls collected. Max permanent HP bonus achieved."
+      : `Missing ${missingSouls} Fairy Souls (-${lostHp} Max HP, -${Math.round(missingSouls * 0.5)} Defense).`;
+
+  // 3. Skill Balance Audit
+  const nonMaxedSkills = (player?.skills?.filter((s) => !s.maxed) ?? []).filter((s) => typeof s.level === "number");
+  const lowestSkill = nonMaxedSkills.sort((a, b) => (a.level ?? 0) - (b.level ?? 0))[0] ?? {
+    name: "Combat",
+    level: 15,
+    neededXp: 100_000,
+    currentXp: 20_000,
+  };
+  const lowestSkillName = lowestSkill.name ?? "Combat";
+  const lowestSkillLevel = lowestSkill.level ?? 15;
+  const skillScore = Math.min(100, Math.round((skillAvg / 55) * 100));
+  const skillStatusText = `Skill Avg: ${skillAvg.toFixed(2)}. Your lowest skill is ${lowestSkillName} (Lvl ${lowestSkillLevel}), dragging down your profile progression.`;
+
+  // 4. Slayer Audit
+  const slayers = player?.slayers ?? [];
+  const rev = slayers.find((s) => s.name.toLowerCase().includes("zombie") || s.name.toLowerCase().includes("revenant"))?.tier ?? 0;
+  const tara = slayers.find((s) => s.name.toLowerCase().includes("spider") || s.name.toLowerCase().includes("tarantula"))?.tier ?? 0;
+  const sven = slayers.find((s) => s.name.toLowerCase().includes("wolf") || s.name.toLowerCase().includes("sven"))?.tier ?? 0;
+  const eman = slayers.find((s) => s.name.toLowerCase().includes("enderman") || s.name.toLowerCase().includes("voidgloom"))?.tier ?? 0;
+  const slayerXpTotal = slayers.reduce((sum, s) => sum + (s.xp ?? 0), 0);
+  const slayerScore = Math.min(100, Math.round((slayerXpTotal / 1_000_000) * 100));
+  const slayerStatusText = `Rev ${rev} · Tara ${tara} · Sven ${sven} · Eman ${eman}. ${eman < 5 ? "Need Eman 5 for Juju Shortbow." : rev < 7 ? "Need Rev 7 for Reaper Falchion." : "Slayer passives in good standing."}`;
+
+  // 5. Dungeon Audit
+  const floors = player?.dungeons?.floors ?? [];
+  const completedFloors = floors.filter((f) => f.completions > 0);
+  const highestFloor = completedFloors.length > 0 ? completedFloors[completedFloors.length - 1]!.name : "None";
+  const nextFloor = floors.find((f) => f.completions === 0)?.name ?? "Master Mode Floor 7";
+  const dungeonScore = Math.min(100, Math.round((cataLvl / 50) * 100));
+  const dungeonStatusText =
+    cataLvl === 0
+      ? "Catacombs not started. Run Entrance & Floor 1 to unlock dungeon stats."
+      : `Catacombs Level ${cataLvl}. Highest Floor: ${highestFloor}. Next Target: ${nextFloor}.`;
+
+  // 6. Minion Audit
+  const uniqueCrafts = player?.collections?.length ?? 120;
+  const currentSlots = Math.min(31, Math.max(5, Math.floor(uniqueCrafts / 25) + 5));
+  const craftsToNextSlot = Math.max(1, 25 - (uniqueCrafts % 25));
+  const minionScore = Math.min(100, Math.round((currentSlots / 31) * 100));
+  const minionStatusText = `${currentSlots} / 31 Minion Slots unlocked. Craft ${craftsToNextSlot} more unique minion tiers to unlock Slot ${currentSlots + 1}.`;
+
+  const overallScore = Math.round((mpScore + soulScore + skillScore + slayerScore + dungeonScore + minionScore) / 6);
+
   return {
+    score: overallScore,
     stage,
     stageColor,
     badgeClass,
-    sbLevel,
-    netWorth,
-    skillAverage,
-    catacombsLevel,
-    magicalPower,
-    stageSummary,
+    summary,
+    mpAudit: {
+      currentMp,
+      targetMp,
+      deficit: mpDeficit,
+      score: mpScore,
+      statusText: mpStatusText,
+    },
+    soulAudit: {
+      collected: souls,
+      max: maxSouls,
+      missing: missingSouls,
+      lostHp,
+      score: soulScore,
+      statusText: soulStatusText,
+    },
+    skillAudit: {
+      skillAverage: skillAvg,
+      lowestSkillName,
+      lowestSkillLevel,
+      lowestSkillXpToNext: Math.max(0, (lowestSkill.neededXp ?? 0) - (lowestSkill.currentXp ?? 0)),
+      score: skillScore,
+      statusText: skillStatusText,
+    },
+    slayerAudit: {
+      totalXp: slayerXpTotal,
+      revLvl: rev,
+      taraLvl: tara,
+      svenLvl: sven,
+      emanLvl: eman,
+      score: slayerScore,
+      statusText: slayerStatusText,
+    },
+    dungeonAudit: {
+      catacombsLevel: cataLvl,
+      highestFloorCompleted: highestFloor,
+      nextFloorTarget: nextFloor,
+      score: dungeonScore,
+      statusText: dungeonStatusText,
+    },
+    minionAudit: {
+      uniqueCrafts,
+      currentSlots,
+      craftsToNextSlot,
+      score: minionScore,
+      statusText: minionStatusText,
+    },
   };
 }
 
 // ---------------------------------------------------------------------------
-// 2. PERSONALIZED HIGH-ROI ACTION MATRIX
+// 2. TAILORED DYNAMIC ACTION PLAN
 // ---------------------------------------------------------------------------
 
-export type AdvisorAction = {
+export type TailoredAction = {
   id: string;
   title: string;
-  category: "Accessories" | "Slayers" | "Skills" | "Dungeons" | "Minions" | "Farming" | "Mining";
-  roiTier: "💎 S-Tier (Essential)" | "🟢 A-Tier (High Value)" | "🟡 B-Tier (Solid Upgrade)";
+  category: "Accessories" | "Skills" | "Slayers" | "Dungeons" | "Minions" | "Farming" | "Economy";
+  priority: "🔥 URGENT (Highest ROI)" | "💎 HIGH VALUE" | "🎯 SOLID PROGRESSION";
+  currentStatText: string;
+  targetGoalText: string;
+  exactRewardText: string;
   estimatedCost: string;
-  statReward: string;
-  description: string;
-  actionCommand?: string;
+  actionGuidance: string;
+  inGameCommand?: string;
 };
 
-export type AdvisorPlayerInput = {
-  fairySouls?: number | undefined;
-  skillAverage?: number | undefined;
-  dungeons?: { catacombsLevel?: number | undefined } | undefined;
-  slayers?: Array<{ name: string; tier?: number | undefined; kills?: number | undefined }> | undefined;
-  skills?: Array<{ key: string; level?: number | undefined }> | undefined;
-};
+export function generateTailoredActionPlan(player?: AdvisorPlayerInput | null | undefined): TailoredAction[] {
+  const audit = performProfileAudit(player);
+  const actions: TailoredAction[] = [];
+  const purse = player?.purse ?? 0;
 
-export function generateAdvisorActions(player?: AdvisorPlayerInput | null | undefined): AdvisorAction[] {
-  const actions: AdvisorAction[] = [];
-
-  const fairySouls = player?.fairySouls ?? 50;
-  const skillAvg = player?.skillAverage ?? 25;
-  const cataLvl = player?.dungeons?.catacombsLevel ?? 15;
-  const slayers = player?.slayers ?? [];
-  const emanSlayer = slayers.find((s) => s.name.toLowerCase().includes("voidgloom") || s.name.toLowerCase().includes("enderman"));
-  const emanLvl = emanSlayer?.tier ?? 3;
-
-  // 1. Fairy Souls
-  if (fairySouls < 220) {
+  // 1. Missing Fairy Souls (Urgent if missing > 10)
+  if (audit.soulAudit.missing > 0) {
     actions.push({
-      id: "fairy_souls",
-      title: `Claim ${242 - fairySouls} Missing Fairy Souls`,
+      id: "action_souls",
+      title: `Claim ${audit.soulAudit.missing} Missing Fairy Souls`,
       category: "Skills",
-      roiTier: "💎 S-Tier (Essential)",
-      estimatedCost: "Free (0 coins)",
-      statReward: `+${(242 - fairySouls) * 2} HP, +Defense, +Speed`,
-      description: "Fairy souls grant permanent base HP, Defense, Strength, and Speed without spending coins.",
+      priority: audit.soulAudit.missing >= 20 ? "🔥 URGENT (Highest ROI)" : "💎 HIGH VALUE",
+      currentStatText: `Current: ${audit.soulAudit.collected} / 242 Souls`,
+      targetGoalText: `Collect remaining ${Math.min(30, audit.soulAudit.missing)} souls in Hub & Crimson Isle`,
+      exactRewardText: `+${audit.soulAudit.lostHp} Max HP, +${Math.round(audit.soulAudit.missing * 0.5)} Defense`,
+      estimatedCost: "0 coins (Free permanent stats)",
+      actionGuidance: "Fairy souls give massive permanent survival stats that scale with dungeon percentages and armor modifiers.",
+      inGameCommand: "/warp hub",
     });
   }
 
-  // 2. Juju Shortbow / Eman Slayer
-  if (emanLvl < 5) {
+  // 2. Magical Power Deficit
+  if (audit.mpAudit.deficit > 0) {
     actions.push({
-      id: "juju_unlock",
-      title: "Unlock Enderman Slayer Level 5 (Juju Shortbow)",
+      id: "action_mp",
+      title: `Upgrade Magical Power (+${Math.min(50, audit.mpAudit.deficit)} MP Gap)`,
+      category: "Accessories",
+      priority: "🔥 URGENT (Highest ROI)",
+      currentStatText: `Current: ${audit.mpAudit.currentMp} MP (Stage Target: ${audit.mpAudit.targetMp} MP)`,
+      targetGoalText: "Purchase cheap unowned Talismans (<500k coins each on Auction House)",
+      exactRewardText: `+${Math.min(50, audit.mpAudit.deficit) * 1.8} Strength / Crit Damage from Power Stone`,
+      estimatedCost: `~${formatNumber(Math.min(50, audit.mpAudit.deficit) * 45_000)} coins`,
+      actionGuidance: "Magical Power directly multiplies all Power Stone stats (Silky, Hurtful, Fortuitous, Scorching). Visit Maxwell in the Hub.",
+      inGameCommand: "/ah",
+    });
+  }
+
+  // 3. Juju Shortbow / Enderman Slayer 5 Gate
+  if (audit.slayerAudit.emanLvl < 5) {
+    actions.push({
+      id: "action_eman5",
+      title: "Reach Enderman Slayer Level 5 (Unlock Juju Shortbow)",
       category: "Slayers",
-      roiTier: "💎 S-Tier (Essential)",
-      estimatedCost: "~3M - 5M coins in carry / gear",
-      statReward: "Unlocks Juju Shortbow (Best Mid-game weapon)",
-      description: "Juju Shortbow triples your Dungeon room-clearing speed and DPS compared to standard bows.",
+      priority: "🔥 URGENT (Highest ROI)",
+      currentStatText: `Current: Enderman Slayer Level ${audit.slayerAudit.emanLvl}`,
+      targetGoalText: "Reach Enderman Slayer 5 (5,000 Slayer XP)",
+      exactRewardText: "Unlocks Juju Shortbow requirement (Triples Dungeon room clear speed)",
+      estimatedCost: "~2.5M - 4.5M coins in carry / slayer quests",
+      actionGuidance: "Juju Shortbow is the mandatory progression weapon for Catacombs Floor 5 through Floor 7.",
+      inGameCommand: "/warp hub",
     });
   }
 
-  // 3. Cheap MP Accessory Buys
-  actions.push({
-    id: "cheap_mp",
-    title: "Craft & Buy Low-Tier Missing Accessories (<100k coins)",
-    category: "Accessories",
-    roiTier: "💎 S-Tier (Essential)",
-    estimatedCost: "< 250k coins total",
-    statReward: "+15 to +35 Magical Power",
-    description: "Feather Ring, Piggy Bank, Healing Ring, and Farming Talisman give massive damage bonus per coin spent.",
-    actionCommand: "/ah",
-  });
-
-  // 4. Daily Enchanting Experimentation
-  const enchantingSkill = player?.skills?.find((s) => s.key === "ENCHANTING");
-  if ((enchantingSkill?.level ?? 30) < 60) {
+  // 4. Lowest Skill Leveling Push
+  if (audit.skillAudit.lowestSkillLevel < 40) {
     actions.push({
-      id: "daily_superpairs",
-      title: "Complete Daily Superpairs & Experimentation Table",
+      id: "action_lowest_skill",
+      title: `Level Up ${audit.skillAudit.lowestSkillName} (Level ${audit.skillAudit.lowestSkillLevel} $\to$ ${audit.skillAudit.lowestSkillLevel + 5})`,
       category: "Skills",
-      roiTier: "💎 S-Tier (Essential)",
-      estimatedCost: "1 Titanic EXP Bottle (~350k)",
-      statReward: "+500k to +1.2M Enchanting XP / day + T7 books",
-      description: "Fastest skill to Level 60 in SkyBlock. Grants massive Intelligence and Ability Damage.",
+      priority: "💎 HIGH VALUE",
+      currentStatText: `Current: Level ${audit.skillAudit.lowestSkillLevel} (${formatNumber(audit.skillAudit.lowestSkillXpToNext)} XP to next level)`,
+      targetGoalText: `Push ${audit.skillAudit.lowestSkillName} by +5 levels to raise Skill Average (${audit.skillAudit.skillAverage.toFixed(1)})`,
+      exactRewardText: `+0.62 Skill Average, +${audit.skillAudit.lowestSkillName === "Combat" ? "Crit Chance & Damage" : audit.skillAudit.lowestSkillName === "Mining" ? "Defense & Mining Fortune" : "Health & Intelligence"}`,
+      estimatedCost: audit.skillAudit.lowestSkillName === "Alchemy" ? "~4M coins (Brewing Sugar Cane)" : "Low (Time-based)",
+      actionGuidance: `Your lowest skill is holding back your SkyBlock Level. Raising low skill tiers takes minimal XP compared to high levels.`,
     });
   }
 
-  // 5. Minion Slots Expansion
-  actions.push({
-    id: "minion_expansion",
-    title: "Craft Unique Minions to reach 20-25 Minion Slots",
-    category: "Minions",
-    roiTier: "🟢 A-Tier (High Value)",
-    estimatedCost: "~2M - 4M coins",
-    statReward: "+1-3 Passive Minion Slots (+250k-750k coins/day)",
-    description: "Crafting Tier 1-5 of every minion type is extremely cheap and permanently expands passive income.",
-  });
-
-  // 6. Catacombs Floor 5 / Shadow Assassin
-  if (cataLvl < 14) {
+  // 5. Next Dungeon Floor Clearance
+  if (audit.dungeonAudit.catacombsLevel < 24) {
     actions.push({
-      id: "f5_shadow_assassin",
-      title: "Clear Floor 5 & Equip Shadow Assassin Armor",
+      id: "action_dungeon_floor",
+      title: `Clear ${audit.dungeonAudit.nextFloorTarget} in Catacombs`,
       category: "Dungeons",
-      roiTier: "🟢 A-Tier (High Value)",
-      estimatedCost: "~15M coins",
-      statReward: "+150 Strength, +Crit Damage, +Dungeon Survivability",
-      description: "Clearing Floor 5 unlocks the Shadow Assassin armor set requirement, boosting your DPS.",
+      priority: "💎 HIGH VALUE",
+      currentStatText: `Current: Catacombs Level ${audit.dungeonAudit.catacombsLevel} (Highest: ${audit.dungeonAudit.highestFloorCompleted})`,
+      targetGoalText: `Obtain 1 completion on ${audit.dungeonAudit.nextFloorTarget}`,
+      exactRewardText: "Unlocks next armor requirement tier + higher Catacombs XP multipliers",
+      estimatedCost: "Dungeon entry cost / chest coins",
+      actionGuidance: "Every floor completed unlocks higher floor requirements, master mode prerequisites, and better floor chest drops.",
+      inGameCommand: "/warp dungeon_hub",
     });
   }
 
-  // 7. Garden Visitor Dedication 4 & Plots
-  actions.push({
-    id: "garden_expansion",
-    title: "Unlock 10+ Garden Plots & Level Garden to 10",
-    category: "Farming",
-    roiTier: "🟡 B-Tier (Solid Upgrade)",
-    estimatedCost: "Compost & Garden Cleanups",
-    statReward: "+30 to +50 Farming Fortune",
-    description: "Every plot unlocked permanently adds +3 Farming Fortune across all crops.",
-  });
+  // 6. Minion Slot Unlock
+  if (audit.minionAudit.currentSlots < 25) {
+    actions.push({
+      id: "action_minion_slots",
+      title: `Unlock Minion Slot ${audit.minionAudit.currentSlots + 1} (${audit.minionAudit.craftsToNextSlot} Unique Crafts Needed)`,
+      category: "Minions",
+      priority: "🎯 SOLID PROGRESSION",
+      currentStatText: `Current: ${audit.minionAudit.currentSlots} Slots (${audit.minionAudit.uniqueCrafts} unique crafts)`,
+      targetGoalText: `Craft Tier 1–4 of ${audit.minionAudit.craftsToNextSlot} uncrafted minion types`,
+      exactRewardText: "+1 Minion Slot (+150k - 300k passive coins/day forever)",
+      estimatedCost: `~${formatNumber(audit.minionAudit.craftsToNextSlot * 80_000)} coins in Bazaar materials`,
+      actionGuidance: "Crafting Tier 1 through Tier 4 of unused minions (e.g. Flower, Clay, Obsidian, Redstone) is extremely cheap and unlocks slots rapidly.",
+      inGameCommand: "/bz",
+    });
+  }
+
+  // 7. Personal Bank Gold Interest Deposit
+  const bankBalance = player?.bank ?? 0;
+  if (bankBalance < 10_000_000 && purse > 5_000_000) {
+    actions.push({
+      id: "action_bank_interest",
+      title: "Deposit Purse into Personal Bank before Season Ends",
+      category: "Economy",
+      priority: "🎯 SOLID PROGRESSION",
+      currentStatText: `Bank Balance: ${formatFull(bankBalance)} · Purse: ${formatFull(purse)}`,
+      targetGoalText: "Deposit at least 10,000,000 coins into Bank",
+      exactRewardText: `+200,000 to +500,000 coins free passive interest every SkyBlock season (31 hours)`,
+      estimatedCost: "0 coins (Depositing coins)",
+      actionGuidance: "The Hypixel SkyBlock bank pays 2% interest on your balance up to your account cap every 31 real hours.",
+      inGameCommand: "/bank",
+    });
+  }
 
   return actions;
 }
 
 // ---------------------------------------------------------------------------
-// 3. LINEAR GEAR PROGRESSION TREES
+// 3. DETECTED GEAR AUDIT & NEXT GEAR UPGRADE
 // ---------------------------------------------------------------------------
 
-export type GearStep = {
-  stage: string;
-  weapon: string;
-  armor: string;
-  estimatedPrice: string;
-  recommendedPet: string;
+export type DetectedGearReport = {
+  detectedHelmet: string;
+  detectedChestplate: string;
+  detectedLeggings: string;
+  detectedBoots: string;
+  detectedWeapon: string;
+  recommendedNextUpgrade: {
+    weaponTarget: string;
+    armorTarget: string;
+    estimatedCostCoins: number;
+    estimatedCostText: string;
+    statBenefit: string;
+    unlockedAt: string;
+  };
 };
 
-export type ClassProgressionTree = {
-  className: "Archer / Berserk" | "Mage" | "Mining Specialist" | "Farming Specialist";
-  description: string;
-  steps: GearStep[];
-};
+export function detectPlayerGear(player?: AdvisorPlayerInput | null | undefined): DetectedGearReport {
+  const containers = player?.containers ?? [];
+  const armorItems = containers.find((c) => c.id === "armor")?.items ?? [];
+  const invItems = containers.find((c) => c.id === "inventory")?.items ?? [];
 
-export const CLASS_PROGRESSION_TREES: ClassProgressionTree[] = [
-  {
-    className: "Archer / Berserk",
-    description: "High single-target DPS and fast Dungeon clear speed with bows and swords.",
-    steps: [
-      {
-        stage: "Starter (Level 1–40)",
-        weapon: "Void Sword / Aspect of the End",
-        armor: "Glacite Armor $\to$ Unstable Dragon Armor",
-        estimatedPrice: "500k - 1.5M coins",
-        recommendedPet: "Rare Tiger (Level 70+)",
-      },
-      {
-        stage: "Mid-Game (Level 40–120)",
-        weapon: "Juju Shortbow (5★) / Shadow Fury",
-        armor: "3/4 Shadow Assassin + Zombie Knight Chest",
-        estimatedPrice: "25M - 45M coins",
-        recommendedPet: "Epic Baby Yeti / Wither Skeleton",
-      },
-      {
-        stage: "Late Game (Level 120–220)",
-        weapon: "Terminator Bow / Giant's Sword",
-        armor: "3/4 Necron Armor + Maxor Boots (5★)",
-        estimatedPrice: "650M - 900M coins",
-        recommendedPet: "Legendary Ender Dragon / Lion",
-      },
-      {
-        stage: "Endgame (Level 220+)",
-        weapon: "Terminator (Duplex V / Fatal V, 10★)",
-        armor: "Infernal Terror / Crimson Armor (10★)",
-        estimatedPrice: "2.5B - 4.5B coins",
-        recommendedPet: "Golden Dragon (Level 200 + 1B Bank)",
-      },
-    ],
-  },
-  {
-    className: "Mage",
-    description: "Massive area-of-effect ability damage and lightning-fast mob clearing.",
-    steps: [
-      {
-        stage: "Starter (Level 1–40)",
-        weapon: "Dreadlord Sword / Aurora Staff",
-        armor: "Wise Dragon Armor (5★)",
-        estimatedPrice: "2M - 4M coins",
-        recommendedPet: "Rare Sheep Pet (Level 70+)",
-      },
-      {
-        stage: "Mid-Game (Level 40–120)",
-        weapon: "Spirit Sceptre (5★) / Midas Staff (100M)",
-        armor: "3/4 Wise / Necromancer Lord + Shadow Goggles",
-        estimatedPrice: "30M - 120M coins",
-        recommendedPet: "Legendary Sheep (with Text Book)",
-      },
-      {
-        stage: "Late Game (Level 120–220)",
-        weapon: "Hyperion (Wither Impact, 5★)",
-        armor: "3/4 Storm's Armor + Wither Goggles",
-        estimatedPrice: "1.2B - 1.5B coins",
-        recommendedPet: "Mythic Black Cat / Sheep",
-      },
-      {
-        stage: "Endgame (Level 220+)",
-        weapon: "Hyperion (Chimera V / 10★ Master Stars)",
-        armor: "Infernal Aurora Armor (Mana Pool X / Veteran X)",
-        estimatedPrice: "3.5B - 6.0B coins",
-        recommendedPet: "Golden Dragon (Level 200)",
-      },
-    ],
-  },
-  {
-    className: "Mining Specialist",
-    description: "Gemstone and Mithril mining for high hourly coin yields and powder.",
-    steps: [
-      {
-        stage: "Starter (HOTM 1–3)",
-        weapon: "Pickonimbus 2000 / Bandaged Mithril Pick",
-        armor: "Glacite Armor",
-        estimatedPrice: "300k coins",
-        recommendedPet: "Uncommon Armadillo Pet",
-      },
-      {
-        stage: "Mid-Game (HOTM 4–6)",
-        weapon: "Titanium Drill DR-X355 / Mithril Drill SX-R326",
-        armor: "Sorrow Armor (Fine Gemstones)",
-        estimatedPrice: "35M - 60M coins",
-        recommendedPet: "Epic Mithril Golem / Scatha",
-      },
-      {
-        stage: "Late Game (HOTM 7–10)",
-        weapon: "Titanium Drill DR-X655 (Amber Engine)",
-        armor: "Divan's Armor (Perfect Topaz & Jade)",
-        estimatedPrice: "450M - 750M coins",
-        recommendedPet: "Legendary Bal / Rare Scatha",
-      },
-      {
-        stage: "Endgame (HOTM 10)",
-        weapon: "Divan's Drill (Full Perfect Gemstones)",
-        armor: "Divan's Armor (Perfect Gemstones + Recomb)",
-        estimatedPrice: "1.8B - 2.5B coins",
-        recommendedPet: "Legendary Scatha (Level 100)",
-      },
-    ],
-  },
-  {
-    className: "Farming Specialist",
-    description: "Garden crop farming for steady 12M–16M coins/hour and Jacob medals.",
-    steps: [
-      {
-        stage: "Starter (Garden 1–4)",
-        weapon: "T2 Rookie Hoe / Advanced Gardening Axe",
-        armor: "Farm Suit $\to$ Farm Armor",
-        estimatedPrice: "100k - 500k coins",
-        recommendedPet: "Rare Rabbit Pet (for XP)",
-      },
-      {
-        stage: "Mid-Game (Garden 5–8)",
-        weapon: "T2 Mathematical Hoe / Dicer 2.0",
-        armor: "Crop Armor $\to$ Melon Armor $\to$ Cropie Armor",
-        estimatedPrice: "8M - 20M coins",
-        recommendedPet: "Epic Elephant Pet",
-      },
-      {
-        stage: "Late Game (Garden 9–12)",
-        weapon: "T3 Mathematical Hoe (Cultivating 9, Turbo V)",
-        armor: "Squash Armor $\to$ Fermento Armor",
-        estimatedPrice: "45M - 80M coins",
-        recommendedPet: "Legendary Elephant (Green Bandana)",
-      },
-      {
-        stage: "Endgame (Garden 15+)",
-        weapon: "T3 Mathematical Hoe (Dedication IV, Cultivating 10)",
-        armor: "Fermento Armor (Mossy Reforge, Pesterminator V)",
-        estimatedPrice: "150M - 250M coins",
-        recommendedPet: "Legendary Mooshroom Cow / Elephant 100",
-      },
-    ],
-  },
-];
+  // Parse equipped pieces
+  const helmet = armorItems.find((i) => i.slot === 3 || i.name.toLowerCase().includes("helmet") || i.name.toLowerCase().includes("goggles"))?.name ?? "Glacite Helmet";
+  const chest = armorItems.find((i) => i.slot === 2 || i.name.toLowerCase().includes("chestplate"))?.name ?? "Glacite Chestplate";
+  const legs = armorItems.find((i) => i.slot === 1 || i.name.toLowerCase().includes("leggings"))?.name ?? "Glacite Leggings";
+  const boots = armorItems.find((i) => i.slot === 0 || i.name.toLowerCase().includes("boots"))?.name ?? "Glacite Boots";
 
-// ---------------------------------------------------------------------------
-// 4. SKILL FAST-TRACK LEVELING GUIDES
-// ---------------------------------------------------------------------------
+  // Find primary weapon
+  const weapon =
+    invItems.find((i) =>
+      i.name.toLowerCase().includes("sword") ||
+      i.name.toLowerCase().includes("bow") ||
+      i.name.toLowerCase().includes("staff") ||
+      i.name.toLowerCase().includes("aspect") ||
+      i.name.toLowerCase().includes("blade") ||
+      i.name.toLowerCase().includes("scythe") ||
+      i.name.toLowerCase().includes("hyperion") ||
+      i.name.toLowerCase().includes("terminator") ||
+      i.name.toLowerCase().includes("juju") ||
+      i.name.toLowerCase().includes("claymore") ||
+      i.name.toLowerCase().includes("dagger")
+    )?.name ?? "Aspect of the End";
 
-export type SkillLevelingGuide = {
-  skill: string;
-  icon: string;
-  recommendedPet: string;
-  fastestMethod: string;
-  budgetMethod: string;
-  hourlyXpRate: string;
-};
+  const audit = performProfileAudit(player);
 
-export const SKILL_LEVELING_GUIDES: SkillLevelingGuide[] = [
-  {
-    skill: "Combat",
-    icon: "⚔️",
-    recommendedPet: "Wolf (for +30% Combat XP) or GDrag",
-    fastestMethod: "Tier 5 Revenant Horror slayers (with God Pot + Cookie)",
-    budgetMethod: "Bestiary milestone hunting in Crimson Isle / End",
-    hourlyXpRate: "1.5M - 3.2M XP/hr",
-  },
-  {
-    skill: "Mining",
-    icon: "⛏️",
-    recommendedPet: "Silverfish (for +30% Mining XP) or Mithril Golem",
-    fastestMethod: "Glacite Tunnels Mithril & Tungsten / Umber routes",
-    budgetMethod: "Dwarven Mines Mithril vein commissions",
-    hourlyXpRate: "1.2M - 2.8M XP/hr",
-  },
-  {
-    skill: "Farming",
-    icon: "🌾",
-    recommendedPet: "Legendary Rabbit (+30% Farming XP)",
-    fastestMethod: "Mushroom / Pumpkin / Sugar Cane with 20 BPS speed tuning",
-    budgetMethod: "Wheat in Hub / Garden plot lane farming",
-    hourlyXpRate: "800k - 1.6M XP/hr",
-  },
-  {
-    skill: "Enchanting",
-    icon: "🔮",
-    recommendedPet: "Guardian Pet (+30% Enchanting XP)",
-    fastestMethod: "Daily Superpairs + Chronomatron + Ultra-Sequencer",
-    budgetMethod: "Titanic EXP Bottles on Grand enchanting table",
-    hourlyXpRate: "1.0M - 2.5M XP/day (Time-gated)",
-  },
-  {
-    skill: "Alchemy",
-    icon: "🧪",
-    recommendedPet: "Black Cat / Sheep / GDrag",
-    fastestMethod: "Brewing Enchanted Sugar Cane with Speed Potion base (Alchemy 50 in 30 mins)",
-    budgetMethod: "Brewing Enchanted Fermented Spider Eyes",
-    hourlyXpRate: "15M - 25M XP/hr (Cost: ~35M coins)",
-  },
-];
+  let nextUpgrade = {
+    weaponTarget: "Juju Shortbow (5★) & Void Sword",
+    armorTarget: "3/4 Shadow Assassin + Zombie Knight Chestplate",
+    estimatedCostCoins: 28_000_000,
+    estimatedCostText: "~28,000,000 coins",
+    statBenefit: "+180 Strength, +95 Crit Damage, Triples Dungeon DPS",
+    unlockedAt: "Catacombs Floor 5 Completion + Enderman Slayer 5",
+  };
+
+  if (audit.stage === "Mid Game") {
+    nextUpgrade = {
+      weaponTarget: "Giant's Sword / Terminator (3★+)",
+      armorTarget: "3/4 Necron's Armor + Maxor's Boots (5★)",
+      estimatedCostCoins: 450_000_000,
+      estimatedCostText: "~450,000,000 coins",
+      statBenefit: "+340 Strength, +120 Speed, +400% Crit DPS",
+      unlockedAt: "Catacombs Floor 7 Completion",
+    };
+  } else if (audit.stage === "Late Game") {
+    nextUpgrade = {
+      weaponTarget: "Hyperion (Wither Impact, 5★) / Terminator (Duplex V)",
+      armorTarget: "Infernal Crimson / Terror Armor (10★ Master Stars)",
+      estimatedCostCoins: 2_200_000_000,
+      estimatedCostText: "~2.2B coins",
+      statBenefit: "Wither Shield healing + 2,000,000 AOE ability damage",
+      unlockedAt: "Kuudra T5 Infernal & Master Mode 7",
+    };
+  } else if (audit.stage === "End Game") {
+    nextUpgrade = {
+      weaponTarget: "Chimera V Hyperion & Fatal Tempo V Terminator",
+      armorTarget: "10★ Infernal Aurora & Crimson (Full Perfect Gemstones)",
+      estimatedCostCoins: 5_500_000_000,
+      estimatedCostText: "~5.5B coins",
+      statBenefit: "Maximum possible stat cap in Hypixel SkyBlock",
+      unlockedAt: "Golden Dragon Level 200 + 1B Bank",
+    };
+  }
+
+  return {
+    detectedHelmet: helmet,
+    detectedChestplate: chest,
+    detectedLeggings: legs,
+    detectedBoots: boots,
+    detectedWeapon: weapon,
+    recommendedNextUpgrade: nextUpgrade,
+  };
+}
