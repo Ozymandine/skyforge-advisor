@@ -13,8 +13,6 @@ import { useAccount } from "@/hooks/use-account";
 import { fetchPlayer } from "@/lib/hypixel.functions";
 import { computeWeight, type WeightBreakdown } from "@/lib/weight";
 import { formatNumber, formatFull, type PlayerData } from "@/lib/skyblock";
-import { RankBadge } from "@/components/ui/rank-badge";
-
 export const Route = createFileRoute("/compare")({
   head: () => ({
     meta: [

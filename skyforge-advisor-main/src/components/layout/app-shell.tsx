@@ -27,6 +27,7 @@ import {
   Moon,
   User,
   Calendar,
+  Bot,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -63,7 +64,10 @@ import {
 const nav = [
   {
     group: "General",
-    items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }],
+    items: [
+      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/advisor", label: "Progression Advisor", icon: Bot },
+    ],
   },
   {
     group: "Progression",

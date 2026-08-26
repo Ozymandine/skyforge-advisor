@@ -63,3 +63,4 @@ describe("Autonomous Advisor: Linear Gear Trees & Skill Fast-Tracks", () => {
     expect(alchemy?.fastestMethod).toContain("Sugar Cane");
   });
 });
+
