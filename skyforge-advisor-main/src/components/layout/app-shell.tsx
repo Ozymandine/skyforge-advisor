@@ -162,7 +162,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
   return (
     <aside
       className={cn(
-        "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-white/10 bg-sidebar/40 backdrop-blur-xl lg:flex",
+        "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-white/10 bg-[#0B0E14] lg:flex",
         collapsed ? "w-[86px]" : "w-[276px]",
       )}
     >
@@ -187,7 +187,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         <button
           onClick={onToggle}
           aria-label="Toggle sidebar"
-          className="hover-fast flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 py-2.5 text-muted-foreground transition-colors duration-75 hover:bg-white/15 hover:text-foreground active:opacity-75"
+          className="hover-fast flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-2.5 text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground active:opacity-75"
         >
           {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
         </button>
@@ -204,12 +204,12 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "hover-fast flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors duration-75 hover:bg-white/10 hover:text-foreground active:opacity-80",
+                      "hover-fast flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white active:bg-white/15",
                       collapsed && "justify-center px-0",
                     )}
                     activeProps={{
                       className:
-                        "bg-white/15 text-foreground ring-1 ring-white/20 font-medium shadow-sm",
+                        "bg-white/15 text-white ring-1 ring-white/20 font-medium shadow-sm",
                     }}
                   >
                     <item.icon className="size-4 shrink-0" />
@@ -226,7 +226,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       <div className="p-4">
         <DropdownMenu>
           <DropdownMenuTrigger className="w-full text-left outline-none">
-            <div className="hover-fast flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-3.5 backdrop-blur-md transition-colors duration-75 hover:bg-white/10 hover:border-emerald-500/30">
+            <div className="hover-fast flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] p-3.5 transition-colors hover:bg-white/[0.08] hover:border-emerald-500/30">
               {!collapsed ? (
                 <>
                   <div className="flex items-center gap-3 min-w-0">
@@ -439,11 +439,11 @@ function Header({
     );
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0E121B]/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0B0E14]">
       <div className="flex items-center gap-4 px-4 py-3.5 sm:px-6">
         <button
           onClick={onOpenSearch}
-          className="hover-fast flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-muted-foreground transition-colors duration-75 hover:border-white/20 hover:bg-white/10 active:opacity-80 sm:max-w-xl"
+          className="hover-fast flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:border-white/20 hover:bg-white/10 active:opacity-80 sm:max-w-xl"
         >
           <Search className="size-4 shrink-0" />
           <span className="truncate">Search or type a command...</span>

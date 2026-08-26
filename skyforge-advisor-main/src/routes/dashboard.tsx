@@ -261,7 +261,7 @@ function Dashboard() {
               {sbLevel.categories.map((cat) => (
                 <div
                   key={cat.id}
-                  className="rounded-xl border border-white/5 bg-white/[0.02] p-3.5 backdrop-blur transition-all duration-75 hover:border-sky-500/30 hover:bg-white/[0.05]"
+                  className="rounded-xl border border-white/5 bg-white/[0.02] p-3.5 transition-colors duration-75 hover:border-sky-500/30 hover:bg-white/[0.05]"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-white/80">{cat.name}</span>

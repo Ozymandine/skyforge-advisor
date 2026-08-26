@@ -225,15 +225,11 @@
 }
 
 @utility hover-fast {
-  transition-property: color, background-color, border-color, box-shadow, opacity;
-  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
-  transition-duration: 40ms;
-  will-change: background-color, color, border-color;
-  transform: translateZ(0);
+  transition-property: color, background-color, border-color, opacity;
+  transition-timing-function: ease-out;
+  transition-duration: 80ms;
 }
 
 @utility gpu-layer {
   transform: translateZ(0);
-  backface-visibility: hidden;
-  will-change: transform;
 }

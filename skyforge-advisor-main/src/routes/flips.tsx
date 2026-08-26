@@ -324,7 +324,7 @@ function FlipsRoute() {
               return (
                 <div
                   key={flip.id}
-                  className="flex flex-col justify-between rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur transition-all duration-75 hover:border-sky-500/30 hover:bg-white/[0.04]"
+                  className="flex flex-col justify-between rounded-2xl border border-white/5 bg-white/[0.02] p-4 transition-colors duration-75 hover:border-sky-500/30 hover:bg-white/[0.04]"
                 >
                   <div>
                     <div className="flex items-start justify-between gap-3">
@@ -399,7 +399,7 @@ function FlipsRoute() {
               return (
                 <div
                   key={flip.uuid}
-                  className="flex flex-col justify-between rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur transition-all duration-75 hover:border-purple-500/30 hover:bg-white/[0.04]"
+                  className="flex flex-col justify-between rounded-2xl border border-white/5 bg-white/[0.02] p-4 transition-colors duration-75 hover:border-purple-500/30 hover:bg-white/[0.04]"
                 >
                   <div>
                     <div className="flex items-start justify-between gap-3">
@@ -474,7 +474,7 @@ function FlipsRoute() {
               return (
                 <div
                   key={flip.id}
-                  className="rounded-2xl border border-white/5 bg-white/[0.02] p-5 backdrop-blur transition-all duration-75 hover:border-amber-500/30"
+                  className="rounded-2xl border border-white/5 bg-white/[0.02] p-5 transition-colors duration-75 hover:border-amber-500/30"
                 >
                   <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-4">
                     <div className="flex items-center gap-3 min-w-0">
