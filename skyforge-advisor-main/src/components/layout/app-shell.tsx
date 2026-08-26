@@ -187,7 +187,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         <button
           onClick={onToggle}
           aria-label="Toggle sidebar"
-          className="hover-fast flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-2.5 text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground active:opacity-75"
+          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-2.5 text-muted-foreground transition-none hover:bg-white/15 hover:text-foreground active:bg-white/20"
         >
           {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
         </button>
@@ -204,12 +204,12 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "hover-fast flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white active:bg-white/15",
+                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/70 transition-none hover:bg-white/15 hover:text-white active:bg-white/25",
                       collapsed && "justify-center px-0",
                     )}
                     activeProps={{
                       className:
-                        "bg-white/15 text-white ring-1 ring-white/20 font-medium shadow-sm",
+                        "bg-white/20 text-white ring-1 ring-white/25 font-semibold shadow-sm",
                     }}
                   >
                     <item.icon className="size-4 shrink-0" />
@@ -226,7 +226,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       <div className="p-4">
         <DropdownMenu>
           <DropdownMenuTrigger className="w-full text-left outline-none">
-            <div className="hover-fast flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] p-3.5 transition-colors hover:bg-white/[0.08] hover:border-emerald-500/30">
+            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] p-3.5 transition-none hover:bg-white/[0.12] hover:border-emerald-500/40 active:bg-white/[0.18]">
               {!collapsed ? (
                 <>
                   <div className="flex items-center gap-3 min-w-0">
@@ -443,7 +443,7 @@ function Header({
       <div className="flex items-center gap-4 px-4 py-3.5 sm:px-6">
         <button
           onClick={onOpenSearch}
-          className="hover-fast flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:border-white/20 hover:bg-white/10 active:opacity-80 sm:max-w-xl"
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-muted-foreground transition-none hover:border-white/20 hover:bg-white/10 active:opacity-80 sm:max-w-xl"
         >
           <Search className="size-4 shrink-0" />
           <span className="truncate">Search or type a command...</span>
@@ -457,7 +457,7 @@ function Header({
           {!player.data && (
             <Link
               to="/connect"
-              className="hover-fast hidden items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/15 px-3 py-2 text-xs font-semibold text-primary transition-colors duration-75 hover:bg-primary/25 active:opacity-80 sm:flex"
+              className="hidden items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/15 px-3 py-2 text-xs font-semibold text-primary transition-none hover:bg-primary/25 active:opacity-80 sm:flex"
             >
               <KeyRound className="size-3.5" /> Connect
             </Link>
@@ -467,7 +467,7 @@ function Header({
           <button
             onClick={onOpenNav}
             aria-label="Open navigation"
-            className="hover-fast rounded-lg p-2 text-muted-foreground transition-colors duration-75 hover:bg-white/10 hover:text-foreground active:opacity-75 lg:hidden"
+            className="rounded-lg p-2 text-muted-foreground transition-none hover:bg-white/10 hover:text-foreground active:opacity-75 lg:hidden"
           >
             <Menu className="size-4" />
           </button>
@@ -476,14 +476,14 @@ function Header({
           <button
             onClick={() => player.refetch()}
             aria-label="Refresh data"
-            className="hover-fast rounded-lg p-2 text-muted-foreground transition-colors duration-75 hover:bg-white/10 hover:text-foreground active:opacity-75"
+            className="rounded-lg p-2 text-muted-foreground transition-none hover:bg-white/10 hover:text-foreground active:opacity-75"
           >
             <RefreshCw className={cn("size-4", player.isFetching && "animate-spin")} />
           </button>
 
           {/* Notifications Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger className="hover-fast relative rounded-lg p-2 text-muted-foreground transition-colors duration-75 hover:bg-white/10 hover:text-foreground active:opacity-75 outline-none">
+            <DropdownMenuTrigger className="relative rounded-lg p-2 text-muted-foreground transition-none hover:bg-white/10 hover:text-foreground active:opacity-75 outline-none">
               <Bell className="size-4" />
               {feed.unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-emerald-400 text-[9px] font-bold text-black ring-2 ring-background">
@@ -493,7 +493,7 @@ function Header({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-80 border-white/10 bg-[#0E121B]/95 p-3 backdrop-blur-2xl"
+              className="w-80 border-white/10 bg-[#0E121B] p-3 shadow-2xl"
             >
               <div className="flex items-center justify-between border-b border-white/10 pb-2 px-1">
                 <span className="text-xs font-bold text-foreground">
@@ -512,7 +512,7 @@ function Header({
                   <div
                     key={n.id}
                     className={cn(
-                      "rounded-xl p-2.5 transition text-left",
+                      "rounded-xl p-2.5 transition-none text-left",
                       n.unread
                         ? "bg-emerald-500/10 border border-emerald-500/20"
                         : "hover:bg-white/5",
@@ -537,7 +537,7 @@ function Header({
               </div>
               <Link
                 to="/notifications"
-                className="mt-2 block rounded-lg border border-white/10 bg-white/5 py-2 text-center text-[11px] font-medium text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+                className="mt-2 block rounded-lg border border-white/10 bg-white/5 py-2 text-center text-[11px] font-medium text-muted-foreground transition-none hover:bg-white/10 hover:text-foreground"
               >
                 View all notifications
               </Link>
@@ -548,7 +548,7 @@ function Header({
           <button
             onClick={cycleTheme}
             aria-label="Toggle Theme"
-            className="hover-fast rounded-lg p-2 text-muted-foreground transition-colors duration-75 hover:bg-white/10 hover:text-foreground active:opacity-75"
+            className="rounded-lg p-2 text-muted-foreground transition-none hover:bg-white/10 hover:text-foreground active:opacity-75"
             title={`Theme: ${theme} (click to change)`}
           >
             {themeIcon}
@@ -558,7 +558,7 @@ function Header({
           <Link
             to="/settings"
             aria-label="Settings"
-            className="hover-fast rounded-lg p-2 text-muted-foreground transition-colors duration-75 hover:bg-white/10 hover:text-foreground active:opacity-75"
+            className="rounded-lg p-2 text-muted-foreground transition-none hover:bg-white/10 hover:text-foreground active:opacity-75"
           >
             <Settings className="size-4" />
           </Link>

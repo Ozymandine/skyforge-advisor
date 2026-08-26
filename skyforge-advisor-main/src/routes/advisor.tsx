@@ -334,7 +334,6 @@ function AdvisorRoute() {
                 <div
                   key={action.id}
                   className="flex flex-col justify-between rounded-2xl border border-white/5 bg-white/[0.02] p-4 transition-colors duration-75 hover:border-sky-500/30 hover:bg-white/[0.04]"
-                >
                   <div>
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="text-sm font-bold text-white leading-tight">{action.title}</h3>

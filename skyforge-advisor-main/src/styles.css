@@ -225,9 +225,11 @@
 }
 
 @utility hover-fast {
-  transition-property: color, background-color, border-color, opacity;
-  transition-timing-function: ease-out;
-  transition-duration: 80ms;
+  transition: none !important;
+}
+
+@utility hover-instant {
+  transition: none !important;
 }
 
 @utility gpu-layer {
