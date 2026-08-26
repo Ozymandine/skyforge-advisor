@@ -183,36 +183,36 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         )}
       </div>
 
-      <div className="px-4">
+      <div className="px-3">
         <button
           onClick={onToggle}
           aria-label="Toggle sidebar"
-          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-2.5 text-muted-foreground transition-none hover:bg-white/15 hover:text-foreground active:bg-white/20"
+          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-3 text-muted-foreground transition-none hover:bg-white/15 hover:text-foreground active:bg-white/20"
         >
           {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
         </button>
       </div>
 
-      <nav className="scroll-slim mt-6 flex-1 overflow-y-auto px-3 pb-4">
+      <nav className="scroll-slim mt-5 flex-1 overflow-y-auto px-2.5 pb-4">
         {nav.map((section) => (
-          <div key={section.group} className="mb-5">
-            {!collapsed && <p className="eyebrow px-3 pb-2">{section.group}</p>}
-            <ul className="space-y-1">
+          <div key={section.group} className="mb-4">
+            {!collapsed && <p className="eyebrow px-3 pb-1.5">{section.group}</p>}
+            <ul className="space-y-0.5">
               {section.items.map((item) => (
                 <li key={item.to}>
                   <Link
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/70 transition-none hover:bg-white/15 hover:text-white active:bg-white/25",
-                      collapsed && "justify-center px-0",
+                      "group relative flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-white/70 transition-none select-none hover:bg-white/[0.14] hover:text-white active:bg-white/[0.22]",
+                      collapsed && "justify-center px-0 py-3",
                     )}
                     activeProps={{
                       className:
-                        "bg-white/20 text-white ring-1 ring-white/25 font-semibold shadow-sm",
+                        "bg-white/[0.18] text-white ring-1 ring-white/25 font-bold shadow-sm",
                     }}
                   >
-                    <item.icon className="size-4 shrink-0" />
+                    <item.icon className="size-4 shrink-0 transition-none text-white/60 group-hover:text-emerald-300" />
                     {!collapsed && <span className="truncate">{item.label}</span>}
                   </Link>
                 </li>
@@ -688,17 +688,17 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
             <div className="mt-6">
               {nav.map((section) => (
-                <div key={section.group} className="mb-5">
-                  <p className="eyebrow px-3 pb-2">{section.group}</p>
-                  <ul className="space-y-1">
+                <div key={section.group} className="mb-4">
+                  <p className="eyebrow px-3 pb-1.5">{section.group}</p>
+                  <ul className="space-y-0.5">
                     {section.items.map((item) => (
                       <li key={item.to}>
                         <Link
                           to={item.to}
                           onClick={() => setNavOpen(false)}
-                          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-all hover:bg-white/10 hover:text-foreground"
+                          className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-white/70 transition-none hover:bg-white/[0.14] hover:text-white active:bg-white/[0.22]"
                         >
-                          <item.icon className="size-4 shrink-0" />
+                          <item.icon className="size-4 shrink-0 text-white/60" />
                           <span>{item.label}</span>
                         </Link>
                       </li>
