@@ -3,11 +3,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createArmorCompositedSkin } from "@/lib/skin-armor-compositor";
+import type { InventoryItem } from "@/lib/skyblock";
 
 export type CharacterCanvasProps = {
   uuid?: string | undefined;
   username?: string | undefined;
   skinUrl?: string | undefined;
+  armorItems?: InventoryItem[] | undefined;
   width?: number;
   height?: number;
   className?: string;
@@ -17,6 +20,7 @@ export function CharacterCanvas({
   uuid,
   username,
   skinUrl,
+  armorItems = [],
   width = 160,
   height = 200,
   className,
@@ -26,7 +30,7 @@ export function CharacterCanvas({
   const [isLoading, setIsLoading] = useState(true);
 
   // Determine skin source URL
-  const resolvedSkin =
+  const baseSkin =
     skinUrl ||
     (uuid ? `https://mc-heads.net/skin/${uuid}` : null) ||
     (username ? `https://mc-heads.net/skin/${username}` : null) ||
@@ -44,11 +48,19 @@ export function CharacterCanvas({
 
         if (!isMounted || !canvasRef.current) return;
 
+        // Composite equipped armor layers onto skin texture
+        const finalSkin =
+          armorItems && armorItems.length > 0
+            ? await createArmorCompositedSkin(baseSkin, armorItems)
+            : baseSkin;
+
+        if (!isMounted || !canvasRef.current) return;
+
         viewer = new skinview3d.SkinViewer({
           canvas: canvasRef.current,
           width,
           height,
-          skin: resolvedSkin,
+          skin: finalSkin,
         });
 
         // Set optimal camera angle and slow smooth auto-rotation
@@ -77,7 +89,7 @@ export function CharacterCanvas({
       }
       viewerRef.current = null;
     };
-  }, [resolvedSkin, width, height]);
+  }, [baseSkin, armorItems, width, height]);
 
   return (
     <div
@@ -93,7 +105,7 @@ export function CharacterCanvas({
         {isLoading && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/40 backdrop-blur-sm">
             <Sparkles className="size-5 text-emerald-400 animate-spin" />
-            <span className="font-mono text-[10px] text-white/70">Loading 3D Skin...</span>
+            <span className="font-mono text-[10px] text-white/70">Rendering 3D Armor...</span>
           </div>
         )}
       </div>
