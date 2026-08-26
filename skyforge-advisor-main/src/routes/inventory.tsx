@@ -13,7 +13,7 @@ import {
 } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { MinecraftTooltip } from "@/components/ui/minecraft-tooltip";
-import { CharacterCanvas } from "@/components/ui/character-canvas";
+import { EquippedArmorShowcase } from "@/components/ui/equipped-armor-showcase";
 import { playClickSound, playSlotHoverSound, playSuccessChime } from "@/lib/sound-effects";
 import { RenderMinecraftLore } from "@/lib/minecraft-text";
 import { usePlayer } from "@/hooks/use-account";
@@ -99,6 +99,9 @@ function Inventory() {
   const current = containers.find((c) => c.id === tab) ?? containers[0];
   const item = current?.items.find((i) => i.slot === selected) ?? current?.items[0];
 
+  const armorContainer = useMemo(() => containers.find((c) => c.id === "armor"), [containers]);
+  const equipmentContainer = useMemo(() => containers.find((c) => c.id === "equipment"), [containers]);
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHero
@@ -126,249 +129,239 @@ function Inventory() {
         </Chip>
       </div>
 
-      {mode === "containers" && (
-        <>
-          {data && containers.length === 0 && (
-            <Panel>
-              <p className="text-sm text-muted-foreground">
-                This profile does not share inventory data. Enable inventory API access in SkyBlock
-                (Settings → API Settings) and refresh.
-              </p>
-            </Panel>
-          )}
-
-          {current && (
-            <>
-              <div className="flex flex-wrap gap-2">
-                {containers.map((c) => (
-                  <Chip
-                    key={c.id}
-                    active={current.id === c.id}
-                    onClick={() => {
-                      setTab(c.id);
-                      setSelected(0);
-                    }}
-                  >
-                    {c.label} · {c.items.length}
-                  </Chip>
-                ))}
-              </div>
-
-              <div className="grid gap-4 lg:grid-cols-3 items-start">
-                <Panel className="lg:col-span-2">
-                  <div className="flex items-baseline justify-between">
-                    <h2 className="text-xl font-semibold">{current.label}</h2>
-                    <p className="text-xs text-muted-foreground">
-                      {current.items.length} of {current.slots} slots used
+      {connected && data && (
+        <div className="grid gap-6 lg:grid-cols-3 items-start">
+          {/* Main Left / Middle Area (2 Cols) */}
+          <div className="space-y-6 lg:col-span-2">
+            {mode === "containers" && (
+              <>
+                {containers.length === 0 ? (
+                  <Panel>
+                    <p className="text-sm text-muted-foreground">
+                      This profile does not share inventory data. Enable inventory API access in SkyBlock
+                      (Settings → API Settings) and refresh.
                     </p>
-                  </div>
-                  <div className="mt-4">
-                    <ProgressBar
-                      pct={Math.round((current.items.length / Math.max(1, current.slots)) * 100)}
-                    />
-                  </div>
-                  <div className="mt-5 grid grid-cols-9 gap-2 rounded-2xl border border-white/10 bg-black/50 p-3 shadow-inner">
-                    {Array.from({ length: current.slots }).map((_, slot) => {
-                      const slotItem = current.items.find((i) => i.slot === slot);
-                      return (
-                        <MinecraftTooltip
-                          key={slot}
-                          name={slotItem?.name ?? "Empty Slot"}
-                          rarity={slotItem?.rarity ?? "COMMON"}
-                          lore={slotItem?.lore}
-                          disabled={!slotItem}
+                  </Panel>
+                ) : current ? (
+                  <>
+                    <div className="flex flex-wrap gap-2">
+                      {containers.map((c) => (
+                        <Chip
+                          key={c.id}
+                          active={current.id === c.id}
+                          onClick={() => {
+                            setTab(c.id);
+                            setSelected(0);
+                          }}
                         >
-                          <button
-                            onClick={() => {
-                              if (slotItem) {
-                                playClickSound();
-                                setSelected(slot);
-                              }
-                            }}
-                            onMouseEnter={() => {
-                              if (slotItem) playSlotHoverSound();
-                            }}
-                            className={cn(
-                              "group relative flex aspect-square w-full items-center justify-center rounded-xl border p-1 transition-none select-none",
-                              selected === slot
-                                ? "border-emerald-400 bg-emerald-500/25 ring-2 ring-emerald-400/50 shadow-lg shadow-emerald-500/20"
-                                : slotItem
-                                  ? "border-white/10 bg-white/[0.04] hover:border-emerald-400/60 hover:bg-white/[0.08]"
-                                  : "border-white/5 bg-black/40 opacity-40 cursor-default"
-                            )}
-                          >
-                            {slotItem && (
-                              <>
-                                <ItemIcon
-                                  id={slotItem.id}
-                                  name={slotItem.name}
-                                  className="size-8 object-contain"
-                                />
-                                {slotItem.count > 1 && (
-                                  <span className="absolute bottom-1 right-1.5 font-mono text-[10px] font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">
-                                    {slotItem.count}
-                                  </span>
-                                )}
-                              </>
-                            )}
-                          </button>
-                        </MinecraftTooltip>
-                      );
-                    })}
-                  </div>
-                </Panel>
+                          {c.label} · {c.items.length}
+                        </Chip>
+                      ))}
+                    </div>
 
-                <div className="space-y-4">
-                  <Panel className="bg-slate-950/85">
-                  {item ? (
-                    <>
-                      <div className="flex items-center gap-3">
-                        <ItemIcon id={item.id} name={item.name} className="size-12" />
-                        <div className="min-w-0">
-                          <h3 className="truncate text-lg font-semibold">{item.name}</h3>
-                          <RarityTag rarity={item.rarity} />
-                        </div>
+                    <Panel>
+                      <div className="flex items-baseline justify-between">
+                        <h2 className="text-xl font-semibold">{current.label}</h2>
+                        <p className="text-xs text-muted-foreground">
+                          {current.items.length} of {current.slots} slots used
+                        </p>
                       </div>
-                      {item.count > 1 && (
-                        <p className="mt-2 text-sm text-muted-foreground">Quantity: {item.count}</p>
-                      )}
+                      <div className="mt-4">
+                        <ProgressBar
+                          pct={Math.round((current.items.length / Math.max(1, current.slots)) * 100)}
+                        />
+                      </div>
+                      <div className="mt-5 grid grid-cols-9 gap-2 rounded-2xl border border-white/10 bg-black/50 p-3 shadow-inner">
+                        {Array.from({ length: current.slots }).map((_, slot) => {
+                          const slotItem = current.items.find((i) => i.slot === slot);
+                          return (
+                            <MinecraftTooltip
+                              key={slot}
+                              name={slotItem?.name ?? "Empty Slot"}
+                              rarity={slotItem?.rarity ?? "COMMON"}
+                              lore={slotItem?.lore}
+                              disabled={!slotItem}
+                            >
+                              <button
+                                onClick={() => {
+                                  if (slotItem) {
+                                    playClickSound();
+                                    setSelected(slot);
+                                  }
+                                }}
+                                onMouseEnter={() => {
+                                  if (slotItem) playSlotHoverSound();
+                                }}
+                                className={cn(
+                                  "group relative flex aspect-square w-full items-center justify-center rounded-xl border p-1 transition-none select-none",
+                                  selected === slot
+                                    ? "border-emerald-400 bg-emerald-500/25 ring-2 ring-emerald-400/50 shadow-lg shadow-emerald-500/20"
+                                    : slotItem
+                                      ? "border-white/10 bg-white/[0.04] hover:border-emerald-400/60 hover:bg-white/[0.08]"
+                                      : "border-white/5 bg-black/40 opacity-40 cursor-default"
+                                )}
+                              >
+                                {slotItem && (
+                                  <>
+                                    <ItemIcon
+                                      id={slotItem.id}
+                                      name={slotItem.name}
+                                      className="size-8 object-contain"
+                                    />
+                                    {slotItem.count > 1 && (
+                                      <span className="absolute bottom-1 right-1.5 font-mono text-[10px] font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">
+                                        {slotItem.count}
+                                      </span>
+                                    )}
+                                  </>
+                                )}
+                              </button>
+                            </MinecraftTooltip>
+                          );
+                        })}
+                      </div>
+                    </Panel>
+                  </>
+                ) : null}
+              </>
+            )}
 
-                      {/* Structured tooltip: stat block, flavor text, ability */}
-                      {(() => {
-                        const statLines = item.lore.filter((l) => /^[^:]+:\s*\S/.test(l));
-                        const flavorLines = item.lore.filter(
-                          (l) => l.trim() && !/^[^:]+:\s*\S/.test(l),
-                        );
-                        return (
-                          <>
-                            {statLines.length > 0 && (
-                              <dl className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-black/30 p-3">
-                                {statLines.map((line, index) => {
-                                  const [label, ...rest] = line.split(":");
-                                  return (
-                                    <div
-                                      key={index}
-                                      className="flex items-baseline justify-between gap-3 font-mono text-xs"
-                                    >
-                                      <dt className="shrink-0 text-muted-foreground">{label}:</dt>
-                                      <dd className="min-w-0 text-right">
-                                        <RenderMinecraftLore text={rest.join(":").trim()} />
-                                      </dd>
-                                    </div>
-                                  );
-                                })}
-                              </dl>
-                            )}
+            {mode === "accessories" && <AccessoriesSection />}
+            {mode === "pets" && <PetsSection />}
+            {mode === "profile" && <ProfileSection />}
+          </div>
 
-                            {flavorLines.length > 0 && (
-                              <div className="mt-3 space-y-1.5 text-xs leading-relaxed text-muted-foreground">
-                                {flavorLines.map((line, index) => (
-                                  <p key={index}>
-                                    <RenderMinecraftLore text={line} />
-                                  </p>
-                                ))}
-                              </div>
-                            )}
-                          </>
-                        );
-                      })()}
+          {/* Persistent Right Column: Equipped 3D Character at the Top + Item Details beneath */}
+          <div className="space-y-4 lg:col-span-1">
+            {/* Top Right: Equipped 3D Character & Armor Showcase */}
+            <EquippedArmorShowcase
+              uuid={data.uuid}
+              username={data.username}
+              armorItems={armorContainer?.items}
+              equipmentItems={equipmentContainer?.items}
+            />
 
-                      {/* NBT extras: structured enchant/reforge/gem/star data */}
-                      {(item.enchantments ||
-                        item.reforge ||
-                        item.stars ||
-                        item.hotPotatoBooks ||
-                        item.gems ||
-                        item.abilityScrolls) && (
-                        <div className="mt-4 space-y-2 border-t border-white/10 pt-3">
-                          {item.reforge && (
-                            <p className="text-xs">
-                              <span className="text-muted-foreground">Reforge:</span>{" "}
-                              <span className="font-semibold text-foreground">{item.reforge}</span>
-                            </p>
-                          )}
-                          {item.enchantments && Object.keys(item.enchantments).length > 0 && (
-                            <div>
-                              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                Enchantments
-                              </p>
-                              <div className="mt-1 flex flex-wrap gap-1">
-                                {Object.entries(item.enchantments).map(([ench, level]) => (
-                                  <span
-                                    key={ench}
-                                    className="rounded-md border border-sky-400/25 bg-sky-400/10 px-1.5 py-0.5 text-[10px] font-medium text-sky-300"
+            {/* Inspected Item Details Card (visible in containers mode) */}
+            {mode === "containers" && (
+              <Panel className="bg-slate-950/85">
+                {item ? (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <ItemIcon id={item.id} name={item.name} className="size-12" />
+                      <div className="min-w-0">
+                        <h3 className="truncate text-lg font-semibold">{item.name}</h3>
+                        <RarityTag rarity={item.rarity} />
+                      </div>
+                    </div>
+                    {item.count > 1 && (
+                      <p className="mt-2 text-sm text-muted-foreground">Quantity: {item.count}</p>
+                    )}
+
+                    {/* Structured tooltip: stat block, flavor text, ability */}
+                    {(() => {
+                      const statLines = item.lore.filter((l) => /^[^:]+:\s*\S/.test(l));
+                      const flavorLines = item.lore.filter(
+                        (l) => l.trim() && !/^[^:]+:\s*\S/.test(l),
+                      );
+                      return (
+                        <>
+                          {statLines.length > 0 && (
+                            <dl className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-black/30 p-3">
+                              {statLines.map((line, index) => {
+                                const [label, ...rest] = line.split(":");
+                                return (
+                                  <div
+                                    key={index}
+                                    className="flex items-baseline justify-between gap-3 font-mono text-xs"
                                   >
-                                    {ench.replace(/_/g, " ")} {level}
+                                    <dt className="shrink-0 text-muted-foreground">{label}:</dt>
+                                    <dd className="min-w-0 text-right">
+                                      <RenderMinecraftLore text={rest.join(":").trim()} />
+                                    </dd>
+                                  </div>
+                                );
+                              })}
+                            </dl>
+                          )}
+
+                          {flavorLines.length > 0 && (
+                            <div className="mt-4 space-y-1 text-xs text-muted-foreground">
+                              {flavorLines.map((line, index) => (
+                                <p key={index}>
+                                  <RenderMinecraftLore text={line} />
+                                </p>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Enchants, reforge, stars, runes, scrolls badges */}
+                          {item.enchantments && Object.keys(item.enchantments).length > 0 && (
+                            <div className="mt-4 border-t border-white/10 pt-3">
+                              <p className="text-xs font-semibold text-muted-foreground">
+                                Enchantments ({Object.keys(item.enchantments).length}):
+                              </p>
+                              <div className="mt-1.5 flex flex-wrap gap-1">
+                                {Object.entries(item.enchantments).map(([name, level]) => (
+                                  <span
+                                    key={name}
+                                    className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] text-primary"
+                                  >
+                                    {name.replace(/_/g, " ")} {level}
                                   </span>
                                 ))}
                               </div>
                             </div>
                           )}
-                          {item.stars ? (
+
+                          {item.reforge && (
+                            <p className="mt-3 text-xs">
+                              <span className="text-muted-foreground">Reforge:</span>{" "}
+                              <span className="font-semibold text-primary">{item.reforge}</span>
+                            </p>
+                          )}
+                          {item.stars && item.stars > 0 ? (
                             <p className="text-xs">
-                              <span className="text-muted-foreground">Dungeon stars:</span>{" "}
-                              <span className="font-mono font-semibold text-amber-300">
-                                {"✪".repeat(item.stars)}
+                              <span className="text-muted-foreground">Stars:</span>{" "}
+                              <span className="font-semibold text-amber-300">
+                                {"★".repeat(item.stars)}
                               </span>
                             </p>
                           ) : null}
-                          {item.hotPotatoBooks ? (
+                          {item.hotPotatoBooks && item.hotPotatoBooks > 0 ? (
                             <p className="text-xs">
-                              <span className="text-muted-foreground">Hot potato books:</span>{" "}
-                              <span className="font-mono font-semibold">{item.hotPotatoBooks}</span>
+                              <span className="text-muted-foreground">Hot Potato Books:</span>{" "}
+                              <span className="font-semibold">{item.hotPotatoBooks}/10</span>
                             </p>
                           ) : null}
                           {item.gems && Object.keys(item.gems).length > 0 && (
-                            <div>
-                              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                Gemstones
+                            <div className="mt-2 border-t border-white/10 pt-2">
+                              <p className="text-xs font-semibold text-muted-foreground">
+                                Gemstones:
                               </p>
                               <div className="mt-1 flex flex-wrap gap-1">
-                                {Object.entries(item.gems).map(([slot, gem]) => (
+                                {Object.entries(item.gems).map(([slot, quality]) => (
                                   <span
                                     key={slot}
-                                    className="rounded-md border border-purple-400/25 bg-purple-400/10 px-1.5 py-0.5 text-[10px] text-purple-300"
+                                    className="rounded bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
                                   >
-                                    {gem.replace(/_/g, " ")}
+                                    {slot}: {quality}
                                   </span>
                                 ))}
                               </div>
                             </div>
                           )}
-                          {item.abilityScrolls && item.abilityScrolls.length > 0 && (
-                            <p className="text-xs">
-                              <span className="text-muted-foreground">Scrolls:</span>{" "}
-                              <span className="font-semibold">
-                                {item.abilityScrolls.join(", ")}
-                              </span>
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Select a slot to inspect it.</p>
-                  )}
-                </Panel>
-
-                {/* 3D WebGL Character Model & Armor Preview */}
-                  <CharacterCanvas
-                    uuid={data?.uuid}
-                    username={data?.username}
-                    width={260}
-                    height={260}
-                    className="w-full shadow-xl ring-1 ring-white/10"
-                  />
-                </div>
-              </div>
-            </>
-          )}
-        </>
+                        </>
+                      );
+                    })()}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Select a slot to inspect it.</p>
+                )}
+              </Panel>
+            )}
+          </div>
+        </div>
       )}
-
-      {mode === "accessories" && data && <AccessoriesSection />}
-      {mode === "pets" && data && <PetsSection />}
-      {mode === "profile" && data && <ProfileSection />}
     </div>
   );
 }
