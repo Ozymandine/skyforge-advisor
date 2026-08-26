@@ -147,6 +147,22 @@ describe("playerDataSchema", () => {
     expect(playerDataSchema.safeParse(broken).success).toBe(false);
   });
 
+  it("accepts hypixelPlayer with null and optional rank properties", () => {
+    const payload = {
+      ...base,
+      hypixelPlayer: {
+        rank: null,
+        monthlyPackageRank: "SUPERSTAR",
+        newPackageRank: null,
+        packageRank: "MVP_PLUS",
+        prefix: null,
+        rankPlusColor: "RED",
+        monthlyRankColor: null,
+      },
+    };
+    expect(playerDataSchema.safeParse(payload).success).toBe(true);
+  });
+
   it("rejects wrong-typed new sections", () => {
     const payload = { ...base, hotm: { tier: "seven" } };
     expect(playerDataSchema.safeParse(payload).success).toBe(false);

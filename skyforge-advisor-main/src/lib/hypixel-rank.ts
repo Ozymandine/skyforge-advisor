@@ -47,13 +47,13 @@ export const MINECRAFT_COLORS: Record<string, string> = {
 };
 
 export type RawHypixelPlayerData = {
-  rank?: string | undefined;
-  monthlyPackageRank?: string | undefined;
-  newPackageRank?: string | undefined;
-  packageRank?: string | undefined;
-  prefix?: string | undefined;
-  rankPlusColor?: string | undefined;
-  monthlyRankColor?: string | undefined;
+  rank?: string | null | undefined;
+  monthlyPackageRank?: string | null | undefined;
+  newPackageRank?: string | null | undefined;
+  packageRank?: string | null | undefined;
+  prefix?: string | null | undefined;
+  rankPlusColor?: string | null | undefined;
+  monthlyRankColor?: string | null | undefined;
 };
 
 export function parseHypixelRank(playerData?: RawHypixelPlayerData | null | undefined): FormattedRank {

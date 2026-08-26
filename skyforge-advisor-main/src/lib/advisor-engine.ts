@@ -84,15 +84,7 @@ export type AdvisorPlayerInput = {
   } | undefined;
   containers?: Array<{ id: string; items: InventoryItem[] }> | undefined;
   collections?: Array<{ id: string; name: string }> | undefined;
-  hypixelPlayer?: {
-    rank?: string | undefined;
-    monthlyPackageRank?: string | undefined;
-    newPackageRank?: string | undefined;
-    packageRank?: string | undefined;
-    prefix?: string | undefined;
-    rankPlusColor?: string | undefined;
-    monthlyRankColor?: string | undefined;
-  } | undefined;
+  hypixelPlayer?: import("./hypixel-rank").RawHypixelPlayerData | null | undefined;
 };
 
 export function performProfileAudit(player?: AdvisorPlayerInput | null | undefined): ProfileAudit {

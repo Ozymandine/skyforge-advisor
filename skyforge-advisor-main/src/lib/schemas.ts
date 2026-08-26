@@ -286,14 +286,15 @@ export const playerDataSchema = z.object({
     .optional(),
   hypixelPlayer: z
     .object({
-      rank: z.string().optional(),
-      monthlyPackageRank: z.string().optional(),
-      newPackageRank: z.string().optional(),
-      packageRank: z.string().optional(),
-      prefix: z.string().optional(),
-      rankPlusColor: z.string().optional(),
-      monthlyRankColor: z.string().optional(),
+      rank: z.string().nullable().optional(),
+      monthlyPackageRank: z.string().nullable().optional(),
+      newPackageRank: z.string().nullable().optional(),
+      packageRank: z.string().nullable().optional(),
+      prefix: z.string().nullable().optional(),
+      rankPlusColor: z.string().nullable().optional(),
+      monthlyRankColor: z.string().nullable().optional(),
     })
+    .nullable()
     .optional(),
 });
 

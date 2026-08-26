@@ -423,15 +423,7 @@ export type PlayerData = {
   sacks?: SacksData;
   bestiary?: import("./bestiary").BestiaryData;
   slayerOverview?: import("./slayer").SlayerOverview;
-  hypixelPlayer?: {
-    rank?: string;
-    monthlyPackageRank?: string;
-    newPackageRank?: string;
-    packageRank?: string;
-    prefix?: string;
-    rankPlusColor?: string;
-    monthlyRankColor?: string;
-  };
+  hypixelPlayer?: import("./hypixel-rank").RawHypixelPlayerData | null | undefined;
 };
 
 export type SackItem = {

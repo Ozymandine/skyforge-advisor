@@ -2440,15 +2440,27 @@ export async function getPlayerData(
 
     const hypixelPlayer = await getKeyedJson<{
       player?: {
-        rank?: string;
-        monthlyPackageRank?: string;
-        newPackageRank?: string;
-        packageRank?: string;
-        prefix?: string;
-        rankPlusColor?: string;
-        monthlyRankColor?: string;
+        rank?: string | null;
+        monthlyPackageRank?: string | null;
+        newPackageRank?: string | null;
+        packageRank?: string | null;
+        prefix?: string | null;
+        rankPlusColor?: string | null;
+        monthlyRankColor?: string | null;
       };
-    }>(`${API}/player?uuid=${uuid}`).then((r) => r?.player).catch(() => null);
+    }>(`${API}/player?uuid=${uuid}`, apiKey).then((r) => r?.player).catch(() => null);
+
+    const normalizedHypixelPlayer = hypixelPlayer
+      ? {
+          rank: hypixelPlayer.rank ?? undefined,
+          monthlyPackageRank: hypixelPlayer.monthlyPackageRank ?? undefined,
+          newPackageRank: hypixelPlayer.newPackageRank ?? undefined,
+          packageRank: hypixelPlayer.packageRank ?? undefined,
+          prefix: hypixelPlayer.prefix ?? undefined,
+          rankPlusColor: hypixelPlayer.rankPlusColor ?? undefined,
+          monthlyRankColor: hypixelPlayer.monthlyRankColor ?? undefined,
+        }
+      : undefined;
 
     const payload = {
       username: name,
@@ -2476,7 +2488,7 @@ export async function getPlayerData(
 
       lastSave: Number(profile?.last_save ?? lastSaveRaw ?? Date.now()),
 
-      ...(hypixelPlayer ? { hypixelPlayer } : {}),
+      ...(normalizedHypixelPlayer ? { hypixelPlayer: normalizedHypixelPlayer } : {}),
 
       ...(dungeons ? { dungeons } : {}),
 
