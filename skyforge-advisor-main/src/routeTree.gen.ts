@@ -27,6 +27,7 @@ import { Route as FlipsRouteImport } from './routes/flips'
 import { Route as GardenRouteImport } from './routes/garden'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as InventoryRouteImport } from './routes/inventory'
+import { Route as LeaderboardsRouteImport } from './routes/leaderboards'
 import { Route as MinionsRouteImport } from './routes/minions'
 import { Route as NetWorthRouteImport } from './routes/net-worth'
 import { Route as NotificationsRouteImport } from './routes/notifications'
@@ -127,6 +128,11 @@ const InventoryRoute = InventoryRouteImport.update({
   path: '/inventory',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LeaderboardsRoute = LeaderboardsRouteImport.update({
+  id: '/leaderboards',
+  path: '/leaderboards',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MinionsRoute = MinionsRouteImport.update({
   id: '/minions',
   path: '/minions',
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/garden': typeof GardenRoute
   '/goals': typeof GoalsRoute
   '/inventory': typeof InventoryRoute
+  '/leaderboards': typeof LeaderboardsRoute
   '/minions': typeof MinionsRoute
   '/net-worth': typeof NetWorthRoute
   '/notifications': typeof NotificationsRoute
@@ -221,6 +228,7 @@ export interface FileRoutesByTo {
   '/garden': typeof GardenRoute
   '/goals': typeof GoalsRoute
   '/inventory': typeof InventoryRoute
+  '/leaderboards': typeof LeaderboardsRoute
   '/minions': typeof MinionsRoute
   '/net-worth': typeof NetWorthRoute
   '/notifications': typeof NotificationsRoute
@@ -251,6 +259,7 @@ export interface FileRoutesById {
   '/garden': typeof GardenRoute
   '/goals': typeof GoalsRoute
   '/inventory': typeof InventoryRoute
+  '/leaderboards': typeof LeaderboardsRoute
   '/minions': typeof MinionsRoute
   '/net-worth': typeof NetWorthRoute
   '/notifications': typeof NotificationsRoute
@@ -282,6 +291,7 @@ export interface FileRouteTypes {
     | '/garden'
     | '/goals'
     | '/inventory'
+    | '/leaderboards'
     | '/minions'
     | '/net-worth'
     | '/notifications'
@@ -311,6 +321,7 @@ export interface FileRouteTypes {
     | '/garden'
     | '/goals'
     | '/inventory'
+    | '/leaderboards'
     | '/minions'
     | '/net-worth'
     | '/notifications'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/garden'
     | '/goals'
     | '/inventory'
+    | '/leaderboards'
     | '/minions'
     | '/net-worth'
     | '/notifications'
@@ -370,6 +382,7 @@ export interface RootRouteChildren {
   GardenRoute: typeof GardenRoute
   GoalsRoute: typeof GoalsRoute
   InventoryRoute: typeof InventoryRoute
+  LeaderboardsRoute: typeof LeaderboardsRoute
   MinionsRoute: typeof MinionsRoute
   NetWorthRoute: typeof NetWorthRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -508,6 +521,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InventoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/leaderboards': {
+      id: '/leaderboards'
+      path: '/leaderboards'
+      fullPath: '/leaderboards'
+      preLoaderRoute: typeof LeaderboardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/minions': {
       id: '/minions'
       path: '/minions'
@@ -603,6 +623,7 @@ const rootRouteChildren: RootRouteChildren = {
   GardenRoute: GardenRoute,
   GoalsRoute: GoalsRoute,
   InventoryRoute: InventoryRoute,
+  LeaderboardsRoute: LeaderboardsRoute,
   MinionsRoute: MinionsRoute,
   NetWorthRoute: NetWorthRoute,
   NotificationsRoute: NotificationsRoute,

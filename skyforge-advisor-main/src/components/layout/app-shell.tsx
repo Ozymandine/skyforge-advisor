@@ -30,6 +30,7 @@ import {
   Bot,
   Skull,
   Sprout,
+  Trophy,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -88,6 +89,7 @@ const nav = [
   {
     group: "Tools",
     items: [
+      { to: "/leaderboards", label: "Leaderboards", icon: Trophy },
       { to: "/calendar", label: "Calendar", icon: Calendar },
       { to: "/compare", label: "Compare Profiles", icon: Swords },
       { to: "/analytics", label: "Analytics", icon: LineChart },
