@@ -112,25 +112,25 @@ function Inventory() {
       />
 
       {!connected && <ConnectPrompt what="your real inventories" />}
-      {connected && isLoading && <LoadState>Decoding inventory data…</LoadState>}
+      {connected && !data && !error && <LoadState>Decoding inventory data…</LoadState>}
       {connected && error && <ErrorState error={error} />}
 
-      <div className="flex flex-wrap gap-2">
-        <Chip active={mode === "containers"} onClick={() => setMode("containers")}>
-          Containers
-        </Chip>
-        <Chip active={mode === "accessories"} onClick={() => setMode("accessories")}>
-          Accessories & Magical Power
-        </Chip>
-        <Chip active={mode === "pets"} onClick={() => setMode("pets")}>
-          Pets
-        </Chip>
-        <Chip active={mode === "profile"} onClick={() => setMode("profile")}>
-          Museum & Achievements
-        </Chip>
-      </div>
-
       {connected && data && (
+        <>
+          <div className="flex flex-wrap gap-2">
+            <Chip active={mode === "containers"} onClick={() => setMode("containers")}>
+              Containers
+            </Chip>
+            <Chip active={mode === "accessories"} onClick={() => setMode("accessories")}>
+              Accessories & Magical Power
+            </Chip>
+            <Chip active={mode === "pets"} onClick={() => setMode("pets")}>
+              Pets
+            </Chip>
+            <Chip active={mode === "profile"} onClick={() => setMode("profile")}>
+              Museum & Achievements
+            </Chip>
+          </div>
         <div className="grid gap-6 lg:grid-cols-3 items-start">
           {/* Main Left / Middle Area (2 Cols) */}
           <div className="space-y-6 lg:col-span-2">
@@ -370,7 +370,8 @@ function Inventory() {
             )}
           </div>
         </div>
-      )}
+      </>
+    )}
     </div>
   );
 }
