@@ -196,7 +196,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         {nav.map((section) => (
           <div key={section.group} className="flex flex-col">
             {!collapsed && (
-              <p className="eyebrow px-3 text-[10px] font-bold uppercase tracking-wider text-white/35 pb-1">
+              <p className="eyebrow text-center text-[10px] font-bold uppercase tracking-wider text-white/35 pb-1">
                 {section.group}
               </p>
             )}
@@ -207,10 +207,10 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "group relative flex h-8.5 items-center gap-3 rounded-xl px-3 text-xs font-semibold text-white/75 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
-                      "hover:transition-none hover:bg-white/[0.14] hover:text-white hover:border-white/15 hover:translate-x-1 hover:shadow-md hover:shadow-black/20",
+                      "group relative flex h-8.5 items-center justify-center gap-2.5 rounded-xl px-3 text-xs font-semibold text-white/75 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
+                      "hover:transition-none hover:bg-white/[0.14] hover:text-white hover:border-white/15 hover:scale-[1.02] hover:shadow-md hover:shadow-black/20",
                       "active:scale-[0.98] active:bg-white/[0.2]",
-                      collapsed && "justify-center px-0 hover:translate-x-0",
+                      collapsed && "justify-center px-0 hover:scale-100",
                     )}
                     activeProps={{
                       className:
