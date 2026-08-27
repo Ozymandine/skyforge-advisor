@@ -185,17 +185,17 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         <button
           onClick={onToggle}
           aria-label="Toggle sidebar"
-          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-1 text-muted-foreground transition-all duration-150 ease-out hover:bg-white/15 hover:text-foreground active:scale-95 active:bg-white/20"
+          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-1.5 text-muted-foreground transition-all duration-150 hover:bg-white/15 hover:text-foreground active:bg-white/20"
         >
           {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
         </button>
       </div>
 
-      <nav className="scroll-slim mt-1.5 flex-1 overflow-y-auto px-2.5 pb-1 flex flex-col justify-between">
+      <nav className="scroll-slim mt-3 flex-1 overflow-y-auto px-2.5 pb-3 space-y-2.5">
         {nav.map((section) => (
-          <div key={section.group} className="mb-1">
+          <div key={section.group} className="mb-2">
             {!collapsed && (
-              <p className="eyebrow px-3 pb-0.5 text-[10px] font-bold uppercase tracking-wider text-white/40">
+              <p className="eyebrow px-3 pb-1 text-[10.5px] font-bold uppercase tracking-wider text-white/40">
                 {section.group}
               </p>
             )}
@@ -206,17 +206,17 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "group relative flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs font-semibold text-white/70 select-none cursor-pointer transition-all duration-150 ease-out border border-transparent",
-                      "hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/30 hover:shadow-[0_0_12px_rgba(52,211,153,0.12)]",
-                      "active:scale-[0.98] active:bg-emerald-500/20",
-                      collapsed && "justify-center px-0 py-1.5",
+                      "group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-white/70 select-none cursor-pointer transition-all duration-150 border border-transparent",
+                      "hover:bg-white/[0.12] hover:text-white hover:border-white/10",
+                      "active:scale-[0.98] active:bg-white/[0.2]",
+                      collapsed && "justify-center px-0 py-2",
                     )}
                     activeProps={{
                       className:
-                        "bg-emerald-500/15 text-emerald-300 border-emerald-500/40 font-bold shadow-[0_0_15px_rgba(52,211,153,0.15)] ring-1 ring-emerald-500/20",
+                        "bg-white/[0.16] text-white border-white/25 font-bold shadow-sm ring-1 ring-white/15",
                     }}
                   >
-                    <item.icon className="size-4 shrink-0 text-white/50 group-hover:text-emerald-400 group-hover:scale-110 transition-transform duration-150 ease-out" />
+                    <item.icon className="size-4 shrink-0 text-white/60 group-hover:text-white transition-colors duration-150" />
                     {!collapsed && <span className="truncate">{item.label}</span>}
                   </Link>
                 </li>
@@ -227,10 +227,10 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       </nav>
 
       {/* Unified Bottom-Left Profile Switcher */}
-      <div className="p-2 border-t border-white/10">
+      <div className="p-3 border-t border-white/10">
         <DropdownMenu>
           <DropdownMenuTrigger className="w-full text-left outline-none">
-            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] p-2.5 transition-all duration-150 ease-out hover:bg-white/[0.12] hover:border-emerald-500/40 active:scale-[0.99] active:bg-white/[0.18] cursor-pointer">
+            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] p-3 transition-all duration-150 hover:bg-white/[0.12] hover:border-emerald-500/40 active:scale-[0.99] active:bg-white/[0.18] cursor-pointer">
               {!collapsed ? (
                 <>
                   <div className="flex items-center gap-3 min-w-0">
