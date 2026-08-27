@@ -162,62 +162,66 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
     <aside
       className={cn(
         "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-white/10 bg-[#0B0E14] lg:flex transition-all duration-300 ease-in-out",
-        collapsed ? "w-[72px]" : "w-[218px]",
+        collapsed ? "w-[68px]" : "w-[204px]",
       )}
     >
-      {/* Centered Wordmark */}
-      <div className="flex flex-col items-center justify-center px-4 pt-4 pb-2 transition-all duration-300">
+      {/* Header with Title and Integrated Toggle */}
+      <div className="flex items-center justify-between px-3 pt-3.5 pb-1 transition-all duration-300">
         {!collapsed ? (
-          <div className="w-full text-center">
-            <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-xl tracking-[0.16em] text-transparent select-none drop-shadow-[0_2px_15px_rgba(52,211,153,0.45)]">
+          <div className="flex items-center justify-between w-full">
+            <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-lg tracking-[0.16em] text-transparent select-none drop-shadow-[0_2px_15px_rgba(52,211,153,0.45)]">
               SKYFORGE
             </span>
+            <button
+              onClick={onToggle}
+              aria-label="Collapse sidebar"
+              className="flex size-7 items-center justify-center rounded-lg text-white/50 transition-all hover:bg-white/10 hover:text-white active:bg-white/15 cursor-pointer"
+            >
+              <PanelLeftClose className="size-4" />
+            </button>
           </div>
         ) : (
-          <div className="flex w-full justify-center">
-            <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-lg tracking-wider text-transparent select-none drop-shadow-[0_2px_12px_rgba(52,211,153,0.45)]">
+          <div className="flex flex-col items-center gap-1.5 w-full">
+            <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-base tracking-wider text-transparent select-none drop-shadow-[0_2px_12px_rgba(52,211,153,0.45)]">
               SF
             </span>
+            <button
+              onClick={onToggle}
+              aria-label="Expand sidebar"
+              className="flex size-7 items-center justify-center rounded-lg text-white/50 transition-all hover:bg-white/10 hover:text-white active:bg-white/15 cursor-pointer"
+            >
+              <PanelLeftOpen className="size-4" />
+            </button>
           </div>
         )}
       </div>
 
-      <div className="px-3">
-        <button
-          onClick={onToggle}
-          aria-label="Toggle sidebar"
-          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-1.5 text-muted-foreground transition-all duration-150 hover:transition-none hover:bg-white/15 hover:text-foreground hover:border-white/20 active:bg-white/20 cursor-pointer"
-        >
-          {collapsed ? <PanelLeftOpen className="size-3.5" /> : <PanelLeftClose className="size-3.5" />}
-        </button>
-      </div>
-
-      <nav className="flex flex-1 flex-col justify-between overflow-hidden px-3 pt-2 pb-2">
+      <nav className="flex flex-1 flex-col justify-between overflow-hidden px-2.5 pt-1 pb-2">
         {nav.map((section) => (
           <div key={section.group} className="flex flex-col">
             {!collapsed && (
-              <p className="eyebrow text-center text-[10px] font-bold uppercase tracking-wider text-white/35 pb-1">
+              <p className="eyebrow px-2.5 text-[9.5px] font-bold uppercase tracking-wider text-white/35 pb-1">
                 {section.group}
               </p>
             )}
-            <ul className="space-y-1">
+            <ul className="space-y-0.5">
               {section.items.map((item) => (
                 <li key={item.to}>
                   <Link
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "group relative flex h-8.5 items-center justify-center gap-2.5 rounded-xl px-3 text-xs font-semibold text-white/75 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
-                      "hover:transition-none hover:bg-white/[0.14] hover:text-white hover:border-white/15 hover:scale-[1.02] hover:shadow-md hover:shadow-black/20",
-                      "active:scale-[0.98] active:bg-white/[0.2]",
-                      collapsed && "justify-center px-0 hover:scale-100",
+                      "group relative flex h-8.5 items-center gap-2.5 rounded-xl px-2.5 text-xs font-medium text-white/70 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
+                      "hover:transition-none hover:bg-white/[0.08] hover:text-white hover:border-white/10 hover:translate-x-0.5",
+                      "active:scale-[0.98] active:bg-white/[0.15]",
+                      collapsed && "justify-center px-0 hover:translate-x-0",
                     )}
                     activeProps={{
                       className:
-                        "bg-white/[0.16] text-white border-white/25 font-bold shadow-sm ring-1 ring-white/15",
+                        "bg-white/[0.12] text-white border-l-2 border-emerald-400 font-bold shadow-sm ring-1 ring-white/10 hover:translate-x-0",
                     }}
                   >
-                    <item.icon className="size-4 shrink-0 text-white/60 group-hover:text-white group-hover:transition-none transition-colors duration-150" />
+                    <item.icon className="size-4 shrink-0 text-white/55 group-hover:text-white group-hover:transition-none transition-colors duration-150" />
                     {!collapsed && <span className="truncate">{item.label}</span>}
                   </Link>
                 </li>
@@ -228,21 +232,21 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       </nav>
 
       {/* Bottom Profile Selector Card */}
-      <div className="border-t border-white/10 p-3">
+      <div className="border-t border-white/10 p-2.5">
         {player.data ? (
           <DropdownMenu>
             <DropdownMenuTrigger className="w-full text-left outline-none">
               <div
                 className={cn(
-                  "flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] p-2 transition-all duration-150 hover:transition-none hover:bg-white/[0.14] hover:border-emerald-500/60 hover:shadow-lg hover:shadow-emerald-500/10 active:scale-[0.98] cursor-pointer will-change-transform",
+                  "flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] p-1.5 transition-all duration-150 hover:transition-none hover:bg-white/[0.09] hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10 active:scale-[0.98] cursor-pointer will-change-transform",
                   collapsed && "justify-center p-1.5",
                 )}
               >
                 <PlayerHeadAvatar
                   uuid={player.data.uuid}
                   name={player.data.username || account.username}
-                  size={28}
-                  className="size-7 shrink-0 rounded-lg"
+                  size={26}
+                  className="size-6.5 shrink-0 rounded-lg"
                 />
                 {!collapsed && (
                   <div className="min-w-0 flex-1">
@@ -252,14 +256,14 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                         {player.data.username}
                       </p>
                     </div>
-                    <p className="flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
+                    <p className="flex items-center gap-1 text-[9.5px] text-muted-foreground font-mono">
                       <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       <span className="truncate">{activeProfile ? activeProfile.cuteName : "Profile"}</span>
                     </p>
                   </div>
                 )}
                 {!collapsed && (
-                  <ChevronDown className="size-3.5 text-muted-foreground shrink-0 ml-auto" />
+                  <ChevronDown className="size-3 text-muted-foreground shrink-0 ml-auto" />
                 )}
               </div>
             </DropdownMenuTrigger>
@@ -302,12 +306,12 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
             to="/connect"
             title="Connect Account"
             className={cn(
-              "flex items-center gap-2.5 rounded-xl border border-dashed border-emerald-500/40 bg-emerald-500/10 p-2.5 text-xs font-semibold text-emerald-300 transition-all hover:bg-emerald-500/20 hover:border-emerald-500/60",
+              "flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] p-2 text-xs font-semibold text-white/80 transition-all hover:bg-white/[0.08] hover:border-emerald-500/40 hover:text-white",
               collapsed && "justify-center p-2",
             )}
           >
-            <KeyRound className="size-4 shrink-0" />
-            {!collapsed && <span className="truncate">Connect Account</span>}
+            <KeyRound className="size-4 shrink-0 text-emerald-400" />
+            {!collapsed && <span className="truncate text-xs">Connect Account</span>}
           </Link>
         )}
       </div>
