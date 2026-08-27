@@ -20,6 +20,7 @@ import { fetchPlayer } from "@/lib/hypixel.functions";
 import { Panel, ProgressBar } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { MinecraftTooltip } from "@/components/ui/minecraft-tooltip";
+import { ProfileShareCard } from "@/components/profile-share-card";
 import { playClickSound, playSuccessChime } from "@/lib/sound-effects";
 import { formatNumber, type PlayerData, type InventoryItem, type PetInfo } from "@/lib/skyblock";
 import { cn } from "@/lib/utils";
@@ -191,9 +192,21 @@ function PublicProfileRoute() {
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-3">
+            <ProfileShareCard
+              data={{
+                username: data.username,
+                uuid: data.uuid,
+                profileName: activeProfile,
+                skillAverage: data.skillAverage,
+                netWorth: totalNetWorthEstimate,
+                fairySouls: data.fairySouls,
+                catacombsLevel: data.dungeons?.catacombsLevel ?? null,
+                collectionsCount: data.collections.length,
+              }}
+            />
             <button
               onClick={copyShareLink}
-              className="flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary hover:bg-primary/30 transition-all shadow-lg shadow-primary/10"
+              className="flex items-center gap-2 rounded-full border border-primary/40 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary hover:bg-primary/30 transition-all shadow-lg shadow-primary/10"
             >
               {copied ? (
                 <>
@@ -209,7 +222,7 @@ function PublicProfileRoute() {
             </button>
             <Link
               to="/dashboard"
-              className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-bold text-white hover:bg-white/10 transition-all"
+              className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-bold text-white hover:bg-white/10 transition-all"
             >
               <span>Advisor Dashboard</span>
               <ChevronRight className="size-4 text-muted-foreground" />

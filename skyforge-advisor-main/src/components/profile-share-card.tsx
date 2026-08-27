@@ -181,15 +181,11 @@ export function ProfileShareCard({ data }: { data: ShareCardData | null }) {
                 <Button
                   variant="outline"
                   className="flex-1 gap-2 border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10"
-                  onClick={() => {
                     const url = `${window.location.origin}/profile/${encodeURIComponent(data.username)}`;
                     void navigator.clipboard.writeText(url).catch(() => {});
-                  }}
-                >
                   <Share2 className="size-4" /> Copy Public Link
                 </Button>
               </div>
-            </div>
           )}
         </DialogContent>
       </Dialog>
