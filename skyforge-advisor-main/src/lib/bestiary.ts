@@ -288,10 +288,22 @@ export function calculateBestiary(
     const mobs: BestiaryMob[] = familyDef.mobs.map((mobDef) => {
       const kills =
         killsMap[mobDef.id] ??
+        killsMap[`family_${mobDef.id}`] ??
+        killsMap[`kills_family_${mobDef.id}`] ??
         killsMap[`kills_${mobDef.id}`] ??
         killsMap[mobDef.id.replace(/_/g, "")] ??
+        killsMap[`family_${mobDef.id.replace(/_/g, "")}`] ??
+        killsMap[`kills_family_${mobDef.id.replace(/_/g, "")}`] ??
         0;
-      const deaths = deathsMap[mobDef.id] ?? 0;
+      const deaths =
+        deathsMap[mobDef.id] ??
+        deathsMap[`family_${mobDef.id}`] ??
+        deathsMap[`deaths_family_${mobDef.id}`] ??
+        deathsMap[`deaths_${mobDef.id}`] ??
+        deathsMap[mobDef.id.replace(/_/g, "")] ??
+        deathsMap[`family_${mobDef.id.replace(/_/g, "")}`] ??
+        deathsMap[`deaths_family_${mobDef.id.replace(/_/g, "")}`] ??
+        0;
 
       const { tier, maxTier, nextTierKills } = calculateMobTier(kills, mobDef.bracket);
 

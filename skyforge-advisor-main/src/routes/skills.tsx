@@ -31,6 +31,7 @@ import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
 import { Chip, PageHero, Panel, ProgressBar, StatRow } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { playClickSound } from "@/lib/sound-effects";
+import { calculateBestiary } from "@/lib/bestiary";
 import { DungeonFloorMap, SkillRadar } from "@/components/progression-visuals";
 import { usePlayer } from "@/hooks/use-account";
 import { formatFull, formatNumber } from "@/lib/skyblock";
@@ -193,8 +194,12 @@ function SkillsRoute() {
     [data]
   );
 
+  const bestiaryData = useMemo(() => {
+    return data?.bestiary ?? calculateBestiary({});
+  }, [data?.bestiary]);
+
   const filteredBestiaryFamilies = useMemo(() => {
-    const families = data?.bestiary?.families ?? [];
+    const families = bestiaryData.families ?? [];
     return families
       .filter((fam) => {
         if (bestiaryZone !== "all" && fam.id !== bestiaryZone) return false;
@@ -215,7 +220,7 @@ function SkillsRoute() {
         };
       })
       .filter((fam) => fam.mobs.length > 0);
-  }, [data?.bestiary?.families, bestiaryZone, bestiarySearch, bestiaryFilter]);
+  }, [bestiaryData.families, bestiaryZone, bestiarySearch, bestiaryFilter]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -344,10 +349,10 @@ function SkillsRoute() {
                     <Crosshair className="size-4 text-primary" />
                   </div>
                   <p className="mt-2 text-2xl font-bold font-mono text-white">
-                    {(data.bestiary?.totalKills ?? 0).toLocaleString()}
+                    {bestiaryData.totalKills.toLocaleString()}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Across {(data.bestiary?.families ?? []).length} SkyBlock zones
+                    Across {bestiaryData.families.length} SkyBlock zones
                   </p>
                 </Panel>
 
@@ -359,12 +364,12 @@ function SkillsRoute() {
                     <Trophy className="size-4 text-amber-400" />
                   </div>
                   <p className="mt-2 text-2xl font-bold font-mono text-amber-300">
-                    Milestone {data.bestiary?.milestone ?? 0}
+                    Milestone {bestiaryData.milestone}
                   </p>
                   <div className="mt-2">
-                    <ProgressBar pct={data.bestiary?.milestoneProgressPct ?? 0} tone="gold" />
+                    <ProgressBar pct={bestiaryData.milestoneProgressPct} tone="gold" />
                     <span className="mt-1 block text-[10px] text-muted-foreground">
-                      {data.bestiary?.totalTiersUnlocked ?? 0} / {data.bestiary?.maxTiers ?? 850} total tiers unlocked
+                      {bestiaryData.totalTiersUnlocked} / {bestiaryData.maxTiers} total tiers unlocked
                     </span>
                   </div>
                 </Panel>
@@ -378,16 +383,16 @@ function SkillsRoute() {
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1.5 font-mono text-xs font-bold">
                     <span className="rounded bg-emerald-500/10 px-2 py-0.5 text-emerald-300">
-                      +{data.bestiary?.milestone ?? 0} HP
+                      +{bestiaryData.milestone} HP
                     </span>
                     <span className="rounded bg-blue-500/10 px-2 py-0.5 text-blue-300">
-                      +{data.bestiary?.milestone ?? 0} Def
+                      +{bestiaryData.milestone} Def
                     </span>
                     <span className="rounded bg-red-500/10 px-2 py-0.5 text-red-300">
-                      +{data.bestiary?.milestone ?? 0} Str
+                      +{bestiaryData.milestone} Str
                     </span>
                     <span className="rounded bg-purple-500/10 px-2 py-0.5 text-purple-300">
-                      +{Math.floor((data.bestiary?.milestone ?? 0) / 10)} MF
+                      +{Math.floor(bestiaryData.milestone / 10)} MF
                     </span>
                   </div>
                   <p className="mt-2 text-[10px] text-muted-foreground">
@@ -403,7 +408,7 @@ function SkillsRoute() {
                     <Sparkles className="size-4 text-purple-400" />
                   </div>
                   <p className="mt-2 text-2xl font-bold font-mono text-purple-200">
-                    +{((data.bestiary?.milestone ?? 0) * 1_000_000).toLocaleString()}
+                    +{(bestiaryData.milestone * 1_000_000).toLocaleString()}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     +1M Combat XP per milestone
@@ -424,7 +429,7 @@ function SkillsRoute() {
                   >
                     All Zones
                   </Chip>
-                  {(data.bestiary?.families ?? []).map((fam) => (
+                  {bestiaryData.families.map((fam) => (
                     <Chip
                       key={fam.id}
                       active={bestiaryZone === fam.id}

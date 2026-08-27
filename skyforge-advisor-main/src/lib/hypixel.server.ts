@@ -2423,19 +2423,56 @@ export async function getPlayerData(
     const profile = member["profile"] as { last_save?: number } | undefined;
     const lastSaveRaw = member["last_save"];
 
-    // Bestiary: raw kills & deaths per mob
-    const bestiaryRaw = member["bestiary"] as { kills?: Record<string, number>; deaths?: Record<string, number> } | undefined;
+    // Bestiary: raw kills & deaths per mob (flat or nested structure)
+    const bestiaryRaw = member["bestiary"] as Record<string, any> | undefined;
+    const playerStatsRaw = (member["player_stats"] ?? member["stats"]) as Record<string, any> | undefined;
+
     const bestiaryKills: Record<string, number> = {};
-    for (const [k, v] of Object.entries(bestiaryRaw?.kills ?? {})) {
-      if (typeof v === "number" && v > 0) bestiaryKills[k] = v;
-    }
-    for (const [k, v] of Object.entries(statsRaw ?? {})) {
-      if (k.startsWith("kills_") && typeof v === "number" && v > 0) {
-        const mob = k.replace(/^kills_/, "");
-        if (!bestiaryKills[mob]) bestiaryKills[mob] = v;
+    const bestiaryDeaths: Record<string, number> = {};
+
+    if (bestiaryRaw && typeof bestiaryRaw === "object") {
+      for (const [k, v] of Object.entries(bestiaryRaw)) {
+        if (typeof v === "number" && v > 0) {
+          if (k.startsWith("kills_") || k.startsWith("deaths_")) {
+            if (k.startsWith("kills_")) {
+              bestiaryKills[k.replace(/^kills_/, "")] = v;
+              bestiaryKills[k] = v;
+            } else if (k.startsWith("deaths_")) {
+              bestiaryDeaths[k.replace(/^deaths_/, "")] = v;
+              bestiaryDeaths[k] = v;
+            }
+          } else {
+            bestiaryKills[k] = v;
+          }
+        } else if (k === "kills" && typeof v === "object" && v) {
+          for (const [subK, subV] of Object.entries(v as Record<string, number>)) {
+            if (typeof subV === "number" && subV > 0) bestiaryKills[subK] = subV;
+          }
+        } else if (k === "deaths" && typeof v === "object" && v) {
+          for (const [subK, subV] of Object.entries(v as Record<string, number>)) {
+            if (typeof subV === "number" && subV > 0) bestiaryDeaths[subK] = subV;
+          }
+        }
       }
     }
-    const bestiaryData = calculateBestiary(bestiaryKills, bestiaryRaw?.deaths);
+
+    if (playerStatsRaw && typeof playerStatsRaw === "object") {
+      for (const [k, v] of Object.entries(playerStatsRaw)) {
+        if (typeof v === "number" && v > 0) {
+          if (k.startsWith("kills_")) {
+            const mob = k.replace(/^kills_/, "");
+            if (!bestiaryKills[mob]) bestiaryKills[mob] = v;
+            if (!bestiaryKills[k]) bestiaryKills[k] = v;
+          } else if (k.startsWith("deaths_")) {
+            const mob = k.replace(/^deaths_/, "");
+            if (!bestiaryDeaths[mob]) bestiaryDeaths[mob] = v;
+            if (!bestiaryDeaths[k]) bestiaryDeaths[k] = v;
+          }
+        }
+      }
+    }
+
+    const bestiaryData = calculateBestiary(bestiaryKills, bestiaryDeaths);
     const slayerOverview = calculateSlayerOverview(slayerRaw);
 
     const hypixelPlayer = await getKeyedJson<{
@@ -2518,7 +2555,7 @@ export async function getPlayerData(
 
       ...(sacks ? { sacks } : {}),
 
-      ...(bestiaryData.totalKills > 0 ? { bestiary: bestiaryData } : {}),
+      bestiary: bestiaryData,
 
       ...(slayerOverview.totalKills > 0 || slayerOverview.totalXp > 0 ? { slayerOverview } : {}),
     };
