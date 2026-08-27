@@ -21,11 +21,16 @@ import {
   Compass,
   Hourglass,
   Moon,
+  Search,
+  Heart,
+  Shield,
+  Trophy,
 } from "lucide-react";
 
 import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
-import { PageHero, Panel, ProgressBar, StatRow } from "@/components/layout/app-shell";
+import { Chip, PageHero, Panel, ProgressBar, StatRow } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
+import { playClickSound } from "@/lib/sound-effects";
 import { DungeonFloorMap, SkillRadar } from "@/components/progression-visuals";
 import { usePlayer } from "@/hooks/use-account";
 import { formatFull, formatNumber } from "@/lib/skyblock";
@@ -81,6 +86,7 @@ export const Route = createFileRoute("/skills")({
 
 type SkillTab =
   | "overview"
+  | "bestiary"
   | "dungeons"
   | "kuudra"
   | "rift"
@@ -93,6 +99,9 @@ type SkillTab =
 function SkillsRoute() {
   const { data, isLoading, error, connected } = usePlayer();
   const [activeTab, setActiveTab] = useState<SkillTab>("overview");
+  const [bestiaryZone, setBestiaryZone] = useState<string>("all");
+  const [bestiarySearch, setBestiarySearch] = useState<string>("");
+  const [bestiaryFilter, setBestiaryFilter] = useState<"all" | "incomplete" | "maxed">("all");
 
   // Dungeons Telemetry
   const cataLvl = data?.dungeons?.catacombsLevel ?? 30;
@@ -184,6 +193,30 @@ function SkillsRoute() {
     [data]
   );
 
+  const filteredBestiaryFamilies = useMemo(() => {
+    const families = data?.bestiary?.families ?? [];
+    return families
+      .filter((fam) => {
+        if (bestiaryZone !== "all" && fam.id !== bestiaryZone) return false;
+        return true;
+      })
+      .map((fam) => {
+        const matchingMobs = fam.mobs.filter((mob) => {
+          if (bestiarySearch && !mob.name.toLowerCase().includes(bestiarySearch.toLowerCase())) {
+            return false;
+          }
+          if (bestiaryFilter === "incomplete" && mob.tier >= mob.maxTier) return false;
+          if (bestiaryFilter === "maxed" && mob.tier < mob.maxTier) return false;
+          return true;
+        });
+        return {
+          ...fam,
+          mobs: matchingMobs,
+        };
+      })
+      .filter((fam) => fam.mobs.length > 0);
+  }, [data?.bestiary?.families, bestiaryZone, bestiarySearch, bestiaryFilter]);
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHero
@@ -202,6 +235,7 @@ function SkillsRoute() {
           <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-4">
             {[
               { id: "overview", label: "Skills Constellation", icon: Sparkles },
+              { id: "bestiary", label: "Bestiary & Mobs", icon: Crosshair },
               { id: "dungeons", label: "Catacombs & Master Mode", icon: Skull },
               { id: "kuudra", label: "Crimson Isle & Kuudra", icon: Flame },
               { id: "rift", label: "The Rift Dimension", icon: Moon },
@@ -294,6 +328,223 @@ function SkillsRoute() {
                   ))}
                 </div>
               </Panel>
+            </div>
+          )}
+
+          {/* TAB 2: BESTIARY & MOB ELIMINATION HUB */}
+          {activeTab === "bestiary" && (
+            <div className="space-y-6">
+              {/* Bestiary Stats Overview Banner */}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Panel className="bg-slate-900/60 border-primary/20">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Total Mob Kills
+                    </span>
+                    <Crosshair className="size-4 text-primary" />
+                  </div>
+                  <p className="mt-2 text-2xl font-bold font-mono text-white">
+                    {(data.bestiary?.totalKills ?? 0).toLocaleString()}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Across {(data.bestiary?.families ?? []).length} SkyBlock zones
+                  </p>
+                </Panel>
+
+                <Panel className="bg-slate-900/60 border-amber-500/20">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Bestiary Milestone
+                    </span>
+                    <Trophy className="size-4 text-amber-400" />
+                  </div>
+                  <p className="mt-2 text-2xl font-bold font-mono text-amber-300">
+                    Milestone {data.bestiary?.milestone ?? 0}
+                  </p>
+                  <div className="mt-2">
+                    <ProgressBar pct={data.bestiary?.milestoneProgressPct ?? 0} tone="gold" />
+                    <span className="mt-1 block text-[10px] text-muted-foreground">
+                      {data.bestiary?.totalTiersUnlocked ?? 0} / {data.bestiary?.maxTiers ?? 850} total tiers unlocked
+                    </span>
+                  </div>
+                </Panel>
+
+                <Panel className="bg-slate-900/60 border-emerald-500/20">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
+                      Permanent Stat Perks
+                    </span>
+                    <ShieldCheck className="size-4 text-emerald-400" />
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5 font-mono text-xs font-bold">
+                    <span className="rounded bg-emerald-500/10 px-2 py-0.5 text-emerald-300">
+                      +{data.bestiary?.milestone ?? 0} HP
+                    </span>
+                    <span className="rounded bg-blue-500/10 px-2 py-0.5 text-blue-300">
+                      +{data.bestiary?.milestone ?? 0} Def
+                    </span>
+                    <span className="rounded bg-red-500/10 px-2 py-0.5 text-red-300">
+                      +{data.bestiary?.milestone ?? 0} Str
+                    </span>
+                    <span className="rounded bg-purple-500/10 px-2 py-0.5 text-purple-300">
+                      +{Math.floor((data.bestiary?.milestone ?? 0) / 10)} MF
+                    </span>
+                  </div>
+                  <p className="mt-2 text-[10px] text-muted-foreground">
+                    Awarded automatically to all combat stats
+                  </p>
+                </Panel>
+
+                <Panel className="bg-slate-900/60 border-purple-500/20">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-purple-300 uppercase tracking-wider">
+                      Combat XP Bonus
+                    </span>
+                    <Sparkles className="size-4 text-purple-400" />
+                  </div>
+                  <p className="mt-2 text-2xl font-bold font-mono text-purple-200">
+                    +{((data.bestiary?.milestone ?? 0) * 1_000_000).toLocaleString()}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    +1M Combat XP per milestone
+                  </p>
+                </Panel>
+              </div>
+
+              {/* Filters & Zone Selector */}
+              <div className="space-y-3">
+                {/* Zone Filter Chips */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Chip
+                    active={bestiaryZone === "all"}
+                    onClick={() => {
+                      playClickSound();
+                      setBestiaryZone("all");
+                    }}
+                  >
+                    All Zones
+                  </Chip>
+                  {(data.bestiary?.families ?? []).map((fam) => (
+                    <Chip
+                      key={fam.id}
+                      active={bestiaryZone === fam.id}
+                      onClick={() => {
+                        playClickSound();
+                        setBestiaryZone(fam.id);
+                      }}
+                    >
+                      {fam.name} ({fam.tiersUnlocked}/{fam.maxTiers})
+                    </Chip>
+                  ))}
+                </div>
+
+                {/* Search Bar & Progress Filter */}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="relative w-full max-w-sm">
+                    <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+                    <input
+                      type="text"
+                      placeholder="Search mobs (e.g. Zealot, Ghost, Scatha)..."
+                      value={bestiarySearch}
+                      onChange={(e) => setBestiarySearch(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-slate-950/80 pl-9 pr-3 py-1.5 text-xs text-white placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {(["all", "incomplete", "maxed"] as const).map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => {
+                          playClickSound();
+                          setBestiaryFilter(status);
+                        }}
+                        className={cn(
+                          "rounded-lg px-3 py-1 text-xs font-semibold transition-all",
+                          bestiaryFilter === status
+                            ? "bg-primary text-primary-foreground shadow"
+                            : "border border-white/10 bg-white/5 text-muted-foreground hover:text-white"
+                        )}
+                      >
+                        {status === "all" ? "All Mobs" : status === "incomplete" ? "Needs Kills" : "Maxed Tiers"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Mob Groups by Zone */}
+              <div className="space-y-6">
+                {filteredBestiaryFamilies.map((fam) => (
+                  <Panel key={fam.id} className="bg-slate-950/80">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+                      <div className="flex items-center gap-2.5">
+                        <h3 className="text-base font-bold text-white">{fam.name}</h3>
+                        <span className="rounded bg-white/5 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+                          {fam.totalKills.toLocaleString()} kills · {fam.tiersUnlocked}/{fam.maxTiers} tiers
+                        </span>
+                      </div>
+                      <span className="text-xs font-mono text-primary font-bold">
+                        {Math.round((fam.tiersUnlocked / fam.maxTiers) * 100)}% Zone Mastery
+                      </span>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {fam.mobs.map((mob) => {
+                        const isMaxed = mob.tier >= mob.maxTier;
+                        const progressPct = mob.nextTierKills
+                          ? Math.min(100, Math.round((mob.kills / mob.nextTierKills) * 100))
+                          : 100;
+                        const remainingKills = mob.nextTierKills
+                          ? Math.max(0, mob.nextTierKills - mob.kills)
+                          : 0;
+
+                        return (
+                          <div
+                            key={mob.id}
+                            className="group rounded-xl border border-white/5 bg-black/40 p-3.5 transition-all hover:border-primary/40 hover:bg-black/60"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <h4 className="truncate text-sm font-bold text-white group-hover:text-primary transition-colors">
+                                  {mob.name}
+                                </h4>
+                                <p className="font-mono text-xs font-semibold text-emerald-400 mt-0.5">
+                                  {mob.kills.toLocaleString()} kills
+                                </p>
+                              </div>
+                              <span
+                                className={cn(
+                                  "shrink-0 rounded-lg px-2 py-0.5 font-mono text-[10px] font-bold",
+                                  isMaxed
+                                    ? "border border-amber-500/40 bg-amber-500/15 text-amber-300"
+                                    : "border border-sky-500/30 bg-sky-500/10 text-sky-300"
+                                )}
+                              >
+                                {isMaxed ? `MAX TIER ${mob.tier} ✪` : `Tier ${mob.tier} / ${mob.maxTier}`}
+                              </span>
+                            </div>
+
+                            {/* Kill Progress Bar to Next Tier */}
+                            <div className="mt-3 space-y-1">
+                              <div className="flex items-center justify-between font-mono text-[10px] text-muted-foreground">
+                                <span>{isMaxed ? "Mastered" : `${mob.kills.toLocaleString()} / ${mob.nextTierKills?.toLocaleString()}`}</span>
+                                <span className="font-bold text-white">{progressPct}%</span>
+                              </div>
+                              <ProgressBar pct={progressPct} tone={isMaxed ? "emerald" : "gold"} />
+                              {!isMaxed && remainingKills > 0 && (
+                                <span className="block text-[10px] text-muted-foreground/80 font-mono">
+                                  {remainingKills.toLocaleString()} kills to Tier {mob.tier + 1}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Panel>
+                ))}
+              </div>
             </div>
           )}
 
