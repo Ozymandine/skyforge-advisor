@@ -3,11 +3,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { apply3DArmor } from "@/lib/skin-3d-armor";
+import type { InventoryItem } from "@/lib/skyblock";
 
 export type CharacterCanvasProps = {
   uuid?: string | undefined;
   username?: string | undefined;
   skinUrl?: string | undefined;
+  armorItems?: InventoryItem[] | undefined;
   width?: number;
   height?: number;
   className?: string;
@@ -17,6 +20,7 @@ export function CharacterCanvas({
   uuid,
   username,
   skinUrl,
+  armorItems = [],
   width = 150,
   height = 190,
   className,
@@ -78,6 +82,11 @@ export function CharacterCanvas({
           }
         }
 
+        // Attach true 3D armor onto the character mesh
+        if (armorItems && armorItems.length > 0) {
+          apply3DArmor(viewer, armorItems);
+        }
+
         if (isMounted) {
           viewerRef.current = viewer;
           setIsLoading(!loaded);
@@ -97,7 +106,14 @@ export function CharacterCanvas({
       }
       viewerRef.current = null;
     };
-  }, [uuid, username, skinUrl, width, height]);
+  }, [uuid, username, skinUrl, armorItems, width, height]);
+
+  // Update armor dynamically if armorItems prop changes
+  useEffect(() => {
+    if (viewerRef.current && armorItems) {
+      apply3DArmor(viewerRef.current, armorItems);
+    }
+  }, [armorItems]);
 
   return (
     <div
