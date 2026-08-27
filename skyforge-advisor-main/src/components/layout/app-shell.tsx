@@ -191,9 +191,9 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         </button>
       </div>
 
-      <nav className="scroll-slim mt-3 flex-1 overflow-y-auto px-3 pb-2 space-y-3">
+      <nav className="scroll-slim mt-4 flex-1 overflow-y-auto px-3 pb-6 space-y-4">
         {nav.map((section) => (
-          <div key={section.group} className="mb-3">
+          <div key={section.group} className="mb-4">
             {!collapsed && (
               <p className="eyebrow px-3 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-white/40">
                 {section.group}
@@ -225,94 +225,6 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
           </div>
         ))}
       </nav>
-
-      {/* Unified Bottom-Left Profile Switcher */}
-      <div className="p-3.5 border-t border-white/10">
-        <DropdownMenu>
-          <DropdownMenuTrigger className="w-full text-left outline-none">
-            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] p-3 transition-all duration-150 hover:bg-white/[0.12] hover:border-emerald-500/40 active:scale-[0.99] active:bg-white/[0.18] cursor-pointer">
-              {!collapsed ? (
-                <>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <PlayerHeadAvatar
-                      uuid={player.data?.uuid}
-                      name={player.data?.username || account.username}
-                    />
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <RankBadge rankData={player.data?.hypixelPlayer} size="sm" />
-                        <p className="truncate text-xs font-bold text-foreground">
-                          {player.data?.username ?? (account.username || "Not connected")}
-                        </p>
-                      </div>
-                      <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                        <span
-                          className={cn(
-                            "size-1.5 rounded-full",
-                            player.data ? "bg-emerald-400" : "bg-amber-400",
-                          )}
-                        />
-                        {activeProfile
-                          ? `${activeProfile.cuteName}`
-                          : player.data
-                            ? "Add API key"
-                            : "Tap to connect"}
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronDown className="size-4 text-muted-foreground shrink-0" />
-                </>
-              ) : (
-                <div className="flex w-full justify-center">
-                  <span
-                    className={cn(
-                      "size-2.5 rounded-full",
-                      player.data ? "bg-emerald-400" : "bg-amber-400",
-                    )}
-                  />
-                </div>
-              )}
-            </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="start"
-            side="top"
-            className="mb-2 w-64 border-white/10 bg-[#0E121B]/95 backdrop-blur-2xl"
-          >
-            {!player.data ? (
-              <DropdownMenuItem asChild className="cursor-pointer py-2.5">
-                <Link to="/connect" className="flex items-center gap-2 text-xs">
-                  <KeyRound className="size-3.5 text-primary" /> Connect your profile
-                </Link>
-              </DropdownMenuItem>
-            ) : (
-              <>
-                <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  Select Active Profile
-                </div>
-                {profiles.map((p) => (
-                  <DropdownMenuItem
-                    key={p.profileId}
-                    onSelect={() => account.save({ profileId: p.profileId })}
-                    className="flex items-center justify-between py-2.5 cursor-pointer"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-foreground">{p.cuteName}</p>
-                      <p className="text-[10px] text-muted-foreground capitalize">
-                        {p.gameMode || "Standard"} profile · {p.members} member
-                        {p.members > 1 ? "s" : ""}
-                      </p>
-                    </div>
-                    {activeProfile?.profileId === p.profileId && (
-                      <Check className="size-4 text-emerald-400 shrink-0" />
-                    )}
-                  </DropdownMenuItem>
-                ))}
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
     </aside>
   );
 }
@@ -404,9 +316,15 @@ function Header({
   onOpenNav: () => void;
   onCycleThemeRef: React.RefObject<(() => void) | null>;
 }) {
+  const account = useAccount();
   const player = usePlayer();
   const feed = useNotificationFeed();
   const [theme, setTheme] = useState<string>("dark");
+
+  const profiles = player.data?.profiles ?? [];
+  const activeProfile = profiles.find(
+    (p) => p.profileId === (account.profileId || player.data?.activeProfileId),
+  );
 
   useEffect(() => {
     setTheme(getTheme());
@@ -444,7 +362,7 @@ function Header({
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0B0E14]">
-      <div className="flex items-center gap-4 px-4 py-3.5 sm:px-6">
+      <div className="flex items-center gap-4 px-4 py-3 sm:px-6">
         <button
           onClick={onOpenSearch}
           className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-muted-foreground transition-none hover:border-white/20 hover:bg-white/10 active:opacity-80 sm:max-w-xl"
@@ -456,12 +374,71 @@ function Header({
           </kbd>
         </button>
 
-        <div className="ml-auto flex items-center gap-2">
-          {/* Connect CTA (only when no profile data yet) */}
-          {!player.data && (
+        <div className="ml-auto flex items-center gap-2.5">
+          {/* Top-Right Profile Switcher Dropdown (Connected) OR Connect Button (Not Connected) */}
+          {player.data ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger className="text-left outline-none">
+                <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1.5 transition-all duration-150 hover:bg-white/[0.12] hover:border-emerald-500/40 active:scale-[0.99] cursor-pointer">
+                  <PlayerHeadAvatar
+                    uuid={player.data.uuid}
+                    name={player.data.username || account.username}
+                    size={28}
+                    className="size-7 rounded-lg"
+                  />
+                  <div className="hidden sm:block text-left min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <RankBadge rankData={player.data.hypixelPlayer} size="sm" />
+                      <p className="truncate text-xs font-bold text-foreground max-w-[120px]">
+                        {player.data.username}
+                      </p>
+                    </div>
+                    <p className="flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
+                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      {activeProfile ? activeProfile.cuteName : "SkyBlock"}
+                    </p>
+                  </div>
+                  <ChevronDown className="size-3.5 text-muted-foreground shrink-0 ml-0.5" />
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                side="bottom"
+                className="mt-1.5 w-64 border-white/10 bg-[#0E121B]/95 backdrop-blur-2xl p-2 shadow-2xl"
+              >
+                <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Select Active Profile
+                </div>
+                {profiles.map((p) => (
+                  <DropdownMenuItem
+                    key={p.profileId}
+                    onSelect={() => account.save({ profileId: p.profileId })}
+                    className="flex items-center justify-between py-2 px-2.5 rounded-lg cursor-pointer hover:bg-white/10"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-foreground">{p.cuteName}</p>
+                      <p className="text-[10px] text-muted-foreground capitalize">
+                        {p.gameMode || "Standard"} profile · {p.members} member
+                        {p.members > 1 ? "s" : ""}
+                      </p>
+                    </div>
+                    {activeProfile?.profileId === p.profileId && (
+                      <Check className="size-4 text-emerald-400 shrink-0" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+                <div className="my-1 border-t border-white/10" />
+                <DropdownMenuItem asChild className="cursor-pointer py-2 px-2.5 rounded-lg hover:bg-white/10">
+                  <Link to="/connect" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-white">
+                    <KeyRound className="size-3.5 text-primary" /> Switch / Reconnect Account
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
             <Link
               to="/connect"
-              className="hidden items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/15 px-3 py-2 text-xs font-semibold text-primary transition-none hover:bg-primary/25 active:opacity-80 sm:flex"
+              className="flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/20 px-3.5 py-2 text-xs font-bold text-primary transition-all duration-150 hover:bg-primary/30 hover:scale-[1.02] active:scale-95 shadow-lg shadow-primary/10"
             >
               <KeyRound className="size-3.5" /> Connect
             </Link>
