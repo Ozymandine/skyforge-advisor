@@ -47,8 +47,8 @@ export function CharacterCanvas({
           height,
         });
 
-        // Camera setup & slow auto-rotation
-        viewer.camera.position.set(0, 0, 56);
+        // Set camera angle and slow smooth auto-rotation
+        viewer.camera.position.set(0, 0, 58);
         viewer.autoRotate = true;
         viewer.autoRotateSpeed = 0.5;
 
@@ -59,16 +59,16 @@ export function CharacterCanvas({
         // Build list of high-availability CORS skin URLs
         const skinUrls: string[] = [];
         if (skinUrl) skinUrls.push(skinUrl);
-        if (uuid) {
-          const cleanUuid = uuid.replace(/-/g, "");
-          skinUrls.push(`https://crafatar.com/skins/${cleanUuid}`);
-          skinUrls.push(`https://api.mineatar.io/skin/${cleanUuid}`);
-        }
         if (username) {
           skinUrls.push(`https://minotar.net/skin/${username}`);
           skinUrls.push(`https://mc-heads.net/skin/${username}`);
         }
-        skinUrls.push("https://crafatar.com/skins/853c80ef3c3749fdaa49938b607ad664"); // Steve fallback
+        if (uuid && uuid.length >= 32) {
+          const cleanUuid = uuid.replace(/-/g, "");
+          skinUrls.push(`https://crafatar.com/skins/${cleanUuid}`);
+          skinUrls.push(`https://api.mineatar.io/skin/${cleanUuid}`);
+        }
+        skinUrls.push("https://mc-heads.net/skin/MHF_Steve");
 
         // Attempt loading skin with fallbacks
         let loaded = false;
@@ -78,11 +78,11 @@ export function CharacterCanvas({
             loaded = true;
             break;
           } catch {
-            // Try next skin provider
+            // Try next provider
           }
         }
 
-        // Attach true 3D armor onto the character mesh
+        // Attach true 3D armor meshes onto player model
         if (armorItems && armorItems.length > 0) {
           apply3DArmor(viewer, armorItems);
         }
@@ -106,9 +106,9 @@ export function CharacterCanvas({
       }
       viewerRef.current = null;
     };
-  }, [uuid, username, skinUrl, armorItems, width, height]);
+  }, [uuid, username, skinUrl, width, height]);
 
-  // Update armor dynamically if armorItems prop changes
+  // Update 3D armor when armor items change
   useEffect(() => {
     if (viewerRef.current && armorItems) {
       apply3DArmor(viewerRef.current, armorItems);
