@@ -185,7 +185,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         <button
           onClick={onToggle}
           aria-label="Toggle sidebar"
-          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-2 text-muted-foreground transition-all duration-150 hover:bg-white/15 hover:text-foreground active:bg-white/20"
+          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-2 text-muted-foreground transition-all duration-150 hover:transition-none hover:bg-white/15 hover:text-foreground hover:border-white/20 active:bg-white/20"
         >
           {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
         </button>
@@ -206,17 +206,17 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "group relative flex h-10 items-center gap-3 rounded-xl px-3.5 text-xs font-semibold text-white/75 select-none cursor-pointer transition-all duration-150 border border-transparent",
-                      "hover:bg-white/[0.12] hover:text-white hover:border-white/10",
+                      "group relative flex h-10 items-center gap-3 rounded-xl px-3.5 text-xs font-semibold text-white/75 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
+                      "hover:transition-none hover:bg-white/[0.14] hover:text-white hover:border-white/15 hover:translate-x-1 hover:shadow-md hover:shadow-black/20",
                       "active:scale-[0.98] active:bg-white/[0.2]",
-                      collapsed && "justify-center px-0",
+                      collapsed && "justify-center px-0 hover:translate-x-0",
                     )}
                     activeProps={{
                       className:
                         "bg-white/[0.16] text-white border-white/25 font-bold shadow-sm ring-1 ring-white/15",
                     }}
                   >
-                    <item.icon className="size-4 shrink-0 text-white/60 group-hover:text-white transition-colors duration-150" />
+                    <item.icon className="size-4 shrink-0 text-white/60 group-hover:text-white group-hover:transition-none transition-colors duration-150" />
                     {!collapsed && <span className="truncate">{item.label}</span>}
                   </Link>
                 </li>
@@ -379,7 +379,7 @@ function Header({
           {player.data ? (
             <DropdownMenu>
               <DropdownMenuTrigger className="text-left outline-none">
-                <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1.5 transition-all duration-150 hover:bg-white/[0.12] hover:border-emerald-500/40 active:scale-[0.99] cursor-pointer">
+                <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1.5 transition-all duration-150 hover:transition-none hover:bg-white/[0.14] hover:border-emerald-500/60 hover:shadow-lg hover:shadow-emerald-500/10 active:scale-[0.99] cursor-pointer will-change-transform">
                   <PlayerHeadAvatar
                     uuid={player.data.uuid}
                     name={player.data.username || account.username}
