@@ -34,6 +34,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SimulatorRouteImport } from './routes/simulator'
 import { Route as SkillsRouteImport } from './routes/skills'
 import { Route as WikiRouteImport } from './routes/wiki'
+import { Route as ProfileUsernameRouteImport } from './routes/profile.$username'
 import { Route as WikiItemIdRouteImport } from './routes/wiki.$itemId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -161,6 +162,11 @@ const WikiRoute = WikiRouteImport.update({
   path: '/wiki',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileUsernameRoute = ProfileUsernameRouteImport.update({
+  id: '/profile/$username',
+  path: '/profile/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WikiItemIdRoute = WikiItemIdRouteImport.update({
   id: '/$itemId',
   path: '/$itemId',
@@ -193,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/simulator': typeof SimulatorRoute
   '/skills': typeof SkillsRoute
   '/wiki': typeof WikiRouteWithChildren
+  '/profile/$username': typeof ProfileUsernameRoute
   '/wiki/$itemId': typeof WikiItemIdRoute
 }
 export interface FileRoutesByTo {
@@ -221,6 +228,7 @@ export interface FileRoutesByTo {
   '/simulator': typeof SimulatorRoute
   '/skills': typeof SkillsRoute
   '/wiki': typeof WikiRouteWithChildren
+  '/profile/$username': typeof ProfileUsernameRoute
   '/wiki/$itemId': typeof WikiItemIdRoute
 }
 export interface FileRoutesById {
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/simulator': typeof SimulatorRoute
   '/skills': typeof SkillsRoute
   '/wiki': typeof WikiRouteWithChildren
+  '/profile/$username': typeof ProfileUsernameRoute
   '/wiki/$itemId': typeof WikiItemIdRoute
 }
 export interface FileRouteTypes {
@@ -280,6 +289,7 @@ export interface FileRouteTypes {
     | '/simulator'
     | '/skills'
     | '/wiki'
+    | '/profile/$username'
     | '/wiki/$itemId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -308,6 +318,7 @@ export interface FileRouteTypes {
     | '/simulator'
     | '/skills'
     | '/wiki'
+    | '/profile/$username'
     | '/wiki/$itemId'
   id:
     | '__root__'
@@ -336,6 +347,7 @@ export interface FileRouteTypes {
     | '/simulator'
     | '/skills'
     | '/wiki'
+    | '/profile/$username'
     | '/wiki/$itemId'
   fileRoutesById: FileRoutesById
 }
@@ -365,6 +377,7 @@ export interface RootRouteChildren {
   SimulatorRoute: typeof SimulatorRoute
   SkillsRoute: typeof SkillsRoute
   WikiRoute: typeof WikiRouteWithChildren
+  ProfileUsernameRoute: typeof ProfileUsernameRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -544,6 +557,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WikiRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/$username': {
+      id: '/profile/$username'
+      path: '/profile/$username'
+      fullPath: '/profile/$username'
+      preLoaderRoute: typeof ProfileUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/wiki/$itemId': {
       id: '/wiki/$itemId'
       path: '/$itemId'
@@ -590,6 +610,7 @@ const rootRouteChildren: RootRouteChildren = {
   SimulatorRoute: SimulatorRoute,
   SkillsRoute: SkillsRoute,
   WikiRoute: WikiRouteWithChildren,
+  ProfileUsernameRoute: ProfileUsernameRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
