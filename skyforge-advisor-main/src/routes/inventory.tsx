@@ -236,8 +236,8 @@ function Inventory() {
           <div className="space-y-4 lg:col-span-1">
             {/* Top Right: Equipped 3D Character & Armor Showcase */}
             <EquippedArmorShowcase
-              uuid={data.uuid}
-              username={data.username}
+              uuid={data?.uuid}
+              username={data?.username}
               armorItems={armorContainer?.items}
               equipmentItems={equipmentContainer?.items}
             />

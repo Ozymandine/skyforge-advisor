@@ -29,6 +29,13 @@ export function CharacterCanvas({
   const viewerRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const cleanName = username || "MHF_Steve";
+  const primarySkin =
+    skinUrl ||
+    (username ? `https://minotar.net/skin/${username}` : null) ||
+    (uuid ? `https://mc-heads.net/skin/${uuid}` : null) ||
+    `https://minotar.net/skin/${cleanName}`;
+
   useEffect(() => {
     if (!canvasRef.current || typeof window === "undefined") return;
 
@@ -45,6 +52,7 @@ export function CharacterCanvas({
           canvas: canvasRef.current,
           width,
           height,
+          skin: primarySkin,
         });
 
         // Set camera angle and slow smooth auto-rotation
@@ -56,40 +64,23 @@ export function CharacterCanvas({
         viewer.animation = new skinview3d.WalkingAnimation();
         viewer.animation.speed = 0.4;
 
-        // Build list of high-availability CORS skin URLs
-        const skinUrls: string[] = [];
-        if (skinUrl) skinUrls.push(skinUrl);
-        if (username) {
-          skinUrls.push(`https://minotar.net/skin/${username}`);
-          skinUrls.push(`https://mc-heads.net/skin/${username}`);
-        }
-        if (uuid && uuid.length >= 32) {
-          const cleanUuid = uuid.replace(/-/g, "");
-          skinUrls.push(`https://crafatar.com/skins/${cleanUuid}`);
-          skinUrls.push(`https://api.mineatar.io/skin/${cleanUuid}`);
-        }
-        skinUrls.push("https://mc-heads.net/skin/MHF_Steve");
-
-        // Attempt loading skin with fallbacks
-        let loaded = false;
-        for (const url of skinUrls) {
-          try {
-            await viewer.loadSkin(url);
-            loaded = true;
-            break;
-          } catch {
-            // Try next provider
-          }
+        // Ensure skin is visible
+        if (viewer.playerObject?.skin) {
+          viewer.playerObject.skin.visible = true;
         }
 
         // Attach true 3D armor meshes onto player model
         if (armorItems && armorItems.length > 0) {
-          apply3DArmor(viewer, armorItems);
+          try {
+            apply3DArmor(viewer, armorItems);
+          } catch (e) {
+            console.warn("Could not attach 3D armor meshes:", e);
+          }
         }
 
         if (isMounted) {
           viewerRef.current = viewer;
-          setIsLoading(!loaded);
+          setIsLoading(false);
         }
       } catch (err) {
         console.error("Failed to initialize 3D Character Canvas:", err);
@@ -106,12 +97,16 @@ export function CharacterCanvas({
       }
       viewerRef.current = null;
     };
-  }, [uuid, username, skinUrl, width, height]);
+  }, [primarySkin, width, height]);
 
   // Update 3D armor when armor items change
   useEffect(() => {
     if (viewerRef.current && armorItems) {
-      apply3DArmor(viewerRef.current, armorItems);
+      try {
+        apply3DArmor(viewerRef.current, armorItems);
+      } catch (e) {
+        console.warn("Could not update 3D armor:", e);
+      }
     }
   }, [armorItems]);
 

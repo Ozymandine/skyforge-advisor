@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Shield, Sparkles } from "lucide-react";
+import { Shield } from "lucide-react";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { MinecraftTooltip } from "@/components/ui/minecraft-tooltip";
 import { CharacterCanvas } from "@/components/ui/character-canvas";
@@ -25,50 +25,55 @@ export function EquippedArmorShowcase({
   activeWeapon,
   className,
 }: EquippedArmorShowcaseProps) {
-  // Find equipped armor by slot or keyword
-  // In vanilla/Hypixel: Slot 3 = Helmet, Slot 2 = Chestplate, Slot 1 = Leggings, Slot 0 = Boots
+  const items = Array.isArray(armorItems) ? armorItems : [];
+
+  // Find equipped armor by slot or keyword (Slot 3=Helmet, 2=Chest, 1=Leggings, 0=Boots)
   const helmet =
-    armorItems.find(
+    items.find(
       (i) =>
-        i.slot === 3 ||
-        i.name.toLowerCase().includes("helmet") ||
-        i.name.toLowerCase().includes("crown") ||
-        i.name.toLowerCase().includes("head") ||
-        i.name.toLowerCase().includes("goggles") ||
-        i.name.toLowerCase().includes("fedora") ||
-        i.name.toLowerCase().includes("mask") ||
-        i.name.toLowerCase().includes("hood") ||
-        i.name.toLowerCase().includes("cap")
+        i &&
+        (i.slot === 3 ||
+          i.name?.toLowerCase().includes("helmet") ||
+          i.name?.toLowerCase().includes("crown") ||
+          i.name?.toLowerCase().includes("head") ||
+          i.name?.toLowerCase().includes("goggles") ||
+          i.name?.toLowerCase().includes("fedora") ||
+          i.name?.toLowerCase().includes("mask") ||
+          i.name?.toLowerCase().includes("hood") ||
+          i.name?.toLowerCase().includes("cap"))
     ) || null;
 
   const chestplate =
-    armorItems.find(
+    items.find(
       (i) =>
-        i.slot === 2 ||
-        i.name.toLowerCase().includes("chestplate") ||
-        i.name.toLowerCase().includes("tunic") ||
-        i.name.toLowerCase().includes("shirt") ||
-        i.name.toLowerCase().includes("jacket") ||
-        i.name.toLowerCase().includes("cloak") ||
-        i.name.toLowerCase().includes("tuxedo")
+        i &&
+        (i.slot === 2 ||
+          i.name?.toLowerCase().includes("chestplate") ||
+          i.name?.toLowerCase().includes("tunic") ||
+          i.name?.toLowerCase().includes("shirt") ||
+          i.name?.toLowerCase().includes("jacket") ||
+          i.name?.toLowerCase().includes("cloak") ||
+          i.name?.toLowerCase().includes("tuxedo"))
     ) || null;
 
   const leggings =
-    armorItems.find(
+    items.find(
       (i) =>
-        i.slot === 1 ||
-        i.name.toLowerCase().includes("leggings") ||
-        i.name.toLowerCase().includes("pants") ||
-        i.name.toLowerCase().includes("trousers")
+        i &&
+        (i.slot === 1 ||
+          i.name?.toLowerCase().includes("leggings") ||
+          i.name?.toLowerCase().includes("pants") ||
+          i.name?.toLowerCase().includes("trousers"))
     ) || null;
 
   const boots =
-    armorItems.find(
+    items.find(
       (i) =>
-        i.slot === 0 ||
-        i.name.toLowerCase().includes("boots") ||
-        i.name.toLowerCase().includes("shoes") ||
-        i.name.toLowerCase().includes("sandals")
+        i &&
+        (i.slot === 0 ||
+          i.name?.toLowerCase().includes("boots") ||
+          i.name?.toLowerCase().includes("shoes") ||
+          i.name?.toLowerCase().includes("sandals"))
     ) || null;
 
   return (
@@ -96,18 +101,16 @@ export function EquippedArmorShowcase({
       <div className="mt-3 flex items-center justify-between gap-2">
         {/* Left Side: Helmet & Chestplate */}
         <div className="flex flex-col gap-2">
-          {/* Helmet Slot */}
           <ArmorSlotCard item={helmet} label="Helmet" defaultIcon="🪖" />
-
-          {/* Chestplate Slot */}
           <ArmorSlotCard item={chestplate} label="Chestplate" defaultIcon="🥋" />
         </div>
 
-        {/* Center: 3D Animated Character Model */}
+        {/* Center: 3D Animated Character Model with Equipped 3D Armor */}
         <div className="flex flex-1 items-center justify-center">
           <CharacterCanvas
             uuid={uuid}
             username={username}
+            armorItems={items}
             width={140}
             height={180}
             className="w-full"
@@ -116,10 +119,7 @@ export function EquippedArmorShowcase({
 
         {/* Right Side: Leggings & Boots */}
         <div className="flex flex-col gap-2">
-          {/* Leggings Slot */}
           <ArmorSlotCard item={leggings} label="Leggings" defaultIcon="👖" />
-
-          {/* Boots Slot */}
           <ArmorSlotCard item={boots} label="Boots" defaultIcon="👢" />
         </div>
       </div>
@@ -160,4 +160,3 @@ function ArmorSlotCard({
     </MinecraftTooltip>
   );
 }
-
