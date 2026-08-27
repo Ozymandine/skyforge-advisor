@@ -68,19 +68,14 @@ const nav = [
     group: "Overview",
     items: [
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/advisor", label: "Autonomous Advisor", icon: Bot },
-      { to: "/simulator", label: "Damage & Gear Lab", icon: Swords },
-      { to: "/bosses", label: "Boss Tactics & Kuudra", icon: Skull },
-      { to: "/net-worth", label: "Net Worth", icon: Coins },
     ],
   },
   {
     group: "Progression",
     items: [
-      { to: "/skills", label: "Skills & Dungeons", icon: Sparkles },
-      { to: "/garden", label: "Garden & Farming", icon: Sprout },
+      { to: "/skills", label: "Skills", icon: Sparkles },
       { to: "/collections", label: "Collections", icon: Compass },
-      { to: "/inventory", label: "Inventory & Pets", icon: Boxes },
+      { to: "/inventory", label: "Inventory", icon: Boxes },
     ],
   },
   {
@@ -88,17 +83,13 @@ const nav = [
     items: [
       { to: "/bazaar", label: "Bazaar", icon: TrendingUp },
       { to: "/auction-house", label: "Auction House", icon: Hammer },
-      { to: "/flips", label: "Market Flips & Radar", icon: Target },
-      { to: "/minions", label: "Minion Engine & Claims", icon: Bot },
     ],
   },
   {
     group: "Tools",
     items: [
-      { to: "/calendar", label: "Event Calendar", icon: Calendar },
+      { to: "/calendar", label: "Calendar", icon: Calendar },
       { to: "/compare", label: "Compare Profiles", icon: Swords },
-      { to: "/crafting", label: "Crafting Calculator", icon: Hammer },
-      { to: "/goals", label: "Goals", icon: Target },
       { to: "/analytics", label: "Analytics", icon: LineChart },
       { to: "/wiki", label: "Wiki", icon: BookOpen },
     ],
@@ -174,16 +165,16 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       )}
     >
       {/* Large Centered Custom Gradient Wordmark */}
-      <div className="flex flex-col items-center justify-center px-4 pt-7 pb-4">
+      <div className="flex flex-col items-center justify-center px-4 pt-4 pb-2">
         {!collapsed ? (
           <div className="w-full text-center">
-            <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-3xl tracking-[0.18em] text-transparent select-none drop-shadow-[0_2px_20px_rgba(52,211,153,0.45)]">
+            <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-2xl tracking-[0.18em] text-transparent select-none drop-shadow-[0_2px_20px_rgba(52,211,153,0.45)]">
               SKYFORGE
             </span>
           </div>
         ) : (
           <div className="flex w-full justify-center">
-            <span className="bg-gradient-to-br from-emerald-400 to-teal-300 bg-clip-text font-black text-2xl text-transparent select-none">
+            <span className="bg-gradient-to-br from-emerald-400 to-teal-300 bg-clip-text font-black text-xl text-transparent select-none">
               SF
             </span>
           </div>
@@ -194,16 +185,16 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         <button
           onClick={onToggle}
           aria-label="Toggle sidebar"
-          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-3 text-muted-foreground transition-none hover:bg-white/15 hover:text-foreground active:bg-white/20"
+          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-1.5 text-muted-foreground transition-none hover:bg-white/15 hover:text-foreground active:bg-white/20"
         >
           {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
         </button>
       </div>
 
-      <nav className="scroll-slim mt-5 flex-1 overflow-y-auto px-2.5 pb-4">
+      <nav className="scroll-slim mt-2 flex-1 overflow-y-auto px-2.5 pb-2">
         {nav.map((section) => (
-          <div key={section.group} className="mb-4">
-            {!collapsed && <p className="eyebrow px-3 pb-1.5">{section.group}</p>}
+          <div key={section.group} className="mb-2">
+            {!collapsed && <p className="eyebrow px-3 pb-1 text-[10px]">{section.group}</p>}
             <ul className="space-y-0.5">
               {section.items.map((item) => (
                 <li key={item.to}>
@@ -211,8 +202,8 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "group relative flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-white/70 transition-none select-none hover:bg-white/[0.14] hover:text-white active:bg-white/[0.22]",
-                      collapsed && "justify-center px-0 py-3",
+                      "group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-white/70 transition-none select-none hover:bg-white/[0.14] hover:text-white active:bg-white/[0.22]",
+                      collapsed && "justify-center px-0 py-2",
                     )}
                     activeProps={{
                       className:
@@ -230,7 +221,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       </nav>
 
       {/* Unified Bottom-Left Profile Switcher */}
-      <div className="p-4">
+      <div className="p-3 border-t border-white/10">
         <DropdownMenu>
           <DropdownMenuTrigger className="w-full text-left outline-none">
             <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] p-3.5 transition-none hover:bg-white/[0.12] hover:border-emerald-500/40 active:bg-white/[0.18]">
