@@ -13,6 +13,7 @@ import {
 } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { MinecraftTooltip } from "@/components/ui/minecraft-tooltip";
+import { MinecraftItemCard } from "@/components/ui/minecraft-item-card";
 import { playClickSound, playSlotHoverSound, playSuccessChime } from "@/lib/sound-effects";
 import { RenderMinecraftLore } from "@/lib/minecraft-text";
 import { usePlayer } from "@/hooks/use-account";
@@ -219,129 +220,15 @@ function Inventory() {
                       </div>
                     </Panel>
 
-                    <Panel className="bg-slate-950/85 lg:col-span-1">
+                    <div className="lg:col-span-1">
                       {item ? (
-                        <>
-                          <div className="flex items-center gap-3">
-                            <ItemIcon id={item.id} name={item.name} className="size-12" />
-                            <div className="min-w-0">
-                              <h3 className="truncate text-lg font-semibold">{item.name}</h3>
-                              <RarityTag rarity={item.rarity} />
-                            </div>
-                          </div>
-                          {item.count > 1 && (
-                            <p className="mt-2 text-sm text-muted-foreground">Quantity: {item.count}</p>
-                          )}
-
-                          {/* Structured tooltip: stat block, flavor text, ability */}
-                          {(() => {
-                            const statLines = item.lore.filter((l) => /^[^:]+:\s*\S/.test(l));
-                            const flavorLines = item.lore.filter(
-                              (l) => l.trim() && !/^[^:]+:\s*\S/.test(l),
-                            );
-                            return (
-                              <>
-                                {statLines.length > 0 && (
-                                  <dl className="mt-4 space-y-1.5 rounded-xl border border-white/10 bg-black/30 p-3">
-                                    {statLines.map((line, index) => {
-                                      const [label, ...rest] = line.split(":");
-                                      return (
-                                        <div
-                                          key={index}
-                                          className="flex items-baseline justify-between gap-3 font-mono text-xs"
-                                        >
-                                          <dt className="shrink-0 text-muted-foreground">{label}:</dt>
-                                          <dd className="min-w-0 text-right">
-                                            <RenderMinecraftLore text={rest.join(":").trim()} />
-                                          </dd>
-                                        </div>
-                                      );
-                                    })}
-                                  </dl>
-                                )}
-
-                                {flavorLines.length > 0 && (
-                                  <div className="mt-3 space-y-1.5 text-xs leading-relaxed text-muted-foreground">
-                                    {flavorLines.map((line, index) => (
-                                      <p key={index}>
-                                        <RenderMinecraftLore text={line} />
-                                      </p>
-                                    ))}
-                                  </div>
-                                )}
-
-                                {/* Enchants, reforge, stars, runes, scrolls badges */}
-                                {item.enchantments && Object.keys(item.enchantments).length > 0 && (
-                                  <div className="mt-4 border-t border-white/10 pt-3">
-                                    <p className="text-xs font-semibold text-muted-foreground">
-                                      Enchantments ({Object.keys(item.enchantments).length}):
-                                    </p>
-                                    <div className="mt-1.5 flex flex-wrap gap-1">
-                                      {Object.entries(item.enchantments).map(([name, level]) => (
-                                        <span
-                                          key={name}
-                                          className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-[11px] text-primary"
-                                        >
-                                          {name.replace(/_/g, " ")} {level}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {item.reforge && (
-                                  <p className="mt-3 text-xs">
-                                    <span className="text-muted-foreground">Reforge:</span>{" "}
-                                    <span className="font-semibold text-primary">{item.reforge}</span>
-                                  </p>
-                                )}
-                                {item.stars && item.stars > 0 ? (
-                                  <p className="text-xs">
-                                    <span className="text-muted-foreground">Stars:</span>{" "}
-                                    <span className="font-semibold text-amber-300">
-                                      {"★".repeat(item.stars)}
-                                    </span>
-                                  </p>
-                                ) : null}
-                                {item.hotPotatoBooks && item.hotPotatoBooks > 0 ? (
-                                  <p className="text-xs">
-                                    <span className="text-muted-foreground">Hot Potato Books:</span>{" "}
-                                    <span className="font-semibold">{item.hotPotatoBooks}/10</span>
-                                  </p>
-                                ) : null}
-                                {item.gems && Object.keys(item.gems).length > 0 && (
-                                  <div className="mt-2 border-t border-white/10 pt-2">
-                                    <p className="text-xs font-semibold text-muted-foreground">
-                                      Gemstones:
-                                    </p>
-                                    <div className="mt-1 flex flex-wrap gap-1">
-                                      {Object.entries(item.gems).map(([slot, quality]) => (
-                                        <span
-                                          key={slot}
-                                          className="rounded bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
-                                        >
-                                          {slot}: {quality}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                                {item.abilityScrolls && item.abilityScrolls.length > 0 && (
-                                  <p className="text-xs">
-                                    <span className="text-muted-foreground">Scrolls:</span>{" "}
-                                    <span className="font-semibold">
-                                      {item.abilityScrolls.join(", ")}
-                                    </span>
-                                  </p>
-                                )}
-                              </>
-                            );
-                          })()}
-                        </>
+                        <MinecraftItemCard item={item} />
                       ) : (
-                        <p className="text-sm text-muted-foreground">Select a slot to inspect it.</p>
+                        <Panel className="bg-slate-950/85 text-center py-10">
+                          <p className="text-sm text-muted-foreground">Select a slot to inspect it.</p>
+                        </Panel>
                       )}
-                    </Panel>
+                    </div>
                   </div>
                 </>
               ) : null}

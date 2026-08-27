@@ -78,11 +78,17 @@ export function MinecraftTooltip({
           {/* Minecraft Lore Content */}
           {loreLines.length > 0 && (
             <div className="mt-2 space-y-0.5 font-mono text-[11px] leading-snug">
-              {loreLines.map((line, idx) => (
-                <div key={idx} className="min-h-[14px]">
-                  <RenderMinecraftLore text={line} />
-                </div>
-              ))}
+              {loreLines.map((line, idx) => {
+                const isBlank = !line || line.trim() === "";
+                if (isBlank) {
+                  return <div key={idx} className="h-1.5" />;
+                }
+                return (
+                  <div key={idx} className="min-h-[14px]">
+                    <RenderMinecraftLore text={line} />
+                  </div>
+                );
+              })}
             </div>
           )}
 

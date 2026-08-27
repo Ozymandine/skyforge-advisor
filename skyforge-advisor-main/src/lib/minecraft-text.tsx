@@ -29,9 +29,12 @@ const MC_FORMATS: Record<string, string> = {
 function cleanGlyphs(str: string): string {
   if (!str) return "";
   return str
-    .replace(/[\u25A0\u25A1\uFFFD]/g, "✦")
-    .replace(/\[\]/g, "[✦]")
-    .replace(/Speed for/g, "✦ Speed for");
+    .replace(/[\u25A0\u25A1\uFFFD\u007F-\u009F]/g, "✦")
+    .replace(/\[✦\]/g, "[✦]")
+    .replace(/\[\s*\]/g, "[✦]")
+    .replace(/✦\s*✦/g, "✦")
+    .replace(/✦{2,}/g, "✦")
+    .replace(/\+\s*(\d+)\s*✦?\s*✦?\s*Speed/gi, "+$1 ✦ Speed");
 }
 
 export function RenderMinecraftLore({ text }: { text: string }) {
