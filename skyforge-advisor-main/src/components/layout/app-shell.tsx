@@ -196,7 +196,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         )}
       </div>
 
-      <nav className="flex flex-1 flex-col justify-between overflow-hidden px-2.5 pt-1 pb-2">
+      <nav className="flex flex-1 flex-col justify-between overflow-hidden px-2.5 py-2.5">
         {nav.map((section) => (
           <div key={section.group} className="flex flex-col">
             {!collapsed && (
@@ -204,14 +204,14 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                 {section.group}
               </p>
             )}
-            <ul className="space-y-0.5">
+            <ul className="space-y-1">
               {section.items.map((item) => (
                 <li key={item.to}>
                   <Link
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "group relative flex h-8.5 items-center gap-2.5 rounded-xl px-2.5 text-xs font-medium text-white/70 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
+                      "group relative flex h-9 items-center gap-2.5 rounded-xl px-2.5 text-xs font-medium text-white/70 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
                       "hover:transition-none hover:bg-white/[0.08] hover:text-white hover:border-white/10 hover:translate-x-0.5",
                       "active:scale-[0.98] active:bg-white/[0.15]",
                       collapsed && "justify-center px-0 hover:translate-x-0",
