@@ -165,38 +165,31 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         collapsed ? "w-[68px]" : "w-[204px]",
       )}
     >
-      {/* Header with Title and Integrated Toggle */}
-      <div className="flex items-center justify-between px-3 pt-3.5 pb-1 transition-all duration-300">
+      {/* Centered Wordmark */}
+      <div className="flex flex-col items-center justify-center px-3 pt-4 pb-2 transition-all duration-300">
         {!collapsed ? (
-          <div className="flex items-center justify-between w-full">
-            <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-lg tracking-[0.16em] text-transparent select-none drop-shadow-[0_2px_15px_rgba(52,211,153,0.45)]">
-              SKYFORGE
-            </span>
-            <button
-              onClick={onToggle}
-              aria-label="Collapse sidebar"
-              className="flex size-7 items-center justify-center rounded-lg text-white/50 transition-all hover:bg-white/10 hover:text-white active:bg-white/15 cursor-pointer"
-            >
-              <PanelLeftClose className="size-4" />
-            </button>
-          </div>
+          <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-xl tracking-[0.16em] text-transparent select-none drop-shadow-[0_2px_15px_rgba(52,211,153,0.45)]">
+            SKYFORGE
+          </span>
         ) : (
-          <div className="flex flex-col items-center gap-1.5 w-full">
-            <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-base tracking-wider text-transparent select-none drop-shadow-[0_2px_12px_rgba(52,211,153,0.45)]">
-              SF
-            </span>
-            <button
-              onClick={onToggle}
-              aria-label="Expand sidebar"
-              className="flex size-7 items-center justify-center rounded-lg text-white/50 transition-all hover:bg-white/10 hover:text-white active:bg-white/15 cursor-pointer"
-            >
-              <PanelLeftOpen className="size-4" />
-            </button>
-          </div>
+          <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-base tracking-wider text-transparent select-none drop-shadow-[0_2px_12px_rgba(52,211,153,0.45)]">
+            SF
+          </span>
         )}
       </div>
 
-      <nav className="flex flex-1 flex-col justify-between overflow-hidden px-2.5 py-2.5">
+      {/* Big Pill Toggle Button */}
+      <div className="px-3 pb-1">
+        <button
+          onClick={onToggle}
+          aria-label="Toggle sidebar"
+          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-1.5 text-muted-foreground transition-all duration-150 hover:transition-none hover:bg-white/15 hover:text-foreground hover:border-white/20 active:bg-white/20 cursor-pointer"
+        >
+          {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+        </button>
+      </div>
+
+      <nav className="flex flex-1 flex-col justify-between overflow-hidden px-2.5 pt-1.5 pb-2">
         {nav.map((section) => (
           <div key={section.group} className="flex flex-col">
             {!collapsed && (
@@ -204,14 +197,14 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                 {section.group}
               </p>
             )}
-            <ul className="space-y-1">
+            <ul className="space-y-0.5">
               {section.items.map((item) => (
                 <li key={item.to}>
                   <Link
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "group relative flex h-9 items-center gap-2.5 rounded-xl px-2.5 text-xs font-medium text-white/70 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
+                      "group relative flex h-8.5 items-center gap-2.5 rounded-xl px-2.5 text-xs font-medium text-white/70 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
                       "hover:transition-none hover:bg-white/[0.08] hover:text-white hover:border-white/10 hover:translate-x-0.5",
                       "active:scale-[0.98] active:bg-white/[0.15]",
                       collapsed && "justify-center px-0 hover:translate-x-0",
