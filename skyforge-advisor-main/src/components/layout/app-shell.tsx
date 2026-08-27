@@ -165,16 +165,16 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       )}
     >
       {/* Large Centered Custom Gradient Wordmark */}
-      <div className="flex flex-col items-center justify-center px-4 pt-6 pb-3">
+      <div className="flex flex-col items-center justify-center px-4 pt-3 pb-1">
         {!collapsed ? (
           <div className="w-full text-center">
-            <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-3xl tracking-[0.18em] text-transparent select-none drop-shadow-[0_2px_20px_rgba(52,211,153,0.45)]">
+            <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-2xl tracking-[0.18em] text-transparent select-none drop-shadow-[0_2px_20px_rgba(52,211,153,0.45)]">
               SKYFORGE
             </span>
           </div>
         ) : (
           <div className="flex w-full justify-center">
-            <span className="bg-gradient-to-br from-emerald-400 to-teal-300 bg-clip-text font-black text-2xl text-transparent select-none">
+            <span className="bg-gradient-to-br from-emerald-400 to-teal-300 bg-clip-text font-black text-xl text-transparent select-none">
               SF
             </span>
           </div>
@@ -185,36 +185,38 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         <button
           onClick={onToggle}
           aria-label="Toggle sidebar"
-          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-2 text-muted-foreground transition-none hover:bg-white/15 hover:text-foreground active:bg-white/20"
+          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-1 text-muted-foreground transition-all duration-150 ease-out hover:bg-white/15 hover:text-foreground active:scale-95 active:bg-white/20"
         >
           {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
         </button>
       </div>
 
-      <nav className="scroll-slim mt-3 flex-1 overflow-y-auto px-3 pb-3 space-y-3">
+      <nav className="scroll-slim mt-1.5 flex-1 overflow-y-auto px-2.5 pb-1 flex flex-col justify-between">
         {nav.map((section) => (
-          <div key={section.group} className="mb-3">
+          <div key={section.group} className="mb-1">
             {!collapsed && (
-              <p className="eyebrow px-3 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-white/40">
+              <p className="eyebrow px-3 pb-0.5 text-[10px] font-bold uppercase tracking-wider text-white/40">
                 {section.group}
               </p>
             )}
-            <ul className="space-y-1">
+            <ul className="space-y-0.5">
               {section.items.map((item) => (
                 <li key={item.to}>
                   <Link
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "group relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-white/75 transition-none select-none hover:bg-white/[0.14] hover:text-white active:bg-white/[0.22]",
-                      collapsed && "justify-center px-0 py-2.5",
+                      "group relative flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs font-semibold text-white/70 select-none cursor-pointer transition-all duration-150 ease-out border border-transparent",
+                      "hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/30 hover:shadow-[0_0_12px_rgba(52,211,153,0.12)]",
+                      "active:scale-[0.98] active:bg-emerald-500/20",
+                      collapsed && "justify-center px-0 py-1.5",
                     )}
                     activeProps={{
                       className:
-                        "bg-white/[0.18] text-white ring-1 ring-white/25 font-bold shadow-sm",
+                        "bg-emerald-500/15 text-emerald-300 border-emerald-500/40 font-bold shadow-[0_0_15px_rgba(52,211,153,0.15)] ring-1 ring-emerald-500/20",
                     }}
                   >
-                    <item.icon className="size-4 shrink-0 transition-none text-white/60 group-hover:text-emerald-300" />
+                    <item.icon className="size-4 shrink-0 text-white/50 group-hover:text-emerald-400 group-hover:scale-110 transition-transform duration-150 ease-out" />
                     {!collapsed && <span className="truncate">{item.label}</span>}
                   </Link>
                 </li>
@@ -225,10 +227,10 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       </nav>
 
       {/* Unified Bottom-Left Profile Switcher */}
-      <div className="p-3.5 border-t border-white/10">
+      <div className="p-2 border-t border-white/10">
         <DropdownMenu>
           <DropdownMenuTrigger className="w-full text-left outline-none">
-            <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] p-3.5 transition-none hover:bg-white/[0.12] hover:border-emerald-500/40 active:bg-white/[0.18]">
+            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] p-2.5 transition-all duration-150 ease-out hover:bg-white/[0.12] hover:border-emerald-500/40 active:scale-[0.99] active:bg-white/[0.18] cursor-pointer">
               {!collapsed ? (
                 <>
                   <div className="flex items-center gap-3 min-w-0">
@@ -999,7 +1001,7 @@ export function Panel({ className, children }: { className?: string; children: R
   return (
     <section
       className={cn(
-        "panel-card rounded-3xl p-6 shadow-xl transition-colors duration-75 hover:border-white/20",
+        "panel-card rounded-3xl p-6 shadow-xl transition-all duration-200 ease-out hover:border-emerald-500/30 hover:shadow-2xl hover:shadow-emerald-500/[0.04]",
         className,
       )}
     >
