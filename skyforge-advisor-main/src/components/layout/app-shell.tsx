@@ -192,11 +192,11 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         </button>
       </div>
 
-      <nav className="flex flex-1 flex-col justify-between overflow-hidden px-3 py-3">
+      <nav className="flex-1 overflow-hidden px-3 py-2 space-y-3">
         {nav.map((section) => (
-          <div key={section.group} className="flex flex-col">
+          <div key={section.group} className="space-y-1">
             {!collapsed && (
-              <p className="eyebrow px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-white/40">
+              <p className="eyebrow px-3 text-[10px] font-bold uppercase tracking-wider text-white/40">
                 {section.group}
               </p>
             )}
@@ -207,7 +207,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "group relative flex h-9.5 items-center gap-3 rounded-xl px-3.5 text-xs font-semibold text-white/75 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
+                      "group relative flex h-8.5 items-center gap-3 rounded-xl px-3 text-xs font-semibold text-white/75 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
                       "hover:transition-none hover:bg-white/[0.14] hover:text-white hover:border-white/15 hover:translate-x-1 hover:shadow-md hover:shadow-black/20",
                       "active:scale-[0.98] active:bg-white/[0.2]",
                       collapsed && "justify-center px-0 hover:translate-x-0",
