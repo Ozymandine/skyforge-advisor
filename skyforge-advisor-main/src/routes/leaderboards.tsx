@@ -22,12 +22,13 @@ import {
 import { usePlayer, useAccount } from "@/hooks/use-account";
 import { PageHero, Panel } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
-import { fetchEliteLeaderboardFn, fetchPlayer } from "@/lib/hypixel.functions";
+import { fetchPlayer } from "@/lib/hypixel.functions";
 import { playClickSound } from "@/lib/sound-effects";
 import {
   LEADERBOARD_GROUPS,
   LEADERBOARD_SUBCATEGORIES,
   calculatePlayerLeaderboardStandings,
+  fetchEliteLeaderboard,
   type LeaderboardCategoryGroup,
   type LeaderboardSubcategory,
   type EliteLeaderboardEntry,
@@ -78,7 +79,7 @@ function LeaderboardsRoute() {
   // Live query to fetch actual real-time Elite SkyBlock leaderboard
   const eliteLeaderboardQuery = useQuery({
     queryKey: ["elite-leaderboard", activeSubcategory.eliteId],
-    queryFn: () => fetchEliteLeaderboardFn({ data: activeSubcategory.eliteId }),
+    queryFn: () => fetchEliteLeaderboard(activeSubcategory.eliteId),
     staleTime: 60_000,
   });
 
