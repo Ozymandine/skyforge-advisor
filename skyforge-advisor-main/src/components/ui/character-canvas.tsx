@@ -25,13 +25,6 @@ export function CharacterCanvas({
   const viewerRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Use clean official skin feed (mc-heads / crafatar)
-  const resolvedSkin =
-    skinUrl ||
-    (uuid ? `https://mc-heads.net/skin/${uuid}` : null) ||
-    (username ? `https://mc-heads.net/skin/${username}` : null) ||
-    "https://mc-heads.net/skin/MHF_Steve";
-
   useEffect(() => {
     if (!canvasRef.current || typeof window === "undefined") return;
 
@@ -48,23 +41,50 @@ export function CharacterCanvas({
           canvas: canvasRef.current,
           width,
           height,
-          skin: resolvedSkin,
         });
 
-        // Set optimal camera angle and slow smooth auto-rotation
+        // Camera setup & slow auto-rotation
         viewer.camera.position.set(0, 0, 56);
         viewer.autoRotate = true;
         viewer.autoRotateSpeed = 0.5;
 
-        // Gentle walking animation
+        // Smooth walking animation
         viewer.animation = new skinview3d.WalkingAnimation();
         viewer.animation.speed = 0.4;
 
-        viewerRef.current = viewer;
-        setIsLoading(false);
+        // Build list of high-availability CORS skin URLs
+        const skinUrls: string[] = [];
+        if (skinUrl) skinUrls.push(skinUrl);
+        if (uuid) {
+          const cleanUuid = uuid.replace(/-/g, "");
+          skinUrls.push(`https://crafatar.com/skins/${cleanUuid}`);
+          skinUrls.push(`https://api.mineatar.io/skin/${cleanUuid}`);
+        }
+        if (username) {
+          skinUrls.push(`https://minotar.net/skin/${username}`);
+          skinUrls.push(`https://mc-heads.net/skin/${username}`);
+        }
+        skinUrls.push("https://crafatar.com/skins/853c80ef3c3749fdaa49938b607ad664"); // Steve fallback
+
+        // Attempt loading skin with fallbacks
+        let loaded = false;
+        for (const url of skinUrls) {
+          try {
+            await viewer.loadSkin(url);
+            loaded = true;
+            break;
+          } catch {
+            // Try next skin provider
+          }
+        }
+
+        if (isMounted) {
+          viewerRef.current = viewer;
+          setIsLoading(!loaded);
+        }
       } catch (err) {
         console.error("Failed to initialize 3D Character Canvas:", err);
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     }
 
@@ -77,7 +97,7 @@ export function CharacterCanvas({
       }
       viewerRef.current = null;
     };
-  }, [resolvedSkin, width, height]);
+  }, [uuid, username, skinUrl, width, height]);
 
   return (
     <div
