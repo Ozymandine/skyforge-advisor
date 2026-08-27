@@ -127,3 +127,4 @@ describe("Minions Engine: Placed Minions & Claimable Yields", () => {
     expect(claims.totalDailyRate).toBeGreaterThan(200_000);
   });
 });
+
