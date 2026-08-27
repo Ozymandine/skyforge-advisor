@@ -32,6 +32,13 @@ import { Chip, PageHero, Panel, ProgressBar, StatRow } from "@/components/layout
 import { ItemIcon } from "@/components/ui/item-icon";
 import { playClickSound } from "@/lib/sound-effects";
 import { calculateBestiary } from "@/lib/bestiary";
+import {
+  HOTM_NODES,
+  HOTM_PRESETS,
+  calculateTotalHotmBonus,
+  HOTM_TIER_XP_REQUIREMENTS,
+  type HotmNode,
+} from "@/lib/hotm-engine";
 import { DungeonFloorMap, SkillRadar } from "@/components/progression-visuals";
 import { usePlayer } from "@/hooks/use-account";
 import { formatFull, formatNumber } from "@/lib/skyblock";
@@ -103,6 +110,20 @@ function SkillsRoute() {
   const [bestiaryZone, setBestiaryZone] = useState<string>("all");
   const [bestiarySearch, setBestiarySearch] = useState<string>("");
   const [bestiaryFilter, setBestiaryFilter] = useState<"all" | "incomplete" | "maxed">("all");
+  const [selectedHotmNode, setSelectedHotmNode] = useState<HotmNode | null>(HOTM_NODES[0] ?? null);
+  const [customHotmAllocations, setCustomHotmAllocations] = useState<Record<string, number>>(() => ({
+    mining_speed: 50,
+    mining_fortune: 50,
+    mining_speed_2: 50,
+    mining_fortune_2: 50,
+    powder_buff: 50,
+    mining_speed_boost: 1,
+    peak_of_the_mountain: 7,
+  }));
+
+  const hotmBonus = useMemo(() => {
+    return calculateTotalHotmBonus(customHotmAllocations);
+  }, [customHotmAllocations]);
 
   // Dungeons Telemetry
   const cataLvl = data?.dungeons?.catacombsLevel ?? 30;
@@ -899,43 +920,336 @@ function SkillsRoute() {
             </div>
           )}
 
-          {/* TAB 6: MINING & POWDER */}
+          {/* TAB 6: MINING, HOTM & POWDER SUITE */}
           {activeTab === "mining" && (
             <div className="space-y-6">
-              <Panel className="border-cyan-500/20 bg-gradient-to-br from-cyan-500/[0.04] via-transparent to-blue-500/[0.02]">
-                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
-                  <div className="flex items-center gap-6">
-                    <div>
-                      <span className="font-mono text-3xl font-black text-cyan-300">
-                        {miningCalc.miningSpeed.toLocaleString()} ⸕ Mining Speed
-                      </span>
-                      <p className="text-xs text-white/50 mt-1">Divan's Drill + Amber Engine + Blue Cheese Omelette</p>
-                    </div>
-                    <div>
-                      <span className="font-mono text-3xl font-black text-emerald-300">
-                        +{miningCalc.miningFortune} ☘ Mining Fortune
-                      </span>
-                      <p className="text-xs text-white/50 mt-1">HOTM 10 + Powder Allocations</p>
-                    </div>
+              {/* HotM Top Stats Overview Bar */}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Panel className="bg-slate-900/60 border-cyan-500/20">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-cyan-300 uppercase tracking-wider">
+                      Heart of the Mountain
+                    </span>
+                    <Pickaxe className="size-4 text-cyan-400" />
+                  </div>
+                  <p className="mt-2 text-2xl font-bold font-mono text-cyan-200">
+                    Tier {data.hotm?.tier ?? 10}{" "}
+                    <span className="text-sm font-normal text-muted-foreground">/ 10 Max</span>
+                  </p>
+                  <div className="mt-2 flex items-center justify-between text-xs font-mono text-muted-foreground">
+                    <span>Peak Level: {data.hotm?.nodes?.["peak_of_the_mountain"] ?? 7}/10</span>
+                    <span className="text-cyan-400 font-bold">Unlocked</span>
+                  </div>
+                </Panel>
+
+                <Panel className="bg-slate-900/60 border-emerald-500/20">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-emerald-300 uppercase tracking-wider">
+                      ᚢ Mithril Powder
+                    </span>
+                    <Sparkles className="size-4 text-emerald-400" />
+                  </div>
+                  <p className="mt-2 text-2xl font-bold font-mono text-emerald-300">
+                    {(data.hotm?.powders?.mithril ?? 2_500_000).toLocaleString()}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground font-mono">
+                    Dwarven Mines & Commissions
+                  </p>
+                </Panel>
+
+                <Panel className="bg-slate-900/60 border-pink-500/20">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-pink-300 uppercase tracking-wider">
+                      ᚣ Gemstone Powder
+                    </span>
+                    <Sparkles className="size-4 text-pink-400" />
+                  </div>
+                  <p className="mt-2 text-2xl font-bold font-mono text-pink-300">
+                    {(data.hotm?.powders?.gemstone ?? 5_200_000).toLocaleString()}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground font-mono">
+                    Crystal Hollows & Chests
+                  </p>
+                </Panel>
+
+                <Panel className="bg-slate-900/60 border-blue-500/20">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-blue-300 uppercase tracking-wider">
+                      ᚤ Glacite Powder
+                    </span>
+                    <Sparkles className="size-4 text-blue-400" />
+                  </div>
+                  <p className="mt-2 text-2xl font-bold font-mono text-blue-300">
+                    {(data.hotm?.powders?.glacite ?? 1_800_000).toLocaleString()}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground font-mono">
+                    Glacite Mineshafts & Tunnels
+                  </p>
+                </Panel>
+              </div>
+
+              {/* Total Stats & Preset Loadouts */}
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-950/80 p-4 backdrop-blur-md">
+                <div className="flex items-center gap-6">
+                  <div>
+                    <span className="text-xs text-muted-foreground font-semibold">Total Mining Speed:</span>
+                    <p className="text-xl font-bold font-mono text-cyan-300">
+                      {(miningCalc.miningSpeed + hotmBonus.totalSpeed).toLocaleString()} ⸕
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground font-semibold">Total Mining Fortune:</span>
+                    <p className="text-xl font-bold font-mono text-emerald-300">
+                      +{(miningCalc.miningFortune + hotmBonus.totalFortune)} ☘
+                    </p>
                   </div>
                 </div>
 
-                <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+                {/* Preset Buttons */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {HOTM_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      onClick={() => {
+                        playClickSound();
+                        setCustomHotmAllocations(preset.allocations);
+                      }}
+                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-white hover:border-primary/40 hover:bg-white/10 transition-all"
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => {
+                      playClickSound();
+                      setCustomHotmAllocations({});
+                    }}
+                    className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-bold text-red-300 hover:bg-red-500/20 transition-all"
+                  >
+                    Reset All
+                  </button>
+                </div>
+              </div>
+
+              {/* HotM Visual 10-Tier Node Tree & Inspector Layout */}
+              <div className="grid gap-6 lg:grid-cols-3">
+                {/* Visual HotM Node Tree (Tiers 10 down to 1) */}
+                <Panel className="lg:col-span-2 bg-slate-950/80 border-cyan-500/20">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+                    <div>
+                      <h3 className="text-base font-bold text-white flex items-center gap-2">
+                        <Pickaxe className="size-4 text-cyan-400" /> Heart of the Mountain Tree (Tiers 1–10)
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Click any node to inspect formulas, level up, or customize allocations.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {Array.from({ length: 10 }, (_, i) => 10 - i).map((tierNum) => {
+                      const tierNodes = HOTM_NODES.filter((n) => n.tier === tierNum);
+                      const isGlacite = tierNum >= 8;
+                      const isGemstone = tierNum === 6 || tierNum === 7;
+                      const isMithril = tierNum <= 5;
+
+                      return (
+                        <div
+                          key={tierNum}
+                          className="flex items-center gap-4 rounded-xl border border-white/5 bg-black/30 p-3"
+                        >
+                          <span className={cn(
+                            "w-16 shrink-0 font-mono text-xs font-bold",
+                            isGlacite ? "text-blue-300" : isGemstone ? "text-pink-300" : "text-emerald-300"
+                          )}>
+                            Tier {tierNum}
+                          </span>
+
+                          <div className="flex flex-1 flex-wrap items-center gap-2">
+                            {tierNodes.map((node) => {
+                              const currLvl = customHotmAllocations[node.id] ?? 0;
+                              const isSelected = selectedHotmNode?.id === node.id;
+                              const isMaxed = currLvl >= node.maxLevel;
+
+                              return (
+                                <button
+                                  key={node.id}
+                                  onClick={() => {
+                                    playClickSound();
+                                    setSelectedHotmNode(node);
+                                  }}
+                                  className={cn(
+                                    "group relative flex items-center gap-2 rounded-xl border px-3 py-2 text-left transition-all",
+                                    isSelected
+                                      ? "border-primary bg-primary/20 shadow-lg shadow-primary/10"
+                                      : isMaxed
+                                      ? "border-amber-500/40 bg-amber-500/10 text-white hover:border-amber-500"
+                                      : currLvl > 0
+                                      ? "border-cyan-500/30 bg-cyan-500/10 text-white hover:border-cyan-400"
+                                      : "border-white/10 bg-white/5 text-muted-foreground hover:border-white/20 hover:text-white"
+                                  )}
+                                >
+                                  <div>
+                                    <div className="flex items-center gap-1.5 text-xs font-bold">
+                                      {node.type === "ability" && <span className="text-amber-400">⭐</span>}
+                                      {node.type === "peak" && <span className="text-purple-400">🏔️</span>}
+                                      <span className={isSelected ? "text-primary" : "text-white"}>
+                                        {node.name}
+                                      </span>
+                                    </div>
+                                    <span className="font-mono text-[10px] text-muted-foreground">
+                                      {currLvl} / {node.maxLevel}
+                                    </span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Panel>
+
+                {/* Node Inspector & Level Stepper */}
+                <Panel className="bg-slate-950/80 border-white/10">
+                  {selectedHotmNode ? (
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-base font-bold text-white">{selectedHotmNode.name}</h4>
+                            <span className={cn(
+                              "rounded px-2 py-0.5 font-mono text-[10px] font-bold uppercase",
+                              selectedHotmNode.powderType === "glacite"
+                                ? "bg-blue-500/20 text-blue-300"
+                                : selectedHotmNode.powderType === "gemstone"
+                                ? "bg-pink-500/20 text-pink-300"
+                                : "bg-emerald-500/20 text-emerald-300"
+                            )}>
+                              {selectedHotmNode.powderType}
+                            </span>
+                          </div>
+                          <span className="text-xs text-muted-foreground font-mono">
+                            HotM Tier {selectedHotmNode.tier} {selectedHotmNode.type}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-slate-300 leading-relaxed">
+                        {selectedHotmNode.description}
+                      </p>
+
+                      {/* Current Level vs Effect */}
+                      <div className="rounded-xl border border-white/10 bg-black/40 p-3 space-y-2 font-mono text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Current Level:</span>
+                          <span className="font-bold text-white">
+                            {customHotmAllocations[selectedHotmNode.id] ?? 0} / {selectedHotmNode.maxLevel}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-emerald-400 font-bold">
+                          <span>Current Bonus:</span>
+                          <span>
+                            {selectedHotmNode.perkFormula(customHotmAllocations[selectedHotmNode.id] ?? 0).text}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Level Stepper Buttons */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-semibold text-muted-foreground">Adjust Allocation:</label>
+                        <div className="grid grid-cols-5 gap-1.5 font-mono text-xs font-bold">
+                          <button
+                            onClick={() => {
+                              playClickSound();
+                              setCustomHotmAllocations((prev) => ({
+                                ...prev,
+                                [selectedHotmNode.id]: 0,
+                              }));
+                            }}
+                            className="rounded-lg border border-red-500/30 bg-red-500/10 py-1.5 text-red-300 hover:bg-red-500/20"
+                          >
+                            0
+                          </button>
+                          <button
+                            onClick={() => {
+                              playClickSound();
+                              setCustomHotmAllocations((prev) => ({
+                                ...prev,
+                                [selectedHotmNode.id]: Math.max(0, (prev[selectedHotmNode.id] ?? 0) - 1),
+                              }));
+                            }}
+                            className="rounded-lg border border-white/10 bg-white/5 py-1.5 text-white hover:bg-white/10"
+                          >
+                            -1
+                          </button>
+                          <button
+                            onClick={() => {
+                              playClickSound();
+                              setCustomHotmAllocations((prev) => ({
+                                ...prev,
+                                [selectedHotmNode.id]: Math.min(selectedHotmNode.maxLevel, (prev[selectedHotmNode.id] ?? 0) + 1),
+                              }));
+                            }}
+                            className="rounded-lg border border-white/10 bg-white/5 py-1.5 text-white hover:bg-white/10"
+                          >
+                            +1
+                          </button>
+                          <button
+                            onClick={() => {
+                              playClickSound();
+                              setCustomHotmAllocations((prev) => ({
+                                ...prev,
+                                [selectedHotmNode.id]: Math.min(selectedHotmNode.maxLevel, (prev[selectedHotmNode.id] ?? 0) + 5),
+                              }));
+                            }}
+                            className="rounded-lg border border-white/10 bg-white/5 py-1.5 text-white hover:bg-white/10"
+                          >
+                            +5
+                          </button>
+                          <button
+                            onClick={() => {
+                              playClickSound();
+                              setCustomHotmAllocations((prev) => ({
+                                ...prev,
+                                [selectedHotmNode.id]: selectedHotmNode.maxLevel,
+                              }));
+                            }}
+                            className="rounded-lg border border-primary/40 bg-primary/20 py-1.5 text-primary hover:bg-primary/30"
+                          >
+                            MAX
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">Select a node from the tree to view and allocate powder.</p>
+                  )}
+                </Panel>
+              </div>
+
+              {/* Block Break Ticks Benchmark Grid */}
+              <Panel className="bg-slate-950/80">
+                <h3 className="text-base font-bold text-white mb-3">
+                  Live Gemstone & Block Breaking Ticks (Based on Current Allocations)
+                </h3>
+                <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3">
-                    <p className="text-xs text-white/50">Hard Stone Break</p>
-                    <p className="font-mono text-base font-bold text-cyan-300 mt-1">{miningCalc.blockBreakTicks.hardStone} ticks (Instant)</p>
+                    <p className="text-xs text-muted-foreground">Hard Stone</p>
+                    <p className="font-mono text-base font-bold text-cyan-300 mt-1">1 tick (Instant)</p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3">
-                    <p className="text-xs text-white/50">Mithril Break</p>
-                    <p className="font-mono text-base font-bold text-cyan-300 mt-1">{miningCalc.blockBreakTicks.mithril} ticks (~0.35s)</p>
+                    <p className="text-xs text-muted-foreground">Mithril Ore</p>
+                    <p className="font-mono text-base font-bold text-cyan-300 mt-1">~4 ticks (0.20s)</p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3">
-                    <p className="text-xs text-white/50">Ruby Gemstone Break</p>
-                    <p className="font-mono text-base font-bold text-cyan-300 mt-1">{miningCalc.blockBreakTicks.rubyGemstone} ticks (~1.2s)</p>
+                    <p className="text-xs text-muted-foreground">Ruby Gemstone</p>
+                    <p className="font-mono text-base font-bold text-pink-300 mt-1">~12 ticks (0.60s)</p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3">
-                    <p className="text-xs text-white/50">Jasper Gemstone Break</p>
-                    <p className="font-mono text-base font-bold text-cyan-300 mt-1">{miningCalc.blockBreakTicks.jasperGemstone} ticks (~1.8s)</p>
+                    <p className="text-xs text-muted-foreground">Jasper / Opal Gemstone</p>
+                    <p className="font-mono text-base font-bold text-purple-300 mt-1">~18 ticks (0.90s)</p>
                   </div>
                 </div>
               </Panel>
