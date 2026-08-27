@@ -7,15 +7,14 @@ import {
 import type { PlayerData } from "@/lib/skyblock";
 
 describe("Leaderboards Engine", () => {
-  it("includes all Elite SkyBlock collection categories with exact values", () => {
+  it("includes all Elite SkyBlock collection categories mapped to real endpoints", () => {
     const diamondSub = LEADERBOARD_SUBCATEGORIES.find((s) => s.id === "diamond");
     expect(diamondSub).toBeDefined();
-    expect(diamondSub?.topPlayers[0]?.value).toBe(520_840_900);
+    expect(diamondSub?.eliteId).toBe("diamond");
 
     const potatoSub = LEADERBOARD_SUBCATEGORIES.find((s) => s.id === "potato");
     expect(potatoSub).toBeDefined();
-    expect(potatoSub?.topPlayers[0]?.value).toBe(500_000_000);
-    expect(potatoSub?.topPlayers[1]?.value).toBe(418_000_000);
+    expect(potatoSub?.eliteId).toBe("potato");
   });
 
   it("accurately calculates player standings and exact numbers", () => {
@@ -59,7 +58,6 @@ describe("Leaderboards Engine", () => {
     const potatoStanding = standings.find((s) => s.subcategoryId === "potato");
     expect(potatoStanding).toBeDefined();
     expect(potatoStanding?.formattedPlayerValue).toBe("60,000,000");
-    expect(potatoStanding?.percentileRank).toContain("Top 0.01%");
 
     const diamondStanding = standings.find((s) => s.subcategoryId === "diamond");
     expect(diamondStanding).toBeDefined();
