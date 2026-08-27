@@ -162,11 +162,11 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
     <aside
       className={cn(
         "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-white/10 bg-[#0B0E14] lg:flex transition-all duration-300 ease-in-out",
-        collapsed ? "w-[64px]" : "w-[172px]",
+        collapsed ? "w-[72px]" : "w-[218px]",
       )}
     >
-      {/* Large Centered Custom Gradient Wordmark */}
-      <div className="flex flex-col items-center justify-center px-2 pt-4 pb-1.5 transition-all duration-300">
+      {/* Centered Wordmark */}
+      <div className="flex flex-col items-center justify-center px-4 pt-4 pb-2 transition-all duration-300">
         {!collapsed ? (
           <div className="w-full text-center">
             <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-xl tracking-[0.16em] text-transparent select-none drop-shadow-[0_2px_15px_rgba(52,211,153,0.45)]">
@@ -182,7 +182,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         )}
       </div>
 
-      <div className="px-2.5">
+      <div className="px-3">
         <button
           onClick={onToggle}
           aria-label="Toggle sidebar"
@@ -192,11 +192,11 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         </button>
       </div>
 
-      <nav className="flex-1 overflow-hidden px-2.5 pt-3 pb-3 space-y-2.5">
+      <nav className="flex flex-1 flex-col justify-between overflow-hidden px-3 pt-2 pb-2">
         {nav.map((section) => (
-          <div key={section.group} className="space-y-1">
+          <div key={section.group} className="flex flex-col">
             {!collapsed && (
-              <p className="eyebrow px-2 text-[9px] font-bold uppercase tracking-wider text-white/35">
+              <p className="eyebrow px-3 text-[10px] font-bold uppercase tracking-wider text-white/35 pb-1">
                 {section.group}
               </p>
             )}
@@ -207,7 +207,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "group relative flex h-8.5 items-center gap-2.5 rounded-xl px-2.5 text-xs font-semibold text-white/75 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
+                      "group relative flex h-8.5 items-center gap-3 rounded-xl px-3 text-xs font-semibold text-white/75 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
                       "hover:transition-none hover:bg-white/[0.14] hover:text-white hover:border-white/15 hover:translate-x-1 hover:shadow-md hover:shadow-black/20",
                       "active:scale-[0.98] active:bg-white/[0.2]",
                       collapsed && "justify-center px-0 hover:translate-x-0",
@@ -218,7 +218,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     }}
                   >
                     <item.icon className="size-4 shrink-0 text-white/60 group-hover:text-white group-hover:transition-none transition-colors duration-150" />
-                    {!collapsed && <span className="truncate text-[12px]">{item.label}</span>}
+                    {!collapsed && <span className="truncate">{item.label}</span>}
                   </Link>
                 </li>
               ))}
@@ -228,38 +228,38 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       </nav>
 
       {/* Bottom Profile Selector Card */}
-      <div className="border-t border-white/10 p-2.5">
+      <div className="border-t border-white/10 p-3">
         {player.data ? (
           <DropdownMenu>
             <DropdownMenuTrigger className="w-full text-left outline-none">
               <div
                 className={cn(
-                  "flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] p-1.5 transition-all duration-150 hover:transition-none hover:bg-white/[0.14] hover:border-emerald-500/60 hover:shadow-lg hover:shadow-emerald-500/10 active:scale-[0.98] cursor-pointer will-change-transform",
+                  "flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] p-2 transition-all duration-150 hover:transition-none hover:bg-white/[0.14] hover:border-emerald-500/60 hover:shadow-lg hover:shadow-emerald-500/10 active:scale-[0.98] cursor-pointer will-change-transform",
                   collapsed && "justify-center p-1.5",
                 )}
               >
                 <PlayerHeadAvatar
                   uuid={player.data.uuid}
                   name={player.data.username || account.username}
-                  size={26}
-                  className="size-6.5 shrink-0 rounded-lg"
+                  size={28}
+                  className="size-7 shrink-0 rounded-lg"
                 />
                 {!collapsed && (
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                       <RankBadge rankData={player.data.hypixelPlayer} size="sm" />
-                      <p className="truncate text-[11px] font-bold text-foreground max-w-[70px]">
+                      <p className="truncate text-xs font-bold text-foreground">
                         {player.data.username}
                       </p>
                     </div>
-                    <p className="flex items-center gap-1 text-[9px] text-muted-foreground font-mono">
-                      <span className="size-1 rounded-full bg-emerald-400 animate-pulse" />
+                    <p className="flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
+                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       <span className="truncate">{activeProfile ? activeProfile.cuteName : "Profile"}</span>
                     </p>
                   </div>
                 )}
                 {!collapsed && (
-                  <ChevronDown className="size-3 text-muted-foreground shrink-0 ml-auto" />
+                  <ChevronDown className="size-3.5 text-muted-foreground shrink-0 ml-auto" />
                 )}
               </div>
             </DropdownMenuTrigger>
@@ -302,12 +302,12 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
             to="/connect"
             title="Connect Account"
             className={cn(
-              "flex items-center gap-2 rounded-xl border border-dashed border-emerald-500/40 bg-emerald-500/10 p-2 text-xs font-semibold text-emerald-300 transition-all hover:bg-emerald-500/20 hover:border-emerald-500/60",
+              "flex items-center gap-2.5 rounded-xl border border-dashed border-emerald-500/40 bg-emerald-500/10 p-2.5 text-xs font-semibold text-emerald-300 transition-all hover:bg-emerald-500/20 hover:border-emerald-500/60",
               collapsed && "justify-center p-2",
             )}
           >
             <KeyRound className="size-4 shrink-0" />
-            {!collapsed && <span className="truncate text-xs">Connect</span>}
+            {!collapsed && <span className="truncate">Connect Account</span>}
           </Link>
         )}
       </div>

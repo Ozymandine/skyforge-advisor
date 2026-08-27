@@ -218,8 +218,13 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
  */
 export async function fetchEliteLeaderboard(leaderboardId: string): Promise<EliteLeaderboardResponse | null> {
   try {
+    const isServer = typeof window === "undefined";
+    const headers: Record<string, string> = isServer
+      ? { "User-Agent": "SkyForgeAdvisor/1.0 (Mozilla/5.0)" }
+      : {};
+
     const res = await fetch(`https://api.eliteskyblock.com/leaderboard/${encodeURIComponent(leaderboardId)}?limit=100`, {
-      headers: { "User-Agent": "SkyForgeAdvisor/1.0" },
+      headers,
     });
     if (!res.ok) return null;
     const data = (await res.json()) as EliteLeaderboardResponse;

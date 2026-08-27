@@ -19,13 +19,12 @@ import {
 import { usePlayer, useAccount } from "@/hooks/use-account";
 import { PageHero, Panel } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
-import { fetchPlayer } from "@/lib/hypixel.functions";
+import { fetchEliteLeaderboardFn, fetchPlayer } from "@/lib/hypixel.functions";
 import { playClickSound } from "@/lib/sound-effects";
 import {
   LEADERBOARD_GROUPS,
   LEADERBOARD_SUBCATEGORIES,
   calculatePlayerLeaderboardStandings,
-  fetchEliteLeaderboard,
   type LeaderboardCategoryGroup,
   type LeaderboardSubcategory,
   type EliteLeaderboardEntry,
@@ -72,10 +71,10 @@ function LeaderboardsRoute() {
     return groupSubcategories[0] ?? LEADERBOARD_SUBCATEGORIES[0]!;
   }, [selectedSubId, activeGroup, groupSubcategories]);
 
-  // Live query to fetch actual real-time Elite SkyBlock leaderboard (Top 100)
+  // Live query to fetch actual real-time Elite SkyBlock leaderboard (Top 100) via Server Function
   const eliteLeaderboardQuery = useQuery({
     queryKey: ["elite-leaderboard-top100", activeSubcategory.eliteId],
-    queryFn: () => fetchEliteLeaderboard(activeSubcategory.eliteId),
+    queryFn: () => fetchEliteLeaderboardFn({ data: activeSubcategory.eliteId }),
     staleTime: 60_000,
   });
 
