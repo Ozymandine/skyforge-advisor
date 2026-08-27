@@ -19,6 +19,8 @@ import {
   Layers,
   ChevronRight,
   HelpCircle,
+  Info,
+  Edit3,
 } from "lucide-react";
 
 import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
@@ -32,6 +34,12 @@ import {
 } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { MinecraftTooltip } from "@/components/ui/minecraft-tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { usePlayer } from "@/hooks/use-account";
 import { fetchBazaar } from "@/lib/hypixel.functions";
 import { playClickSound, playSuccessChime } from "@/lib/sound-effects";
@@ -64,7 +72,7 @@ const DEFAULT_PLACED_SETUP: PlacedMinionSetup[] = Array.from({ length: 24 }, (_,
   upgrade2Id: "DIAMOND_SPREADING",
   hopperId: "ENCHANTED_HOPPER",
   storageChestId: "LARGE_STORAGE",
-  lastClaimTimestamp: Date.now() - 14 * 3600 * 1000, // 14 hours accumulated default
+  lastClaimTimestamp: Date.now() - 14 * 3600 * 1000,
 }));
 
 export function MinionsRoute() {
@@ -76,7 +84,7 @@ export function MinionsRoute() {
   const [placedMinions, setPlacedMinions] = useState<PlacedMinionSetup[]>(DEFAULT_PLACED_SETUP);
   const [lastClaimTime, setLastClaimTime] = useState<number>(Date.now() - 18 * 3600 * 1000);
   const [now, setNow] = useState<number>(Date.now());
-  const [selectedSlot, setSelectedSlot] = useState<PlacedMinionSetup | null>(null);
+  const [editingSlot, setEditingSlot] = useState<PlacedMinionSetup | null>(null);
 
   // Live timer tick every 10 seconds for real-time claim accumulation
   useEffect(() => {
@@ -219,6 +227,68 @@ export function MinionsRoute() {
     savePlacedMinions(updated);
   };
 
+  const handleAutoDetectFromCrafts = () => {
+    playClickSound();
+    const crafted = player?.craftedGenerators ?? [];
+    if (!crafted.length) {
+      handleApplyPreset("slime");
+      return;
+    }
+
+    const highestTiers = new Map<string, number>();
+    for (const gen of crafted) {
+      const match = gen.match(/^([A-Z_]+)_(\d+)$/);
+      if (match) {
+        const id = match[1]!;
+        const tier = Number(match[2]);
+        const curr = highestTiers.get(id) ?? 0;
+        if (tier > curr) highestTiers.set(id, tier);
+      }
+    }
+
+    const sortedMinions = Array.from(highestTiers.entries())
+      .filter(([id]) => RAW_MINION_PROFILES.some((p) => p.id === id))
+      .sort((a, b) => b[1] - a[1]);
+
+    const count = slotProgression.totalSlotsUnlocked || 24;
+    const updated: PlacedMinionSetup[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const minionEntry = sortedMinions[i % sortedMinions.length] ?? ["SLIME", 11];
+      const minionId = minionEntry[0] ?? "SLIME";
+      const tier = minionEntry[1] ?? 11;
+      const isCombat = RAW_MINION_PROFILES.find((p) => p.id === minionId)?.category === "combat";
+
+      updated.push({
+        id: `slot-${i + 1}`,
+        minionId,
+        tier,
+        fuelId: "ENCHANTED_LAVA_BUCKET",
+        upgrade1Id: isCombat ? "CORRUPT_SOIL" : "SUPER_COMPACTOR_3000",
+        upgrade2Id: "DIAMOND_SPREADING",
+        hopperId: "ENCHANTED_HOPPER",
+        storageChestId: "LARGE_STORAGE",
+      });
+    }
+
+    savePlacedMinions(updated);
+  };
+
+  const handleSaveSlot = (updatedSlot: PlacedMinionSetup, applyToAll = false) => {
+    playClickSound();
+    let updated: PlacedMinionSetup[];
+    if (applyToAll) {
+      updated = placedMinions.map((slot, i) => ({
+        ...updatedSlot,
+        id: `slot-${i + 1}`,
+      }));
+    } else {
+      updated = placedMinions.map((slot) => (slot.id === updatedSlot.id ? updatedSlot : slot));
+    }
+    savePlacedMinions(updated);
+    setEditingSlot(null);
+  };
+
   return (
     <div className="space-y-6 pb-12">
       <PageHero
@@ -283,7 +353,7 @@ export function MinionsRoute() {
             </span>
           </p>
           <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
-            <CheckCircle2 className="size-3.5" /> 100% active setups
+            <CheckCircle2 className="size-3.5" /> Active & Calculating
           </div>
         </Panel>
 
@@ -353,17 +423,36 @@ export function MinionsRoute() {
        * ======================================================================= */}
       {tab === "placed" && (
         <div className="space-y-6">
+          {/* API Limitation Transparency Banner */}
+          <div className="flex items-start gap-3 rounded-2xl border border-blue-500/20 bg-blue-950/20 p-4 text-xs text-blue-200 backdrop-blur-md">
+            <Info className="size-4 shrink-0 text-blue-400 mt-0.5" />
+            <div>
+              <p className="font-bold text-blue-100">
+                Why configure placed minions?
+              </p>
+              <p className="mt-0.5 text-blue-200/80 leading-relaxed">
+                Hypixel&apos;s public API provides your lifetime unique crafted tiers (<code className="bg-blue-950 px-1 py-0.5 rounded">crafted_generators</code>) and community upgrades, but does not serialize private island block placements. Click any slot to configure your exact minions, or use the 1-click presets below to simulate your live daily profits and claim timers!
+              </p>
+            </div>
+          </div>
+
           {/* Preset Quick Actions */}
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4 backdrop-blur-md">
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Sparkles className="size-4 text-primary" /> Active Minion Presets
+                <Sparkles className="size-4 text-primary" /> Active Minion Presets & Loadouts
               </h3>
               <p className="text-xs text-muted-foreground">
-                Instantly populate all your slots with the highest-yielding meta configurations
+                Click any slot below to customize, or apply a high-yield meta setup:
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={handleAutoDetectFromCrafts}
+                className="rounded-xl border border-primary/40 bg-primary/20 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/30 transition-all flex items-center gap-1.5"
+              >
+                <Sparkles className="size-3.5" /> Auto-Fill from My Highest Crafts
+              </button>
               <button
                 onClick={() => handleApplyPreset("slime")}
                 className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20 transition-all"
@@ -403,7 +492,7 @@ export function MinionsRoute() {
                   key={report.setup.id}
                   onClick={() => {
                     playClickSound();
-                    setSelectedSlot(report.setup);
+                    setEditingSlot(report.setup);
                   }}
                   className="group relative cursor-pointer rounded-2xl border border-white/10 bg-slate-950/80 p-4 transition-all duration-150 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5"
                 >
@@ -420,8 +509,8 @@ export function MinionsRoute() {
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <h4 className="truncate text-sm font-bold text-white group-hover:text-primary transition-colors">
-                          {report.minion.name}
+                        <h4 className="truncate text-sm font-bold text-white group-hover:text-primary transition-colors flex items-center gap-1.5">
+                          {report.minion.name} <Edit3 className="size-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                         </h4>
                         <span className="text-[11px] font-mono text-muted-foreground">
                           {report.minion.actionTime}s / action
@@ -727,6 +816,140 @@ export function MinionsRoute() {
             </div>
           </Panel>
         </div>
+      )}
+
+      {/* =========================================================================
+       * SLOT EDITOR MODAL
+       * ======================================================================= */}
+      {editingSlot && (
+        <Dialog open={!!editingSlot} onOpenChange={(open) => !open && setEditingSlot(null)}>
+          <DialogContent className="max-w-md border-white/10 bg-slate-950/95 text-white backdrop-blur-xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-base font-bold">
+                <Edit3 className="size-4 text-primary" /> Edit Minion Slot #{editingSlot.id.replace("slot-", "")}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4 pt-2 text-xs">
+              {/* Minion Type Selector */}
+              <div>
+                <label className="text-muted-foreground font-semibold">Minion Type:</label>
+                <select
+                  value={editingSlot.minionId}
+                  onChange={(e) => setEditingSlot({ ...editingSlot, minionId: e.target.value })}
+                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-black/50 p-2.5 text-xs text-white focus:border-primary focus:outline-none"
+                >
+                  {RAW_MINION_PROFILES.map((p) => (
+                    <option key={p.id} value={p.id} className="bg-slate-900 text-white">
+                      {p.name} ({p.category.toUpperCase()})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Tier Selector */}
+              <div>
+                <label className="text-muted-foreground font-semibold">Tier (1–12):</label>
+                <div className="mt-1.5 flex flex-wrap gap-1">
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((tierNum) => (
+                    <button
+                      key={tierNum}
+                      type="button"
+                      onClick={() => setEditingSlot({ ...editingSlot, tier: tierNum })}
+                      className={`size-7 rounded-lg font-mono text-xs font-bold transition-all ${
+                        editingSlot.tier === tierNum
+                          ? "bg-primary text-primary-foreground shadow"
+                          : "border border-white/10 bg-white/5 text-muted-foreground hover:text-white"
+                      }`}
+                    >
+                      {tierNum}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Fuel Selector */}
+              <div>
+                <label className="text-muted-foreground font-semibold">Fuel:</label>
+                <select
+                  value={editingSlot.fuelId ?? "NONE"}
+                  onChange={(e) => setEditingSlot({ ...editingSlot, fuelId: e.target.value })}
+                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-black/50 p-2.5 text-xs text-white focus:border-primary focus:outline-none"
+                >
+                  {MINION_FUELS.map((f) => (
+                    <option key={f.id} value={f.id} className="bg-slate-900 text-white">
+                      {f.name} {f.speedBonus > 0 ? `(+${(f.speedBonus * 100).toFixed(0)}%)` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Upgrade 1 */}
+              <div>
+                <label className="text-muted-foreground font-semibold">Upgrade Slot 1:</label>
+                <select
+                  value={editingSlot.upgrade1Id ?? "NONE"}
+                  onChange={(e) => setEditingSlot({ ...editingSlot, upgrade1Id: e.target.value })}
+                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-black/50 p-2.5 text-xs text-white focus:border-primary focus:outline-none"
+                >
+                  {MINION_UPGRADES.map((u) => (
+                    <option key={u.id} value={u.id} className="bg-slate-900 text-white">
+                      {u.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Upgrade 2 */}
+              <div>
+                <label className="text-muted-foreground font-semibold">Upgrade Slot 2:</label>
+                <select
+                  value={editingSlot.upgrade2Id ?? "NONE"}
+                  onChange={(e) => setEditingSlot({ ...editingSlot, upgrade2Id: e.target.value })}
+                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-black/50 p-2.5 text-xs text-white focus:border-primary focus:outline-none"
+                >
+                  {MINION_UPGRADES.map((u) => (
+                    <option key={u.id} value={u.id} className="bg-slate-900 text-white">
+                      {u.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Hopper */}
+              <div>
+                <label className="text-muted-foreground font-semibold">Automated Hopper:</label>
+                <select
+                  value={editingSlot.hopperId ?? "ENCHANTED_HOPPER"}
+                  onChange={(e) => setEditingSlot({ ...editingSlot, hopperId: e.target.value as any })}
+                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-black/50 p-2.5 text-xs text-white focus:border-primary focus:outline-none"
+                >
+                  <option value="ENCHANTED_HOPPER" className="bg-slate-900 text-white">Enchanted Hopper (90% NPC Sell)</option>
+                  <option value="BUDGET_HOPPER" className="bg-slate-900 text-white">Budget Hopper (50% NPC Sell)</option>
+                  <option value="NONE" className="bg-slate-900 text-white">None (Manual Chest Collect)</option>
+                </select>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="mt-6 flex items-center justify-end gap-2 border-t border-white/10 pt-4">
+                <button
+                  type="button"
+                  onClick={() => handleSaveSlot(editingSlot, true)}
+                  className="rounded-xl border border-primary/40 bg-primary/10 px-3.5 py-2 text-xs font-bold text-primary hover:bg-primary/20 transition-all"
+                >
+                  Apply to All Slots
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveSlot(editingSlot, false)}
+                  className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:brightness-110 transition-all"
+                >
+                  Save This Slot
+                </button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
