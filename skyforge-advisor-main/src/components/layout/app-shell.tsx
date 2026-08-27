@@ -226,6 +226,91 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
           </div>
         ))}
       </nav>
+
+      {/* Bottom Profile Selector Card */}
+      <div className="border-t border-white/10 p-2.5">
+        {player.data ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger className="w-full text-left outline-none">
+              <div
+                className={cn(
+                  "flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] p-1.5 transition-all duration-150 hover:transition-none hover:bg-white/[0.14] hover:border-emerald-500/60 hover:shadow-lg hover:shadow-emerald-500/10 active:scale-[0.98] cursor-pointer will-change-transform",
+                  collapsed && "justify-center p-1.5",
+                )}
+              >
+                <PlayerHeadAvatar
+                  uuid={player.data.uuid}
+                  name={player.data.username || account.username}
+                  size={26}
+                  className="size-6.5 shrink-0 rounded-lg"
+                />
+                {!collapsed && (
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1">
+                      <RankBadge rankData={player.data.hypixelPlayer} size="sm" />
+                      <p className="truncate text-[11px] font-bold text-foreground max-w-[70px]">
+                        {player.data.username}
+                      </p>
+                    </div>
+                    <p className="flex items-center gap-1 text-[9px] text-muted-foreground font-mono">
+                      <span className="size-1 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="truncate">{activeProfile ? activeProfile.cuteName : "Profile"}</span>
+                    </p>
+                  </div>
+                )}
+                {!collapsed && (
+                  <ChevronDown className="size-3 text-muted-foreground shrink-0 ml-auto" />
+                )}
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="start"
+              side={collapsed ? "right" : "top"}
+              className="mb-2 w-64 border-white/10 bg-[#0E121B]/95 backdrop-blur-2xl p-2 shadow-2xl"
+            >
+              <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Select Active Profile
+              </div>
+              {profiles.map((p) => (
+                <DropdownMenuItem
+                  key={p.profileId}
+                  onSelect={() => account.save({ profileId: p.profileId })}
+                  className="flex items-center justify-between py-2 px-2.5 rounded-lg cursor-pointer hover:bg-white/10"
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-foreground">{p.cuteName}</p>
+                    <p className="text-[10px] text-muted-foreground capitalize">
+                      {p.gameMode || "Standard"} profile · {p.members} member
+                      {p.members > 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  {activeProfile?.profileId === p.profileId && (
+                    <Check className="size-4 text-emerald-400 shrink-0" />
+                  )}
+                </DropdownMenuItem>
+              ))}
+              <div className="my-1 border-t border-white/10" />
+              <DropdownMenuItem asChild className="cursor-pointer py-2 px-2.5 rounded-lg hover:bg-white/10">
+                <Link to="/connect" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-white">
+                  <KeyRound className="size-3.5 text-primary" /> Switch / Reconnect Account
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Link
+            to="/connect"
+            title="Connect Account"
+            className={cn(
+              "flex items-center gap-2 rounded-xl border border-dashed border-emerald-500/40 bg-emerald-500/10 p-2 text-xs font-semibold text-emerald-300 transition-all hover:bg-emerald-500/20 hover:border-emerald-500/60",
+              collapsed && "justify-center p-2",
+            )}
+          >
+            <KeyRound className="size-4 shrink-0" />
+            {!collapsed && <span className="truncate text-xs">Connect</span>}
+          </Link>
+        )}
+      </div>
     </aside>
   );
 }
@@ -376,66 +461,26 @@ function Header({
         </button>
 
         <div className="ml-auto flex items-center gap-2.5">
-          {/* Top-Right Profile Switcher Dropdown (Connected) OR Connect Button (Not Connected) */}
+          {/* Top-Right Profile Link (Connected) OR Connect Button (Not Connected) */}
           {player.data ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="text-left outline-none">
-                <div className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1.5 transition-all duration-150 hover:transition-none hover:bg-white/[0.14] hover:border-emerald-500/60 hover:shadow-lg hover:shadow-emerald-500/10 active:scale-[0.99] cursor-pointer will-change-transform">
-                  <PlayerHeadAvatar
-                    uuid={player.data.uuid}
-                    name={player.data.username || account.username}
-                    size={28}
-                    className="size-7 rounded-lg"
-                  />
-                  <div className="hidden sm:block text-left min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <RankBadge rankData={player.data.hypixelPlayer} size="sm" />
-                      <p className="truncate text-xs font-bold text-foreground max-w-[120px]">
-                        {player.data.username}
-                      </p>
-                    </div>
-                    <p className="flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
-                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      {activeProfile ? activeProfile.cuteName : "SkyBlock"}
-                    </p>
-                  </div>
-                  <ChevronDown className="size-3.5 text-muted-foreground shrink-0 ml-0.5" />
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                side="bottom"
-                className="mt-1.5 w-64 border-white/10 bg-[#0E121B]/95 backdrop-blur-2xl p-2 shadow-2xl"
-              >
-                <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  Select Active Profile
-                </div>
-                {profiles.map((p) => (
-                  <DropdownMenuItem
-                    key={p.profileId}
-                    onSelect={() => account.save({ profileId: p.profileId })}
-                    className="flex items-center justify-between py-2 px-2.5 rounded-lg cursor-pointer hover:bg-white/10"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-foreground">{p.cuteName}</p>
-                      <p className="text-[10px] text-muted-foreground capitalize">
-                        {p.gameMode || "Standard"} profile · {p.members} member
-                        {p.members > 1 ? "s" : ""}
-                      </p>
-                    </div>
-                    {activeProfile?.profileId === p.profileId && (
-                      <Check className="size-4 text-emerald-400 shrink-0" />
-                    )}
-                  </DropdownMenuItem>
-                ))}
-                <div className="my-1 border-t border-white/10" />
-                <DropdownMenuItem asChild className="cursor-pointer py-2 px-2.5 rounded-lg hover:bg-white/10">
-                  <Link to="/connect" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-white">
-                    <KeyRound className="size-3.5 text-primary" /> Switch / Reconnect Account
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Link
+              to="/profile/$username"
+              params={{ username: player.data.username }}
+              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1.5 transition-all duration-150 hover:bg-white/[0.1] hover:border-white/20 active:scale-[0.99] cursor-pointer"
+            >
+              <PlayerHeadAvatar
+                uuid={player.data.uuid}
+                name={player.data.username || account.username}
+                size={24}
+                className="size-6 rounded-lg"
+              />
+              <div className="hidden sm:flex items-center gap-1.5">
+                <RankBadge rankData={player.data.hypixelPlayer} size="sm" />
+                <span className="truncate text-xs font-bold text-foreground max-w-[100px]">
+                  {player.data.username}
+                </span>
+              </div>
+            </Link>
           ) : (
             <Link
               to="/connect"
