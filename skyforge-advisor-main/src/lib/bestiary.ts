@@ -267,6 +267,59 @@ export function calculateMobTier(kills: number, bracket: number): {
   return { tier, maxTier, nextTierKills };
 }
 
+const MOB_ALIASES: Record<string, string[]> = {
+  zealot: ["zealot", "zealot_enderman", "zealot_bruiser"],
+  enderman: ["enderman", "watcher"],
+  zombie: ["zombie", "graveyard_zombie", "zombie_villager"],
+  skeleton: ["skeleton", "high_level_skeleton"],
+  spider: ["spider", "weaver_spider", "dasher_spider", "voracious_spider", "cave_spider"],
+  ghost: ["ghost"],
+  ice_walker: ["ice_walker"],
+  goblin: ["goblin", "goblin_burrower"],
+  corleone: ["corleone", "boss_corleone"],
+  beetle: ["beetle", "pest_beetle"],
+  cricket: ["cricket", "pest_cricket"],
+  fly: ["fly", "pest_fly"],
+  locust: ["locust", "pest_locust"],
+  rat: ["rat", "pest_rat"],
+  mosquito: ["mosquito", "pest_mosquito"],
+  mite: ["mite", "pest_mite"],
+  moth: ["moth", "pest_moth"],
+  slug: ["slug", "pest_slug"],
+  earthworm: ["earthworm", "pest_earthworm"],
+  minos_hunter: ["minos_hunter", "hunter"],
+  siamese_lynx: ["siamese_lynx", "lynx"],
+  gaia_construct: ["gaia_construct", "gaia"],
+  minos_champion: ["minos_champion", "champion"],
+  minos_inquisitor: ["minos_inquisitor", "inquisitor"],
+};
+
+function lookupCount(map: Record<string, number>, id: string): number {
+  const aliases = Array.from(new Set([id, ...(MOB_ALIASES[id] ?? [])]));
+  let maxCount = 0;
+  for (const alias of aliases) {
+    const keysToCheck = [
+      alias,
+      `family_${alias}`,
+      `kills_family_${alias}`,
+      `kills_${alias}`,
+      `deaths_family_${alias}`,
+      `deaths_${alias}`,
+      alias.replace(/_/g, ""),
+      `family_${alias.replace(/_/g, "")}`,
+      `kills_family_${alias.replace(/_/g, "")}`,
+      `kills_${alias.replace(/_/g, "")}`,
+    ];
+    for (const key of keysToCheck) {
+      const val = map[key];
+      if (typeof val === "number" && val > maxCount) {
+        maxCount = val;
+      }
+    }
+  }
+  return maxCount;
+}
+
 export function calculateBestiary(
   rawKills: Record<string, number> | undefined,
   rawDeaths?: Record<string, number> | undefined,
@@ -286,24 +339,8 @@ export function calculateBestiary(
     let familyMaxTiers = 0;
 
     const mobs: BestiaryMob[] = familyDef.mobs.map((mobDef) => {
-      const kills =
-        killsMap[mobDef.id] ??
-        killsMap[`family_${mobDef.id}`] ??
-        killsMap[`kills_family_${mobDef.id}`] ??
-        killsMap[`kills_${mobDef.id}`] ??
-        killsMap[mobDef.id.replace(/_/g, "")] ??
-        killsMap[`family_${mobDef.id.replace(/_/g, "")}`] ??
-        killsMap[`kills_family_${mobDef.id.replace(/_/g, "")}`] ??
-        0;
-      const deaths =
-        deathsMap[mobDef.id] ??
-        deathsMap[`family_${mobDef.id}`] ??
-        deathsMap[`deaths_family_${mobDef.id}`] ??
-        deathsMap[`deaths_${mobDef.id}`] ??
-        deathsMap[mobDef.id.replace(/_/g, "")] ??
-        deathsMap[`family_${mobDef.id.replace(/_/g, "")}`] ??
-        deathsMap[`deaths_family_${mobDef.id.replace(/_/g, "")}`] ??
-        0;
+      const kills = lookupCount(killsMap, mobDef.id);
+      const deaths = lookupCount(deathsMap, mobDef.id);
 
       const { tier, maxTier, nextTierKills } = calculateMobTier(kills, mobDef.bracket);
 
