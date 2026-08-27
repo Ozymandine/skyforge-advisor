@@ -978,7 +978,7 @@ export function Panel({ className, children }: { className?: string; children: R
   return (
     <section
       className={cn(
-        "panel-card rounded-3xl p-6 shadow-xl transition-all duration-200 ease-out hover:border-emerald-500/30 hover:shadow-2xl hover:shadow-emerald-500/[0.04]",
+        "panel-card rounded-3xl p-6 shadow-xl transition-all duration-75 ease-out hover:border-emerald-500/35 hover:shadow-2xl hover:shadow-emerald-500/[0.06]",
         className,
       )}
     >
@@ -989,17 +989,17 @@ export function Panel({ className, children }: { className?: string; children: R
 
 export function StatTile({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div className="px-6 py-5">
-      <p className="eyebrow">{label}</p>
-      <p className="mt-3 text-3xl font-semibold tracking-tight">{value}</p>
-      <p className="mt-2 text-xs text-muted-foreground">{sub}</p>
+    <div className="group relative px-6 py-5 transition-all duration-75 ease-out hover:bg-white/[0.04] cursor-pointer">
+      <p className="eyebrow group-hover:text-emerald-400/90 transition-colors duration-75">{label}</p>
+      <p className="mt-3 text-3xl font-semibold tracking-tight text-foreground group-hover:text-emerald-300 transition-colors duration-75">{value}</p>
+      <p className="mt-2 text-xs text-muted-foreground group-hover:text-white/80 transition-colors duration-75">{sub}</p>
     </div>
   );
 }
 
 export function StatRow({ stats }: { stats: { label: string; value: string; sub: string }[] }) {
   return (
-    <div className="grid grid-cols-1 divide-y divide-white/10 rounded-3xl border border-white/10 bg-slate-950/75 backdrop-blur-xl shadow-2xl sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x lg:divide-white/10">
+    <div className="grid grid-cols-1 divide-y divide-white/10 rounded-3xl border border-white/10 bg-slate-950/75 backdrop-blur-xl shadow-2xl sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x lg:divide-white/10 overflow-hidden">
       {stats.map((s) => (
         <StatTile key={s.label} {...s} />
       ))}

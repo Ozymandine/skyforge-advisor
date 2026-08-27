@@ -261,26 +261,30 @@ function Dashboard() {
               {sbLevel.categories.map((cat) => (
                 <div
                   key={cat.id}
-                  className="rounded-xl border border-white/5 bg-white/[0.02] p-3.5 transition-colors duration-75 hover:border-sky-500/30 hover:bg-white/[0.05]"
+                  className="group relative rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-all duration-75 ease-out hover:-translate-y-1 hover:border-sky-400/60 hover:bg-white/[0.08] hover:shadow-xl hover:shadow-sky-500/10 active:translate-y-0 cursor-pointer"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-white/80">{cat.name}</span>
-                    <span className="font-mono text-xs font-bold text-sky-400">
+                    <span className="text-xs font-bold text-white/90 group-hover:text-white transition-colors duration-75">
+                      {cat.name}
+                    </span>
+                    <span className="font-mono text-xs font-black text-sky-400 group-hover:text-sky-300">
                       +{cat.levelContribution} LVL
                     </span>
                   </div>
                   <div className="mt-2 flex items-baseline justify-between text-xs">
-                    <span className="font-mono font-bold text-white/90">
+                    <span className="font-mono font-bold text-white">
                       {cat.currentXp.toLocaleString()} XP
                     </span>
                     <span className="text-[10px] text-white/40">
                       / {cat.maxEstimatedXp.toLocaleString()}
                     </span>
                   </div>
-                  <div className="mt-2">
+                  <div className="mt-2.5">
                     <ProgressBar pct={Math.min(100, Math.round((cat.currentXp / cat.maxEstimatedXp) * 100))} />
                   </div>
-                  <p className="mt-2 truncate text-[10px] text-white/40">{cat.details}</p>
+                  <p className="mt-2 truncate text-[10px] text-white/50 group-hover:text-white/70 transition-colors duration-75">
+                    {cat.details}
+                  </p>
                 </div>
               ))}
             </div>
