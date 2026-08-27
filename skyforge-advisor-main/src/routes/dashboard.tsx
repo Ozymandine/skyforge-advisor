@@ -261,7 +261,7 @@ function Dashboard() {
               {sbLevel.categories.map((cat) => (
                 <div
                   key={cat.id}
-                  className="group relative rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-all duration-75 ease-out hover:-translate-y-1 hover:border-sky-400/60 hover:bg-white/[0.08] hover:shadow-xl hover:shadow-sky-500/10 active:translate-y-0 cursor-pointer"
+                  className="group relative rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-all duration-150 ease-out hover:transition-none hover:-translate-y-1 hover:border-sky-400/70 hover:bg-white/[0.09] hover:shadow-xl hover:shadow-sky-500/15 active:translate-y-0 cursor-pointer will-change-transform"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white/90 group-hover:text-white transition-colors duration-75">

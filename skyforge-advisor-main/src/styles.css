@@ -199,18 +199,23 @@
   background-color: oklch(0.2 0.015 243 / 0.92);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-glass);
-  transition: all 75ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 120ms ease-out, border-color 150ms ease-out, background-color 150ms ease-out, box-shadow 150ms ease-out;
+  transform: translateZ(0);
+  will-change: transform, border-color, background-color;
 }
 
 @utility glass-soft {
   background-color: oklch(0.22 0.016 243 / 0.88);
   border: 1px solid var(--border);
-  transition: all 75ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 120ms ease-out, border-color 150ms ease-out, background-color 150ms ease-out, box-shadow 150ms ease-out;
+  transform: translateZ(0);
+  will-change: transform, border-color, background-color;
   &:hover {
-    border-color: rgba(52, 211, 153, 0.45);
-    background-color: rgba(255, 255, 255, 0.06);
-    transform: translateY(-1.5px);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(52, 211, 153, 0.1);
+    transition: none !important;
+    border-color: rgba(52, 211, 153, 0.5);
+    background-color: rgba(255, 255, 255, 0.07);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(52, 211, 153, 0.12);
   }
 }
 
@@ -218,17 +223,22 @@
   background-color: oklch(0.18 0.015 243 / 0.94);
   border: 1px solid oklch(0.98 0.005 240 / 0.08);
   contain: content;
-  transition: all 75ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 120ms ease-out, border-color 150ms ease-out, background-color 150ms ease-out, box-shadow 150ms ease-out;
+  transform: translateZ(0);
+  will-change: transform, border-color, background-color;
 }
 
 @utility interactive-card {
-  transition: all 75ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 120ms ease-out, border-color 150ms ease-out, background-color 150ms ease-out, box-shadow 150ms ease-out;
+  transform: translateZ(0);
+  will-change: transform, border-color, background-color;
   cursor: pointer;
   &:hover {
-    border-color: rgba(52, 211, 153, 0.5);
-    background-color: rgba(255, 255, 255, 0.08);
+    transition: none !important;
+    border-color: rgba(52, 211, 153, 0.6);
+    background-color: rgba(255, 255, 255, 0.09);
     transform: translateY(-2px);
-    box-shadow: 0 12px 30px -6px rgba(0, 0, 0, 0.6), 0 0 20px rgba(52, 211, 153, 0.15);
+    box-shadow: 0 12px 30px -6px rgba(0, 0, 0, 0.6), 0 0 20px rgba(52, 211, 153, 0.18);
   }
   &:active {
     transform: translateY(0) scale(0.99);
@@ -236,13 +246,16 @@
 }
 
 @utility card-hover {
-  transition: all 75ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 120ms ease-out, border-color 150ms ease-out, background-color 150ms ease-out, box-shadow 150ms ease-out;
+  transform: translateZ(0);
+  will-change: transform, border-color, background-color;
   cursor: pointer;
   &:hover {
-    border-color: rgba(56, 189, 248, 0.55);
-    background-color: rgba(255, 255, 255, 0.08);
+    transition: none !important;
+    border-color: rgba(56, 189, 248, 0.65);
+    background-color: rgba(255, 255, 255, 0.09);
     transform: translateY(-2px);
-    box-shadow: 0 12px 30px -6px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.18);
+    box-shadow: 0 12px 30px -6px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.2);
   }
   &:active {
     transform: translateY(0) scale(0.99);
