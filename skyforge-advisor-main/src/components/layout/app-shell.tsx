@@ -91,7 +91,6 @@ const nav = [
     items: [
       { to: "/leaderboards", label: "Leaderboards", icon: Trophy },
       { to: "/calendar", label: "Calendar", icon: Calendar },
-      { to: "/compare", label: "Compare Profiles", icon: Swords },
       { to: "/analytics", label: "Analytics", icon: LineChart },
       { to: "/wiki", label: "Wiki", icon: BookOpen },
     ],

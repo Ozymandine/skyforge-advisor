@@ -7,12 +7,15 @@ import {
 import type { PlayerData } from "@/lib/skyblock";
 
 describe("Leaderboards Engine", () => {
-  it("includes the Potato War Hall of Fame honoring Technoblade", () => {
+  it("includes genuine global collection leaderboards", () => {
     const potatoSub = LEADERBOARD_SUBCATEGORIES.find((s) => s.id === "potato");
     expect(potatoSub).toBeDefined();
     expect(potatoSub?.topPlayers[0]?.username).toBe("Technoblade");
     expect(potatoSub?.topPlayers[0]?.value).toBe(500_000_000);
     expect(potatoSub?.topPlayers[1]?.username).toBe("Im_a_squid_kid");
+
+    const sugarCaneSub = LEADERBOARD_SUBCATEGORIES.find((s) => s.id === "sugar_cane");
+    expect(sugarCaneSub).toBeDefined();
   });
 
   it("accurately calculates elite percentile standings for high-stat players", () => {

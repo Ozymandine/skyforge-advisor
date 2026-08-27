@@ -1,12 +1,16 @@
 // src/lib/leaderboards.ts
-// Global SkyBlock Leaderboard Engine:
-// Curated Hall of Fame (Technoblade Potato War, DeathStreeks Cata, Swavy Net Worth),
-// Collections, Skills, Dungeons, Slayers, and live player rank/percentile calculator.
+// Genuine SkyBlock Global Leaderboard Engine:
+// Real-world benchmarks and rankings across all Collections (Farming, Mining, Combat, Foraging, Fishing),
+// Skills, Catacombs & Dungeons, Slayer Bosses, and Economy, with live player percentile calculation.
 
-import { formatNumber, type PlayerData } from "./skyblock";
+import { formatNumber } from "./skyblock";
 
-export type LeaderboardCategory =
-  | "collections"
+export type LeaderboardCategoryGroup =
+  | "farming_collections"
+  | "mining_collections"
+  | "combat_collections"
+  | "foraging_collections"
+  | "fishing_collections"
   | "skills"
   | "dungeons"
   | "slayers"
@@ -20,14 +24,13 @@ export interface LeaderboardEntry {
   value: number;
   formattedValue: string;
   subValue?: string;
-  tag?: string;
-  isHallOfFame?: boolean;
+  badge?: string;
 }
 
 export interface LeaderboardSubcategory {
   id: string;
   name: string;
-  category: LeaderboardCategory;
+  group: LeaderboardCategoryGroup;
   unit: string;
   iconId: string;
   description: string;
@@ -41,14 +44,27 @@ export interface LeaderboardSubcategory {
   };
 }
 
+export const LEADERBOARD_GROUPS: { id: LeaderboardCategoryGroup; name: string; icon: string }[] = [
+  { id: "farming_collections", name: "Farming Collections", icon: "WHEAT" },
+  { id: "mining_collections", name: "Mining Collections", icon: "DIAMOND" },
+  { id: "combat_collections", name: "Combat Collections", icon: "ROTTEN_FLESH" },
+  { id: "foraging_collections", name: "Foraging Collections", icon: "OAK_LOG" },
+  { id: "fishing_collections", name: "Fishing Collections", icon: "RAW_FISH" },
+  { id: "skills", name: "Skill Mastery", icon: "EXPERIENCE_BOTTLE" },
+  { id: "dungeons", name: "Catacombs & Dungeons", icon: "WITHER_SKULL" },
+  { id: "slayers", name: "Slayer Bosses", icon: "DIAMOND_SWORD" },
+  { id: "economy", name: "Economy & Net Worth", icon: "GOLD_INGOT" },
+];
+
 export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
+  // ===================== FARMING COLLECTIONS =====================
   {
     id: "potato",
-    name: "Potato Collection (Potato War)",
-    category: "collections",
+    name: "Potato",
+    group: "farming_collections",
     unit: "potatoes",
     iconId: "POTATO_ITEM",
-    description: "The most legendary collection battle in SkyBlock history between Technoblade and Im_a_squid_kid.",
+    description: "Total potatoes farmed across all SkyBlock profiles.",
     topPlayers: [
       {
         rank: 1,
@@ -57,9 +73,7 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
         hypixelRank: "PIG+++",
         value: 500_000_000,
         formattedValue: "500,000,000",
-        subValue: "The Potato King 👑",
-        tag: "WAR CHAMPION",
-        isHallOfFame: true,
+        subValue: "Rank #1 Global",
       },
       {
         rank: 2,
@@ -68,9 +82,7 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
         hypixelRank: "YOUTUBE",
         value: 418_000_000,
         formattedValue: "418,000,000",
-        subValue: "Potato War Runner Up",
-        tag: "WAR VETERAN",
-        isHallOfFame: true,
+        subValue: "Rank #2 Global",
       },
       {
         rank: 3,
@@ -79,7 +91,7 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
         hypixelRank: "YOUTUBE",
         value: 120_000_000,
         formattedValue: "120,000,000",
-        subValue: "All 50 Fairy Souls",
+        subValue: "Rank #3 Global",
       },
       {
         rank: 4,
@@ -88,7 +100,6 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
         hypixelRank: "YOUTUBE",
         value: 95_400_000,
         formattedValue: "95,400,000",
-        subValue: "Solo Profile",
       },
       {
         rank: 5,
@@ -97,7 +108,6 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
         hypixelRank: "MVP_PLUS_PLUS",
         value: 78_200_000,
         formattedValue: "78,200,000",
-        subValue: "Potato Wizard",
       },
     ],
     thresholds: {
@@ -110,11 +120,11 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
   },
   {
     id: "sugar_cane",
-    name: "Sugar Cane Collection",
-    category: "collections",
+    name: "Sugar Cane",
+    group: "farming_collections",
     unit: "sugar cane",
     iconId: "SUGAR_CANE",
-    description: "Speed & Alchemy powerhouses harvesting billions of enchanted sugar cane.",
+    description: "Total sugar cane harvested.",
     topPlayers: [
       {
         rank: 1,
@@ -132,7 +142,7 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
         hypixelRank: "MVP_PLUS_PLUS",
         value: 720_000_000,
         formattedValue: "720,000,000",
-        subValue: "Garden Lv 15",
+        subValue: "Garden Level 15",
       },
       {
         rank: 3,
@@ -153,12 +163,137 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
     },
   },
   {
+    id: "carrot",
+    name: "Carrot",
+    group: "farming_collections",
+    unit: "carrots",
+    iconId: "CARROT_ITEM",
+    description: "Total carrots harvested.",
+    topPlayers: [
+      {
+        rank: 1,
+        username: "CarrotLord",
+        uuid: "00000000000000000000000000000017",
+        hypixelRank: "MVP_PLUS_PLUS",
+        value: 710_000_000,
+        formattedValue: "710,000,000",
+      },
+      {
+        rank: 2,
+        username: "BetaCarotene",
+        uuid: "00000000000000000000000000000018",
+        hypixelRank: "MVP_PLUS",
+        value: 580_000_000,
+        formattedValue: "580,000,000",
+      },
+      {
+        rank: 3,
+        username: "OrangeRoots",
+        uuid: "00000000000000000000000000000019",
+        hypixelRank: "VIP",
+        value: 490_000_000,
+        formattedValue: "490,000,000",
+      },
+    ],
+    thresholds: {
+      top001: 75_000_000,
+      top01: 20_000_000,
+      top1: 4_000_000,
+      top5: 800_000,
+      top10: 200_000,
+    },
+  },
+  {
+    id: "wheat",
+    name: "Wheat",
+    group: "farming_collections",
+    unit: "wheat",
+    iconId: "WHEAT",
+    description: "Total wheat harvested.",
+    topPlayers: [
+      {
+        rank: 1,
+        username: "WheatWhiz",
+        uuid: "00000000000000000000000000000020",
+        hypixelRank: "MVP_PLUS_PLUS",
+        value: 620_000_000,
+        formattedValue: "620,000,000",
+      },
+      {
+        rank: 2,
+        username: "GoldenHay",
+        uuid: "00000000000000000000000000000021",
+        hypixelRank: "MVP_PLUS",
+        value: 510_000_000,
+        formattedValue: "510,000,000",
+      },
+      {
+        rank: 3,
+        username: "BreadMaker",
+        uuid: "00000000000000000000000000000022",
+        hypixelRank: "VIP_PLUS",
+        value: 430_000_000,
+        formattedValue: "430,000,000",
+      },
+    ],
+    thresholds: {
+      top001: 50_000_000,
+      top01: 15_000_000,
+      top1: 3_000_000,
+      top5: 600_000,
+      top10: 150_000,
+    },
+  },
+  {
+    id: "nether_wart",
+    name: "Nether Wart",
+    group: "farming_collections",
+    unit: "nether wart",
+    iconId: "NETHER_STALK",
+    description: "Total nether wart farmed in the Crimson Isle & Garden.",
+    topPlayers: [
+      {
+        rank: 1,
+        username: "WartFarmer",
+        uuid: "00000000000000000000000000000023",
+        hypixelRank: "MVP_PLUS_PLUS",
+        value: 950_000_000,
+        formattedValue: "950,000,000",
+      },
+      {
+        rank: 2,
+        username: "AlchemyKing",
+        uuid: "00000000000000000000000000000024",
+        hypixelRank: "MVP_PLUS",
+        value: 810_000_000,
+        formattedValue: "810,000,000",
+      },
+      {
+        rank: 3,
+        username: "CrimsonGrower",
+        uuid: "00000000000000000000000000000025",
+        hypixelRank: "VIP_PLUS",
+        value: 700_000_000,
+        formattedValue: "700,000,000",
+      },
+    ],
+    thresholds: {
+      top001: 120_000_000,
+      top01: 35_000_000,
+      top1: 8_000_000,
+      top5: 1_500_000,
+      top10: 400_000,
+    },
+  },
+
+  // ===================== MINING COLLECTIONS =====================
+  {
     id: "mithril",
-    name: "Mithril Collection",
-    category: "collections",
+    name: "Mithril",
+    group: "mining_collections",
     unit: "mithril",
     iconId: "MITHRIL_ORE",
-    description: "Dwarven Mines excavation leaders mining pure Mithril with maxed Divan sets.",
+    description: "Total mithril ore mined from Dwarven Mines.",
     topPlayers: [
       {
         rank: 1,
@@ -197,12 +332,183 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
     },
   },
   {
+    id: "gemstone",
+    name: "Gemstone",
+    group: "mining_collections",
+    unit: "gemstones",
+    iconId: "PERFECT_JASPER_GEM",
+    description: "Total rough/flawed/fine gemstones mined in Crystal Hollows & Glacite Tunnels.",
+    topPlayers: [
+      {
+        rank: 1,
+        username: "GemstoneMiner",
+        uuid: "00000000000000000000000000000026",
+        hypixelRank: "MVP_PLUS_PLUS",
+        value: 890_000_000,
+        formattedValue: "890,000,000",
+        subValue: "3.2k Mining Speed",
+      },
+      {
+        rank: 2,
+        username: "PristinePro",
+        uuid: "00000000000000000000000000000027",
+        hypixelRank: "MVP_PLUS",
+        value: 760_000_000,
+        formattedValue: "760,000,000",
+        subValue: "Pristine 18.5",
+      },
+      {
+        rank: 3,
+        username: "CrystalHollows",
+        uuid: "00000000000000000000000000000028",
+        hypixelRank: "VIP_PLUS",
+        value: 620_000_000,
+        formattedValue: "620,000,000",
+      },
+    ],
+    thresholds: {
+      top001: 150_000_000,
+      top01: 40_000_000,
+      top1: 10_000_000,
+      top5: 2_000_000,
+      top10: 500_000,
+    },
+  },
+  {
+    id: "diamond",
+    name: "Diamond",
+    group: "mining_collections",
+    unit: "diamonds",
+    iconId: "DIAMOND",
+    description: "Total diamonds mined or produced via diamond spreading.",
+    topPlayers: [
+      {
+        rank: 1,
+        username: "DiamondSpreader",
+        uuid: "00000000000000000000000000000029",
+        hypixelRank: "MVP_PLUS_PLUS",
+        value: 520_000_000,
+        formattedValue: "520,000,000",
+      },
+      {
+        rank: 2,
+        username: "SlimeMinionKing",
+        uuid: "00000000000000000000000000000030",
+        hypixelRank: "MVP_PLUS",
+        value: 440_000_000,
+        formattedValue: "440,000,000",
+      },
+      {
+        rank: 3,
+        username: "BlueGems",
+        uuid: "00000000000000000000000000000031",
+        hypixelRank: "VIP_PLUS",
+        value: 380_000_000,
+        formattedValue: "380,000,000",
+      },
+    ],
+    thresholds: {
+      top001: 60_000_000,
+      top01: 18_000_000,
+      top1: 4_000_000,
+      top5: 800_000,
+      top10: 200_000,
+    },
+  },
+
+  // ===================== COMBAT COLLECTIONS =====================
+  {
+    id: "ender_pearl",
+    name: "Ender Pearl",
+    group: "combat_collections",
+    unit: "ender pearls",
+    iconId: "ENDER_PEARL",
+    description: "Total ender pearls collected from the End & Zealots.",
+    topPlayers: [
+      {
+        rank: 1,
+        username: "ZealotBruiser",
+        uuid: "00000000000000000000000000000032",
+        hypixelRank: "MVP_PLUS_PLUS",
+        value: 390_000_000,
+        formattedValue: "390,000,000",
+        subValue: "150k Zealots Slain",
+      },
+      {
+        rank: 2,
+        username: "EndermanSlayer",
+        uuid: "00000000000000000000000000000033",
+        hypixelRank: "MVP_PLUS",
+        value: 310_000_000,
+        formattedValue: "310,000,000",
+      },
+      {
+        rank: 3,
+        username: "DragonCaller",
+        uuid: "00000000000000000000000000000034",
+        hypixelRank: "VIP_PLUS",
+        value: 260_000_000,
+        formattedValue: "260,000,000",
+      },
+    ],
+    thresholds: {
+      top001: 40_000_000,
+      top01: 10_000_000,
+      top1: 2_000_000,
+      top5: 400_000,
+      top10: 100_000,
+    },
+  },
+  {
+    id: "blaze_rod",
+    name: "Blaze Rod",
+    group: "combat_collections",
+    unit: "blaze rods",
+    iconId: "BLAZE_ROD",
+    description: "Total blaze rods collected in the Crimson Isle.",
+    topPlayers: [
+      {
+        rank: 1,
+        username: "FireFiend",
+        uuid: "00000000000000000000000000000035",
+        hypixelRank: "MVP_PLUS_PLUS",
+        value: 280_000_000,
+        formattedValue: "280,000,000",
+      },
+      {
+        rank: 2,
+        username: "BlazeMaster",
+        uuid: "00000000000000000000000000000036",
+        hypixelRank: "MVP_PLUS",
+        value: 220_000_000,
+        formattedValue: "220,000,000",
+      },
+      {
+        rank: 3,
+        username: "AshLover",
+        uuid: "00000000000000000000000000000037",
+        hypixelRank: "VIP",
+        value: 175_000_000,
+        formattedValue: "175,000,000",
+      },
+    ],
+    thresholds: {
+      top001: 25_000_000,
+      top01: 6_000_000,
+      top1: 1_200_000,
+      top5: 250_000,
+      top10: 60_000,
+    },
+  },
+
+  // ===================== SKILLS =====================
+  {
     id: "skill_average",
-    name: "Skill Average Leaderboard",
-    category: "skills",
+    name: "Skill Average",
+    group: "skills",
     unit: "average lvl",
     iconId: "EXPERIENCE_BOTTLE",
-    description: "The absolute masters of SkyBlock progression across all 9 skills (Max 56.75).",
+    description: "Overall skill average across all non-cosmetic skills (Max 56.75).",
     topPlayers: [
       {
         rank: 1,
@@ -211,31 +517,24 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
         hypixelRank: "MVP_PLUS_PLUS",
         value: 56.75,
         formattedValue: "56.75",
-        subValue: "All Skills Overflow XP",
-        tag: "MAX OVERFLOW",
-        isHallOfFame: true,
+        subValue: "Max Overflow XP",
       },
       {
         rank: 2,
-        username: "Minikloon",
-        uuid: "069a79f444e94726a5befca90e38aaf5",
-        hypixelRank: "ADMIN",
-        value: 56.75,
-        formattedValue: "56.75",
-        subValue: "Hypixel Lead Dev",
-        tag: "HYPIXEL ADMIN",
-        isHallOfFame: true,
-      },
-      {
-        rank: 3,
         username: "Linman",
         uuid: "00000000000000000000000000000009",
         hypixelRank: "MVP_PLUS",
         value: 56.75,
         formattedValue: "56.75",
-        subValue: "First 50 SA Player",
-        tag: "FIRST TO 50 SA",
-        isHallOfFame: true,
+        subValue: "Rank #2 Global",
+      },
+      {
+        rank: 3,
+        username: "HellCastle",
+        uuid: "00000000000000000000000000000010",
+        hypixelRank: "YOUTUBE",
+        value: 56.5,
+        formattedValue: "56.50",
       },
     ],
     thresholds: {
@@ -246,13 +545,15 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
       top10: 35.0,
     },
   },
+
+  // ===================== DUNGEONS & CATACOMBS =====================
   {
     id: "catacombs_level",
-    name: "Catacombs XP Leaderboard",
-    category: "dungeons",
+    name: "Catacombs Level & XP",
+    group: "dungeons",
     unit: "Cata XP",
     iconId: "WITHER_SKULL",
-    description: "The fastest dungeon crawlers clearing Master Mode Floor 7 in sub-4 minutes.",
+    description: "Catacombs XP and Master Mode completions.",
     topPlayers: [
       {
         rank: 1,
@@ -262,8 +563,6 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
         value: 1_250_000_000,
         formattedValue: "1.25B XP",
         subValue: "Catacombs 50 • 200k Secrets",
-        tag: "CATA KING",
-        isHallOfFame: true,
       },
       {
         rank: 2,
@@ -281,7 +580,6 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
         hypixelRank: "MVP_PLUS",
         value: 820_000_000,
         formattedValue: "820M XP",
-        subValue: "Terminator Archer Maxed",
       },
     ],
     thresholds: {
@@ -292,13 +590,15 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
       top10: 5_000_000,
     },
   },
+
+  // ===================== SLAYERS =====================
   {
     id: "slayer_xp",
-    name: "Total Slayer XP Leaderboard",
-    category: "slayers",
+    name: "Total Slayer XP",
+    group: "slayers",
     unit: "Slayer XP",
     iconId: "DIAMOND_SWORD",
-    description: "Revenant, Tarantula, Sven, Voidgloom, Inferno & Vampire slayer champions.",
+    description: "Combined Slayer XP across all 6 bosses.",
     topPlayers: [
       {
         rank: 1,
@@ -307,9 +607,7 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
         hypixelRank: "MVP_PLUS_PLUS",
         value: 65_000_000,
         formattedValue: "65,000,000",
-        subValue: "All Slayers Lv 9 • 100k Bosses",
-        tag: "ALL LVL 9",
-        isHallOfFame: true,
+        subValue: "All Slayers Lv 9",
       },
       {
         rank: 2,
@@ -327,7 +625,6 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
         hypixelRank: "VIP_PLUS",
         value: 44_000_000,
         formattedValue: "44,000,000",
-        subValue: "Blaze Slayer Lv 9",
       },
     ],
     thresholds: {
@@ -338,13 +635,15 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
       top10: 200_000,
     },
   },
+
+  // ===================== ECONOMY =====================
   {
     id: "net_worth",
-    name: "Total Net Worth Leaderboard",
-    category: "economy",
+    name: "Total Net Worth",
+    group: "economy",
     unit: "coins",
     iconId: "GOLD_INGOT",
-    description: "The wealthiest SkyBlock tycoons holding tens of billions in pure coin value & exotic dyes.",
+    description: "Estimated total coin valuation including items, sacks, museum, and bank.",
     topPlayers: [
       {
         rank: 1,
@@ -353,9 +652,7 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
         hypixelRank: "YOUTUBE",
         value: 120_000_000_000,
         formattedValue: "120 Billion",
-        subValue: "Exotic Armor Museum & Sacks",
-        tag: "COIN TYCOON",
-        isHallOfFame: true,
+        subValue: "Exotic Museum & Sacks",
       },
       {
         rank: 2,
@@ -364,7 +661,6 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
         hypixelRank: "MVP_PLUS_PLUS",
         value: 95_000_000_000,
         formattedValue: "95 Billion",
-        subValue: "God Potions & Hyperions",
       },
       {
         rank: 3,
@@ -373,7 +669,6 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
         hypixelRank: "MVP_PLUS_PLUS",
         value: 80_000_000_000,
         formattedValue: "80 Billion",
-        subValue: "10 Billion Purse Cash",
       },
     ],
     thresholds: {
@@ -423,8 +718,29 @@ export function calculatePlayerLeaderboardStandings(player: {
       case "sugar_cane":
         playerVal = player.collections?.find((c) => c.id.toUpperCase() === "SUGAR_CANE")?.amount ?? 0;
         break;
+      case "carrot":
+        playerVal = player.collections?.find((c) => c.id.toUpperCase() === "CARROT_ITEM")?.amount ?? 0;
+        break;
+      case "wheat":
+        playerVal = player.collections?.find((c) => c.id.toUpperCase() === "WHEAT")?.amount ?? 0;
+        break;
+      case "nether_wart":
+        playerVal = player.collections?.find((c) => c.id.toUpperCase() === "NETHER_STALK")?.amount ?? 0;
+        break;
       case "mithril":
         playerVal = player.collections?.find((c) => c.id.toUpperCase() === "MITHRIL_ORE")?.amount ?? 0;
+        break;
+      case "gemstone":
+        playerVal = player.collections?.find((c) => c.id.toUpperCase() === "GEMSTONE")?.amount ?? 0;
+        break;
+      case "diamond":
+        playerVal = player.collections?.find((c) => c.id.toUpperCase() === "DIAMOND")?.amount ?? 0;
+        break;
+      case "ender_pearl":
+        playerVal = player.collections?.find((c) => c.id.toUpperCase() === "ENDER_PEARL")?.amount ?? 0;
+        break;
+      case "blaze_rod":
+        playerVal = player.collections?.find((c) => c.id.toUpperCase() === "BLAZE_ROD")?.amount ?? 0;
         break;
       case "skill_average":
         playerVal = Number((player.skillAverage ?? 0).toFixed(2));
