@@ -194,7 +194,6 @@ function PublicProfileRoute() {
             <button
               onClick={copyShareLink}
               className="flex items-center gap-2 rounded-full border border-primary/40 bg-primary/20 px-4 py-2.5 text-xs font-bold text-primary hover:bg-primary/30 transition-all shadow-lg shadow-primary/10"
-            >
               {copied ? (
                 <>
                   <Check className="size-4 text-emerald-400" />
@@ -211,7 +210,6 @@ function PublicProfileRoute() {
               to="/dashboard"
               className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-bold text-white hover:bg-white/10 transition-all"
             >
-              <span>Advisor Dashboard</span>
               <ChevronRight className="size-4 text-muted-foreground" />
             </Link>
           </div>

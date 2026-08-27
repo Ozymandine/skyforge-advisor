@@ -165,7 +165,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       )}
     >
       {/* Large Centered Custom Gradient Wordmark */}
-      <div className="flex flex-col items-center justify-center px-4 pt-3 pb-1">
+      <div className="flex flex-col items-center justify-center px-4 pt-5 pb-2">
         {!collapsed ? (
           <div className="w-full text-center">
             <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-2xl tracking-[0.18em] text-transparent select-none drop-shadow-[0_2px_20px_rgba(52,211,153,0.45)]">
@@ -185,31 +185,31 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         <button
           onClick={onToggle}
           aria-label="Toggle sidebar"
-          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-1.5 text-muted-foreground transition-all duration-150 hover:bg-white/15 hover:text-foreground active:bg-white/20"
+          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-2 text-muted-foreground transition-all duration-150 hover:bg-white/15 hover:text-foreground active:bg-white/20"
         >
           {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
         </button>
       </div>
 
-      <nav className="scroll-slim mt-3 flex-1 overflow-y-auto px-2.5 pb-3 space-y-2.5">
+      <nav className="scroll-slim mt-3 flex-1 overflow-y-auto px-3 pb-2 space-y-3">
         {nav.map((section) => (
-          <div key={section.group} className="mb-2">
+          <div key={section.group} className="mb-3">
             {!collapsed && (
-              <p className="eyebrow px-3 pb-1 text-[10.5px] font-bold uppercase tracking-wider text-white/40">
+              <p className="eyebrow px-3 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-white/40">
                 {section.group}
               </p>
             )}
-            <ul className="space-y-0.5">
+            <ul className="space-y-1">
               {section.items.map((item) => (
                 <li key={item.to}>
                   <Link
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-white/70 select-none cursor-pointer transition-all duration-150 border border-transparent",
+                      "group relative flex h-10 items-center gap-3 rounded-xl px-3.5 text-xs font-semibold text-white/75 select-none cursor-pointer transition-all duration-150 border border-transparent",
                       "hover:bg-white/[0.12] hover:text-white hover:border-white/10",
                       "active:scale-[0.98] active:bg-white/[0.2]",
-                      collapsed && "justify-center px-0 py-2",
+                      collapsed && "justify-center px-0",
                     )}
                     activeProps={{
                       className:
@@ -227,7 +227,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       </nav>
 
       {/* Unified Bottom-Left Profile Switcher */}
-      <div className="p-3 border-t border-white/10">
+      <div className="p-3.5 border-t border-white/10">
         <DropdownMenu>
           <DropdownMenuTrigger className="w-full text-left outline-none">
             <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] p-3 transition-all duration-150 hover:bg-white/[0.12] hover:border-emerald-500/40 active:scale-[0.99] active:bg-white/[0.18] cursor-pointer">
