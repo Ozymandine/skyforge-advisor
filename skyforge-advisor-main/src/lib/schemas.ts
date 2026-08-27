@@ -214,6 +214,7 @@ export const playerDataSchema = z.object({
   experimentation: experimentationSchema.optional(),
   lifetimeStats: lifetimeStatsSchema.optional(),
   communityUpgrades: z.array(communityUpgradeSchema).optional(),
+  craftedGenerators: z.array(z.string()).optional(),
   sacks: z
     .object({
       totalValue: z.number(),

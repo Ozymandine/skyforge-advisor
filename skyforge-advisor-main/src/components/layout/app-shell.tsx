@@ -89,6 +89,7 @@ const nav = [
       { to: "/bazaar", label: "Bazaar", icon: TrendingUp },
       { to: "/auction-house", label: "Auction House", icon: Hammer },
       { to: "/flips", label: "Market Flips & Radar", icon: Target },
+      { to: "/minions", label: "Minion Engine & Claims", icon: Bot },
     ],
   },
   {

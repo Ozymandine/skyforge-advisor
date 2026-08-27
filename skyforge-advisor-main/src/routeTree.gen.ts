@@ -27,6 +27,7 @@ import { Route as FlipsRouteImport } from './routes/flips'
 import { Route as GardenRouteImport } from './routes/garden'
 import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as InventoryRouteImport } from './routes/inventory'
+import { Route as MinionsRouteImport } from './routes/minions'
 import { Route as NetWorthRouteImport } from './routes/net-worth'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -125,6 +126,11 @@ const InventoryRoute = InventoryRouteImport.update({
   path: '/inventory',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MinionsRoute = MinionsRouteImport.update({
+  id: '/minions',
+  path: '/minions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NetWorthRoute = NetWorthRouteImport.update({
   id: '/net-worth',
   path: '/net-worth',
@@ -180,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/garden': typeof GardenRoute
   '/goals': typeof GoalsRoute
   '/inventory': typeof InventoryRoute
+  '/minions': typeof MinionsRoute
   '/net-worth': typeof NetWorthRoute
   '/notifications': typeof NotificationsRoute
   '/settings': typeof SettingsRoute
@@ -207,6 +214,7 @@ export interface FileRoutesByTo {
   '/garden': typeof GardenRoute
   '/goals': typeof GoalsRoute
   '/inventory': typeof InventoryRoute
+  '/minions': typeof MinionsRoute
   '/net-worth': typeof NetWorthRoute
   '/notifications': typeof NotificationsRoute
   '/settings': typeof SettingsRoute
@@ -235,6 +243,7 @@ export interface FileRoutesById {
   '/garden': typeof GardenRoute
   '/goals': typeof GoalsRoute
   '/inventory': typeof InventoryRoute
+  '/minions': typeof MinionsRoute
   '/net-worth': typeof NetWorthRoute
   '/notifications': typeof NotificationsRoute
   '/settings': typeof SettingsRoute
@@ -264,6 +273,7 @@ export interface FileRouteTypes {
     | '/garden'
     | '/goals'
     | '/inventory'
+    | '/minions'
     | '/net-worth'
     | '/notifications'
     | '/settings'
@@ -291,6 +301,7 @@ export interface FileRouteTypes {
     | '/garden'
     | '/goals'
     | '/inventory'
+    | '/minions'
     | '/net-worth'
     | '/notifications'
     | '/settings'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/garden'
     | '/goals'
     | '/inventory'
+    | '/minions'
     | '/net-worth'
     | '/notifications'
     | '/settings'
@@ -346,6 +358,7 @@ export interface RootRouteChildren {
   GardenRoute: typeof GardenRoute
   GoalsRoute: typeof GoalsRoute
   InventoryRoute: typeof InventoryRoute
+  MinionsRoute: typeof MinionsRoute
   NetWorthRoute: typeof NetWorthRoute
   NotificationsRoute: typeof NotificationsRoute
   SettingsRoute: typeof SettingsRoute
@@ -482,6 +495,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InventoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/minions': {
+      id: '/minions'
+      path: '/minions'
+      fullPath: '/minions'
+      preLoaderRoute: typeof MinionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/net-worth': {
       id: '/net-worth'
       path: '/net-worth'
@@ -563,6 +583,7 @@ const rootRouteChildren: RootRouteChildren = {
   GardenRoute: GardenRoute,
   GoalsRoute: GoalsRoute,
   InventoryRoute: InventoryRoute,
+  MinionsRoute: MinionsRoute,
   NetWorthRoute: NetWorthRoute,
   NotificationsRoute: NotificationsRoute,
   SettingsRoute: SettingsRoute,

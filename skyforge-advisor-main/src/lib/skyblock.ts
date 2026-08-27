@@ -420,6 +420,7 @@ export type PlayerData = {
   experimentation?: ExperimentationStats;
   lifetimeStats?: LifetimeStats;
   communityUpgrades?: { upgrade: string; level: number }[];
+  craftedGenerators?: string[];
   sacks?: SacksData;
   bestiary?: import("./bestiary").BestiaryData;
   slayerOverview?: import("./slayer").SlayerOverview;

@@ -2388,6 +2388,14 @@ export async function getPlayerData(
       .filter((u) => u.upgrade)
       .map((u) => ({ upgrade: titleCase(String(u.upgrade)), level: Number(u.tier ?? 0) }));
 
+    // Crafted minion generators
+    const craftedGeneratorsRaw = (member["crafted_generators"] ??
+      (member["player_data"] as Record<string, unknown> | undefined)?.["crafted_generators"] ??
+      []) as string[];
+    const craftedGenerators = Array.isArray(craftedGeneratorsRaw)
+      ? craftedGeneratorsRaw.map((s) => String(s))
+      : [];
+
     // Sacks counts decoder & valuation against live bazaar/NPC prices
     const sacksRaw = (member["sacks_counts"] ?? (member["inventory"] as Record<string, unknown> | undefined)?.["sacks_counts"] ?? {}) as Record<string, number>;
     let sacks: import("./skyblock").SacksData | undefined;
@@ -2515,6 +2523,8 @@ export async function getPlayerData(
       ...(lifetimeStats ? { lifetimeStats } : {}),
 
       ...(communityUpgrades.length ? { communityUpgrades } : {}),
+
+      ...(craftedGenerators.length ? { craftedGenerators } : {}),
 
       ...(sacks ? { sacks } : {}),
 
