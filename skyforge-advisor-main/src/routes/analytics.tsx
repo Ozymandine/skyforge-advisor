@@ -116,26 +116,6 @@ function Analytics() {
       />
 
       {/* Compare Profiles Quick Access Card */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-indigo-950/40 via-slate-900/50 to-black/60 p-4 shadow-lg shadow-indigo-950/20">
-        <div className="flex items-center gap-3.5">
-          <div className="flex size-11 items-center justify-center rounded-xl border border-indigo-500/40 bg-indigo-500/20 text-indigo-400">
-            <Swords className="size-5" />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-white">Compare With Another Player</h4>
-            <p className="text-xs text-muted-foreground">Side-by-side progression, net worth, skill averages, and gear delta.</p>
-          </div>
-        </div>
-        <Link
-          to="/compare"
-          className="flex items-center gap-2 rounded-xl border border-indigo-500/40 bg-indigo-500/20 px-4 py-2.5 text-xs font-bold text-indigo-300 hover:bg-indigo-500/30 hover:border-indigo-400/60 transition-all shrink-0 cursor-pointer shadow-md shadow-indigo-500/10"
-        >
-          <span>Launch Profile Comparator</span>
-          <ChevronRight className="size-3.5" />
-        </Link>
-      </div>
-
-      {!connected && <ConnectPrompt what="analytics for your SkyBlock profile" />}
       {connected && isLoading && <LoadState>Loading analytics data…</LoadState>}
       {connected && error && <ErrorState error={error} />}
 

@@ -192,22 +192,22 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         </button>
       </div>
 
-      <nav className="scroll-slim mt-4 flex-1 overflow-y-auto px-3 pb-6 space-y-4">
+      <nav className="mt-2.5 flex-1 overflow-hidden px-3 pb-3 space-y-2.5">
         {nav.map((section) => (
-          <div key={section.group} className="mb-4">
+          <div key={section.group} className="mb-2">
             {!collapsed && (
-              <p className="eyebrow px-3 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-white/40">
+              <p className="eyebrow px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-white/40">
                 {section.group}
               </p>
             )}
-            <ul className="space-y-1">
+            <ul className="space-y-0.5">
               {section.items.map((item) => (
                 <li key={item.to}>
                   <Link
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "group relative flex h-10 items-center gap-3 rounded-xl px-3.5 text-xs font-semibold text-white/75 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
+                      "group relative flex h-8.5 items-center gap-3 rounded-xl px-3 text-xs font-semibold text-white/75 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
                       "hover:transition-none hover:bg-white/[0.14] hover:text-white hover:border-white/15 hover:translate-x-1 hover:shadow-md hover:shadow-black/20",
                       "active:scale-[0.98] active:bg-white/[0.2]",
                       collapsed && "justify-center px-0 hover:translate-x-0",

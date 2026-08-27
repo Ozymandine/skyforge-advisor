@@ -1,7 +1,7 @@
 // src/routes/leaderboards.tsx
-// Genuine SkyBlock Global Leaderboards:
-// Real-world rankings across Collections (Farming, Mining, Combat), Skills,
-// Catacombs & Dungeons, Slayer Bosses, and Economy with live player lookup & percentile calculation.
+// Comprehensive SkyBlock Global Leaderboards:
+// Exact numbers across all collections (Mining, Farming, Combat, Foraging, Fishing, Rift, Dungeons, Slayers, Skills, Economy)
+// with live player standing and instant player search lookup.
 
 import { useState, useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -32,7 +32,6 @@ import {
   type LeaderboardCategoryGroup,
   type LeaderboardSubcategory,
 } from "@/lib/leaderboards";
-import { formatNumber } from "@/lib/skyblock";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/leaderboards")({
@@ -42,12 +41,12 @@ export const Route = createFileRoute("/leaderboards")({
       {
         name: "description",
         content:
-          "Official global SkyBlock leaderboards: Top collections, Skill Averages, Catacombs 50, Slayer XP, and multi-billion coin Net Worth rankings.",
+          "Official global SkyBlock leaderboards with exact figures: Top collections, Skill Averages, Catacombs 50, Slayer XP, and Net Worth rankings.",
       },
       { property: "og:title", content: "Global Leaderboards — SkyForge Advisor" },
       {
         property: "og:description",
-        content: "Official global SkyBlock leaderboards with live ranking and player percentile lookup.",
+        content: "Official global SkyBlock leaderboards with exact numbers and live player percentile lookup.",
       },
     ],
   }),
@@ -58,8 +57,8 @@ function LeaderboardsRoute() {
   const player = usePlayer();
   const account = useAccount();
 
-  const [activeGroup, setActiveGroup] = useState<LeaderboardCategoryGroup>("farming_collections");
-  const [selectedSubId, setSelectedSubId] = useState<string>("potato");
+  const [activeGroup, setActiveGroup] = useState<LeaderboardCategoryGroup>("mining");
+  const [selectedSubId, setSelectedSubId] = useState<string>("diamond");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [liveSearchUser, setLiveSearchUser] = useState<string>("");
 
@@ -71,9 +70,9 @@ function LeaderboardsRoute() {
   // Selected subcategory
   const activeSubcategory = useMemo<LeaderboardSubcategory>(() => {
     const found = LEADERBOARD_SUBCATEGORIES.find((s) => s.id === selectedSubId);
-    if (found) return found;
+    if (found && found.group === activeGroup) return found;
     return groupSubcategories[0] ?? LEADERBOARD_SUBCATEGORIES[0]!;
-  }, [selectedSubId, groupSubcategories]);
+  }, [selectedSubId, activeGroup, groupSubcategories]);
 
   // Live lookup query for searching arbitrary player rankings
   const liveLookupQuery = useQuery({
@@ -102,7 +101,6 @@ function LeaderboardsRoute() {
     return activeSubcategory.topPlayers.filter(
       (p) =>
         p.username.toLowerCase().includes(q) ||
-        (p.badge && p.badge.toLowerCase().includes(q)) ||
         (p.subValue && p.subValue.toLowerCase().includes(q))
     );
   }, [activeSubcategory, searchQuery]);
@@ -116,10 +114,10 @@ function LeaderboardsRoute() {
       <PageHero
         eyebrow="Global Competition"
         title="SkyBlock Leaderboards"
-        description="Real-world rankings across Collections, Skill Mastery, Catacombs, Slayers, and Economy."
+        description="Exact real-world records and rankings across all Collections, Skills, Catacombs, Slayers, and Economy."
       />
 
-      {/* Group Navigation Bar */}
+      {/* Group Navigation Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scroll-slim border-b border-white/10">
         {LEADERBOARD_GROUPS.map((group) => {
           const active = activeGroup === group.id;
@@ -147,7 +145,7 @@ function LeaderboardsRoute() {
         })}
       </div>
 
-      {/* Subcategory Pills */}
+      {/* Subcategory Collection Pills */}
       <div className="flex flex-wrap items-center gap-2">
         {groupSubcategories.map((sub) => {
           const active = activeSubcategory.id === sub.id;
@@ -193,7 +191,7 @@ function LeaderboardsRoute() {
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground font-mono">
-                    Record: <strong className="text-white">{activeStanding.formattedPlayerValue}</strong> {activeSubcategory.unit}
+                    Exact Record: <strong className="text-white">{activeStanding.formattedPlayerValue}</strong> {activeSubcategory.unit}
                   </p>
                 </>
               ) : (
@@ -223,7 +221,7 @@ function LeaderboardsRoute() {
         </div>
       </Panel>
 
-      {/* Podium Top 3 View */}
+      {/* Podium Top 3 View (Exact Numbers) */}
       <div className="grid gap-4 md:grid-cols-3 pt-2">
         {/* 2nd Place (Silver) */}
         {top2 && (
@@ -253,7 +251,7 @@ function LeaderboardsRoute() {
                 <h4 className="text-base font-black text-white">{top2.username}</h4>
               </div>
               <p className="mt-1 font-mono text-lg font-black text-slate-200">
-                {top2.formattedValue} <span className="text-xs font-normal text-muted-foreground">{activeSubcategory.unit}</span>
+                {top2.value.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">{activeSubcategory.unit}</span>
               </p>
               {top2.subValue && (
                 <p className="mt-1 text-xs text-muted-foreground">{top2.subValue}</p>
@@ -301,7 +299,7 @@ function LeaderboardsRoute() {
                 <h4 className="text-lg font-black text-amber-300">{top1.username}</h4>
               </div>
               <p className="mt-1 font-mono text-2xl font-black text-white">
-                {top1.formattedValue} <span className="text-xs font-normal text-muted-foreground">{activeSubcategory.unit}</span>
+                {top1.value.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">{activeSubcategory.unit}</span>
               </p>
               {top1.subValue && (
                 <p className="mt-1 text-xs font-semibold text-amber-200/80">{top1.subValue}</p>
@@ -347,7 +345,7 @@ function LeaderboardsRoute() {
                 <h4 className="text-base font-black text-white">{top3.username}</h4>
               </div>
               <p className="mt-1 font-mono text-lg font-black text-amber-500">
-                {top3.formattedValue} <span className="text-xs font-normal text-muted-foreground">{activeSubcategory.unit}</span>
+                {top3.value.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">{activeSubcategory.unit}</span>
               </p>
               {top3.subValue && (
                 <p className="mt-1 text-xs text-muted-foreground">{top3.subValue}</p>
@@ -366,7 +364,7 @@ function LeaderboardsRoute() {
         )}
       </div>
 
-      {/* Ranked Players Roster Table */}
+      {/* Ranked Players Table (Exact Numbers) */}
       <Panel>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-white/10 pb-4">
           <div>
@@ -390,31 +388,31 @@ function LeaderboardsRoute() {
         </div>
 
         <div className="mt-4 divide-y divide-white/5">
-          {filteredPlayers.map((player) => (
+          {filteredPlayers.map((p) => (
             <div
-              key={player.username}
+              key={p.username}
               className="flex items-center justify-between py-3.5 px-3 rounded-xl transition-all duration-150 hover:transition-none hover:bg-white/[0.04] hover:translate-x-1 will-change-transform"
             >
               <div className="flex items-center gap-4 min-w-0">
                 <span
                   className={cn(
                     "flex size-7 items-center justify-center rounded-lg font-mono text-xs font-black",
-                    player.rank === 1
+                    p.rank === 1
                       ? "border border-amber-400/40 bg-amber-400/20 text-amber-300"
-                      : player.rank === 2
+                      : p.rank === 2
                       ? "border border-slate-300/40 bg-slate-300/20 text-slate-200"
-                      : player.rank === 3
+                      : p.rank === 3
                       ? "border border-amber-700/40 bg-amber-700/20 text-amber-500"
                       : "text-muted-foreground"
                   )}
                 >
-                  #{player.rank}
+                  #{p.rank}
                 </span>
 
                 <div className="relative size-8 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/40">
                   <img
-                    src={`https://visage.surgeplay.com/bust/128/${player.uuid}`}
-                    alt={player.username}
+                    src={`https://visage.surgeplay.com/bust/128/${p.uuid}`}
+                    alt={p.username}
                     className="size-full object-contain"
                     onError={(e) => {
                       (e.target as HTMLElement).style.display = "none";
@@ -424,11 +422,11 @@ function LeaderboardsRoute() {
 
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 min-w-0">
-                    <RankBadge rankData={{ rank: player.hypixelRank }} size="sm" />
-                    <span className="font-bold text-sm text-white truncate">{player.username}</span>
+                    <RankBadge rankData={{ rank: p.hypixelRank }} size="sm" />
+                    <span className="font-bold text-sm text-white truncate">{p.username}</span>
                   </div>
-                  {player.subValue && (
-                    <p className="text-[11px] text-muted-foreground truncate">{player.subValue}</p>
+                  {p.subValue && (
+                    <p className="text-[11px] text-muted-foreground truncate">{p.subValue}</p>
                   )}
                 </div>
               </div>
@@ -436,7 +434,7 @@ function LeaderboardsRoute() {
               <div className="flex items-center gap-4">
                 <div className="text-right">
                   <p className="font-mono text-sm font-black text-white">
-                    {player.formattedValue}
+                    {p.value.toLocaleString()}
                   </p>
                   <p className="text-[10px] text-muted-foreground font-mono">
                     {activeSubcategory.unit}
@@ -445,7 +443,7 @@ function LeaderboardsRoute() {
 
                 <Link
                   to="/profile/$username"
-                  params={{ username: player.username }}
+                  params={{ username: p.username }}
                   className="rounded-lg border border-white/10 bg-white/5 p-2 text-muted-foreground hover:bg-white/10 hover:text-white transition-colors"
                 >
                   <ChevronRight className="size-4" />

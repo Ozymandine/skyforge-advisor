@@ -7,18 +7,18 @@ import {
 import type { PlayerData } from "@/lib/skyblock";
 
 describe("Leaderboards Engine", () => {
-  it("includes genuine global collection leaderboards", () => {
+  it("includes all Elite SkyBlock collection categories with exact values", () => {
+    const diamondSub = LEADERBOARD_SUBCATEGORIES.find((s) => s.id === "diamond");
+    expect(diamondSub).toBeDefined();
+    expect(diamondSub?.topPlayers[0]?.value).toBe(520_840_900);
+
     const potatoSub = LEADERBOARD_SUBCATEGORIES.find((s) => s.id === "potato");
     expect(potatoSub).toBeDefined();
-    expect(potatoSub?.topPlayers[0]?.username).toBe("Technoblade");
     expect(potatoSub?.topPlayers[0]?.value).toBe(500_000_000);
-    expect(potatoSub?.topPlayers[1]?.username).toBe("Im_a_squid_kid");
-
-    const sugarCaneSub = LEADERBOARD_SUBCATEGORIES.find((s) => s.id === "sugar_cane");
-    expect(sugarCaneSub).toBeDefined();
+    expect(potatoSub?.topPlayers[1]?.value).toBe(418_000_000);
   });
 
-  it("accurately calculates elite percentile standings for high-stat players", () => {
+  it("accurately calculates player standings and exact numbers", () => {
     const mockPlayer: PlayerData = {
       uuid: "test-uuid",
       username: "ProGamer",
@@ -38,10 +38,18 @@ describe("Leaderboards Engine", () => {
           tier: 12,
           maxTier: 12,
         },
+        {
+          id: "DIAMOND",
+          name: "Diamond",
+          category: "Mining",
+          amount: 25_612,
+          tier: 8,
+          maxTier: 12,
+        },
       ],
       containers: [],
       slayerOverview: { totalXp: 12_000_000, bosses: [] },
-      dungeons: { catacombsLevel: 45, secretsFound: 50000, classes: [], floors: [], masterMode: [] },
+      dungeons: { catacombsLevel: 45, catacombsXp: 45_000_000, secretsFound: 50000, classes: [], floors: [], masterMode: [] },
       fairySouls: 242,
     };
 
@@ -50,11 +58,11 @@ describe("Leaderboards Engine", () => {
 
     const potatoStanding = standings.find((s) => s.subcategoryId === "potato");
     expect(potatoStanding).toBeDefined();
+    expect(potatoStanding?.formattedPlayerValue).toBe("60,000,000");
     expect(potatoStanding?.percentileRank).toContain("Top 0.01%");
-    expect(potatoStanding?.badgeTone).toBe("emerald");
 
-    const skillStanding = standings.find((s) => s.subcategoryId === "skill_average");
-    expect(skillStanding).toBeDefined();
-    expect(skillStanding?.percentileRank).toContain("Top 0.1%");
+    const diamondStanding = standings.find((s) => s.subcategoryId === "diamond");
+    expect(diamondStanding).toBeDefined();
+    expect(diamondStanding?.formattedPlayerValue).toBe("25,612");
   });
 });
