@@ -13,6 +13,7 @@ import {
 } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { MinecraftTooltip } from "@/components/ui/minecraft-tooltip";
+import { CharacterCanvas } from "@/components/ui/character-canvas";
 import { EquippedArmorShowcase } from "@/components/ui/equipped-armor-showcase";
 import { playClickSound, playSlotHoverSound, playSuccessChime } from "@/lib/sound-effects";
 import { RenderMinecraftLore } from "@/lib/minecraft-text";
@@ -285,7 +286,7 @@ function Inventory() {
                           )}
 
                           {flavorLines.length > 0 && (
-                            <div className="mt-4 space-y-1 text-xs text-muted-foreground">
+                            <div className="mt-3 space-y-1.5 text-xs leading-relaxed text-muted-foreground">
                               {flavorLines.map((line, index) => (
                                 <p key={index}>
                                   <RenderMinecraftLore text={line} />
@@ -349,6 +350,14 @@ function Inventory() {
                                 ))}
                               </div>
                             </div>
+                          )}
+                          {item.abilityScrolls && item.abilityScrolls.length > 0 && (
+                            <p className="text-xs">
+                              <span className="text-muted-foreground">Scrolls:</span>{" "}
+                              <span className="font-semibold">
+                                {item.abilityScrolls.join(", ")}
+                              </span>
+                            </p>
                           )}
                         </>
                       );
