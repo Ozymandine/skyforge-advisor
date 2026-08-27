@@ -1,7 +1,7 @@
 // src/routes/leaderboards.tsx
 // Real-Time Elite SkyBlock Leaderboards:
 // 100% genuine data queried directly from https://api.eliteskyblock.com/leaderboard/{id}
-// Across all 115 categories with real player IGNs, UUIDs, 3D busts, and exact figures.
+// Real players, live API entries, exact figures, and personal rank lookup.
 
 import { useState, useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -15,13 +15,12 @@ import {
   ChevronRight,
   Target,
   User,
-  Activity,
-  Layers,
-  ArrowUpRight,
   RefreshCw,
+  Pin,
+  ExternalLink,
 } from "lucide-react";
 import { usePlayer, useAccount } from "@/hooks/use-account";
-import { PageHero, Panel, ProgressBar } from "@/components/layout/app-shell";
+import { PageHero, Panel } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { fetchEliteLeaderboardFn, fetchPlayer } from "@/lib/hypixel.functions";
 import { playClickSound } from "@/lib/sound-effects";
@@ -61,7 +60,8 @@ function LeaderboardsRoute() {
   const [activeGroup, setActiveGroup] = useState<LeaderboardCategoryGroup>("mining");
   const [selectedSubId, setSelectedSubId] = useState<string>("diamond");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [liveSearchUser, setLiveSearchUser] = useState<string>("");
+  const [lookupInput, setLookupInput] = useState<string>("");
+  const [activeLookupUsername, setActiveLookupUsername] = useState<string>("");
 
   // Filter subcategories by current group
   const groupSubcategories = useMemo(() => {
@@ -84,13 +84,20 @@ function LeaderboardsRoute() {
 
   // Live lookup query for searching arbitrary player rankings
   const liveLookupQuery = useQuery({
-    queryKey: ["leaderboard-lookup", liveSearchUser.trim().toLowerCase()],
-    queryFn: () => fetchPlayer({ data: { username: liveSearchUser.trim() } }),
-    enabled: liveSearchUser.trim().length >= 3,
+    queryKey: ["leaderboard-lookup", activeLookupUsername.toLowerCase(), account.apiKey],
+    queryFn: () =>
+      fetchPlayer({
+        data: {
+          username: activeLookupUsername,
+          apiKey: account.apiKey || undefined,
+        },
+      }),
+    enabled: activeLookupUsername.trim().length >= 2,
     staleTime: 60_000,
   });
 
-  const inspectedPlayer = liveLookupQuery.data ?? player.data ?? null;
+  const inspectedPlayer =
+    (activeLookupUsername && liveLookupQuery.data) ? liveLookupQuery.data : player.data ?? null;
 
   // Calculate personal standings if player is connected or looked up
   const personalStandings = useMemo(() => {
@@ -103,7 +110,7 @@ function LeaderboardsRoute() {
     return personalStandings.find((s) => s.subcategoryId === activeSubcategory.id) ?? null;
   }, [personalStandings, activeSubcategory.id]);
 
-  const entries: EliteLeaderboardEntry[] = useMemo(() => {
+  const rawEntries: EliteLeaderboardEntry[] = useMemo(() => {
     const list = eliteLeaderboardQuery.data?.entries ?? [];
     return list.map((item, idx) => ({
       ...item,
@@ -111,19 +118,46 @@ function LeaderboardsRoute() {
     }));
   }, [eliteLeaderboardQuery.data]);
 
+  // Check if inspected player is in top list
+  const isInspectedInTopList = useMemo(() => {
+    if (!inspectedPlayer) return false;
+    return rawEntries.some(
+      (e) => e.ign.toLowerCase() === inspectedPlayer.username.toLowerCase()
+    );
+  }, [inspectedPlayer, rawEntries]);
+
+  // Filtered leaderboard players
   const filteredPlayers = useMemo(() => {
-    if (!searchQuery.trim()) return entries;
+    if (!searchQuery.trim()) return rawEntries;
     const q = searchQuery.toLowerCase().trim();
-    return entries.filter(
+    return rawEntries.filter(
       (p) =>
         p.ign.toLowerCase().includes(q) ||
         (p.profile && p.profile.toLowerCase().includes(q))
     );
-  }, [entries, searchQuery]);
+  }, [rawEntries, searchQuery]);
 
-  const top1 = entries[0];
-  const top2 = entries[1];
-  const top3 = entries[2];
+  // Does the search term match the inspected/connected player?
+  const searchMatchesInspected = useMemo(() => {
+    if (!searchQuery.trim() || !inspectedPlayer) return false;
+    const q = searchQuery.toLowerCase().trim();
+    return (
+      inspectedPlayer.username.toLowerCase().includes(q) ||
+      (inspectedPlayer.profiles.some((p) => p.cuteName.toLowerCase().includes(q)))
+    );
+  }, [searchQuery, inspectedPlayer]);
+
+  const top1 = rawEntries[0];
+  const top2 = rawEntries[1];
+  const top3 = rawEntries[2];
+
+  const handleLookupSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (lookupInput.trim().length >= 2) {
+      playClickSound();
+      setActiveLookupUsername(lookupInput.trim());
+    }
+  };
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -191,13 +225,38 @@ function LeaderboardsRoute() {
       <Panel className="bg-gradient-to-r from-emerald-950/30 via-slate-950/60 to-black/70 border-emerald-500/30">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex size-12 items-center justify-center rounded-2xl border border-emerald-500/30 bg-emerald-500/20 text-emerald-400 shrink-0">
-              <Target className="size-6" />
+            <div className="relative size-14 shrink-0 overflow-hidden rounded-2xl border-2 border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center">
+              {inspectedPlayer ? (
+                <img
+                  src={`https://visage.surgeplay.com/bust/128/${inspectedPlayer.uuid}`}
+                  alt={inspectedPlayer.username}
+                  className="size-full object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = "none";
+                  }}
+                />
+              ) : (
+                <Target className="size-6 text-emerald-400" />
+              )}
             </div>
             <div>
-              <p className="eyebrow text-emerald-400">
-                {inspectedPlayer ? `${inspectedPlayer.username}'s Standing` : "Personal Standing"}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="eyebrow text-emerald-400">
+                  {inspectedPlayer ? `${inspectedPlayer.username}'s Standing` : "Personal Standing"}
+                </p>
+                {activeLookupUsername && (
+                  <button
+                    onClick={() => {
+                      setActiveLookupUsername("");
+                      setLookupInput("");
+                    }}
+                    className="text-[10px] text-muted-foreground hover:text-white underline cursor-pointer"
+                  >
+                    (Reset to Connected)
+                  </button>
+                )}
+              </div>
+
               {activeStanding ? (
                 <>
                   <div className="mt-1 flex flex-wrap items-center gap-2.5">
@@ -212,28 +271,31 @@ function LeaderboardsRoute() {
                 </>
               ) : (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Connect your profile or search a player to calculate real-time standing on this leaderboard.
+                  Connect your profile or look up your username to view your real-time standing on this leaderboard.
                 </p>
               )}
             </div>
           </div>
 
           {/* Quick Player Lookup Search Box */}
-          <div className="flex items-center gap-2 lg:w-96">
+          <form onSubmit={handleLookupSubmit} className="flex items-center gap-2 lg:w-96">
             <div className="relative flex-1">
               <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
-                value={liveSearchUser}
-                onChange={(e) => setLiveSearchUser(e.target.value)}
-                placeholder="Look up player (e.g. Swavy, Refraction)..."
+                value={lookupInput}
+                onChange={(e) => setLookupInput(e.target.value)}
+                placeholder="Look up username (e.g. Swavy, Refraction)..."
                 className="w-full rounded-xl border border-white/10 bg-black/40 pl-9 pr-3 py-2 text-xs text-white placeholder:text-muted-foreground outline-none focus:border-emerald-400/50 transition-colors"
               />
             </div>
-            {liveLookupQuery.isFetching && (
-              <span className="text-[10px] font-mono text-emerald-400 animate-pulse">Loading...</span>
-            )}
-          </div>
+            <button
+              type="submit"
+              className="rounded-xl border border-emerald-500/30 bg-emerald-500/20 px-3.5 py-2 text-xs font-bold text-emerald-300 hover:bg-emerald-500/30 transition-colors cursor-pointer"
+            >
+              Look Up
+            </button>
+          </form>
         </div>
       </Panel>
 
@@ -246,7 +308,7 @@ function LeaderboardsRoute() {
       )}
 
       {/* Podium Top 3 View (Exact Numbers) */}
-      {!eliteLeaderboardQuery.isLoading && entries.length > 0 && (
+      {!eliteLeaderboardQuery.isLoading && rawEntries.length > 0 && (
         <div className="grid gap-4 md:grid-cols-3 pt-2">
           {/* 2nd Place (Silver) */}
           {top2 && (
@@ -396,47 +458,37 @@ function LeaderboardsRoute() {
                 <Trophy className="size-5 text-amber-400" />
                 {eliteLeaderboardQuery.data?.title || activeSubcategory.name}
               </h3>
-              <p className="text-xs text-muted-foreground mt-0.5">{activeSubcategory.description}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Top 20 World Records from Elite SkyBlock. {activeSubcategory.description}
+              </p>
             </div>
 
-            <div className="relative sm:w-64">
+            <div className="relative sm:w-72">
               <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Filter leaderboard table..."
+                placeholder="Filter table or search player..."
                 className="w-full rounded-xl border border-white/10 bg-black/40 pl-9 pr-3 py-2 text-xs text-white placeholder:text-muted-foreground outline-none focus:border-amber-400/50 transition-colors"
               />
             </div>
           </div>
 
           <div className="mt-4 divide-y divide-white/5">
-            {filteredPlayers.map((p) => (
-              <div
-                key={`${p.ign}-${p.rank}`}
-                className="flex items-center justify-between py-3.5 px-3 rounded-xl transition-all duration-150 hover:transition-none hover:bg-white/[0.04] hover:translate-x-1 will-change-transform"
-              >
+            {/* PINNED USER POSITION (If connected or looked up and not in top list) */}
+            {inspectedPlayer && activeStanding && !isInspectedInTopList && (!searchQuery.trim() || searchMatchesInspected) && (
+              <div className="mb-2 flex items-center justify-between py-3.5 px-3.5 rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-r from-emerald-950/40 via-emerald-900/20 to-black/60 shadow-lg shadow-emerald-500/10">
                 <div className="flex items-center gap-4 min-w-0">
-                  <span
-                    className={cn(
-                      "flex size-7 items-center justify-center rounded-lg font-mono text-xs font-black",
-                      p.rank === 1
-                        ? "border border-amber-400/40 bg-amber-400/20 text-amber-300"
-                        : p.rank === 2
-                        ? "border border-slate-300/40 bg-slate-300/20 text-slate-200"
-                        : p.rank === 3
-                        ? "border border-amber-700/40 bg-amber-700/20 text-amber-500"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    #{p.rank}
-                  </span>
+                  <div className="flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/20 px-2 py-1 font-mono text-xs font-black text-emerald-300">
+                    <Pin className="size-3" />
+                    <span>{activeStanding.approximateRank}</span>
+                  </div>
 
-                  <div className="relative size-8 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/40">
+                  <div className="relative size-8 shrink-0 overflow-hidden rounded-lg border border-emerald-500/40 bg-black/40">
                     <img
-                      src={`https://visage.surgeplay.com/bust/128/${p.uuid}`}
-                      alt={p.ign}
+                      src={`https://visage.surgeplay.com/bust/128/${inspectedPlayer.uuid}`}
+                      alt={inspectedPlayer.username}
                       className="size-full object-contain"
                       onError={(e) => {
                         (e.target as HTMLElement).style.display = "none";
@@ -446,20 +498,21 @@ function LeaderboardsRoute() {
 
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-bold text-sm text-white truncate">{p.ign}</span>
-                      {p.profile && (
-                        <span className="rounded bg-white/5 border border-white/10 px-1.5 py-0.2 font-mono text-[9px] font-semibold text-muted-foreground capitalize">
-                          {p.profile}
-                        </span>
-                      )}
+                      <span className="font-black text-sm text-emerald-300 truncate">
+                        {inspectedPlayer.username} (You)
+                      </span>
+                      <span className="rounded bg-emerald-500/20 border border-emerald-500/30 px-1.5 py-0.2 font-mono text-[9px] font-bold text-emerald-300">
+                        {activeStanding.percentileRank}
+                      </span>
                     </div>
+                    <p className="text-[11px] text-muted-foreground">Your profile position</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     <p className="font-mono text-sm font-black text-white">
-                      {Math.round(p.amount).toLocaleString()}
+                      {activeStanding.formattedPlayerValue}
                     </p>
                     <p className="text-[10px] text-muted-foreground font-mono">
                       {activeSubcategory.unit}
@@ -468,18 +521,97 @@ function LeaderboardsRoute() {
 
                   <Link
                     to="/profile/$username"
-                    params={{ username: p.ign }}
-                    className="rounded-lg border border-white/10 bg-white/5 p-2 text-muted-foreground hover:bg-white/10 hover:text-white transition-colors"
+                    params={{ username: inspectedPlayer.username }}
+                    className="rounded-lg border border-emerald-500/30 bg-emerald-500/20 p-2 text-emerald-300 hover:bg-emerald-500/30 transition-colors"
                   >
                     <ChevronRight className="size-4" />
                   </Link>
                 </div>
               </div>
-            ))}
+            )}
 
-            {filteredPlayers.length === 0 && (
+            {/* LEADERBOARD ROWS */}
+            {filteredPlayers.map((p) => {
+              const isCurrentPlayer =
+                inspectedPlayer &&
+                p.ign.toLowerCase() === inspectedPlayer.username.toLowerCase();
+
+              return (
+                <div
+                  key={`${p.ign}-${p.rank}`}
+                  className={cn(
+                    "flex items-center justify-between py-3.5 px-3 rounded-xl transition-all duration-150 hover:transition-none hover:translate-x-1 will-change-transform",
+                    isCurrentPlayer
+                      ? "border border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+                      : "hover:bg-white/[0.04]"
+                  )}
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <span
+                      className={cn(
+                        "flex size-7 items-center justify-center rounded-lg font-mono text-xs font-black",
+                        p.rank === 1
+                          ? "border border-amber-400/40 bg-amber-400/20 text-amber-300"
+                          : p.rank === 2
+                          ? "border border-slate-300/40 bg-slate-300/20 text-slate-200"
+                          : p.rank === 3
+                          ? "border border-amber-700/40 bg-amber-700/20 text-amber-500"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      #{p.rank}
+                    </span>
+
+                    <div className="relative size-8 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/40">
+                      <img
+                        src={`https://visage.surgeplay.com/bust/128/${p.uuid}`}
+                        alt={p.ign}
+                        className="size-full object-contain"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = "none";
+                        }}
+                      />
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-bold text-sm text-white truncate">
+                          {p.ign} {isCurrentPlayer && "(You)"}
+                        </span>
+                        {p.profile && (
+                          <span className="rounded bg-white/5 border border-white/10 px-1.5 py-0.2 font-mono text-[9px] font-semibold text-muted-foreground capitalize">
+                            {p.profile}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="font-mono text-sm font-black text-white">
+                        {Math.round(p.amount).toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground font-mono">
+                        {activeSubcategory.unit}
+                      </p>
+                    </div>
+
+                    <Link
+                      to="/profile/$username"
+                      params={{ username: p.ign }}
+                      className="rounded-lg border border-white/10 bg-white/5 p-2 text-muted-foreground hover:bg-white/10 hover:text-white transition-colors"
+                    >
+                      <ChevronRight className="size-4" />
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+
+            {filteredPlayers.length === 0 && !searchMatchesInspected && (
               <div className="py-12 text-center text-xs text-muted-foreground">
-                No players found matching "{searchQuery}".
+                No players found in the Top 20 matching "{searchQuery}". Use the Look Up bar at the top to search any player's profile rank.
               </div>
             )}
           </div>
