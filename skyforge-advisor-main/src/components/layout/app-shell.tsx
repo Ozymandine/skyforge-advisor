@@ -161,53 +161,53 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
   return (
     <aside
       className={cn(
-        "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-white/10 bg-[#0B0E14] lg:flex",
-        collapsed ? "w-[86px]" : "w-[276px]",
+        "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-white/10 bg-[#0B0E14] lg:flex transition-all duration-300 ease-in-out",
+        collapsed ? "w-[64px]" : "w-[172px]",
       )}
     >
       {/* Large Centered Custom Gradient Wordmark */}
-      <div className="flex flex-col items-center justify-center px-4 pt-5 pb-2">
+      <div className="flex flex-col items-center justify-center px-2 pt-4 pb-1.5 transition-all duration-300">
         {!collapsed ? (
           <div className="w-full text-center">
-            <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-2xl tracking-[0.18em] text-transparent select-none drop-shadow-[0_2px_20px_rgba(52,211,153,0.45)]">
+            <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-xl tracking-[0.16em] text-transparent select-none drop-shadow-[0_2px_15px_rgba(52,211,153,0.45)]">
               SKYFORGE
             </span>
           </div>
         ) : (
           <div className="flex w-full justify-center">
-            <span className="bg-gradient-to-br from-emerald-400 to-teal-300 bg-clip-text font-black text-xl text-transparent select-none">
+            <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-lg tracking-wider text-transparent select-none drop-shadow-[0_2px_12px_rgba(52,211,153,0.45)]">
               SF
             </span>
           </div>
         )}
       </div>
 
-      <div className="px-3">
+      <div className="px-2.5">
         <button
           onClick={onToggle}
           aria-label="Toggle sidebar"
-          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-2 text-muted-foreground transition-all duration-150 hover:transition-none hover:bg-white/15 hover:text-foreground hover:border-white/20 active:bg-white/20"
+          className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-1.5 text-muted-foreground transition-all duration-150 hover:transition-none hover:bg-white/15 hover:text-foreground hover:border-white/20 active:bg-white/20 cursor-pointer"
         >
-          {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+          {collapsed ? <PanelLeftOpen className="size-3.5" /> : <PanelLeftClose className="size-3.5" />}
         </button>
       </div>
 
-      <nav className="flex-1 overflow-hidden px-3 py-2 space-y-3">
+      <nav className="flex flex-1 flex-col justify-between overflow-hidden px-2.5 pt-2 pb-2.5">
         {nav.map((section) => (
-          <div key={section.group} className="space-y-1">
+          <div key={section.group} className="flex flex-col">
             {!collapsed && (
-              <p className="eyebrow px-3 text-[10px] font-bold uppercase tracking-wider text-white/40">
+              <p className="eyebrow px-2 text-[9px] font-bold uppercase tracking-wider text-white/35 pb-0.5">
                 {section.group}
               </p>
             )}
-            <ul className="space-y-1">
+            <ul className="space-y-0.5">
               {section.items.map((item) => (
                 <li key={item.to}>
                   <Link
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "group relative flex h-8.5 items-center gap-3 rounded-xl px-3 text-xs font-semibold text-white/75 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
+                      "group relative flex h-8 items-center gap-2.5 rounded-xl px-2.5 text-xs font-semibold text-white/75 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
                       "hover:transition-none hover:bg-white/[0.14] hover:text-white hover:border-white/15 hover:translate-x-1 hover:shadow-md hover:shadow-black/20",
                       "active:scale-[0.98] active:bg-white/[0.2]",
                       collapsed && "justify-center px-0 hover:translate-x-0",
@@ -218,7 +218,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     }}
                   >
                     <item.icon className="size-4 shrink-0 text-white/60 group-hover:text-white group-hover:transition-none transition-colors duration-150" />
-                    {!collapsed && <span className="truncate">{item.label}</span>}
+                    {!collapsed && <span className="truncate text-[12px]">{item.label}</span>}
                   </Link>
                 </li>
               ))}
