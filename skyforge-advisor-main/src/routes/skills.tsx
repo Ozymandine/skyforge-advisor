@@ -74,6 +74,9 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/skills")({
+  validateSearch: (search: Record<string, unknown>): { tab?: SkillTab } => ({
+    tab: (search["tab"] as SkillTab) || "overview",
+  }),
   head: () => ({
     meta: [
       { title: "Skills & Specialization Suites — SkyForge Advisor" },
@@ -106,7 +109,13 @@ type SkillTab =
 
 function SkillsRoute() {
   const { data, isLoading, error, connected } = usePlayer();
-  const [activeTab, setActiveTab] = useState<SkillTab>("overview");
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const activeTab: SkillTab = search.tab || "overview";
+  const setActiveTab = (tab: SkillTab) => {
+    playClickSound();
+    navigate({ search: (prev) => ({ ...prev, tab }) });
+  };
   const [bestiaryZone, setBestiaryZone] = useState<string>("all");
   const [bestiarySearch, setBestiarySearch] = useState<string>("");
   const [bestiaryFilter, setBestiaryFilter] = useState<"all" | "incomplete" | "maxed">("all");
@@ -257,38 +266,48 @@ function SkillsRoute() {
 
       {data && (
         <>
-          {/* Sub-Navigation Tabs */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-4">
-            {[
-              { id: "overview", label: "Skills Constellation", icon: Sparkles },
-              { id: "bestiary", label: "Bestiary & Mobs", icon: Crosshair },
-              { id: "dungeons", label: "Catacombs & Master Mode", icon: Skull },
-              { id: "kuudra", label: "Crimson Isle & Kuudra", icon: Flame },
-              { id: "rift", label: "The Rift Dimension", icon: Moon },
-              { id: "farming", label: "Farming & Garden", icon: Wheat },
-              { id: "mining", label: "Mining & Powder", icon: Pickaxe },
-              { id: "combat", label: "Combat & Magic Find", icon: Swords },
-              { id: "fishing", label: "Crimson Trophy Fish", icon: Fish },
-              { id: "experiments", label: "Slayers & Experiments", icon: FlaskConical },
-            ].map((tab) => {
-              const Icon = tab.icon;
-              const active = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as SkillTab)}
-                  className={cn(
-                    "flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all",
-                    active
-                      ? "border border-sky-400/40 bg-sky-500/20 text-white shadow-lg shadow-sky-500/10"
-                      : "border border-white/5 bg-white/[0.02] text-white/60 hover:bg-white/[0.05] hover:text-white"
-                  )}
-                >
-                  <Icon className="size-3.5 text-sky-400" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
+          {/* Sleek Sub-Navigation Tabs Bar */}
+          <div className="rounded-2xl border border-white/10 bg-[#0E121B]/80 backdrop-blur-xl p-1.5 shadow-xl">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+              {[
+                { id: "overview", label: "Skills Constellation", icon: Sparkles },
+                { id: "bestiary", label: "Bestiary & Mobs", icon: Crosshair },
+                { id: "dungeons", label: "Catacombs & Dungeons", icon: Skull },
+                { id: "kuudra", label: "Crimson Isle & Kuudra", icon: Flame },
+                { id: "rift", label: "The Rift Dimension", icon: Moon },
+                { id: "farming", label: "Farming & Garden", icon: Wheat },
+                { id: "mining", label: "Mining & HOTM", icon: Pickaxe },
+                { id: "combat", label: "Combat & Magic Find", icon: Swords },
+                { id: "fishing", label: "Crimson Trophy Fish", icon: Fish },
+                { id: "experiments", label: "Slayers & Experiments", icon: FlaskConical },
+              ].map((tab) => {
+                const Icon = tab.icon;
+                const active = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as SkillTab)}
+                    className={cn(
+                      "group relative flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold whitespace-nowrap transition-all duration-150 cursor-pointer select-none",
+                      active
+                        ? "bg-gradient-to-r from-emerald-500/25 via-teal-500/20 to-emerald-500/15 text-white border border-emerald-500/50 shadow-md shadow-emerald-500/20"
+                        : "text-white/60 hover:text-white hover:bg-white/[0.06] border border-transparent"
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        "size-3.5 transition-colors",
+                        active ? "text-emerald-400" : "text-white/40 group-hover:text-white/80"
+                      )}
+                    />
+                    <span>{tab.label}</span>
+                    {active && (
+                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* TAB 1: SKILLS OVERVIEW */}

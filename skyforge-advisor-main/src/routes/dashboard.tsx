@@ -5,7 +5,7 @@ import { CircleCheck, Lock, Bot, Swords, Skull, Sprout, ArrowRight } from "lucid
 
 import { ConnectPrompt, ErrorState } from "@/components/data-states";
 import { CountUp, ProgressRing, SkeletonPage, Stagger } from "@/components/motion";
-import { Panel, ProgressBar } from "@/components/layout/app-shell";
+import { PageHero, Panel, ProgressBar } from "@/components/layout/app-shell";
 import { ProfileShareCard } from "@/components/profile-share-card";
 import { fetchGuild, fetchStatus } from "@/lib/hypixel.functions";
 import { usePlayer } from "@/hooks/use-account";
@@ -18,6 +18,40 @@ import {
 import { formatFull } from "@/lib/skyblock";
 import { calculateSkyBlockLevel } from "@/lib/skyblock-level";
 import { RankBadge } from "@/components/ui/rank-badge";
+import { playClickSound } from "@/lib/sound-effects";
+
+function getCategoryLink(id: string): { to: string; search?: Record<string, string> } {
+  switch (id) {
+    case "skills":
+      return { to: "/skills", search: { tab: "overview" } };
+    case "dungeons":
+      return { to: "/skills", search: { tab: "dungeons" } };
+    case "slayers":
+      return { to: "/skills", search: { tab: "experiments" } };
+    case "collections":
+    case "minions":
+      return { to: "/collections" };
+    case "bestiary":
+      return { to: "/skills", search: { tab: "bestiary" } };
+    case "fairy_souls":
+      return { to: "/skills", search: { tab: "overview" } };
+    case "museum":
+    case "accessories":
+      return { to: "/inventory" };
+    case "hotm":
+      return { to: "/skills", search: { tab: "mining" } };
+    case "garden":
+      return { to: "/skills", search: { tab: "farming" } };
+    case "crimson":
+      return { to: "/skills", search: { tab: "kuudra" } };
+    case "rift":
+      return { to: "/skills", search: { tab: "rift" } };
+    case "pets":
+      return { to: "/skills", search: { tab: "combat" } };
+    default:
+      return { to: "/skills" };
+  }
+}
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -91,6 +125,7 @@ function Dashboard() {
         pct: skillAvgPct,
         note: `${maxedSkillsCount} / ${data.skills.length} maxed skills`,
         verified: true,
+        link: { to: "/skills", search: { tab: "overview" } },
       },
       {
         label: "Collections",
@@ -102,6 +137,7 @@ function Dashboard() {
         ),
         note: "Collection categories detected for this profile",
         verified: true,
+        link: { to: "/collections" },
       },
       {
         label: "Fairy Souls",
@@ -110,6 +146,7 @@ function Dashboard() {
         pct: Math.min(100, Math.round((data.fairySouls / MAX_FAIRY_SOULS) * 100)),
         note: "Live fairy soul count",
         verified: true,
+        link: { to: "/skills", search: { tab: "overview" } },
       },
       {
         label: "Inventory",
@@ -118,6 +155,7 @@ function Dashboard() {
         pct: Math.min(100, Math.round((data.containers.length / TYPICAL_CONTAINER_COUNT) * 100)),
         note: "Storage containers decoded from profile data",
         verified: true,
+        link: { to: "/inventory" },
       },
       {
         label: "Profiles",
@@ -126,6 +164,7 @@ function Dashboard() {
         pct: 100,
         note: "Loaded profiles from your Hypixel account",
         verified: true,
+        link: { to: "/connect" },
       },
       {
         label: "Net worth",
@@ -134,134 +173,145 @@ function Dashboard() {
         pct: 100,
         note: "Estimated live economy value",
         verified: true,
+        link: { to: "/inventory" },
       },
     ];
   }, [data, collectionCategories.length, netWorth, profile?.cuteName]);
 
+  if (!connected) return <ConnectPrompt what="your SkyBlock dashboard" />;
+  if (isLoading) return <SkeletonPage />;
+  if (error) return <ErrorState error={error} />;
+  if (!data) return null;
+
   return (
-    <div className="mx-auto max-w-7xl space-y-6">
-      {!connected && <ConnectPrompt what="your live dashboard overview" />}
-      {connected && isLoading && <SkeletonPage />}
-      {connected && error && <ErrorState error={error} />}
+    <div className="mx-auto max-w-7xl space-y-8">
+      <PageHero
+        eyebrow="Command Center"
+        title="Dashboard"
+        description="High-level completion, active profile summary and instant links to all calculators."
+      />
 
-      {connected && data && (
-        <>
-          {/* Hero profile banner */}
-          <Panel className="animate-pulse-glow relative overflow-hidden">
-            <div className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-emerald-500/10 blur-3xl" />
-            <div className="flex flex-col items-center gap-8 py-6 text-center lg:flex-row lg:justify-between lg:text-left">
-              <div className="flex flex-col items-center gap-5 sm:flex-row sm:text-left">
-                {/* Minecraft head render from the player's UUID */}
-                <img
-                  src={`https://mc-heads.net/avatar/${data.uuid}/96`}
-                  alt={`${data.username}'s Minecraft avatar`}
-                  width={96}
-                  height={96}
-                  loading="eager"
-                  className="size-24 shrink-0 rounded-2xl border border-white/15 bg-black/40 shadow-xl [image-rendering:pixelated] animate-float-slow"
-                />
-                <div>
-                  <p className="eyebrow uppercase tracking-wider text-xs text-muted-foreground">
-                    SkyBlock Profile
-                  </p>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <RankBadge rankData={data.hypixelPlayer} size="lg" />
-                    <h1 className="mt-1 text-5xl font-bold tracking-tight">{data.username}</h1>
-                    <span className="mt-1 flex items-center gap-1 rounded-xl border border-sky-400/40 bg-sky-500/15 px-3 py-1 font-mono text-sm font-black text-sky-300 shadow-md">
-                      LVL {sbLevel.level}
-                    </span>
-                  </div>
-                  <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground sm:justify-start">
-                    <span>{profile?.cuteName ?? "Active profile"}</span>
-                    <span className="glass-soft rounded-full px-2.5 py-0.5 text-xs font-medium">
-                      {profile?.gameMode ?? "Classic"}
-                    </span>
-                    <span>{profile?.members ?? 1} member(s)</span>
-                    {guild && (
-                      <span className="glass-soft rounded-full px-2.5 py-0.5 text-xs font-medium text-cyan-300">
-                        {guild.name}
-                        {guild.tag ? ` [${guild.tag}]` : ""}
-                      </span>
-                    )}
-                    {status?.online && (
-                      <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
-                        <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" />
-                        Online{status.game ? ` · ${status.game}` : ""}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <ProfileShareCard
-                  data={{
-                    username: data.username,
-                    uuid: data.uuid,
-                    profileName: profile?.cuteName ?? "SkyBlock",
-                    skillAverage: data.skillAverage,
-                    netWorth,
-                    fairySouls: data.fairySouls,
-                    catacombsLevel: data.dungeons?.catacombsLevel ?? null,
-                    collectionsCount: data.collections.length,
-                  }}
-                />
-              </div>
-
-              {/* Overall account completion ring */}
-              <ProgressRing
-                pct={
-                  dashboardCoverage.length
-                    ? dashboardCoverage.reduce((sum, c) => sum + c.pct, 0) /
-                      dashboardCoverage.length
-                    : 0
-                }
-                size={132}
-                label={
-                  <CountUp
-                    value={Math.round(data.skillAverage * 10) / 10}
-                    format={(n) => n.toFixed(1)}
-                  />
-                }
-                sublabel="skill average"
+      <Stagger className="space-y-8">
+        <Panel className="animate-pulse-glow relative overflow-hidden">
+          <div className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-emerald-500/10 blur-3xl" />
+          <div className="flex flex-col items-center gap-8 py-6 text-center lg:flex-row lg:justify-between lg:text-left">
+            <div className="flex flex-col items-center gap-5 sm:flex-row sm:text-left">
+              {/* Minecraft head render from the player's UUID */}
+              <img
+                src={`https://mc-heads.net/avatar/${data.uuid}/96`}
+                alt={`${data.username}'s Minecraft avatar`}
+                width={96}
+                height={96}
+                loading="eager"
+                className="size-24 shrink-0 rounded-2xl border border-white/15 bg-black/40 shadow-xl [image-rendering:pixelated] animate-float-slow"
               />
-            </div>
-          </Panel>
-
-          {/* Flagship Hubs Quick-Launcher */}
-          <Panel className="relative overflow-hidden border-sky-500/20 bg-gradient-to-br from-sky-500/[0.04] via-transparent to-emerald-500/[0.02]">
-            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-5">
               <div>
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center justify-center rounded-xl border border-sky-400/40 bg-sky-500/15 px-3 py-1 font-mono text-xl font-black text-sky-300 shadow-lg shadow-sky-500/10">
+                <p className="eyebrow uppercase tracking-wider text-xs text-muted-foreground">
+                  SkyBlock Profile
+                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <RankBadge rankData={data.hypixelPlayer} size="lg" />
+                  <h1 className="mt-1 text-5xl font-bold tracking-tight">{data.username}</h1>
+                  <span className="mt-1 flex items-center gap-1 rounded-xl border border-sky-400/40 bg-sky-500/15 px-3 py-1 font-mono text-sm font-black text-sky-300 shadow-md">
                     LVL {sbLevel.level}
                   </span>
-                  <div>
-                    <h2 className="text-2xl font-bold tracking-tight text-white">
-                      SkyBlock Level Engine
-                    </h2>
-                    <p className="text-xs text-white/50">
-                      Total XP: {sbLevel.totalXp.toLocaleString()} XP · {sbLevel.xpToNextLevel} XP to Level {sbLevel.level + 1}
-                    </p>
-                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-sm text-muted-foreground sm:justify-start">
+                  <span>{profile?.cuteName ?? "Active profile"}</span>
+                  <span className="glass-soft rounded-full px-2.5 py-0.5 text-xs font-medium">
+                    {profile?.gameMode ?? "Classic"}
+                  </span>
+                  <span>{profile?.members ?? 1} member(s)</span>
+                  {guild && (
+                    <span className="glass-soft rounded-full px-2.5 py-0.5 text-xs font-medium text-cyan-300">
+                      {guild.name}
+                      {guild.tag ? ` [${guild.tag}]` : ""}
+                    </span>
+                  )}
+                  {status?.online && (
+                    <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-300">
+                      <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" />
+                      Online{status.game ? ` · ${status.game}` : ""}
+                    </span>
+                  )}
                 </div>
               </div>
+              <ProfileShareCard
+                data={{
+                  username: data.username,
+                  uuid: data.uuid,
+                  profileName: profile?.cuteName ?? "SkyBlock",
+                  skillAverage: data.skillAverage,
+                  netWorth,
+                  fairySouls: data.fairySouls,
+                  catacombsLevel: data.dungeons?.catacombsLevel ?? null,
+                  collectionsCount: data.collections.length,
+                }}
+              />
+            </div>
+
+            {/* Overall account completion ring */}
+            <ProgressRing
+              pct={
+                dashboardCoverage.length
+                  ? dashboardCoverage.reduce((sum, c) => sum + c.pct, 0) /
+                    dashboardCoverage.length
+                  : 0
+              }
+              size={132}
+              label={
+                <CountUp
+                  value={Math.round(data.skillAverage * 10) / 10}
+                  format={(n) => n.toFixed(1)}
+                />
+              }
+              sublabel="skill average"
+            />
+          </div>
+        </Panel>
+
+        {/* Flagship Hubs Quick-Launcher */}
+        <Panel className="relative overflow-hidden border-sky-500/20 bg-gradient-to-br from-sky-500/[0.04] via-transparent to-emerald-500/[0.02]">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-5">
+            <div>
               <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <span className="font-mono text-xs font-bold text-sky-400">
-                    {sbLevel.progressPct}%
-                  </span>
-                  <p className="text-[10px] text-white/40">to Level {sbLevel.level + 1}</p>
-                </div>
-                <div className="w-32">
-                  <ProgressBar pct={sbLevel.progressPct} />
+                <span className="flex items-center justify-center rounded-xl border border-sky-400/40 bg-sky-500/15 px-3 py-1 font-mono text-xl font-black text-sky-300 shadow-lg shadow-sky-500/10">
+                  LVL {sbLevel.level}
+                </span>
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight text-white">
+                    SkyBlock Level Engine
+                  </h2>
+                  <p className="text-xs text-white/50">
+                    Total XP: {sbLevel.totalXp.toLocaleString()} XP · {sbLevel.xpToNextLevel} XP to Level {sbLevel.level + 1}
+                  </p>
                 </div>
               </div>
             </div>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <span className="font-mono text-xs font-bold text-sky-400">
+                  {sbLevel.progressPct}%
+                </span>
+                <p className="text-[10px] text-white/40">to Level {sbLevel.level + 1}</p>
+              </div>
+              <div className="w-32">
+                <ProgressBar pct={sbLevel.progressPct} />
+              </div>
+            </div>
+          </div>
 
-            {/* 15-Source Grid */}
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-              {sbLevel.categories.map((cat) => (
-                <div
+          {/* 15-Source Grid */}
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+            {sbLevel.categories.map((cat) => {
+              const target = getCategoryLink(cat.id);
+              return (
+                <Link
                   key={cat.id}
-                  className="group relative rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-all duration-150 ease-out hover:transition-none hover:-translate-y-1 hover:border-sky-400/70 hover:bg-white/[0.09] hover:shadow-xl hover:shadow-sky-500/15 active:translate-y-0 cursor-pointer will-change-transform"
+                  to={target.to}
+                  search={target.search as any}
+                  onClick={() => playClickSound()}
+                  className="group relative rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-all duration-150 ease-out hover:transition-none hover:-translate-y-1 hover:border-sky-400/70 hover:bg-white/[0.09] hover:shadow-xl hover:shadow-sky-500/15 active:translate-y-0 cursor-pointer will-change-transform block"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-white/90 group-hover:text-white transition-colors duration-75">
@@ -285,57 +335,64 @@ function Dashboard() {
                   <p className="mt-2 truncate text-[10px] text-white/50 group-hover:text-white/70 transition-colors duration-75">
                     {cat.details}
                   </p>
-                </div>
-              ))}
-            </div>
-          </Panel>
+                </Link>
+              );
+            })}
+          </div>
+        </Panel>
 
-          <Panel>
-            <div className="flex flex-wrap items-start justify-between gap-6">
-              <div className="max-w-2xl">
-                <p className="eyebrow">Account intelligence</p>
-                <h2 className="mt-2 text-3xl font-semibold tracking-tight">Profile analysis</h2>
-                <p className="mt-3 text-sm text-muted-foreground">
-                  A verified completion view of the connected SkyBlock profile. Categories without
-                  an authoritative value remain clearly marked instead of being estimated.
-                </p>
-              </div>
-              <div className="glass-soft relative rounded-2xl px-6 py-5">
-                <span className="absolute -top-1.5 right-4 flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-300">
-                  <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" /> Live
-                </span>
-                <p className="eyebrow">Live net worth</p>
-                <p className="mt-2 text-4xl font-semibold">
-                  <CountUp value={netWorth} format={(n) => formatFull(n)} duration={1200} />
-                </p>
-              </div>
+        <Panel>
+          <div className="flex flex-wrap items-start justify-between gap-6">
+            <div className="max-w-2xl">
+              <p className="eyebrow">Account intelligence</p>
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight">Profile analysis</h2>
+              <p className="mt-3 text-sm text-muted-foreground">
+                A verified completion view of the connected SkyBlock profile. Categories without
+                an authoritative value remain clearly marked instead of being estimated.
+              </p>
             </div>
+            <div className="glass-soft relative rounded-2xl px-6 py-5">
+              <span className="absolute -top-1.5 right-4 flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-300">
+                <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" /> Live
+              </span>
+              <p className="eyebrow">Live net worth</p>
+              <p className="mt-2 text-4xl font-semibold">
+                <CountUp value={netWorth} format={(n) => formatFull(n)} duration={1200} />
+              </p>
+            </div>
+          </div>
 
-            <div className="mt-8 grid gap-4 lg:grid-cols-3">
-              <div className="grid gap-4 sm:grid-cols-2 lg:col-span-2">
-                <Stagger className="contents">
-                  {dashboardCoverage.map((c) => (
-                    <div key={c.label} className="glass-soft rounded-2xl p-5">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium">{c.label}</p>
-                        {c.verified ? (
-                          <CircleCheck className="size-4 text-primary" />
-                        ) : (
-                          <Lock className="size-4 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="mt-4 flex items-end justify-between">
-                        <p className="text-3xl font-semibold">{c.value}</p>
-                        <p className="text-xs text-muted-foreground">{c.meta}</p>
-                      </div>
-                      <div className="mt-4">
-                        <ProgressBar pct={c.pct} />
-                      </div>
-                      <p className="mt-3 truncate text-xs text-muted-foreground">{c.note}</p>
+          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:col-span-2">
+              <Stagger className="contents">
+                {dashboardCoverage.map((c) => (
+                  <Link
+                    key={c.label}
+                    to={c.link.to}
+                    search={c.link.search as any}
+                    onClick={() => playClickSound()}
+                    className="glass-soft rounded-2xl p-5 transition-all duration-150 hover:-translate-y-1 hover:border-emerald-500/40 hover:bg-white/[0.08] hover:shadow-lg hover:shadow-emerald-500/10 active:translate-y-0 cursor-pointer block"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-white/90">{c.label}</p>
+                      {c.verified ? (
+                        <CircleCheck className="size-4 text-primary" />
+                      ) : (
+                        <Lock className="size-4 text-muted-foreground" />
+                      )}
                     </div>
-                  ))}
-                </Stagger>
-              </div>
+                    <div className="mt-4 flex items-end justify-between">
+                      <p className="text-3xl font-semibold">{c.value}</p>
+                      <p className="text-xs text-muted-foreground">{c.meta}</p>
+                    </div>
+                    <div className="mt-4">
+                      <ProgressBar pct={c.pct} />
+                    </div>
+                    <p className="mt-3 truncate text-xs text-muted-foreground">{c.note}</p>
+                  </Link>
+                ))}
+              </Stagger>
+            </div>
 
               <div className="space-y-4">
                 <div className="glass-soft rounded-2xl p-5">
@@ -419,8 +476,8 @@ function Dashboard() {
               ))}
             </div>
           </Panel>
-        </>
-      )}
+        </Stagger>
     </div>
   );
 }
+

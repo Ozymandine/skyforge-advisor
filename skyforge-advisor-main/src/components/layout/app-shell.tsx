@@ -193,28 +193,28 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         {nav.map((section) => (
           <div key={section.group} className="space-y-0.5">
             {!collapsed && (
-              <p className="eyebrow px-2.5 text-[10.5px] font-bold uppercase tracking-wider text-white/40 pb-1">
+              <p className="eyebrow px-2.5 text-[10px] font-bold uppercase tracking-wider text-white/35 pb-1">
                 {section.group}
               </p>
             )}
-            <ul className="space-y-1">
+            <ul className="space-y-0.5">
               {section.items.map((item) => (
                 <li key={item.to}>
                   <Link
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "group relative flex h-9 items-center gap-2.5 rounded-xl px-2.5 text-[15px] font-bold text-white/75 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
+                      "group relative flex h-9 items-center gap-2.5 rounded-xl px-2.5 text-[15px] font-medium text-white/70 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
                       "hover:transition-none hover:bg-white/[0.08] hover:text-white hover:border-white/10 hover:translate-x-0.5",
                       "active:scale-[0.98] active:bg-white/[0.15]",
                       collapsed && "justify-center px-0 hover:translate-x-0",
                     )}
                     activeProps={{
                       className:
-                        "bg-white/[0.12] text-white border-l-2 border-emerald-400 font-extrabold shadow-sm ring-1 ring-white/10 hover:translate-x-0",
+                        "bg-white/[0.12] text-white border-l-2 border-emerald-400 font-semibold shadow-sm ring-1 ring-white/10 hover:translate-x-0",
                     }}
                   >
-                    <item.icon className="size-4.5 shrink-0 text-white/60 group-hover:text-white group-hover:transition-none transition-colors duration-150" />
+                    <item.icon className="size-4.5 shrink-0 text-white/55 group-hover:text-white group-hover:transition-none transition-colors duration-150" />
                     {!collapsed && <span className="truncate">{item.label}</span>}
                   </Link>
                 </li>
