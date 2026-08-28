@@ -266,14 +266,14 @@ function SkillsRoute() {
 
       {data && (
         <>
-          {/* Sleek Sub-Navigation Tabs Bar */}
-          <div className="rounded-2xl border border-white/10 bg-[#0E121B]/80 backdrop-blur-xl p-1.5 shadow-xl">
-            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          {/* Sub-Navigation Tabs Grid (Equal-Width, Zero Scrollbars) */}
+          <div className="rounded-2xl border border-white/10 bg-[#0E121B]/80 backdrop-blur-xl p-2 shadow-xl">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
               {[
                 { id: "overview", label: "Skills Constellation", icon: Sparkles },
                 { id: "bestiary", label: "Bestiary & Mobs", icon: Crosshair },
                 { id: "dungeons", label: "Catacombs & Dungeons", icon: Skull },
-                { id: "kuudra", label: "Crimson Isle & Kuudra", icon: Flame },
+                { id: "kuudra", label: "Crimson & Kuudra", icon: Flame },
                 { id: "rift", label: "The Rift Dimension", icon: Moon },
                 { id: "farming", label: "Farming & Garden", icon: Wheat },
                 { id: "mining", label: "Mining & HOTM", icon: Pickaxe },
@@ -288,21 +288,21 @@ function SkillsRoute() {
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as SkillTab)}
                     className={cn(
-                      "group relative flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold whitespace-nowrap transition-all duration-150 cursor-pointer select-none",
+                      "group relative flex h-10 items-center justify-center gap-2 rounded-xl px-3 text-xs font-semibold transition-all duration-150 cursor-pointer select-none border",
                       active
-                        ? "bg-gradient-to-r from-emerald-500/25 via-teal-500/20 to-emerald-500/15 text-white border border-emerald-500/50 shadow-md shadow-emerald-500/20"
-                        : "text-white/60 hover:text-white hover:bg-white/[0.06] border border-transparent"
+                        ? "bg-gradient-to-r from-emerald-500/25 via-teal-500/20 to-emerald-500/15 text-white border-emerald-500/50 shadow-md shadow-emerald-500/20"
+                        : "bg-white/[0.02] text-white/65 hover:bg-white/[0.06] hover:text-white border-white/[0.04] hover:border-white/10"
                     )}
                   >
                     <Icon
                       className={cn(
-                        "size-3.5 transition-colors",
+                        "size-3.5 shrink-0 transition-colors",
                         active ? "text-emerald-400" : "text-white/40 group-hover:text-white/80"
                       )}
                     />
-                    <span>{tab.label}</span>
+                    <span className="truncate">{tab.label}</span>
                     {active && (
-                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
+                      <span className="size-1.5 shrink-0 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
                     )}
                   </button>
                 );

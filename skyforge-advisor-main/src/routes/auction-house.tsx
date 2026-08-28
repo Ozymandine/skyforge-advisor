@@ -86,7 +86,7 @@ function AuctionHouse() {
     return data.entries
       .filter((a) => a.name.toLowerCase().includes(q))
       .filter((a) => {
-        if (filter === "BIN only") return a.bin;
+        if (filter === "BIN only") return Boolean(a.bin);
         if (filter === "Bids only") return !a.bin;
         if (filter === "Underpriced") return a.profit > 0;
         if (filter === "Ending soon") return a.endsInMs < 3600_000;
@@ -95,7 +95,7 @@ function AuctionHouse() {
       .filter((a) => {
         if (category !== "All" && a.category !== category) return false;
         if (a.price > maxPriceNum) return false;
-        if (a.profit < minProfitNum) return false;
+        if (minProfitNum > 0 && a.profit < minProfitNum) return false;
         if (minMarginNum > 0 && a.lowestBin && a.lowestBin > 0) {
           const margin = ((a.lowestBin - a.price) / a.price) * 100;
           if (margin < minMarginNum) return false;

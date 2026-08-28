@@ -1,22 +1,19 @@
 export const CATEGORIES = [
   "All",
-  "Stats",
-  "Skills",
-  "Collections",
   "Weapons",
   "Armor",
-  "Pets",
   "Accessories",
-  "Attributes",
-  "Locations",
-  "NPCs",
-  "Mobs",
+  "Pets",
+  "Collections",
+  "Minions",
+  "Slayer",
   "Enchanting",
   "Reforging",
   "Potions",
-  "Minions",
-  "Slayer",
-  "Tutorials & Guides",
+  "Mobs",
+  "Locations",
+  "NPCs",
+  "Attributes",
 ] as const;
 
 export type WikiCategory = (typeof CATEGORIES)[number];
@@ -645,9 +642,6 @@ export const POTION_ID_PREFIXES = [
  * ========================================================================== */
 
 const CATEGORY_ALIASES: Record<string, WikiCategory> = {
-  STATS: "Stats",
-  SKILL: "Skills",
-  SKILLS: "Skills",
   COLLECTION: "Collections",
   COLLECTIONS: "Collections",
   WEAPON: "Weapons",
@@ -967,52 +961,6 @@ export interface WikiVirtualPage {
 
 export const VIRTUAL_PAGES: WikiVirtualPage[] = [
   /*
-   * Stats
-   */
-  ...STAT_GROUPS.map(
-    (name) =>
-      ({
-        id: `WIKI_STAT_GROUP_${name.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}`,
-        name,
-        rarity: "COMMON",
-        category: "Stats",
-        npcSell: null,
-        description: `Hypixel SkyBlock ${name} stats.`,
-        virtual: true,
-        statGroup: name,
-      }) satisfies WikiVirtualPage,
-  ),
-
-  /*
-   * Skills
-   */
-  ...[
-    "Combat",
-    "Mining",
-    "Farming",
-    "Fishing",
-    "Foraging",
-    "Enchanting",
-    "Alchemy",
-    "Taming",
-    "Carpentry",
-    "Runecrafting",
-    "Social",
-    "Hunting",
-  ].map(
-    (name) =>
-      ({
-        id: `WIKI_SKILL_${name.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}`,
-        name,
-        rarity: "COMMON",
-        category: "Skills",
-        npcSell: null,
-        description: `Hypixel SkyBlock ${name} skill.`,
-        virtual: true,
-      }) satisfies WikiVirtualPage,
-  ),
-
-  /*
    * Locations
    */
   ...[
@@ -1040,36 +988,6 @@ export const VIRTUAL_PAGES: WikiVirtualPage[] = [
         category: "Locations",
         npcSell: null,
         description: `Hypixel SkyBlock location: ${name}.`,
-        virtual: true,
-      }) satisfies WikiVirtualPage,
-  ),
-
-  /*
-   * Guides
-   */
-  ...[
-    "Beginner's Guide",
-    "Early Game Guide",
-    "Money Making Guide",
-    "Combat Guide",
-    "Mining Guide",
-    "Farming Guide",
-    "Fishing Guide",
-    "Dungeon Guide",
-    "Bazaar Guide",
-    "Auction House Guide",
-    "Profile Progression Guide",
-    "Accessory Guide",
-    "Pet Guide",
-  ].map(
-    (name) =>
-      ({
-        id: `WIKI_GUIDE_${name.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}`,
-        name,
-        rarity: "COMMON",
-        category: "Tutorials & Guides",
-        npcSell: null,
-        description: `Hypixel SkyBlock Wiki guide: ${name}.`,
         virtual: true,
       }) satisfies WikiVirtualPage,
   ),

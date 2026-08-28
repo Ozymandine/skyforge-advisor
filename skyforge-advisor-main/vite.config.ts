@@ -26,6 +26,11 @@ export default defineConfig({
           method: "GET",
           handler: "./server/api/flips.ts",
         },
+        {
+          route: "/api/leaderboard",
+          method: "GET",
+          handler: "./server/api/leaderboard.ts",
+        },
       ],
     }),
   ],

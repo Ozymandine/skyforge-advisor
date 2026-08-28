@@ -76,11 +76,11 @@ type SearchableItem = ClassifiedItem | (typeof VIRTUAL_PAGES)[number];
  * PAGE CONTROLLER
  * ========================================================================== */
 
-const PAGE_SIZE = 500;
+const PAGE_SIZE = 5000;
 
 function Wiki() {
   const search = Route.useSearch();
-  const navigate = useNavigate();
+  const navigate = Route.useNavigate();
 
   const [query, setQuery] = useState(search.q ?? "");
   const deferredQuery = useDeferredValue(query);
@@ -90,17 +90,32 @@ function Wiki() {
 
   const [visible, setVisible] = useState(PAGE_SIZE);
 
-  // Keep the URL in sync so pages can be shared/bookmarked.
-  useEffect(() => {
+  const handleQueryChange = (newQ: string) => {
+    setQuery(newQ);
     navigate({
-      to: "/wiki",
-      search: {
-        ...(query ? { q: query } : {}),
-        ...(selectedId ? { item: selectedId } : {}),
+      search: (prev) => {
+        const next: { q?: string; item?: string } = {};
+        if (newQ) next.q = newQ;
+        if (prev.item) next.item = prev.item;
+        return next;
       },
       replace: true,
     });
-  }, [query, selectedId, navigate]);
+  };
+
+  const handleSelect = (newItem: string | null) => {
+    setSelectedId(newItem);
+    navigate({
+      search: (prev) => {
+        const next: { q?: string; item?: string } = {};
+        if (prev.q) next.q = prev.q;
+        if (newItem) next.item = newItem;
+        return next;
+      },
+      replace: true,
+    });
+  };
+
 
   /* --------------------------------------------------------------------------
    * DATA
@@ -325,18 +340,18 @@ function Wiki() {
   return (
     <WikiPage
       query={query}
-      onQueryChange={setQuery}
+      onQueryChange={handleQueryChange}
       categories={[...CATEGORIES]}
       category={category}
       onCategoryChange={(value) => setCategory(value as WikiCategory)}
       itemCount={allSearchableItems.length}
       items={shownResults}
       selectedId={selected?.id ?? null}
-      onSelect={setSelectedId}
+      onSelect={handleSelect}
       {...(selectedItemProp ? { selectedItem: selectedItemProp } : {})}
       {...(selectedPrice !== undefined ? { selectedPrice } : {})}
       {...(footer ? { footer } : {})}
-      onItemClick={(item) => setSelectedId(item.id)}
+      onItemClick={(item) => handleSelect(item.id)}
     />
   );
 }

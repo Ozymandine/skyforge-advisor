@@ -958,7 +958,7 @@ const auctionItemCache = new Map<
 
 const AUCTION_ITEM_CACHE_TTL_MS = 15 * 60_000;
 
-const AUCTION_ICON_LIMIT = 240;
+const AUCTION_ICON_LIMIT = 1000;
 const AUCTION_ITEM_DECODE_CONCURRENCY = 8;
 
 function itemBytesData(
@@ -1255,7 +1255,7 @@ export async function getAuctions(pages = 6): Promise<{
 
           rarity: auction.tier,
 
-          bin: auction.bin,
+          bin: Boolean(auction.bin),
 
           price,
 

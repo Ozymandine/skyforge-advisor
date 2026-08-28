@@ -214,18 +214,19 @@ export const LEADERBOARD_SUBCATEGORIES: LeaderboardSubcategory[] = [
 ];
 
 /**
- * Live fetcher directly querying https://api.eliteskyblock.com/leaderboard/{id}?limit=100
+ * Live fetcher directly querying /api/leaderboard (or https://api.eliteskyblock.com/leaderboard/{id}?limit=100 server-side)
  */
 export async function fetchEliteLeaderboard(leaderboardId: string): Promise<EliteLeaderboardResponse | null> {
   try {
     const isServer = typeof window === "undefined";
+    const url = isServer
+      ? `https://api.eliteskyblock.com/leaderboard/${encodeURIComponent(leaderboardId)}?limit=100`
+      : `/api/leaderboard?id=${encodeURIComponent(leaderboardId)}`;
     const headers: Record<string, string> = isServer
-      ? { "User-Agent": "SkyForgeAdvisor/1.0 (Mozilla/5.0)" }
+      ? { "User-Agent": "SkyForgeAdvisor/1.0 (Mozilla/5.0)", Accept: "application/json" }
       : {};
 
-    const res = await fetch(`https://api.eliteskyblock.com/leaderboard/${encodeURIComponent(leaderboardId)}?limit=100`, {
-      headers,
-    });
+    const res = await fetch(url, { headers });
     if (!res.ok) return null;
     const data = (await res.json()) as EliteLeaderboardResponse;
     if (data && data.entries) {
