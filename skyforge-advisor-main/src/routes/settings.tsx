@@ -55,6 +55,7 @@ function Settings() {
   const [textureFallback, setTextureFallback] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [ticker, setTicker] = useState(false);
+  const [theme, setTheme] = useState("dark");
 
   useEffect(() => {
     if (account.hydrated) {
