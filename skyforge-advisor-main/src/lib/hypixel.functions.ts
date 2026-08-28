@@ -302,10 +302,3 @@ export const fetchApiHealth = createServerFn({ method: "GET" }).handler(async ()
   return { profileApi: profileApiHealth() };
 });
 
-export const fetchEliteLeaderboardFn = createServerFn({ method: "GET" })
-  .validator((input: unknown) => String(input ?? "").trim())
-  .handler(async ({ data }) => {
-    const { fetchEliteLeaderboard } = await import("./leaderboards");
-    return fetchEliteLeaderboard(String(data));
-  });
-

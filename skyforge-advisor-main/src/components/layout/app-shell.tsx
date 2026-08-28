@@ -166,20 +166,20 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       )}
     >
       {/* Centered Wordmark */}
-      <div className="flex flex-col items-center justify-center px-3 pt-4 pb-2 transition-all duration-300">
+      <div className="flex flex-col items-center justify-center px-3 pt-5 pb-2.5 transition-all duration-300">
         {!collapsed ? (
-          <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-xl tracking-[0.16em] text-transparent select-none drop-shadow-[0_2px_15px_rgba(52,211,153,0.45)]">
+          <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-[23px] tracking-[0.18em] text-transparent select-none drop-shadow-[0_4px_22px_rgba(52,211,153,0.5)]">
             SKYFORGE
           </span>
         ) : (
-          <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-base tracking-wider text-transparent select-none drop-shadow-[0_2px_12px_rgba(52,211,153,0.45)]">
+          <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-lg tracking-wider text-transparent select-none drop-shadow-[0_2px_14px_rgba(52,211,153,0.5)]">
             SF
           </span>
         )}
       </div>
 
       {/* Big Pill Toggle Button */}
-      <div className="px-3 pb-1">
+      <div className="px-3 pb-1.5">
         <button
           onClick={onToggle}
           aria-label="Toggle sidebar"
@@ -189,9 +189,12 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         </button>
       </div>
 
-      <nav className="flex flex-1 flex-col justify-between overflow-hidden px-2.5 pt-1.5 pb-2">
+      <nav className="flex flex-1 flex-col justify-between overflow-hidden px-2.5 pt-2 pb-1">
         {nav.map((section) => (
-          <div key={section.group} className="flex flex-col">
+          <div
+            key={section.group}
+            className={cn("flex flex-col", section.group === "Profile" && "pb-1.5")}
+          >
             {!collapsed && (
               <p className="eyebrow px-2.5 text-[9.5px] font-bold uppercase tracking-wider text-white/35 pb-1">
                 {section.group}
@@ -314,11 +317,11 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
 
 /** Live economy ticker — top bazaar flips + ending-soon BIN flips. */
 function EconomyTicker() {
-  const [enabled, setEnabled] = useState(true);
+  const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
-    setEnabled(getPref("ticker", true));
-    return onPrefsChange(() => setEnabled(getPref("ticker", true)));
+    setEnabled(getPref("ticker", false));
+    return onPrefsChange(() => setEnabled(getPref("ticker", false)));
   }, []);
 
   if (!enabled) return null;
