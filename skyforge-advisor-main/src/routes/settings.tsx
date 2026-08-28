@@ -55,7 +55,6 @@ function Settings() {
   const [textureFallback, setTextureFallback] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [ticker, setTicker] = useState(false);
-  const [theme, setTheme] = useState("dark");
 
   useEffect(() => {
     if (account.hydrated) {
@@ -72,7 +71,6 @@ function Settings() {
       setTicker(getPref("ticker", false));
     });
   }, [account.hydrated, account.apiKey, account.username]);
-
   // Apply reduced motion globally when toggled.
   useEffect(() => {
     document.documentElement.classList.toggle("force-reduced-motion", reducedMotion);

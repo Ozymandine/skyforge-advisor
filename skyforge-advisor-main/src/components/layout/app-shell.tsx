@@ -189,12 +189,9 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         </button>
       </div>
 
-      <nav className="flex flex-1 flex-col justify-between overflow-hidden px-2.5 pt-2 pb-1">
+      <nav className="flex-1 overflow-y-auto px-2.5 pt-2 pb-3 space-y-3">
         {nav.map((section) => (
-          <div
-            key={section.group}
-            className={cn("flex flex-col", section.group === "Profile" && "pb-1.5")}
-          >
+          <div key={section.group} className="space-y-0.5">
             {!collapsed && (
               <p className="eyebrow px-2.5 text-[9.5px] font-bold uppercase tracking-wider text-white/35 pb-1">
                 {section.group}
