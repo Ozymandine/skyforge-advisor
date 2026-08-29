@@ -44,22 +44,17 @@ function Connect() {
       setError("Enter your Minecraft username first.");
       return;
     }
-    if (!apiKey.trim()) {
-      setError("Paste your API key — click the button above to get one in one click.");
-      return;
-    }
     setConnecting(true);
-    // Save and let the next usePlayer query validate the key by loading data.
+    // Save account state: if apiKey is blank, the server operator key pool is used.
     account.save({
       username: username.trim(),
       apiKey: apiKey.trim(),
       profileId: "",
     });
-    // If the key is bad, usePlayer will surface an error on the dashboard.
     setTimeout(() => {
       setConnecting(false);
       void navigate({ to: "/dashboard" });
-    }, 400);
+    }, 300);
   };
 
   const keyValidShape = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
@@ -71,82 +66,84 @@ function Connect() {
       <PageHero
         eyebrow="Get started"
         title="Connect your profile"
-        description="Two steps: your username, then a free API key. Your key is stored only in this browser and sent nowhere except Hypixel."
+        description="Enter your Minecraft username to instantly load your live SkyBlock profile, net worth, skills, and gear."
       />
 
       <Panel>
-        <ol className="space-y-8">
-          {/* Step 1 — username */}
-          <li className="flex gap-4">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-primary/15 text-sm font-bold text-primary">
-              1
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold">Your Minecraft username</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                We resolve it to a UUID via Mojang — no key needed for that.
-              </p>
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-semibold text-foreground">
+              Minecraft Username
+            </label>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Resolved instantly via Mojang's public API — zero password or login required.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
               <input
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. Technoblade"
-                className="mt-3 w-full max-w-sm rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary/50"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") connect();
+                }}
+                placeholder="e.g. Technoblade, Deathstreeks..."
+                className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-base outline-none transition-colors focus:border-primary/50"
               />
-            </div>
-          </li>
-
-          {/* Step 2 — key */}
-          <li className="flex gap-4">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-primary/40 bg-primary/15 text-sm font-bold text-primary">
-              2
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold">Get your free API key</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                One click — Hypixel's portal auto-generates a key when you're logged in with your
-                Minecraft account. Copy it and paste below.
-              </p>
-              <a
-                href={GET_KEY_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-2 rounded-xl border border-primary/40 bg-primary/15 px-4 py-2.5 text-sm font-medium text-primary transition-all duration-75 ease-out hover:scale-[1.02] hover:bg-primary/25 active:scale-95"
+              <button
+                onClick={connect}
+                disabled={connecting}
+                className="rounded-xl border border-primary/40 bg-primary/20 px-6 py-3 text-sm font-semibold text-primary transition-all duration-75 ease-out hover:scale-[1.02] hover:bg-primary/30 active:scale-95 disabled:opacity-50"
               >
-                <KeyRound className="size-4" />
-                Get my API key
-                <ExternalLink className="size-3.5 opacity-70" />
-              </a>
-
-              <div className="mt-4">
-                <input
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  type="password"
-                  placeholder="Paste your key (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)"
-                  className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 font-mono text-sm outline-none transition-colors focus:border-primary/50"
-                />
-                {apiKey.trim() && (
-                  <p
-                    className={`mt-1.5 flex items-center gap-1.5 text-xs ${
-                      keyValidShape ? "text-emerald-400" : "text-amber-400"
-                    }`}
-                  >
-                    {keyValidShape ? (
-                      <>
-                        <CheckCircle2 className="size-3.5" /> Looks like a valid key format
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="size-3.5" /> Keys are UUID-shaped — double-check the
-                        copy
-                      </>
-                    )}
-                  </p>
-                )}
-              </div>
+                {connecting ? "Connecting…" : "View Profile"}
+              </button>
             </div>
-          </li>
-        </ol>
+          </div>
+
+          {/* Advanced BYOK accordion */}
+          <details className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
+            <summary className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-foreground">
+              Advanced: Use a custom Hypixel API key (Optional)
+            </summary>
+            <div className="mt-4 space-y-3 pt-2">
+              <p className="text-xs text-muted-foreground">
+                By default, requests are routed through the server's shared key pool. If you have
+                your own registered application key from{" "}
+                <a
+                  href={GET_KEY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline hover:opacity-80"
+                >
+                  developer.hypixel.net
+                </a>
+                , you can paste it here.
+              </p>
+              <input
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                type="password"
+                placeholder="Paste optional private key"
+                className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 px-4 py-2 font-mono text-xs outline-none transition-colors focus:border-primary/50"
+              />
+              {apiKey.trim() && (
+                <p
+                  className={`flex items-center gap-1.5 text-xs ${
+                    keyValidShape ? "text-emerald-400" : "text-amber-400"
+                  }`}
+                >
+                  {keyValidShape ? (
+                    <>
+                      <CheckCircle2 className="size-3.5" /> Valid key shape
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="size-3.5" /> Keys are UUID-shaped — check formatting
+                    </>
+                  )}
+                </p>
+              )}
+            </div>
+          </details>
+        </div>
 
         {error && (
           <p className="mt-6 flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">

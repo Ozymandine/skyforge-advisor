@@ -2,8 +2,9 @@
 // Landing page — the storefront. Live proof (real flips from public data),
 // feature grid, and a 2-step get-started strip. No connect wall.
 
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import {
   ArrowRight,
   BarChart3,
@@ -18,6 +19,7 @@ import {
   Skull,
   Sprout,
   Bot,
+  Search,
 } from "lucide-react";
 
 import { Panel } from "@/components/layout/app-shell";
@@ -115,6 +117,17 @@ function TargetIcon(props: { className?: string }) {
 }
 
 function Landing() {
+  const navigate = useNavigate();
+  const [searchIgn, setSearchIgn] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = searchIgn.trim();
+    if (trimmed) {
+      void navigate({ to: `/profile/${encodeURIComponent(trimmed)}` });
+    }
+  };
+
   // Live proof: real flips + accuracy from public endpoints (no key needed).
   const bazaarQuery = useQuery({
     queryKey: ["bazaar"],
@@ -176,32 +189,52 @@ function Landing() {
           wiki and crafting cost trees — powered by the official Hypixel API and the NEU dataset.
         </p>
 
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            to="/connect"
-            className="flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-6 py-3 text-sm font-semibold text-primary transition-all duration-75 ease-out hover:scale-[1.03] hover:bg-primary/25 active:scale-95"
+        {/* 1-Click Search Input */}
+        <form
+          onSubmit={handleSearch}
+          className="mx-auto mt-8 flex max-w-lg flex-wrap items-center justify-center gap-2"
+        >
+          <div className="relative flex-1 min-w-[240px]">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <input
+              value={searchIgn}
+              onChange={(e) => setSearchIgn(e.target.value)}
+              placeholder="Enter Minecraft username..."
+              className="w-full rounded-2xl border border-white/10 bg-white/5 py-3.5 pl-11 pr-4 text-sm font-medium outline-none transition-all focus:border-primary/50 focus:bg-white/[0.08]"
+            />
+          </div>
+          <button
+            type="submit"
+            className="flex items-center gap-2 rounded-2xl border border-primary/40 bg-primary/20 px-6 py-3.5 text-sm font-semibold text-primary transition-all duration-75 ease-out hover:scale-[1.02] hover:bg-primary/30 active:scale-95"
           >
-            <Sparkles className="size-4" /> Connect your profile
-          </Link>
-          <a
-            href={DEVELOPER_DASHBOARD_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.02] hover:text-foreground"
-          >
-            <KeyRound className="size-4" /> Get a free API key
-          </a>
+            <Sparkles className="size-4" /> Explore Profile
+          </button>
+        </form>
+
+        {/* Quick picks */}
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5 text-xs text-muted-foreground">
+          <span>Popular profiles:</span>
+          {["Deathstreeks", "Refraction", "Technoblade", "56ms"].map((name) => (
+            <Link
+              key={name}
+              to="/profile/$username"
+              params={{ username: name }}
+              className="rounded-lg border border-white/5 bg-white/[0.03] px-2.5 py-1 transition-colors hover:border-primary/30 hover:text-primary"
+            >
+              {name}
+            </Link>
+          ))}
         </div>
 
         <div className="mt-10 grid gap-3 sm:grid-cols-3">
           {[
-            ["1", "Type your username", "We resolve it via Mojang instantly"],
+            ["1", "Type Any Username", "Resolves instantly via Mojang — no key or sign in"],
+            ["2", "Live Server Decoder", "Decodes inventory, skills, net worth, gear & pets"],
             [
-              "2",
-              "Paste your free key",
-              "One click at developer.hypixel.net — stays in your browser",
+              "3",
+              "Actionable Guidance",
+              "Autonomous advisor suggests your next highest-ROI upgrades",
             ],
-            ["3", "Everything loads", "Dashboard, flips, wiki, crafting — all live"],
           ].map(([step, title, body]) => (
             <div key={step} className="glass-soft rounded-2xl p-4 text-left">
               <p className="font-mono text-xs font-bold text-primary">STEP {step}</p>
