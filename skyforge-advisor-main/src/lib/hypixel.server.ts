@@ -1842,7 +1842,7 @@ export async function getPlayerData(
     const resolved = await resolveUuid(username);
 
     if (!resolved) {
-      return null;
+      throw new HypixelError(`Minecraft account "${username}" not found on Mojang.`);
     }
 
     const { uuid, name } = resolved;
@@ -1860,10 +1860,16 @@ export async function getPlayerData(
       apiKey,
     );
 
+    if (data === null) {
+      throw new HypixelError(
+        "Hypixel API authorization failed. The server API key is invalid, expired, or missing. Check developer.hypixel.net.",
+      );
+    }
+
     const list = data?.profiles ?? [];
 
     if (!list.length) {
-      return null;
+      throw new HypixelError(`Player "${name}" exists, but has no SkyBlock profiles.`);
     }
 
     const chosen =
@@ -2564,8 +2570,10 @@ export async function getPlayerData(
 
     return validated;
   } catch (err) {
+    if (err instanceof HypixelError) {
+      throw err;
+    }
     console.error("Error in getPlayerData:", err);
-
-    return null;
+    throw new HypixelError(err instanceof Error ? err.message : "Failed to load player data");
   }
 }
