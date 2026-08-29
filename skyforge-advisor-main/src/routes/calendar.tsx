@@ -45,7 +45,8 @@ export const Route = createFileRoute("/calendar")({
       { property: "og:title", content: "SkyBlock Event Calendar — SkyForge Advisor" },
       {
         property: "og:description",
-        content: "Real-time SkyBlock calendar, Jacob contest predictions, and Dark Auction schedules.",
+        content:
+          "Real-time SkyBlock calendar, Jacob contest predictions, and Dark Auction schedules.",
       },
     ],
   }),
@@ -137,7 +138,8 @@ function CalendarRoute() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
-                  <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" /> Live In-Game Time
+                  <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" /> Live
+                  In-Game Time
                 </span>
                 <span className="text-xs text-white/40 font-mono">
                   {new Date(now).toLocaleTimeString()} Local
@@ -160,7 +162,7 @@ function CalendarRoute() {
                 "flex size-9 items-center justify-center rounded-xl border transition-all",
                 alarms.enabled
                   ? "border-sky-400/40 bg-sky-500/20 text-sky-300 hover:bg-sky-500/30"
-                  : "border-white/10 bg-white/5 text-white/40 hover:bg-white/10"
+                  : "border-white/10 bg-white/5 text-white/40 hover:bg-white/10",
               )}
               title={alarms.enabled ? "Alarms Enabled" : "Alarms Muted"}
             >
@@ -207,7 +209,9 @@ function CalendarRoute() {
                   {formatTimeRemaining(currentJacob.timeRemainingMs)}
                 </p>
                 <p className="text-[10px] text-white/40">
-                  {currentJacob.status === "active" ? "Time left in contest" : "Starts at :15 past hour"}
+                  {currentJacob.status === "active"
+                    ? "Time left in contest"
+                    : "Starts at :15 past hour"}
                 </p>
               </div>
             </div>
@@ -242,7 +246,10 @@ function CalendarRoute() {
                   >
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-white/60">
-                        {new Date(contest.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(contest.startTime).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </span>
                       <div className="flex gap-1">
                         {contest.crops.map((c) => (
@@ -301,7 +308,8 @@ function CalendarRoute() {
                 <span className="font-mono font-bold text-amber-300">50,000,000+ Coins</span>
               </div>
               <p className="mt-1 text-[11px] text-white/40">
-                Requires entering Sirius' Hut before gate closes at :55. Top purses gain entry to the basement.
+                Requires entering Sirius' Hut before gate closes at :55. Top purses gain entry to
+                the basement.
               </p>
             </div>
 
@@ -332,7 +340,10 @@ function CalendarRoute() {
                     className="flex items-center justify-between rounded-lg bg-white/[0.02] px-3 py-2 text-xs"
                   >
                     <span className="font-mono text-white/60">
-                      {new Date(da.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      {new Date(da.startTime).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </span>
                     <span className="font-mono text-[11px] text-purple-400">
                       in {formatTimeRemaining(da.timeRemainingMs)}
@@ -364,7 +375,7 @@ function CalendarRoute() {
                   "rounded-lg px-3 py-1 text-xs font-medium transition-all",
                   selectedCategory === cat
                     ? "bg-primary text-primary-foreground font-semibold shadow-md"
-                    : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                    : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white",
                 )}
               >
                 {cat}
@@ -407,8 +418,14 @@ function CalendarRoute() {
               <div className="mt-4 border-t border-white/5 pt-3 flex items-center justify-between text-[11px] text-white/40">
                 <span>{evt.skyblockDate}</span>
                 <span className="font-mono">
-                  {new Date(evt.startTime).toLocaleDateString([], { month: "short", day: "numeric" })}{" "}
-                  {new Date(evt.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  {new Date(evt.startTime).toLocaleDateString([], {
+                    month: "short",
+                    day: "numeric",
+                  })}{" "}
+                  {new Date(evt.startTime).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </span>
               </div>
             </div>
@@ -426,7 +443,8 @@ function CalendarRoute() {
             <div>
               <h2 className="text-xl font-bold text-white">Web Audio Chimes Suite</h2>
               <p className="text-xs text-white/50">
-                Synthesized in-browser sound alerts for Jacob's Contests, Dark Auctions, and Festivals.
+                Synthesized in-browser sound alerts for Jacob's Contests, Dark Auctions, and
+                Festivals.
               </p>
             </div>
           </div>
@@ -455,7 +473,7 @@ function CalendarRoute() {
                     "flex items-center justify-between rounded-xl border p-2.5 text-xs capitalize transition-all",
                     alarms.chimeType === tone
                       ? "border-sky-400 bg-sky-500/20 text-white font-bold"
-                      : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                      : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white",
                   )}
                 >
                   <span>{tone}</span>
@@ -477,7 +495,7 @@ function CalendarRoute() {
                     "rounded-xl border p-2.5 text-center text-xs font-medium transition-all",
                     alarms.alertMinutesBefore === mins
                       ? "border-sky-400 bg-sky-500/20 text-white font-bold"
-                      : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10"
+                      : "border-white/10 bg-white/5 text-white/60 hover:bg-white/10",
                   )}
                 >
                   {mins} min before
@@ -536,4 +554,3 @@ function CalendarRoute() {
     </div>
   );
 }
-

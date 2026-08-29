@@ -99,7 +99,10 @@ export function MinecraftTooltip({
             </span>
             {estimatedValue !== undefined && (
               <span className="text-emerald-400">
-                Est. Value: {typeof estimatedValue === "number" ? estimatedValue.toLocaleString() + " coins" : estimatedValue}
+                Est. Value:{" "}
+                {typeof estimatedValue === "number"
+                  ? estimatedValue.toLocaleString() + " coins"
+                  : estimatedValue}
               </span>
             )}
           </div>
@@ -108,4 +111,3 @@ export function MinecraftTooltip({
     </TooltipProvider>
   );
 }
-

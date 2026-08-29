@@ -301,4 +301,3 @@ export const fetchApiHealth = createServerFn({ method: "GET" }).handler(async ()
   const { profileApiHealth } = await import("./hypixel.server");
   return { profileApi: profileApiHealth() };
 });
-

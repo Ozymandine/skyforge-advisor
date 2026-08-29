@@ -13,11 +13,7 @@ export type MinecraftItemCardProps = {
   estimatedValue?: number | string | undefined;
 };
 
-export function MinecraftItemCard({
-  item,
-  className,
-  estimatedValue,
-}: MinecraftItemCardProps) {
+export function MinecraftItemCard({ item, className, estimatedValue }: MinecraftItemCardProps) {
   const rarityUpper = (item.rarity || "COMMON").toUpperCase();
   const rarityColor = RARITY_COLORS[rarityUpper] || "#ffffff";
 
@@ -36,7 +32,7 @@ export function MinecraftItemCard({
     <div
       className={cn(
         "relative rounded-2xl border-2 border-[#2a0054] bg-[#100010]/95 p-4 shadow-2xl backdrop-blur-xl ring-2 ring-[#080008] text-white select-none transition-all",
-        className
+        className,
       )}
     >
       {/* Background ambient lighting */}
@@ -44,7 +40,11 @@ export function MinecraftItemCard({
 
       {/* Header: Item Icon + Authentic Minecraft Name + Stars */}
       <div className="flex items-center gap-3.5 border-b border-white/10 pb-3">
-        <ItemIcon id={item.id} name={item.name} className="size-11 shrink-0 drop-shadow-md object-contain" />
+        <ItemIcon
+          id={item.id}
+          name={item.name}
+          className="size-11 shrink-0 drop-shadow-md object-contain"
+        />
         <div className="min-w-0 flex-1 font-mono">
           <div className="flex items-center gap-2 flex-wrap">
             <h3
@@ -100,4 +100,3 @@ export function MinecraftItemCard({
     </div>
   );
 }
-

@@ -70,7 +70,8 @@ export function SimulatorPage() {
             </h1>
           </div>
           <p className="mt-1.5 text-xs text-white/60 sm:text-sm">
-            Hypixel combat sandbox — live damage calculation, Catacombs scaling, mob defenses, and cost-to-DPS optimizer.
+            Hypixel combat sandbox — live damage calculation, Catacombs scaling, mob defenses, and
+            cost-to-DPS optimizer.
           </p>
         </div>
 
@@ -196,7 +197,8 @@ export function SimulatorPage() {
                     const mob = MOB_TARGETS[key];
                     return (
                       <option key={key} value={key}>
-                        {mob?.name ?? key} ({formatNumber(mob?.maxHp ?? 0)} HP · {mob?.defense ?? 0}% Def)
+                        {mob?.name ?? key} ({formatNumber(mob?.maxHp ?? 0)} HP · {mob?.defense ?? 0}
+                        % Def)
                       </option>
                     );
                   })}
@@ -205,12 +207,17 @@ export function SimulatorPage() {
 
               <div className="flex items-end gap-3">
                 <button
-                  onClick={() => setLoadout((prev: SimulatorLoadout) => ({ ...prev, insideDungeons: !prev.insideDungeons }))}
+                  onClick={() =>
+                    setLoadout((prev: SimulatorLoadout) => ({
+                      ...prev,
+                      insideDungeons: !prev.insideDungeons,
+                    }))
+                  }
                   className={cn(
                     "flex-1 rounded-xl border py-2 text-xs font-bold transition-none",
                     loadout.insideDungeons
                       ? "border-purple-500/40 bg-purple-500/20 text-purple-300"
-                      : "border-white/10 bg-white/[0.04] text-white/60 hover:bg-white/10"
+                      : "border-white/10 bg-white/[0.04] text-white/60 hover:bg-white/10",
                   )}
                 >
                   {loadout.insideDungeons ? "🏰 Inside Dungeons (Active)" : "🌲 Overworld Mode"}
@@ -218,12 +225,17 @@ export function SimulatorPage() {
 
                 {loadout.insideDungeons && (
                   <button
-                    onClick={() => setLoadout((prev: SimulatorLoadout) => ({ ...prev, masterMode: !prev.masterMode }))}
+                    onClick={() =>
+                      setLoadout((prev: SimulatorLoadout) => ({
+                        ...prev,
+                        masterMode: !prev.masterMode,
+                      }))
+                    }
                     className={cn(
                       "flex-1 rounded-xl border py-2 text-xs font-bold transition-none",
                       loadout.masterMode
                         ? "border-red-500/40 bg-red-500/20 text-red-300"
-                        : "border-white/10 bg-white/[0.04] text-white/60 hover:bg-white/10"
+                        : "border-white/10 bg-white/[0.04] text-white/60 hover:bg-white/10",
                     )}
                   >
                     {loadout.masterMode ? "☠️ Master Mode" : "Normal F1-F7"}
@@ -255,7 +267,12 @@ export function SimulatorPage() {
                   min="0"
                   max="60"
                   value={loadout.combatLevel}
-                  onChange={(e) => setLoadout((prev: SimulatorLoadout) => ({ ...prev, combatLevel: Number(e.target.value) }))}
+                  onChange={(e) =>
+                    setLoadout((prev: SimulatorLoadout) => ({
+                      ...prev,
+                      combatLevel: Number(e.target.value),
+                    }))
+                  }
                   className="mt-2 w-full accent-emerald-400 cursor-pointer"
                 />
               </div>
@@ -263,14 +280,21 @@ export function SimulatorPage() {
               <div>
                 <label className="flex justify-between text-xs text-white/70">
                   <span>Catacombs Level</span>
-                  <span className="font-mono font-bold text-purple-300">{loadout.catacombsLevel}</span>
+                  <span className="font-mono font-bold text-purple-300">
+                    {loadout.catacombsLevel}
+                  </span>
                 </label>
                 <input
                   type="range"
                   min="0"
                   max="50"
                   value={loadout.catacombsLevel}
-                  onChange={(e) => setLoadout((prev: SimulatorLoadout) => ({ ...prev, catacombsLevel: Number(e.target.value) }))}
+                  onChange={(e) =>
+                    setLoadout((prev: SimulatorLoadout) => ({
+                      ...prev,
+                      catacombsLevel: Number(e.target.value),
+                    }))
+                  }
                   className="mt-2 w-full accent-purple-400 cursor-pointer"
                 />
               </div>
@@ -286,7 +310,12 @@ export function SimulatorPage() {
                   max="1600"
                   step="25"
                   value={loadout.magicalPower}
-                  onChange={(e) => setLoadout((prev: SimulatorLoadout) => ({ ...prev, magicalPower: Number(e.target.value) }))}
+                  onChange={(e) =>
+                    setLoadout((prev: SimulatorLoadout) => ({
+                      ...prev,
+                      magicalPower: Number(e.target.value),
+                    }))
+                  }
                   className="mt-2 w-full accent-amber-400 cursor-pointer"
                 />
               </div>
@@ -300,16 +329,23 @@ export function SimulatorPage() {
                   return (
                     <button
                       key={powerName}
-                      onClick={() => setLoadout((prev: SimulatorLoadout) => ({ ...prev, accessoryPowerTuning: powerName }))}
+                      onClick={() =>
+                        setLoadout((prev: SimulatorLoadout) => ({
+                          ...prev,
+                          accessoryPowerTuning: powerName,
+                        }))
+                      }
                       className={cn(
                         "flex flex-col items-center justify-center rounded-xl border p-2 text-xs font-bold transition-none",
                         loadout.accessoryPowerTuning === powerName
                           ? "border-amber-400/50 bg-amber-400/15 text-amber-300"
-                          : "border-white/10 bg-white/[0.03] text-white/60 hover:bg-white/10 hover:text-white"
+                          : "border-white/10 bg-white/[0.03] text-white/60 hover:bg-white/10 hover:text-white",
                       )}
                     >
                       <span>{powerName}</span>
-                      <span className="text-[10px] font-normal text-white/40">{power?.bonusName ?? ""}</span>
+                      <span className="text-[10px] font-normal text-white/40">
+                        {power?.bonusName ?? ""}
+                      </span>
                     </button>
                   );
                 })}
@@ -332,7 +368,9 @@ export function SimulatorPage() {
               {/* Weapon */}
               <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white">Weapon: {loadout.weapon.name}</span>
+                  <span className="text-xs font-bold text-white">
+                    Weapon: {loadout.weapon.name}
+                  </span>
                   <span className="rounded-md border border-white/10 bg-black/40 px-2 py-0.5 font-mono text-[10px] text-amber-300">
                     +{loadout.weapon.damage} Base DMG
                   </span>
@@ -428,33 +466,35 @@ export function SimulatorPage() {
             </p>
 
             <div className="space-y-3">
-              {result.upgradeSuggestions.map((sug: (typeof result.upgradeSuggestions)[number], idx: number) => (
-                <div
-                  key={sug.title}
-                  className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-2 transition-none hover:border-emerald-500/40 hover:bg-white/[0.06]"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="flex size-5 items-center justify-center rounded-full bg-emerald-500/20 text-[10px] font-bold text-emerald-300">
-                        #{idx + 1}
+              {result.upgradeSuggestions.map(
+                (sug: (typeof result.upgradeSuggestions)[number], idx: number) => (
+                  <div
+                    key={sug.title}
+                    className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-2 transition-none hover:border-emerald-500/40 hover:bg-white/[0.06]"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="flex size-5 items-center justify-center rounded-full bg-emerald-500/20 text-[10px] font-bold text-emerald-300">
+                          #{idx + 1}
+                        </span>
+                        <h3 className="text-xs font-bold text-white">{sug.title}</h3>
+                      </div>
+                      <span className="rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-300">
+                        +{sug.dpsGainPct}% DPS
                       </span>
-                      <h3 className="text-xs font-bold text-white">{sug.title}</h3>
                     </div>
-                    <span className="rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-300">
-                      +{sug.dpsGainPct}% DPS
-                    </span>
-                  </div>
 
-                  <p className="text-[11px] text-white/60 leading-relaxed">{sug.description}</p>
+                    <p className="text-[11px] text-white/60 leading-relaxed">{sug.description}</p>
 
-                  <div className="flex items-center justify-between border-t border-white/10 pt-2 text-[11px]">
-                    <span className="text-white/40">Est. Investment:</span>
-                    <span className="font-mono font-bold text-white">
-                      ~{formatNumber(sug.estimatedCostCoins)} coins
-                    </span>
+                    <div className="flex items-center justify-between border-t border-white/10 pt-2 text-[11px]">
+                      <span className="text-white/40">Est. Investment:</span>
+                      <span className="font-mono font-bold text-white">
+                        ~{formatNumber(sug.estimatedCostCoins)} coins
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ),
+              )}
             </div>
           </Panel>
 
@@ -491,4 +531,3 @@ export function SimulatorPage() {
     </div>
   );
 }
-

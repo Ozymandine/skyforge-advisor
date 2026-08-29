@@ -44,7 +44,8 @@ export const Route = createFileRoute("/leaderboards")({
       { property: "og:title", content: "Global Leaderboards — SkyForge Advisor" },
       {
         property: "og:description",
-        content: "Live global Top 100 SkyBlock leaderboards with exact numbers and real player rankings.",
+        content:
+          "Live global Top 100 SkyBlock leaderboards with exact numbers and real player rankings.",
       },
     ],
   }),
@@ -103,9 +104,9 @@ function LeaderboardsRoute() {
 
   // Inspected player: either searched player or connected player
   const inspectedPlayer =
-    (searchedUsername.trim() && searchedPlayerQuery.data)
+    searchedUsername.trim() && searchedPlayerQuery.data
       ? searchedPlayerQuery.data
-      : player.data ?? null;
+      : (player.data ?? null);
 
   // Calculate top 1 & top 100 benchmarks for accurate formula
   const top100Map = useMemo(() => {
@@ -130,7 +131,7 @@ function LeaderboardsRoute() {
   const inspectedTopRank = useMemo(() => {
     if (!inspectedPlayer) return null;
     const found = rawEntries.find(
-      (e) => e.ign.toLowerCase() === inspectedPlayer.username.toLowerCase()
+      (e) => e.ign.toLowerCase() === inspectedPlayer.username.toLowerCase(),
     );
     return found?.rank ?? null;
   }, [inspectedPlayer, rawEntries]);
@@ -140,9 +141,7 @@ function LeaderboardsRoute() {
     if (!searchInput.trim()) return rawEntries;
     const q = searchInput.toLowerCase().trim();
     return rawEntries.filter(
-      (p) =>
-        p.ign.toLowerCase().includes(q) ||
-        (p.profile && p.profile.toLowerCase().includes(q))
+      (p) => p.ign.toLowerCase().includes(q) || (p.profile && p.profile.toLowerCase().includes(q)),
     );
   }, [rawEntries, searchInput]);
 
@@ -180,7 +179,7 @@ function LeaderboardsRoute() {
                 "hover:transition-none hover:-translate-y-0.5",
                 active
                   ? "border border-emerald-500/40 bg-emerald-500/15 text-emerald-300 shadow-lg shadow-emerald-500/10"
-                  : "border border-white/5 bg-white/[0.03] text-white/70 hover:bg-white/[0.08] hover:text-white hover:border-white/15"
+                  : "border border-white/5 bg-white/[0.03] text-white/70 hover:bg-white/[0.08] hover:text-white hover:border-white/15",
               )}
             >
               <ItemIcon id={group.icon} name={group.name} className="size-4 object-contain" />
@@ -206,7 +205,7 @@ function LeaderboardsRoute() {
                 "hover:transition-none hover:-translate-y-0.5",
                 active
                   ? "border border-amber-400/40 bg-amber-400/15 text-amber-300 shadow-md shadow-amber-500/10 font-bold"
-                  : "border border-white/5 bg-white/[0.03] text-white/60 hover:bg-white/[0.08] hover:text-white"
+                  : "border border-white/5 bg-white/[0.03] text-white/60 hover:bg-white/[0.08] hover:text-white",
               )}
             >
               <ItemIcon id={sub.iconId} name={sub.name} className="size-4 object-contain" />
@@ -257,19 +256,24 @@ function LeaderboardsRoute() {
                 <>
                   <div className="mt-1 flex flex-wrap items-center gap-2.5">
                     <h3 className="text-xl font-black text-white">
-                      {inspectedTopRank ? `Rank #${inspectedTopRank} (Top 100)` : `Rank ${activeStanding.approximateRank}`}
+                      {inspectedTopRank
+                        ? `Rank #${inspectedTopRank} (Top 100)`
+                        : `Rank ${activeStanding.approximateRank}`}
                     </h3>
                     <span className="rounded-md border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 font-mono text-xs font-bold text-emerald-300">
                       {activeStanding.percentileRank}
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground font-mono">
-                    Exact Record: <strong className="text-white">{activeStanding.formattedPlayerValue}</strong> {activeSubcategory.unit}
+                    Exact Record:{" "}
+                    <strong className="text-white">{activeStanding.formattedPlayerValue}</strong>{" "}
+                    {activeSubcategory.unit}
                   </p>
                 </>
               ) : (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Connect your profile or search a player using the search bar below to view exact standings.
+                  Connect your profile or search a player using the search bar below to view exact
+                  standings.
                 </p>
               )}
             </div>
@@ -331,29 +335,28 @@ function LeaderboardsRoute() {
           <div className="mt-4 space-y-1.5">
             {filteredPlayers.map((p) => {
               const isCurrentPlayer =
-                inspectedPlayer &&
-                p.ign.toLowerCase() === inspectedPlayer.username.toLowerCase();
+                inspectedPlayer && p.ign.toLowerCase() === inspectedPlayer.username.toLowerCase();
 
               // Outlines: 1st = Gold, 2nd = Bronze, 3rd = Silver, rest = normal
               const outlineClass =
                 p.rank === 1
                   ? "border-2 border-amber-400 bg-amber-400/10 shadow-md shadow-amber-500/15 text-amber-300"
                   : p.rank === 2
-                  ? "border-2 border-amber-700/80 bg-amber-950/20 text-amber-500 shadow-sm"
-                  : p.rank === 3
-                  ? "border-2 border-slate-300/80 bg-slate-400/15 text-slate-200 shadow-sm"
-                  : isCurrentPlayer
-                  ? "border border-emerald-500/50 bg-emerald-500/15 text-emerald-300"
-                  : "border border-white/5 bg-transparent hover:bg-white/[0.04]";
+                    ? "border-2 border-amber-700/80 bg-amber-950/20 text-amber-500 shadow-sm"
+                    : p.rank === 3
+                      ? "border-2 border-slate-300/80 bg-slate-400/15 text-slate-200 shadow-sm"
+                      : isCurrentPlayer
+                        ? "border border-emerald-500/50 bg-emerald-500/15 text-emerald-300"
+                        : "border border-white/5 bg-transparent hover:bg-white/[0.04]";
 
               const badgeClass =
                 p.rank === 1
                   ? "border border-amber-400/60 bg-amber-400/20 text-amber-300 font-black"
                   : p.rank === 2
-                  ? "border border-amber-700/60 bg-amber-700/20 text-amber-500 font-black"
-                  : p.rank === 3
-                  ? "border border-slate-300/60 bg-slate-300/20 text-slate-200 font-black"
-                  : "text-muted-foreground font-bold";
+                    ? "border border-amber-700/60 bg-amber-700/20 text-amber-500 font-black"
+                    : p.rank === 3
+                      ? "border border-slate-300/60 bg-slate-300/20 text-slate-200 font-black"
+                      : "text-muted-foreground font-bold";
 
               return (
                 <div
@@ -361,14 +364,14 @@ function LeaderboardsRoute() {
                   className={cn(
                     "flex items-center justify-between py-2.5 px-3.5 rounded-xl transition-all duration-150 will-change-transform",
                     "hover:transition-none hover:translate-x-1",
-                    outlineClass
+                    outlineClass,
                   )}
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <span
                       className={cn(
                         "flex size-7 items-center justify-center rounded-lg font-mono text-xs shrink-0",
-                        badgeClass
+                        badgeClass,
                       )}
                     >
                       #{p.rank}
@@ -422,7 +425,8 @@ function LeaderboardsRoute() {
 
             {filteredPlayers.length === 0 && (
               <div className="py-8 text-center text-xs text-muted-foreground">
-                No players in the Top 100 match "{searchInput}". Loading player rank at the bottom...
+                No players in the Top 100 match "{searchInput}". Loading player rank at the
+                bottom...
               </div>
             )}
 
@@ -451,13 +455,16 @@ function LeaderboardsRoute() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="font-black text-sm text-emerald-300 truncate">
-                          {inspectedPlayer.username} ({searchedUsername ? "Searched Player" : "You"})
+                          {inspectedPlayer.username} ({searchedUsername ? "Searched Player" : "You"}
+                          )
                         </span>
                         <span className="rounded bg-emerald-500/20 border border-emerald-500/30 px-1.5 py-0.2 font-mono text-[9px] font-bold text-emerald-300">
                           {activeStanding.percentileRank}
                         </span>
                       </div>
-                      <p className="text-[11px] text-muted-foreground">Estimated profile ranking position</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Estimated profile ranking position
+                      </p>
                     </div>
                   </div>
 

@@ -254,7 +254,8 @@ export function evaluatePartyFinderReadiness(
     readinessRating = "Borderline";
     badgeColor = "#eab308";
     badgeClass = "border-amber-500/40 bg-amber-500/15 text-amber-300";
-    feedback = "Cata level is sufficient, but secrets per run is low (<5 s/r). Practice secret routes.";
+    feedback =
+      "Cata level is sufficient, but secrets per run is low (<5 s/r). Practice secret routes.";
   }
 
   return {
@@ -283,7 +284,11 @@ export type MasterFloorOdds = {
   status: "Easy" | "Normal" | "Challenging" | "Extreme" | "Locked";
 };
 
-export function calculateMasterModeOdds(cataLevel: number, hasTerminator = true, hasHyperion = true): MasterFloorOdds[] {
+export function calculateMasterModeOdds(
+  cataLevel: number,
+  hasTerminator = true,
+  hasHyperion = true,
+): MasterFloorOdds[] {
   const floors = [
     { floor: "M1", name: "Floor I (Bonzo)", cata: 32, gear: "Juju / GS / 3/4 Necron" },
     { floor: "M2", name: "Floor II (Scarf)", cata: 34, gear: "Terminator / Necron" },
@@ -291,7 +296,12 @@ export function calculateMasterModeOdds(cataLevel: number, hasTerminator = true,
     { floor: "M4", name: "Floor IV (Thorn)", cata: 38, gear: "Terminator / Spirit Bow" },
     { floor: "M5", name: "Floor V (Livid)", cata: 40, gear: "Terminator / Dia Livid Head" },
     { floor: "M6", name: "Floor VI (Sadan)", cata: 42, gear: "Terminator / Dia Sadan Head / Gyro" },
-    { floor: "M7", name: "Floor VII (Master Necron)", cata: 48, gear: "Terminator / Hyperion / Dia Necron Head / Master Stars" },
+    {
+      floor: "M7",
+      name: "Floor VII (Master Necron)",
+      cata: 48,
+      gear: "Terminator / Hyperion / Dia Necron Head / Master Stars",
+    },
   ];
 
   return floors.map((f) => {
@@ -370,4 +380,3 @@ export function getStarUpEstimates(witherEssencePrice = 2800): StarUpEstimate[] 
     },
   ];
 }
-

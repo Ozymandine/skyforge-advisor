@@ -72,11 +72,43 @@ export type ItemValuation = {
 
 const EXPONENTIAL_ENCHANTS: Record<string, Record<number, number>> = {
   growth: { 1: 10_000, 2: 20_000, 3: 40_000, 4: 80_000, 5: 150_000, 6: 3_500_000, 7: 500_000_000 },
-  protection: { 1: 10_000, 2: 20_000, 3: 40_000, 4: 80_000, 5: 180_000, 6: 4_000_000, 7: 450_000_000 },
-  sharpness: { 1: 10_000, 2: 20_000, 3: 40_000, 4: 80_000, 5: 150_000, 6: 1_800_000, 7: 250_000_000 },
+  protection: {
+    1: 10_000,
+    2: 20_000,
+    3: 40_000,
+    4: 80_000,
+    5: 180_000,
+    6: 4_000_000,
+    7: 450_000_000,
+  },
+  sharpness: {
+    1: 10_000,
+    2: 20_000,
+    3: 40_000,
+    4: 80_000,
+    5: 150_000,
+    6: 1_800_000,
+    7: 250_000_000,
+  },
   power: { 1: 10_000, 2: 20_000, 3: 40_000, 4: 80_000, 5: 150_000, 6: 4_500_000, 7: 400_000_000 },
-  critical: { 1: 10_000, 2: 20_000, 3: 40_000, 4: 80_000, 5: 150_000, 6: 8_000_000, 7: 160_000_000 },
-  giant_killer: { 1: 10_000, 2: 20_000, 3: 40_000, 4: 80_000, 5: 150_000, 6: 3_500_000, 7: 180_000_000 },
+  critical: {
+    1: 10_000,
+    2: 20_000,
+    3: 40_000,
+    4: 80_000,
+    5: 150_000,
+    6: 8_000_000,
+    7: 160_000_000,
+  },
+  giant_killer: {
+    1: 10_000,
+    2: 20_000,
+    3: 40_000,
+    4: 80_000,
+    5: 150_000,
+    6: 3_500_000,
+    7: 180_000_000,
+  },
   first_strike: { 1: 10_000, 2: 25_000, 3: 60_000, 4: 150_000, 5: 18_000_000 },
   triple_strike: { 1: 10_000, 2: 25_000, 3: 60_000, 4: 150_000, 5: 18_000_000 },
   looting: { 1: 10_000, 2: 30_000, 3: 80_000, 4: 2_200_000, 5: 120_000_000 },
@@ -100,17 +132,77 @@ const EXPONENTIAL_ENCHANTS: Record<string, Record<number, number>> = {
   sugar_rush: { 1: 50_000, 2: 150_000, 3: 500_000 },
   overload: { 1: 1_200_000, 2: 2_400_000, 3: 4_800_000, 4: 9_600_000, 5: 19_200_000 },
   vicious: { 1: 22_000_000, 2: 44_000_000, 3: 88_000_000, 4: 176_000_000, 5: 350_000_000 },
-  ender_slayer: { 1: 10_000, 2: 25_000, 3: 60_000, 4: 120_000, 5: 250_000, 6: 1_800_000, 7: 85_000_000 },
+  ender_slayer: {
+    1: 10_000,
+    2: 25_000,
+    3: 60_000,
+    4: 120_000,
+    5: 250_000,
+    6: 1_800_000,
+    7: 85_000_000,
+  },
   smite: { 1: 5_000, 2: 15_000, 3: 35_000, 4: 80_000, 5: 150_000, 6: 300_000, 7: 45_000_000 },
-  bane_of_arthropods: { 1: 5_000, 2: 15_000, 3: 35_000, 4: 80_000, 5: 150_000, 6: 250_000, 7: 35_000_000 },
+  bane_of_arthropods: {
+    1: 5_000,
+    2: 15_000,
+    3: 35_000,
+    4: 80_000,
+    5: 150_000,
+    6: 250_000,
+    7: 35_000_000,
+  },
   dragon_hunter: { 1: 4_500_000, 2: 9_000_000, 3: 18_000_000, 4: 36_000_000, 5: 72_000_000 },
   dedication: { 1: 150_000, 2: 600_000, 3: 2_500_000, 4: 125_000_000 },
-  cultivating: { 1: 100_000, 2: 250_000, 3: 500_000, 4: 1_000_000, 5: 2_000_000, 6: 3_500_000, 7: 5_500_000, 8: 8_000_000, 9: 11_500_000, 10: 16_000_000 },
-  compact: { 1: 200_000, 2: 400_000, 3: 800_000, 4: 1_500_000, 5: 2_500_000, 6: 4_000_000, 7: 6_000_000, 8: 8_500_000, 9: 12_000_000, 10: 18_000_000 },
+  cultivating: {
+    1: 100_000,
+    2: 250_000,
+    3: 500_000,
+    4: 1_000_000,
+    5: 2_000_000,
+    6: 3_500_000,
+    7: 5_500_000,
+    8: 8_000_000,
+    9: 11_500_000,
+    10: 16_000_000,
+  },
+  compact: {
+    1: 200_000,
+    2: 400_000,
+    3: 800_000,
+    4: 1_500_000,
+    5: 2_500_000,
+    6: 4_000_000,
+    7: 6_000_000,
+    8: 8_500_000,
+    9: 12_000_000,
+    10: 18_000_000,
+  },
   replenish: { 1: 1_600_000 },
   pristine: { 1: 500_000, 2: 1_200_000, 3: 2_800_000, 4: 6_500_000, 5: 15_000_000 },
-  champion: { 1: 150_000, 2: 300_000, 3: 600_000, 4: 1_200_000, 5: 2_500_000, 6: 4_500_000, 7: 7_500_000, 8: 12_000_000, 9: 18_000_000, 10: 28_000_000 },
-  hecatomb: { 1: 200_000, 2: 400_000, 3: 800_000, 4: 1_600_000, 5: 3_200_000, 6: 6_000_000, 7: 10_000_000, 8: 16_000_000, 9: 25_000_000, 10: 40_000_000 },
+  champion: {
+    1: 150_000,
+    2: 300_000,
+    3: 600_000,
+    4: 1_200_000,
+    5: 2_500_000,
+    6: 4_500_000,
+    7: 7_500_000,
+    8: 12_000_000,
+    9: 18_000_000,
+    10: 28_000_000,
+  },
+  hecatomb: {
+    1: 200_000,
+    2: 400_000,
+    3: 800_000,
+    4: 1_600_000,
+    5: 3_200_000,
+    6: 6_000_000,
+    7: 10_000_000,
+    8: 16_000_000,
+    9: 25_000_000,
+    10: 40_000_000,
+  },
 };
 
 const DEFAULT_LINEAR_ENCHANTS: Record<string, number> = {
@@ -177,18 +269,27 @@ const ULTIMATE_BASE_BOOK_COSTS: Record<string, number> = {
 // ---------------------------------------------------------------------------
 
 const MASTER_STAR_VALUES: Record<number, number> = {
-  6: 15_000_000,  // First Master Star
-  7: 25_000_000,  // Second Master Star
-  8: 45_000_000,  // Third Master Star
-  9: 75_000_000,  // Fourth Master Star
-  10: 120_000_000 // Fifth Master Star
+  6: 15_000_000, // First Master Star
+  7: 25_000_000, // Second Master Star
+  8: 45_000_000, // Third Master Star
+  9: 75_000_000, // Fourth Master Star
+  10: 120_000_000, // Fifth Master Star
 };
 
 // ---------------------------------------------------------------------------
 // 4. GEMSTONE QUALITY TIERS (Jasper, Ruby, Topaz, Opal, Onyx vs others)
 // ---------------------------------------------------------------------------
 
-const EXPENSIVE_GEMS = new Set(["jasper", "ruby", "topaz", "opal", "onyx", "peridot", "aquamarine", "citrine"]);
+const EXPENSIVE_GEMS = new Set([
+  "jasper",
+  "ruby",
+  "topaz",
+  "opal",
+  "onyx",
+  "peridot",
+  "aquamarine",
+  "citrine",
+]);
 
 function getGemstoneValue(gemType: string, quality: string): number {
   const q = quality.toUpperCase();
@@ -215,25 +316,25 @@ function getGemstoneValue(gemType: string, quality: string): number {
 // ---------------------------------------------------------------------------
 
 const REFORGE_STONE_VALUES: Record<string, number> = {
-  withered: 6_500_000,     // Wither Blood
-  fabled: 1_800_000,       // Dragon Claw
-  ancient: 2_500_000,      // Precursor Gear
-  renowned: 18_000_000,    // Dragon Horn
-  giant: 1_200_000,        // Giant Tooth
-  loving: 1_500_000,       // Red Scarf
-  hyper: 1_000_000,        // End Stone Geode
-  gilded: 15_000_000,      // Midas Jewel
-  suspicious: 2_000_000,   // Suspicious Vial
-  jerry: 4_000_000,        // Jerry Stone
+  withered: 6_500_000, // Wither Blood
+  fabled: 1_800_000, // Dragon Claw
+  ancient: 2_500_000, // Precursor Gear
+  renowned: 18_000_000, // Dragon Horn
+  giant: 1_200_000, // Giant Tooth
+  loving: 1_500_000, // Red Scarf
+  hyper: 1_000_000, // End Stone Geode
+  gilded: 15_000_000, // Midas Jewel
+  suspicious: 2_000_000, // Suspicious Vial
+  jerry: 4_000_000, // Jerry Stone
   strengthened: 6_000_000, // Diamond Atom
-  spiritual: 2_000_000,    // Spirit Stone
-  headstrong: 1_500_000,   // Salmon Opal
-  submerged: 14_000_000,   // Deep Sea Orb
-  blessed: 1_200_000,      // Blessed Fruit
-  undead: 1_000_000,       // Undead Catalyst
-  pitchin: 2_000_000,      // Pitchfork
-  ambered: 9_000_000,      // Amber Material
-  perfect: 30_000_000,     // Divan's Powder Coating
+  spiritual: 2_000_000, // Spirit Stone
+  headstrong: 1_500_000, // Salmon Opal
+  submerged: 14_000_000, // Deep Sea Orb
+  blessed: 1_200_000, // Blessed Fruit
+  undead: 1_000_000, // Undead Catalyst
+  pitchin: 2_000_000, // Pitchfork
+  ambered: 9_000_000, // Amber Material
+  perfect: 30_000_000, // Divan's Powder Coating
   divan: 30_000_000,
   fruitful: 1_200_000,
   bountiful: 1_000_000,
@@ -308,7 +409,16 @@ export function estimateItemValue(
   };
 
   const romanToNumber: Record<string, number> = {
-    I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6, VII: 7, VIII: 8, IX: 9, X: 10,
+    I: 1,
+    II: 2,
+    III: 3,
+    IV: 4,
+    V: 5,
+    VI: 6,
+    VII: 7,
+    VIII: 8,
+    IX: 9,
+    X: 10,
   };
 
   // Helper to value a specific enchantment

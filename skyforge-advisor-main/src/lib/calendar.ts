@@ -131,7 +131,10 @@ function getContestCrops(contestIndex: number): FarmingCrop[] {
   return selected;
 }
 
-export function getJacobContests(timestamp: number = Date.now(), count: number = 8): JacobContest[] {
+export function getJacobContests(
+  timestamp: number = Date.now(),
+  count: number = 8,
+): JacobContest[] {
   // Contests occur at :15 past every real hour and last 20 minutes (1,200,000 ms)
   const CONTEST_DURATION = 20 * REAL_MINUTE;
   const contests: JacobContest[] = [];
@@ -250,8 +253,9 @@ export function getMajorEvents(timestamp: number = Date.now()): SkyBlockEvent[] 
 
   // 1. Spooky Festival: Autumn 29–31 (3 SB days = 1 hour real duration)
   // Occurs once every SB Year (every 124 hours = 5 days 4 hours)
-  const currentYearStart = Math.floor((timestamp - SKYBLOCK_EPOCH) / SB_YEAR_MS) * SB_YEAR_MS + SKYBLOCK_EPOCH;
-  
+  const currentYearStart =
+    Math.floor((timestamp - SKYBLOCK_EPOCH) / SB_YEAR_MS) * SB_YEAR_MS + SKYBLOCK_EPOCH;
+
   for (let y = 0; y <= 2; y++) {
     const yearBase = currentYearStart + y * SB_YEAR_MS;
 
@@ -265,7 +269,8 @@ export function getMajorEvents(timestamp: number = Date.now()): SkyBlockEvent[] 
         id: `spooky-${y}`,
         name: "Spooky Festival",
         category: "Festival",
-        description: "Trick or Treat in the Hub! Collect Green and Purple Candies, battle Spooky Mobs, and win the Bat Person Armor.",
+        description:
+          "Trick or Treat in the Hub! Collect Green and Purple Candies, battle Spooky Mobs, and win the Bat Person Armor.",
         icon: "🎃",
         color: "#ea580c",
         startTime: spookyStart,
@@ -285,7 +290,8 @@ export function getMajorEvents(timestamp: number = Date.now()): SkyBlockEvent[] 
         id: `jerry-${y}`,
         name: "Season of Jerry",
         category: "Festival",
-        description: "Defend Jerry's Workshop against waves of snowmen and unwrap Jerry's Red, Green, and White Gifts!",
+        description:
+          "Defend Jerry's Workshop against waves of snowmen and unwrap Jerry's Red, Green, and White Gifts!",
         icon: "🎁",
         color: "#dc2626",
         startTime: jerryStart,
@@ -305,7 +311,8 @@ export function getMajorEvents(timestamp: number = Date.now()): SkyBlockEvent[] 
         id: `newyear-${y}`,
         name: "New Year Celebration",
         category: "Festival",
-        description: "Celebrate the turn of the SkyBlock Year at the Baker in the Hub! Claim your free New Year Cake.",
+        description:
+          "Celebrate the turn of the SkyBlock Year at the Baker in the Hub! Claim your free New Year Cake.",
         icon: "🎂",
         color: "#38bdf8",
         startTime: newYearStart,
@@ -325,7 +332,8 @@ export function getMajorEvents(timestamp: number = Date.now()): SkyBlockEvent[] 
         id: `zoo1-${y}`,
         name: "Traveling Zoo (Summer)",
         category: "Farming",
-        description: "Oringo visits the Hub with legendary pets (Elephant, Monkey, Giraffe, Blue Whale, Tiger).",
+        description:
+          "Oringo visits the Hub with legendary pets (Elephant, Monkey, Giraffe, Blue Whale, Tiger).",
         icon: "🐘",
         color: "#ca8a04",
         startTime: zoo1Start,
@@ -359,7 +367,8 @@ export function getMajorEvents(timestamp: number = Date.now()): SkyBlockEvent[] 
     id: `magma-boss`,
     name: "Magma Boss Spawn",
     category: "Boss",
-    description: "Spawns at the Crimson Isle / Blazing Fortress core. Drops Magma Rod and Lava Shells.",
+    description:
+      "Spawns at the Crimson Isle / Blazing Fortress core. Drops Magma Rod and Lava Shells.",
     icon: "🌋",
     color: "#f97316",
     startTime: magmaStart,

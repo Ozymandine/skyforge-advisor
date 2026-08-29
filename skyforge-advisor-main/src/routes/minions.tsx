@@ -70,9 +70,9 @@ export function MinionsRoute() {
 
   // Minion slot progression from profile
   const slotProgression = useMemo(() => {
-    const communitySlots = player?.communityUpgrades?.find(
-      (u) => u.upgrade.toLowerCase().includes("minion"),
-    )?.level ?? 0;
+    const communitySlots =
+      player?.communityUpgrades?.find((u) => u.upgrade.toLowerCase().includes("minion"))?.level ??
+      0;
     return getMinionSlotProgression(player?.craftedGenerators ?? [], communitySlots);
   }, [player?.craftedGenerators, player?.communityUpgrades]);
 
@@ -85,9 +85,10 @@ export function MinionsRoute() {
     })
       .map((minion) => {
         const lava = MINION_FUELS.find((f) => f.id === "ENCHANTED_LAVA_BUCKET");
-        const corruptSoil = minion.category === "combat"
-          ? MINION_UPGRADES.find((u) => u.id === "CORRUPT_SOIL")
-          : undefined;
+        const corruptSoil =
+          minion.category === "combat"
+            ? MINION_UPGRADES.find((u) => u.id === "CORRUPT_SOIL")
+            : undefined;
         const diamondSpreading = MINION_UPGRADES.find((u) => u.id === "DIAMOND_SPREADING");
 
         const output = calculateMinionDailyOutput({
@@ -118,7 +119,9 @@ export function MinionsRoute() {
   // Top meta recommendations
   const topAfkMinion = leaderboardEntries[0];
   const topBazaarMinion = useMemo(() => {
-    const bzList = [...leaderboardEntries].sort((a, b) => b.output.dailyBazaarCoins - a.output.dailyBazaarCoins);
+    const bzList = [...leaderboardEntries].sort(
+      (a, b) => b.output.dailyBazaarCoins - a.output.dailyBazaarCoins,
+    );
     return bzList[0];
   }, [leaderboardEntries]);
 
@@ -146,7 +149,8 @@ export function MinionsRoute() {
                 setTab("slots");
               }}
             >
-              <Award className="size-3.5" /> Slot Progression ({slotProgression.uniqueCraftsCount}/850)
+              <Award className="size-3.5" /> Slot Progression ({slotProgression.uniqueCraftsCount}
+              /850)
             </Chip>
             <Chip
               active={tab === "fuels"}
@@ -304,12 +308,17 @@ export function MinionsRoute() {
                     <th className="px-4 py-3">Speed</th>
                     <th className="px-4 py-3">Primary Drops</th>
                     <th className="px-4 py-3 text-right">Daily Coins (1 Minion)</th>
-                    <th className="px-4 py-3 text-right">Full Setup ({slotProgression.totalSlotsUnlocked || 24} Slots)</th>
+                    <th className="px-4 py-3 text-right">
+                      Full Setup ({slotProgression.totalSlotsUnlocked || 24} Slots)
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {leaderboardEntries.map((entry, index) => (
-                    <tr key={`${entry.minion.id}-${entry.minion.tier}`} className="hover:bg-white/[0.02] transition-colors">
+                    <tr
+                      key={`${entry.minion.id}-${entry.minion.tier}`}
+                      className="hover:bg-white/[0.02] transition-colors"
+                    >
                       <td className="px-4 py-3 text-center font-bold text-muted-foreground">
                         {index + 1}
                       </td>
@@ -381,9 +390,12 @@ export function MinionsRoute() {
             <div className="mt-5 space-y-2">
               <div className="flex items-center justify-between text-xs font-mono">
                 <span className="text-muted-foreground">
-                  Unique Crafts: {slotProgression.uniqueCraftsCount} / {slotProgression.nextSlotThreshold}
+                  Unique Crafts: {slotProgression.uniqueCraftsCount} /{" "}
+                  {slotProgression.nextSlotThreshold}
                 </span>
-                <span className="font-bold text-primary">{slotProgression.progressToNextPct}% to next slot</span>
+                <span className="font-bold text-primary">
+                  {slotProgression.progressToNextPct}% to next slot
+                </span>
               </div>
               <ProgressBar pct={slotProgression.progressToNextPct} tone="gold" />
             </div>
@@ -392,10 +404,12 @@ export function MinionsRoute() {
           {/* Cheapest Missing Crafts */}
           <Panel className="bg-slate-950/80">
             <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <TrendingUp className="size-4 text-emerald-400" /> Cheapest Unique Crafts to Unlock Next Slot
+              <TrendingUp className="size-4 text-emerald-400" /> Cheapest Unique Crafts to Unlock
+              Next Slot
             </h3>
             <p className="mt-1 text-xs text-muted-foreground">
-              Ranked by lowest Bazaar material cost to unlock your next minion slot with the fewest coins possible.
+              Ranked by lowest Bazaar material cost to unlock your next minion slot with the fewest
+              coins possible.
             </p>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -406,7 +420,9 @@ export function MinionsRoute() {
                 >
                   <div className="min-w-0">
                     <h4 className="truncate text-sm font-bold text-white">{craft.minionName}</h4>
-                    <span className="text-[11px] text-muted-foreground">{craft.materialsNeeded}</span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {craft.materialsNeeded}
+                    </span>
                   </div>
                   <div className="text-right">
                     <span className="font-mono text-xs font-bold text-emerald-400">

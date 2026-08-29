@@ -4,7 +4,11 @@
 // with exact Hypixel colors, plus customizations, and pixel styling.
 
 import React from "react";
-import { parseHypixelRank, type FormattedRank, type RawHypixelPlayerData } from "@/lib/hypixel-rank";
+import {
+  parseHypixelRank,
+  type FormattedRank,
+  type RawHypixelPlayerData,
+} from "@/lib/hypixel-rank";
 import { cn } from "@/lib/utils";
 
 export type RankBadgeProps = {

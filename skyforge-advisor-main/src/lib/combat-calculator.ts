@@ -166,4 +166,3 @@ export function calculateMagicFind(setup: MagicFindSetup = DEFAULT_MF_SETUP): Ma
     drops,
   };
 }
-

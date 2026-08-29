@@ -36,6 +36,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import headerVideo from "@/assets/skyblock-header.mp4";
+import headerPoster from "@/assets/skyblock-header.jpg";
 import { usePlayer, useAccount } from "@/hooks/use-account";
 import {
   fetchBazaar,
@@ -67,9 +68,7 @@ import {
 const nav = [
   {
     group: "Overview",
-    items: [
-      { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    ],
+    items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }],
   },
   {
     group: "Progression",
@@ -251,7 +250,9 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     </div>
                     <p className="flex items-center gap-1 text-[9.5px] text-muted-foreground font-mono">
                       <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="truncate">{activeProfile ? activeProfile.cuteName : "Profile"}</span>
+                      <span className="truncate">
+                        {activeProfile ? activeProfile.cuteName : "Profile"}
+                      </span>
                     </p>
                   </div>
                 )}
@@ -287,8 +288,14 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                 </DropdownMenuItem>
               ))}
               <div className="my-1 border-t border-white/10" />
-              <DropdownMenuItem asChild className="cursor-pointer py-2 px-2.5 rounded-lg hover:bg-white/10">
-                <Link to="/connect" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-white">
+              <DropdownMenuItem
+                asChild
+                className="cursor-pointer py-2 px-2.5 rounded-lg hover:bg-white/10"
+              >
+                <Link
+                  to="/connect"
+                  className="flex items-center gap-2 text-xs text-muted-foreground hover:text-white"
+                >
                   <KeyRound className="size-3.5 text-primary" /> Switch / Reconnect Account
                 </Link>
               </DropdownMenuItem>
@@ -660,8 +667,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           loop
           muted
           playsInline
-          preload="metadata"
-          poster="/favicon.ico"
+          preload="none"
+          poster={headerPoster}
           suppressHydrationWarning
           className="size-full object-cover gpu-layer opacity-60"
         >
@@ -850,7 +857,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <item.icon className="size-4 text-emerald-400" />
                   <span>{item.label}</span>
                 </CommandItem>
-              ))
+              )),
             )}
           </CommandGroup>
 
@@ -1033,9 +1040,15 @@ export function Panel({ className, children }: { className?: string; children: R
 export function StatTile({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
     <div className="group relative px-6 py-5 transition-all duration-75 ease-out hover:bg-white/[0.04] cursor-pointer">
-      <p className="eyebrow group-hover:text-emerald-400/90 transition-colors duration-75">{label}</p>
-      <p className="mt-3 text-3xl font-semibold tracking-tight text-foreground group-hover:text-emerald-300 transition-colors duration-75">{value}</p>
-      <p className="mt-2 text-xs text-muted-foreground group-hover:text-white/80 transition-colors duration-75">{sub}</p>
+      <p className="eyebrow group-hover:text-emerald-400/90 transition-colors duration-75">
+        {label}
+      </p>
+      <p className="mt-3 text-3xl font-semibold tracking-tight text-foreground group-hover:text-emerald-300 transition-colors duration-75">
+        {value}
+      </p>
+      <p className="mt-2 text-xs text-muted-foreground group-hover:text-white/80 transition-colors duration-75">
+        {sub}
+      </p>
     </div>
   );
 }

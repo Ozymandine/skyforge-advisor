@@ -127,13 +127,12 @@ function NetWorth() {
 
   // Value every container against live bazaar prices and upgraded item valuation.
   const containerValues = useMemo(() => {
-    const list = containers
-      .map((container) => ({
-        id: container.id,
-        label: container.label,
-        items: container.items.length,
-        value: container.items.reduce((sum, item) => sum + valueOfItem(item), 0),
-      }));
+    const list = containers.map((container) => ({
+      id: container.id,
+      label: container.label,
+      items: container.items.length,
+      value: container.items.reduce((sum, item) => sum + valueOfItem(item), 0),
+    }));
 
     if (data?.sacks && data.sacks.totalValue > 0) {
       list.push({
@@ -151,7 +150,9 @@ function NetWorth() {
   const itemsValue = containerValues.reduce((sum, c) => sum + c.value, 0);
   const sacksValue = data?.sacks?.totalValue ?? 0;
   const total = data ? data.purse + (data.bank ?? 0) + itemsValue : 0;
-  const containerItems = containers.reduce((sum, container) => sum + container.items.length, 0) + (data?.sacks?.items.length ?? 0);
+  const containerItems =
+    containers.reduce((sum, container) => sum + container.items.length, 0) +
+    (data?.sacks?.items.length ?? 0);
   const bankPct = total > 0 ? Math.round(((data?.bank ?? 0) / total) * 100) : 0;
   const pursePct = total > 0 ? Math.round(((data?.purse ?? 0) / total) * 100) : 0;
   const itemsPct = total > 0 ? Math.round((itemsValue / total) * 100) : 0;
@@ -290,7 +291,11 @@ function NetWorth() {
                       lore={item.lore}
                       estimatedValue={item.value}
                     >
-                      <ItemIcon id={item.id} name={item.name} className="size-7 shrink-0 cursor-pointer" />
+                      <ItemIcon
+                        id={item.id}
+                        name={item.name}
+                        className="size-7 shrink-0 cursor-pointer"
+                      />
                     </MinecraftTooltip>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{item.name}</p>
@@ -410,7 +415,8 @@ function NetWorth() {
                     <div className="flex items-baseline justify-between text-sm">
                       <p className="font-medium">Sacks & Material Storage</p>
                       <p className="font-mono text-xs text-muted-foreground">
-                        {formatFull(sacksValue)} · {total > 0 ? Math.round((sacksValue / total) * 100) : 0}%
+                        {formatFull(sacksValue)} ·{" "}
+                        {total > 0 ? Math.round((sacksValue / total) * 100) : 0}%
                       </p>
                     </div>
                     <div className="mt-2">

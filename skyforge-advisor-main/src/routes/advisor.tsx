@@ -50,14 +50,16 @@ export const Route = createFileRoute("/advisor")({
       { property: "og:title", content: "Personalized Progression Advisor — SkyForge" },
       {
         property: "og:description",
-        content: "What should you do next? Personalized next best upgrades calculated from your exact account stats.",
+        content:
+          "What should you do next? Personalized next best upgrades calculated from your exact account stats.",
       },
     ],
   }),
   component: AdvisorRoute,
 });
 
-type FilterCategory = "all" | "Accessories" | "Skills" | "Slayers" | "Dungeons" | "Minions" | "Economy";
+type FilterCategory =
+  "all" | "Accessories" | "Skills" | "Slayers" | "Dungeons" | "Minions" | "Economy";
 
 function AdvisorRoute() {
   const { data, isLoading, error, connected } = usePlayer();
@@ -96,7 +98,9 @@ function AdvisorRoute() {
       />
 
       {!connected && <ConnectPrompt what="your live profile for tailored progression advice" />}
-      {connected && isLoading && <LoadState>Auditing profile telemetry and calculating highest-ROI upgrades…</LoadState>}
+      {connected && isLoading && (
+        <LoadState>Auditing profile telemetry and calculating highest-ROI upgrades…</LoadState>
+      )}
       {connected && error && <ErrorState error={error} />}
 
       {data && (
@@ -124,10 +128,19 @@ function AdvisorRoute() {
 
               <div className="flex items-center gap-3">
                 <div className="rounded-2xl border border-white/10 bg-black/40 px-4 py-2.5 text-right">
-                  <p className="text-[10px] uppercase tracking-wider text-white/50">Progression Health</p>
-                  <p className="font-mono text-2xl font-black text-emerald-400">{audit.score} / 100</p>
+                  <p className="text-[10px] uppercase tracking-wider text-white/50">
+                    Progression Health
+                  </p>
+                  <p className="font-mono text-2xl font-black text-emerald-400">
+                    {audit.score} / 100
+                  </p>
                 </div>
-                <span className={cn("rounded-2xl border px-3.5 py-2.5 font-mono text-sm font-bold shadow-lg", audit.badgeClass)}>
+                <span
+                  className={cn(
+                    "rounded-2xl border px-3.5 py-2.5 font-mono text-sm font-bold shadow-lg",
+                    audit.badgeClass,
+                  )}
+                >
                   {audit.stage}
                 </span>
               </div>
@@ -146,7 +159,9 @@ function AdvisorRoute() {
                 <div className="mt-2">
                   <ProgressBar pct={audit.mpAudit.score} />
                 </div>
-                <p className="text-[11px] text-white/60 mt-2 leading-relaxed">{audit.mpAudit.statusText}</p>
+                <p className="text-[11px] text-white/60 mt-2 leading-relaxed">
+                  {audit.mpAudit.statusText}
+                </p>
               </div>
 
               {/* 2. Fairy Souls Audit */}
@@ -160,7 +175,9 @@ function AdvisorRoute() {
                 <div className="mt-2">
                   <ProgressBar pct={audit.soulAudit.score} />
                 </div>
-                <p className="text-[11px] text-white/60 mt-2 leading-relaxed">{audit.soulAudit.statusText}</p>
+                <p className="text-[11px] text-white/60 mt-2 leading-relaxed">
+                  {audit.soulAudit.statusText}
+                </p>
               </div>
 
               {/* 3. Skill Balance Audit */}
@@ -174,7 +191,9 @@ function AdvisorRoute() {
                 <div className="mt-2">
                   <ProgressBar pct={audit.skillAudit.score} />
                 </div>
-                <p className="text-[11px] text-white/60 mt-2 leading-relaxed">{audit.skillAudit.statusText}</p>
+                <p className="text-[11px] text-white/60 mt-2 leading-relaxed">
+                  {audit.skillAudit.statusText}
+                </p>
               </div>
 
               {/* 4. Slayer Boss Audit */}
@@ -188,7 +207,9 @@ function AdvisorRoute() {
                 <div className="mt-2">
                   <ProgressBar pct={audit.slayerAudit.score} />
                 </div>
-                <p className="text-[11px] text-white/60 mt-2 leading-relaxed">{audit.slayerAudit.statusText}</p>
+                <p className="text-[11px] text-white/60 mt-2 leading-relaxed">
+                  {audit.slayerAudit.statusText}
+                </p>
               </div>
 
               {/* 5. Dungeon Clearance Audit */}
@@ -202,7 +223,9 @@ function AdvisorRoute() {
                 <div className="mt-2">
                   <ProgressBar pct={audit.dungeonAudit.score} />
                 </div>
-                <p className="text-[11px] text-white/60 mt-2 leading-relaxed">{audit.dungeonAudit.statusText}</p>
+                <p className="text-[11px] text-white/60 mt-2 leading-relaxed">
+                  {audit.dungeonAudit.statusText}
+                </p>
               </div>
 
               {/* 6. Minion Slots Audit */}
@@ -216,7 +239,9 @@ function AdvisorRoute() {
                 <div className="mt-2">
                   <ProgressBar pct={audit.minionAudit.score} />
                 </div>
-                <p className="text-[11px] text-white/60 mt-2 leading-relaxed">{audit.minionAudit.statusText}</p>
+                <p className="text-[11px] text-white/60 mt-2 leading-relaxed">
+                  {audit.minionAudit.statusText}
+                </p>
               </div>
             </div>
           </Panel>
@@ -224,8 +249,12 @@ function AdvisorRoute() {
           {/* SECTION 2: DETECTED GEAR & NEXT UPGRADE TARGET */}
           <Panel>
             <div className="border-b border-white/10 pb-4 mb-4">
-              <h2 className="text-xl font-bold text-white">Detected Gear & Recommended Next Upgrade</h2>
-              <p className="text-xs text-white/50">Based on your equipped armor and inventory items</p>
+              <h2 className="text-xl font-bold text-white">
+                Detected Gear & Recommended Next Upgrade
+              </h2>
+              <p className="text-xs text-white/50">
+                Based on your equipped armor and inventory items
+              </p>
             </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
@@ -245,7 +274,9 @@ function AdvisorRoute() {
                   </div>
                   <div className="flex justify-between rounded-xl bg-white/[0.02] p-2 border border-white/5">
                     <span className="text-white/50">Chestplate:</span>
-                    <span className="font-semibold text-white">{gearReport.detectedChestplate}</span>
+                    <span className="font-semibold text-white">
+                      {gearReport.detectedChestplate}
+                    </span>
                   </div>
                   <div className="flex justify-between rounded-xl bg-white/[0.02] p-2 border border-white/5">
                     <span className="text-white/50">Leggings:</span>
@@ -272,23 +303,37 @@ function AdvisorRoute() {
 
                   <div className="space-y-2.5 text-xs">
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-white/50">Target Weapon</p>
-                      <p className="font-bold text-white mt-0.5 text-sm">{gearReport.recommendedNextUpgrade.weaponTarget}</p>
+                      <p className="text-[10px] uppercase tracking-wider text-white/50">
+                        Target Weapon
+                      </p>
+                      <p className="font-bold text-white mt-0.5 text-sm">
+                        {gearReport.recommendedNextUpgrade.weaponTarget}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-white/50">Target Armor Set</p>
-                      <p className="font-bold text-white mt-0.5 text-sm">{gearReport.recommendedNextUpgrade.armorTarget}</p>
+                      <p className="text-[10px] uppercase tracking-wider text-white/50">
+                        Target Armor Set
+                      </p>
+                      <p className="font-bold text-white mt-0.5 text-sm">
+                        {gearReport.recommendedNextUpgrade.armorTarget}
+                      </p>
                     </div>
                     <div className="rounded-xl bg-black/40 p-2.5 border border-white/5">
-                      <p className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">Expected Stat Gain</p>
-                      <p className="text-white/80 mt-0.5 font-mono">{gearReport.recommendedNextUpgrade.statBenefit}</p>
+                      <p className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">
+                        Expected Stat Gain
+                      </p>
+                      <p className="text-white/80 mt-0.5 font-mono">
+                        {gearReport.recommendedNextUpgrade.statBenefit}
+                      </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3 text-xs">
                   <span className="text-white/50">Estimated Investment:</span>
-                  <span className="font-mono font-bold text-emerald-400">{gearReport.recommendedNextUpgrade.estimatedCostText}</span>
+                  <span className="font-mono font-bold text-emerald-400">
+                    {gearReport.recommendedNextUpgrade.estimatedCostText}
+                  </span>
                 </div>
               </div>
             </div>
@@ -298,8 +343,12 @@ function AdvisorRoute() {
           <Panel>
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4 mb-4">
               <div>
-                <h2 className="text-xl font-bold text-white">Your Tailored Next Best Upgrades (Ranked by ROI)</h2>
-                <p className="text-xs text-white/50">Calculated directly from your missing stats, slayer requirements, and budget</p>
+                <h2 className="text-xl font-bold text-white">
+                  Your Tailored Next Best Upgrades (Ranked by ROI)
+                </h2>
+                <p className="text-xs text-white/50">
+                  Calculated directly from your missing stats, slayer requirements, and budget
+                </p>
               </div>
 
               {/* Filter Chips */}
@@ -320,7 +369,7 @@ function AdvisorRoute() {
                       "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all",
                       selectedCategory === c.id
                         ? "bg-white/20 text-white font-bold"
-                        : "text-white/50 hover:text-white"
+                        : "text-white/50 hover:text-white",
                     )}
                   >
                     {c.label}
@@ -345,14 +394,16 @@ function AdvisorRoute() {
                             ? "border-red-500/40 bg-red-500/15 text-red-300"
                             : action.priority.includes("HIGH")
                               ? "border-amber-400/40 bg-amber-500/15 text-amber-300"
-                              : "border-sky-400/40 bg-sky-500/15 text-sky-300"
+                              : "border-sky-400/40 bg-sky-500/15 text-sky-300",
                         )}
                       >
                         {action.priority}
                       </span>
                     </div>
 
-                    <p className="text-xs text-white/60 mt-2 leading-relaxed">{action.actionGuidance}</p>
+                    <p className="text-xs text-white/60 mt-2 leading-relaxed">
+                      {action.actionGuidance}
+                    </p>
 
                     <div className="mt-3 space-y-1.5 rounded-xl bg-black/40 p-2.5 text-xs font-mono">
                       <div className="flex justify-between text-white/50">

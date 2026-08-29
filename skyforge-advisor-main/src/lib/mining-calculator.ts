@@ -46,7 +46,9 @@ export const DEFAULT_MINING_SETUP: MiningSetupInput = {
   gemstonePowder: 8_000_000,
 };
 
-export function calculateMiningStats(setup: MiningSetupInput = DEFAULT_MINING_SETUP): MiningStatsResult {
+export function calculateMiningStats(
+  setup: MiningSetupInput = DEFAULT_MINING_SETUP,
+): MiningStatsResult {
   // Base mining speed & fortune from Mining Level
   let baseSpeed = setup.miningLevel * 20; // +20 speed per level
   let baseFortune = setup.miningLevel * 4; // +4 fortune per level
@@ -90,22 +92,25 @@ export function calculateMiningStats(setup: MiningSetupInput = DEFAULT_MINING_SE
   // Optimize Powder Allocations
   // Mithril Powder -> Mining Speed 1 (up to lvl 50) + Mining Fortune 1 (up to lvl 50) + Efficient Miner
   const miningSpeedLevel = Math.min(50, Math.floor(setup.mithrilPowder / 40_000));
-  const miningFortuneLevel = Math.min(50, Math.floor((setup.mithrilPowder - miningSpeedLevel * 40_000) / 40_000));
-  const efficientMinerLevel = Math.min(100, Math.floor((setup.mithrilPowder - (miningSpeedLevel + miningFortuneLevel) * 40_000) / 20_000));
+  const miningFortuneLevel = Math.min(
+    50,
+    Math.floor((setup.mithrilPowder - miningSpeedLevel * 40_000) / 40_000),
+  );
+  const efficientMinerLevel = Math.min(
+    100,
+    Math.floor((setup.mithrilPowder - (miningSpeedLevel + miningFortuneLevel) * 40_000) / 20_000),
+  );
 
   // Gemstone Powder -> Mining Speed 2 (up to lvl 50) + Mining Fortune 2 (up to lvl 50)
   const miningSpeed2Level = Math.min(50, Math.floor(setup.gemstonePowder / 80_000));
-  const miningFortune2Level = Math.min(50, Math.floor((setup.gemstonePowder - miningSpeed2Level * 80_000) / 80_000));
+  const miningFortune2Level = Math.min(
+    50,
+    Math.floor((setup.gemstonePowder - miningSpeed2Level * 80_000) / 80_000),
+  );
 
-  const totalSpeed =
-    baseSpeed +
-    miningSpeedLevel * 40 +
-    miningSpeed2Level * 50;
+  const totalSpeed = baseSpeed + miningSpeedLevel * 40 + miningSpeed2Level * 50;
 
-  const totalFortune =
-    baseFortune +
-    miningFortuneLevel * 5 +
-    miningFortune2Level * 5;
+  const totalFortune = baseFortune + miningFortuneLevel * 5 + miningFortune2Level * 5;
 
   // Calculate Gemstone Breaking Ticks (1 tick = 50ms)
   // Hardness: Hardstone = 50, Mithril = 500, Ruby = 2500, Jasper = 4000
@@ -134,4 +139,3 @@ export function calculateMiningStats(setup: MiningSetupInput = DEFAULT_MINING_SE
     },
   };
 }
-

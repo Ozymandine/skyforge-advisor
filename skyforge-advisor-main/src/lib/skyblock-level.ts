@@ -28,22 +28,28 @@ export type PlayerLevelInput = {
   fairySouls?: number | undefined;
   containers: Array<{ id: string; items: Array<unknown> }>;
   collections: Array<{ id: string }>;
-  dungeons?: {
-    catacombsLevel?: number | undefined;
-    classes?: Array<{ level: number }> | undefined;
-    masterMode?: Array<{ completions: number }> | undefined;
-  } | undefined;
+  dungeons?:
+    | {
+        catacombsLevel?: number | undefined;
+        classes?: Array<{ level: number }> | undefined;
+        masterMode?: Array<{ completions: number }> | undefined;
+      }
+    | undefined;
   slayers?: Array<{ tier: number }> | undefined;
   hotm?: { tier: number } | undefined;
-  garden?: {
-    level: number;
-    cropMilestones?: Record<string, number> | undefined;
-    visitorsServed?: number | undefined;
-  } | undefined;
-  crimson?: {
-    dojo?: Record<string, number> | undefined;
-    kuudra?: Record<string, number> | undefined;
-  } | undefined;
+  garden?:
+    | {
+        level: number;
+        cropMilestones?: Record<string, number> | undefined;
+        visitorsServed?: number | undefined;
+      }
+    | undefined;
+  crimson?:
+    | {
+        dojo?: Record<string, number> | undefined;
+        kuudra?: Record<string, number> | undefined;
+      }
+    | undefined;
   rift?: { progress?: Record<string, number> | undefined } | undefined;
   pets?: Array<{ level: number }> | undefined;
   museum?: { donatedItems?: number | undefined; appraised?: number | undefined } | undefined;
@@ -51,7 +57,9 @@ export type PlayerLevelInput = {
   communityUpgrades?: Array<{ level: number }> | undefined;
 };
 
-export function calculateSkyBlockLevel(player: PlayerLevelInput | PlayerData | null | undefined): SkyBlockLevelData {
+export function calculateSkyBlockLevel(
+  player: PlayerLevelInput | PlayerData | null | undefined,
+): SkyBlockLevelData {
   if (!player) {
     return {
       level: 0,
@@ -186,7 +194,10 @@ export function calculateSkyBlockLevel(player: PlayerLevelInput | PlayerData | n
 
   // 10. GARDEN
   const gardenLvl = player.garden?.level ?? 0;
-  const cropMilestones = Object.values(player.garden?.cropMilestones ?? {}).reduce((a, b) => a + b, 0);
+  const cropMilestones = Object.values(player.garden?.cropMilestones ?? {}).reduce(
+    (a, b) => a + b,
+    0,
+  );
   const visitors = player.garden?.visitorsServed ?? 0;
   const gardenXp = gardenLvl * 50 + cropMilestones * 5 + Math.min(visitors * 2, 200);
   categories.push({

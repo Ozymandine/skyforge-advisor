@@ -29,7 +29,11 @@ export const Route = createFileRoute("/profile/$username")({
     const username = params.username.trim();
     try {
       const data = await fetchPlayer({ data: { username } });
-      return { data: data as PlayerData | null, username, error: data ? null : "Player or SkyBlock profile not found." };
+      return {
+        data: data as PlayerData | null,
+        username,
+        error: data ? null : "Player or SkyBlock profile not found.",
+      };
     } catch (err) {
       return {
         data: null,
@@ -40,7 +44,11 @@ export const Route = createFileRoute("/profile/$username")({
   },
   head: ({ loaderData }: { loaderData?: { data: PlayerData | null; username: string } }) => {
     const user = loaderData?.username ?? "Player";
-    const nw = formatNumber((loaderData?.data?.purse ?? 0) + (loaderData?.data?.bank ?? 0) + (loaderData?.data?.sacks?.totalValue ?? 0));
+    const nw = formatNumber(
+      (loaderData?.data?.purse ?? 0) +
+        (loaderData?.data?.bank ?? 0) +
+        (loaderData?.data?.sacks?.totalValue ?? 0),
+    );
     const sa = (loaderData?.data?.skillAverage ?? 0).toFixed(1);
 
     return {
@@ -98,7 +106,8 @@ function PublicProfileRoute() {
         <div>
           <h1 className="text-3xl font-black text-white">Player Not Found</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Could not retrieve SkyBlock profile telemetry for <span className="font-bold text-white font-mono">{username}</span>.
+            Could not retrieve SkyBlock profile telemetry for{" "}
+            <span className="font-bold text-white font-mono">{username}</span>.
           </p>
           <p className="mt-1 text-xs text-red-400/80">{error}</p>
         </div>
@@ -121,22 +130,27 @@ function PublicProfileRoute() {
   }
 
   // Active Profile Name
-  const activeProfile = data.profiles.find((p) => p.profileId === data.activeProfileId)?.cuteName ?? "SkyBlock";
+  const activeProfile =
+    data.profiles.find((p) => p.profileId === data.activeProfileId)?.cuteName ?? "SkyBlock";
 
   // Rank Styling
-  const rank = data.hypixelPlayer?.rank || data.hypixelPlayer?.newPackageRank || data.hypixelPlayer?.packageRank || "NONE";
+  const rank =
+    data.hypixelPlayer?.rank ||
+    data.hypixelPlayer?.newPackageRank ||
+    data.hypixelPlayer?.packageRank ||
+    "NONE";
   const rankText =
     rank === "MVP_PLUS_PLUS"
       ? "[MVP++]"
       : rank === "MVP_PLUS"
-      ? "[MVP+]"
-      : rank === "MVP"
-      ? "[MVP]"
-      : rank === "VIP_PLUS"
-      ? "[VIP+]"
-      : rank === "VIP"
-      ? "[VIP]"
-      : "";
+        ? "[MVP+]"
+        : rank === "MVP"
+          ? "[MVP]"
+          : rank === "VIP_PLUS"
+            ? "[VIP+]"
+            : rank === "VIP"
+              ? "[VIP]"
+              : "";
 
   // Containers
   const armorItems = data.containers.find((c) => c.id === "armor")?.items ?? [];
@@ -171,7 +185,9 @@ function PublicProfileRoute() {
                     {rankText}
                   </span>
                 )}
-                <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">{data.username}</h1>
+                <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+                  {data.username}
+                </h1>
               </div>
 
               <div className="mt-2 flex flex-wrap items-center gap-4 text-xs font-mono text-muted-foreground">
@@ -278,7 +294,7 @@ function PublicProfileRoute() {
               "rounded-xl px-4 py-2 text-xs font-bold transition-all",
               activeTab === tab.id
                 ? "border border-primary/40 bg-primary/20 text-primary shadow-lg shadow-primary/10"
-                : "border border-white/5 bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white"
+                : "border border-white/5 bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white",
             )}
           >
             {tab.label}
@@ -293,7 +309,8 @@ function PublicProfileRoute() {
           <div className="grid gap-6 md:grid-cols-2">
             <Panel className="bg-slate-950/80 border-cyan-500/20">
               <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                <Shield className="size-4 text-cyan-400" /> Equipped Armor Set ({armorItems.length}/4)
+                <Shield className="size-4 text-cyan-400" /> Equipped Armor Set ({armorItems.length}
+                /4)
               </h3>
               <div className="grid grid-cols-4 gap-3">
                 {armorItems.map((item: InventoryItem, idx: number) => (
@@ -316,7 +333,8 @@ function PublicProfileRoute() {
 
             <Panel className="bg-slate-950/80 border-purple-500/20">
               <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                <Sparkles className="size-4 text-purple-400" /> Equipped Equipment ({equipmentItems.length}/4)
+                <Sparkles className="size-4 text-purple-400" /> Equipped Equipment (
+                {equipmentItems.length}/4)
               </h3>
               <div className="grid grid-cols-4 gap-3">
                 {equipmentItems.map((item: InventoryItem, idx: number) => (
@@ -341,7 +359,8 @@ function PublicProfileRoute() {
           {/* Active Inventory Grid */}
           <Panel className="bg-slate-950/80 border-white/10">
             <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-              <Layers className="size-4 text-primary" /> Active Inventory ({inventoryItems.length} items)
+              <Layers className="size-4 text-primary" /> Active Inventory ({inventoryItems.length}{" "}
+              items)
             </h3>
             <div className="grid grid-cols-9 gap-2 rounded-2xl border border-white/10 bg-black/60 p-3">
               {Array.from({ length: 36 }).map((_, slot) => {
@@ -359,12 +378,16 @@ function PublicProfileRoute() {
                         "flex aspect-square w-full items-center justify-center rounded-xl border p-1",
                         item
                           ? "border-white/10 bg-white/[0.03] hover:border-primary/60 hover:bg-white/[0.08]"
-                          : "border-white/5 bg-black/30 opacity-30"
+                          : "border-white/5 bg-black/30 opacity-30",
                       )}
                     >
                       {item && (
                         <div className="relative">
-                          <ItemIcon id={item.id} name={item.name} className="size-8 object-contain" />
+                          <ItemIcon
+                            id={item.id}
+                            name={item.name}
+                            className="size-8 object-contain"
+                          />
                           {item.count > 1 && (
                             <span className="absolute -bottom-1 -right-1 font-mono text-[10px] font-black text-white">
                               {item.count}
@@ -389,13 +412,12 @@ function PublicProfileRoute() {
               <Panel key={skill.key} className="bg-slate-950/80 border-white/10">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-white">{skill.name}</span>
-                  <span className="font-mono text-sm font-black text-primary">Lv {skill.level}</span>
+                  <span className="font-mono text-sm font-black text-primary">
+                    Lv {skill.level}
+                  </span>
                 </div>
                 <div className="mt-3">
-                  <ProgressBar
-                    pct={skill.pct}
-                    tone={skill.maxed ? "emerald" : "gold"}
-                  />
+                  <ProgressBar pct={skill.pct} tone={skill.maxed ? "emerald" : "gold"} />
                 </div>
                 <div className="mt-2 flex justify-between font-mono text-[11px] text-muted-foreground">
                   <span>{formatNumber(skill.totalXp)} XP</span>
@@ -452,11 +474,15 @@ function PublicProfileRoute() {
               <div className="space-y-3 font-mono text-xs">
                 <div className="flex justify-between border-b border-white/5 pb-2">
                   <span className="text-muted-foreground">Catacombs Level:</span>
-                  <span className="font-bold text-purple-300">Lv {data.dungeons?.catacombsLevel ?? 0}</span>
+                  <span className="font-bold text-purple-300">
+                    Lv {data.dungeons?.catacombsLevel ?? 0}
+                  </span>
                 </div>
                 <div className="flex justify-between border-b border-white/5 pb-2">
                   <span className="text-muted-foreground">Secrets Found:</span>
-                  <span className="font-bold text-white">{data.dungeons?.secretsFound?.toLocaleString() ?? 0}</span>
+                  <span className="font-bold text-white">
+                    {data.dungeons?.secretsFound?.toLocaleString() ?? 0}
+                  </span>
                 </div>
                 {data.dungeons?.classes?.map((c) => (
                   <div key={c.name} className="flex justify-between">
@@ -474,7 +500,10 @@ function PublicProfileRoute() {
               </h3>
               <div className="space-y-3 font-mono text-xs">
                 {data.slayerOverview?.bosses.map((boss) => (
-                  <div key={boss.id} className="flex items-center justify-between border-b border-white/5 pb-2">
+                  <div
+                    key={boss.id}
+                    className="flex items-center justify-between border-b border-white/5 pb-2"
+                  >
                     <div>
                       <span className="font-bold text-white">{boss.name}</span>
                       <span className="text-muted-foreground text-[10px] block">
@@ -506,7 +535,11 @@ function PublicProfileRoute() {
                   key={idx}
                   className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] p-3"
                 >
-                  <ItemIcon id={pet.name.toUpperCase()} name={pet.name} className="size-10 object-contain" />
+                  <ItemIcon
+                    id={pet.name.toUpperCase()}
+                    name={pet.name}
+                    className="size-10 object-contain"
+                  />
                   <div>
                     <span className="text-xs font-bold text-white block">{pet.name}</span>
                     <span className="font-mono text-[10px] font-bold text-amber-300">
@@ -531,10 +564,19 @@ function PublicProfileRoute() {
               </h3>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 font-mono text-xs">
                 {data.sacks.items.slice(0, 18).map((sackItem) => (
-                  <div key={sackItem.id} className="rounded-xl border border-white/5 bg-black/30 p-3">
-                    <span className="text-[10px] text-muted-foreground truncate block">{sackItem.name}</span>
-                    <p className="font-bold text-amber-300 mt-1">{sackItem.count.toLocaleString()}x</p>
-                    <span className="text-[9px] text-emerald-400 font-bold block">{formatNumber(sackItem.value)}</span>
+                  <div
+                    key={sackItem.id}
+                    className="rounded-xl border border-white/5 bg-black/30 p-3"
+                  >
+                    <span className="text-[10px] text-muted-foreground truncate block">
+                      {sackItem.name}
+                    </span>
+                    <p className="font-bold text-amber-300 mt-1">
+                      {sackItem.count.toLocaleString()}x
+                    </p>
+                    <span className="text-[9px] text-emerald-400 font-bold block">
+                      {formatNumber(sackItem.value)}
+                    </span>
                   </div>
                 ))}
               </div>

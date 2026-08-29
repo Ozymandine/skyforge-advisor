@@ -76,12 +76,30 @@ export type AdvisorPlayerInput = {
   bank?: number | null | undefined;
   fairySouls?: number | undefined;
   skillAverage?: number | undefined;
-  skills?: Array<{ name?: string | undefined; key?: string | undefined; level?: number | undefined; currentXp?: number | undefined; neededXp?: number | undefined; maxed?: boolean | undefined }> | undefined;
-  slayers?: Array<{ name: string; tier?: number | undefined; kills?: number | undefined; xp?: number | undefined }> | undefined;
-  dungeons?: {
-    catacombsLevel?: number | undefined;
-    floors?: Array<{ name: string; completions: number }> | undefined;
-  } | undefined;
+  skills?:
+    | Array<{
+        name?: string | undefined;
+        key?: string | undefined;
+        level?: number | undefined;
+        currentXp?: number | undefined;
+        neededXp?: number | undefined;
+        maxed?: boolean | undefined;
+      }>
+    | undefined;
+  slayers?:
+    | Array<{
+        name: string;
+        tier?: number | undefined;
+        kills?: number | undefined;
+        xp?: number | undefined;
+      }>
+    | undefined;
+  dungeons?:
+    | {
+        catacombsLevel?: number | undefined;
+        floors?: Array<{ name: string; completions: number }> | undefined;
+      }
+    | undefined;
   containers?: Array<{ id: string; items: InventoryItem[] }> | undefined;
   collections?: Array<{ id: string; name: string }> | undefined;
   hypixelPlayer?: import("./hypixel-rank").RawHypixelPlayerData | null | undefined;
@@ -126,7 +144,9 @@ function getAccessoryFamily(item: InventoryItem): string {
     .trim();
 }
 
-export function computeAccurateMagicalPower(containers: Array<{ id: string; items: InventoryItem[] }> = []): number {
+export function computeAccurateMagicalPower(
+  containers: Array<{ id: string; items: InventoryItem[] }> = [],
+): number {
   const bestByFamily = new Map<string, number>();
 
   for (const c of containers) {
@@ -165,27 +185,32 @@ export function performProfileAudit(player?: AdvisorPlayerInput | null | undefin
   let stage: GameStage = "Early Game";
   let stageColor = "#22c55e";
   let badgeClass = "border-emerald-500/40 bg-emerald-500/15 text-emerald-300";
-  let summary = "You are in the foundational phase of SkyBlock. Focus on low-hanging permanent stats, cheap accessories, and unlocking collections.";
+  let summary =
+    "You are in the foundational phase of SkyBlock. Focus on low-hanging permanent stats, cheap accessories, and unlocking collections.";
 
   if (sbLevel >= 280 || netWorth >= 7_000_000_000 || (skillAvg >= 50 && cataLvl >= 42)) {
     stage = "End Game";
     stageColor = "#a855f7";
     badgeClass = "border-purple-500/40 bg-purple-500/15 text-purple-300";
-    summary = "Endgame powerhouse. Focus on Master Mode 7 speedruns, Kuudra T5 Infernal, Golden Dragon 200, and maxing out remaining Slayer 9 passives.";
+    summary =
+      "Endgame powerhouse. Focus on Master Mode 7 speedruns, Kuudra T5 Infernal, Golden Dragon 200, and maxing out remaining Slayer 9 passives.";
   } else if (sbLevel >= 180 || netWorth >= 1_500_000_000 || (skillAvg >= 40 && cataLvl >= 30)) {
     stage = "Late Game";
     stageColor = "#38bdf8";
     badgeClass = "border-sky-400/40 bg-sky-500/15 text-sky-300";
-    summary = "Late game scaling. You have high base stats — focus on Terminator/Hyperion optimizations, 800+ MP, and Master Mode clearances.";
+    summary =
+      "Late game scaling. You have high base stats — focus on Terminator/Hyperion optimizations, 800+ MP, and Master Mode clearances.";
   } else if (sbLevel >= 80 || netWorth >= 150_000_000 || (skillAvg >= 26 && cataLvl >= 18)) {
     stage = "Mid Game";
     stageColor = "#eab308";
     badgeClass = "border-amber-400/40 bg-amber-500/15 text-amber-300";
-    summary = "Mid game transition. Focus on Juju Shortbow, Shadow Assassin / Necron armor, 500+ MP, and pushing Catacombs Floor 7.";
+    summary =
+      "Mid game transition. Focus on Juju Shortbow, Shadow Assassin / Necron armor, 500+ MP, and pushing Catacombs Floor 7.";
   }
 
   // 1. MP Benchmark based on Stage
-  const targetMp = stage === "Early Game" ? 300 : stage === "Mid Game" ? 550 : stage === "Late Game" ? 850 : 1200;
+  const targetMp =
+    stage === "Early Game" ? 300 : stage === "Mid Game" ? 550 : stage === "Late Game" ? 850 : 1200;
   const mpScore = Math.min(100, Math.round((currentMp / targetMp) * 100));
   const mpDeficit = Math.max(0, targetMp - currentMp);
   const mpStatusText =
@@ -204,7 +229,9 @@ export function performProfileAudit(player?: AdvisorPlayerInput | null | undefin
       : `Missing ${missingSouls} Fairy Souls (-${lostHp} Max HP, -${Math.round(missingSouls * 0.5)} Defense).`;
 
   // 3. Skill Balance Audit
-  const nonMaxedSkills = (player?.skills?.filter((s) => !s.maxed) ?? []).filter((s) => typeof s.level === "number");
+  const nonMaxedSkills = (player?.skills?.filter((s) => !s.maxed) ?? []).filter(
+    (s) => typeof s.level === "number",
+  );
   const lowestSkill = nonMaxedSkills.sort((a, b) => (a.level ?? 0) - (b.level ?? 0))[0] ?? {
     name: "Combat",
     level: 15,
@@ -218,10 +245,23 @@ export function performProfileAudit(player?: AdvisorPlayerInput | null | undefin
 
   // 4. Slayer Audit
   const slayers = player?.slayers ?? [];
-  const rev = slayers.find((s) => s.name.toLowerCase().includes("zombie") || s.name.toLowerCase().includes("revenant"))?.tier ?? 0;
-  const tara = slayers.find((s) => s.name.toLowerCase().includes("spider") || s.name.toLowerCase().includes("tarantula"))?.tier ?? 0;
-  const sven = slayers.find((s) => s.name.toLowerCase().includes("wolf") || s.name.toLowerCase().includes("sven"))?.tier ?? 0;
-  const eman = slayers.find((s) => s.name.toLowerCase().includes("enderman") || s.name.toLowerCase().includes("voidgloom"))?.tier ?? 0;
+  const rev =
+    slayers.find(
+      (s) => s.name.toLowerCase().includes("zombie") || s.name.toLowerCase().includes("revenant"),
+    )?.tier ?? 0;
+  const tara =
+    slayers.find(
+      (s) => s.name.toLowerCase().includes("spider") || s.name.toLowerCase().includes("tarantula"),
+    )?.tier ?? 0;
+  const sven =
+    slayers.find(
+      (s) => s.name.toLowerCase().includes("wolf") || s.name.toLowerCase().includes("sven"),
+    )?.tier ?? 0;
+  const eman =
+    slayers.find(
+      (s) =>
+        s.name.toLowerCase().includes("enderman") || s.name.toLowerCase().includes("voidgloom"),
+    )?.tier ?? 0;
   const slayerXpTotal = slayers.reduce((sum, s) => sum + (s.xp ?? 0), 0);
   const slayerScore = Math.min(100, Math.round((slayerXpTotal / 1_000_000) * 100));
   const slayerStatusText = `Rev ${rev} · Tara ${tara} · Sven ${sven} · Eman ${eman}. ${eman < 5 ? "Need Eman 5 for Juju Shortbow." : rev < 7 ? "Need Rev 7 for Reaper Falchion." : "Slayer passives in good standing."}`;
@@ -229,7 +269,8 @@ export function performProfileAudit(player?: AdvisorPlayerInput | null | undefin
   // 5. Dungeon Audit
   const floors = player?.dungeons?.floors ?? [];
   const completedFloors = floors.filter((f) => f.completions > 0);
-  const highestFloor = completedFloors.length > 0 ? completedFloors[completedFloors.length - 1]!.name : "None";
+  const highestFloor =
+    completedFloors.length > 0 ? completedFloors[completedFloors.length - 1]!.name : "None";
   const nextFloor = floors.find((f) => f.completions === 0)?.name ?? "Master Mode Floor 7";
   const dungeonScore = Math.min(100, Math.round((cataLvl / 50) * 100));
   const dungeonStatusText =
@@ -244,7 +285,9 @@ export function performProfileAudit(player?: AdvisorPlayerInput | null | undefin
   const minionScore = Math.min(100, Math.round((currentSlots / 31) * 100));
   const minionStatusText = `${currentSlots} / 31 Minion Slots unlocked. Craft ${craftsToNextSlot} more unique minion tiers to unlock Slot ${currentSlots + 1}.`;
 
-  const overallScore = Math.round((mpScore + soulScore + skillScore + slayerScore + dungeonScore + minionScore) / 6);
+  const overallScore = Math.round(
+    (mpScore + soulScore + skillScore + slayerScore + dungeonScore + minionScore) / 6,
+  );
 
   return {
     score: overallScore,
@@ -318,7 +361,9 @@ export type TailoredAction = {
   inGameCommand?: string;
 };
 
-export function generateTailoredActionPlan(player?: AdvisorPlayerInput | null | undefined): TailoredAction[] {
+export function generateTailoredActionPlan(
+  player?: AdvisorPlayerInput | null | undefined,
+): TailoredAction[] {
   const audit = performProfileAudit(player);
   const actions: TailoredAction[] = [];
   const purse = player?.purse ?? 0;
@@ -334,7 +379,8 @@ export function generateTailoredActionPlan(player?: AdvisorPlayerInput | null | 
       targetGoalText: `Collect remaining ${Math.min(30, audit.soulAudit.missing)} souls in Hub & Crimson Isle`,
       exactRewardText: `+${audit.soulAudit.lostHp} Max HP, +${Math.round(audit.soulAudit.missing * 0.5)} Defense`,
       estimatedCost: "0 coins (Free permanent stats)",
-      actionGuidance: "Fairy souls give massive permanent survival stats that scale with dungeon percentages and armor modifiers.",
+      actionGuidance:
+        "Fairy souls give massive permanent survival stats that scale with dungeon percentages and armor modifiers.",
       inGameCommand: "/warp hub",
     });
   }
@@ -350,7 +396,8 @@ export function generateTailoredActionPlan(player?: AdvisorPlayerInput | null | 
       targetGoalText: "Purchase cheap unowned Talismans (<500k coins each on Auction House)",
       exactRewardText: `+${Math.min(50, audit.mpAudit.deficit) * 1.8} Strength / Crit Damage from Power Stone`,
       estimatedCost: `~${formatNumber(Math.min(50, audit.mpAudit.deficit) * 45_000)} coins`,
-      actionGuidance: "Magical Power directly multiplies all Power Stone stats (Silky, Hurtful, Fortuitous, Scorching). Visit Maxwell in the Hub.",
+      actionGuidance:
+        "Magical Power directly multiplies all Power Stone stats (Silky, Hurtful, Fortuitous, Scorching). Visit Maxwell in the Hub.",
       inGameCommand: "/ah",
     });
   }
@@ -366,7 +413,8 @@ export function generateTailoredActionPlan(player?: AdvisorPlayerInput | null | 
       targetGoalText: "Reach Enderman Slayer 5 (5,000 Slayer XP)",
       exactRewardText: "Unlocks Juju Shortbow requirement (Triples Dungeon room clear speed)",
       estimatedCost: "~2.5M - 4.5M coins in carry / slayer quests",
-      actionGuidance: "Juju Shortbow is the mandatory progression weapon for Catacombs Floor 5 through Floor 7.",
+      actionGuidance:
+        "Juju Shortbow is the mandatory progression weapon for Catacombs Floor 5 through Floor 7.",
       inGameCommand: "/warp hub",
     });
   }
@@ -381,7 +429,10 @@ export function generateTailoredActionPlan(player?: AdvisorPlayerInput | null | 
       currentStatText: `Current: Level ${audit.skillAudit.lowestSkillLevel} (${formatNumber(audit.skillAudit.lowestSkillXpToNext)} XP to next level)`,
       targetGoalText: `Push ${audit.skillAudit.lowestSkillName} by +5 levels to raise Skill Average (${audit.skillAudit.skillAverage.toFixed(1)})`,
       exactRewardText: `+0.62 Skill Average, +${audit.skillAudit.lowestSkillName === "Combat" ? "Crit Chance & Damage" : audit.skillAudit.lowestSkillName === "Mining" ? "Defense & Mining Fortune" : "Health & Intelligence"}`,
-      estimatedCost: audit.skillAudit.lowestSkillName === "Alchemy" ? "~4M coins (Brewing Sugar Cane)" : "Low (Time-based)",
+      estimatedCost:
+        audit.skillAudit.lowestSkillName === "Alchemy"
+          ? "~4M coins (Brewing Sugar Cane)"
+          : "Low (Time-based)",
       actionGuidance: `Your lowest skill is holding back your SkyBlock Level. Raising low skill tiers takes minimal XP compared to high levels.`,
     });
   }
@@ -397,7 +448,8 @@ export function generateTailoredActionPlan(player?: AdvisorPlayerInput | null | 
       targetGoalText: `Obtain 1 completion on ${audit.dungeonAudit.nextFloorTarget}`,
       exactRewardText: "Unlocks next armor requirement tier + higher Catacombs XP multipliers",
       estimatedCost: "Dungeon entry cost / chest coins",
-      actionGuidance: "Every floor completed unlocks higher floor requirements, master mode prerequisites, and better floor chest drops.",
+      actionGuidance:
+        "Every floor completed unlocks higher floor requirements, master mode prerequisites, and better floor chest drops.",
       inGameCommand: "/warp dungeon_hub",
     });
   }
@@ -413,7 +465,8 @@ export function generateTailoredActionPlan(player?: AdvisorPlayerInput | null | 
       targetGoalText: `Craft Tier 1–4 of ${audit.minionAudit.craftsToNextSlot} uncrafted minion types`,
       exactRewardText: "+1 Minion Slot (+150k - 300k passive coins/day forever)",
       estimatedCost: `~${formatNumber(audit.minionAudit.craftsToNextSlot * 80_000)} coins in Bazaar materials`,
-      actionGuidance: "Crafting Tier 1 through Tier 4 of unused minions (e.g. Flower, Clay, Obsidian, Redstone) is extremely cheap and unlocks slots rapidly.",
+      actionGuidance:
+        "Crafting Tier 1 through Tier 4 of unused minions (e.g. Flower, Clay, Obsidian, Redstone) is extremely cheap and unlocks slots rapidly.",
       inGameCommand: "/bz",
     });
   }
@@ -430,7 +483,8 @@ export function generateTailoredActionPlan(player?: AdvisorPlayerInput | null | 
       targetGoalText: "Deposit at least 10,000,000 coins into Bank",
       exactRewardText: `+200,000 to +500,000 coins free passive interest every SkyBlock season (31 hours)`,
       estimatedCost: "0 coins (Depositing coins)",
-      actionGuidance: "The Hypixel SkyBlock bank pays 2% interest on your balance up to your account cap every 31 real hours.",
+      actionGuidance:
+        "The Hypixel SkyBlock bank pays 2% interest on your balance up to your account cap every 31 real hours.",
       inGameCommand: "/bank",
     });
   }
@@ -458,13 +512,21 @@ export type DetectedGearReport = {
   };
 };
 
-export function detectPlayerGear(player?: AdvisorPlayerInput | null | undefined): DetectedGearReport {
+export function detectPlayerGear(
+  player?: AdvisorPlayerInput | null | undefined,
+): DetectedGearReport {
   const containers = player?.containers ?? [];
-  
+
   // Collect all owned items across armor, wardrobe, inventory, and enderchest
   const allGearItems: InventoryItem[] = [];
   for (const c of containers) {
-    if (c.id === "armor" || c.id === "wardrobe" || c.id === "inventory" || c.id === "enderchest" || c.id === "storage") {
+    if (
+      c.id === "armor" ||
+      c.id === "wardrobe" ||
+      c.id === "inventory" ||
+      c.id === "enderchest" ||
+      c.id === "storage"
+    ) {
       allGearItems.push(...c.items);
     }
   }
@@ -472,30 +534,136 @@ export function detectPlayerGear(player?: AdvisorPlayerInput | null | undefined)
   // Weapon tier ranker
   const getWeaponTier = (name: string): number => {
     const n = name.toLowerCase();
-    if (n.includes("hyperion") || n.includes("astraea") || n.includes("scylla") || n.includes("valkyrie") || n.includes("terminator") || n.includes("claymore")) return 500;
-    if (n.includes("giant's sword") || n.includes("shadow fury") || n.includes("juju") || n.includes("felthorn") || n.includes("midas staff") || n.includes("reaper scythe") || n.includes("spirit sceptre")) return 400;
-    if (n.includes("livid") || n.includes("flower of truth") || n.includes("dragons") || n.includes("voidedge") || n.includes("dreadlord") || n.includes("bonzo")) return 300;
-    if (n.includes("aspect of the end") || n.includes("void sword") || n.includes("aurora staff") || n.includes("raider")) return 200;
-    if (n.includes("sword") || n.includes("bow") || n.includes("staff") || n.includes("dagger") || n.includes("blade")) return 100;
+    if (
+      n.includes("hyperion") ||
+      n.includes("astraea") ||
+      n.includes("scylla") ||
+      n.includes("valkyrie") ||
+      n.includes("terminator") ||
+      n.includes("claymore")
+    )
+      return 500;
+    if (
+      n.includes("giant's sword") ||
+      n.includes("shadow fury") ||
+      n.includes("juju") ||
+      n.includes("felthorn") ||
+      n.includes("midas staff") ||
+      n.includes("reaper scythe") ||
+      n.includes("spirit sceptre")
+    )
+      return 400;
+    if (
+      n.includes("livid") ||
+      n.includes("flower of truth") ||
+      n.includes("dragons") ||
+      n.includes("voidedge") ||
+      n.includes("dreadlord") ||
+      n.includes("bonzo")
+    )
+      return 300;
+    if (
+      n.includes("aspect of the end") ||
+      n.includes("void sword") ||
+      n.includes("aurora staff") ||
+      n.includes("raider")
+    )
+      return 200;
+    if (
+      n.includes("sword") ||
+      n.includes("bow") ||
+      n.includes("staff") ||
+      n.includes("dagger") ||
+      n.includes("blade")
+    )
+      return 100;
     return 0;
   };
 
   // Armor tier ranker
   const getArmorTier = (name: string): number => {
     const n = name.toLowerCase();
-    if (n.includes("infernal") || n.includes("crimson") || n.includes("aurora") || n.includes("terror") || n.includes("fervor") || n.includes("hollow")) return 500;
-    if (n.includes("necron") || n.includes("storm") || n.includes("maxor") || n.includes("goldor") || n.includes("divan")) return 400;
-    if (n.includes("shadow assassin") || n.includes("frozen blaze") || n.includes("adaptive") || n.includes("werewolf")) return 300;
-    if (n.includes("superior") || n.includes("strong") || n.includes("unstable") || n.includes("wise") || n.includes("young") || n.includes("holy")) return 200;
-    if (n.includes("glacite") || n.includes("miner") || n.includes("lapis") || n.includes("hardened") || n.includes("goggles")) return 100;
+    if (
+      n.includes("infernal") ||
+      n.includes("crimson") ||
+      n.includes("aurora") ||
+      n.includes("terror") ||
+      n.includes("fervor") ||
+      n.includes("hollow")
+    )
+      return 500;
+    if (
+      n.includes("necron") ||
+      n.includes("storm") ||
+      n.includes("maxor") ||
+      n.includes("goldor") ||
+      n.includes("divan")
+    )
+      return 400;
+    if (
+      n.includes("shadow assassin") ||
+      n.includes("frozen blaze") ||
+      n.includes("adaptive") ||
+      n.includes("werewolf")
+    )
+      return 300;
+    if (
+      n.includes("superior") ||
+      n.includes("strong") ||
+      n.includes("unstable") ||
+      n.includes("wise") ||
+      n.includes("young") ||
+      n.includes("holy")
+    )
+      return 200;
+    if (
+      n.includes("glacite") ||
+      n.includes("miner") ||
+      n.includes("lapis") ||
+      n.includes("hardened") ||
+      n.includes("goggles")
+    )
+      return 100;
     return 50;
   };
 
-  const helmets = allGearItems.filter((i) => i.name.toLowerCase().includes("helmet") || i.name.toLowerCase().includes("goggles") || i.name.toLowerCase().includes("crown") || i.name.toLowerCase().includes("fedora") || i.name.toLowerCase().includes("mask")).sort((a, b) => getArmorTier(b.name) - getArmorTier(a.name));
-  const chests = allGearItems.filter((i) => i.name.toLowerCase().includes("chestplate") || i.name.toLowerCase().includes("tunic") || i.name.toLowerCase().includes("jacket")).sort((a, b) => getArmorTier(b.name) - getArmorTier(a.name));
-  const legs = allGearItems.filter((i) => i.name.toLowerCase().includes("leggings") || i.name.toLowerCase().includes("trousers") || i.name.toLowerCase().includes("pants")).sort((a, b) => getArmorTier(b.name) - getArmorTier(a.name));
-  const bootsList = allGearItems.filter((i) => i.name.toLowerCase().includes("boots") || i.name.toLowerCase().includes("shoes") || i.name.toLowerCase().includes("oxfords")).sort((a, b) => getArmorTier(b.name) - getArmorTier(a.name));
-  const weapons = allGearItems.filter((i) => getWeaponTier(i.name) > 0).sort((a, b) => getWeaponTier(b.name) - getWeaponTier(a.name));
+  const helmets = allGearItems
+    .filter(
+      (i) =>
+        i.name.toLowerCase().includes("helmet") ||
+        i.name.toLowerCase().includes("goggles") ||
+        i.name.toLowerCase().includes("crown") ||
+        i.name.toLowerCase().includes("fedora") ||
+        i.name.toLowerCase().includes("mask"),
+    )
+    .sort((a, b) => getArmorTier(b.name) - getArmorTier(a.name));
+  const chests = allGearItems
+    .filter(
+      (i) =>
+        i.name.toLowerCase().includes("chestplate") ||
+        i.name.toLowerCase().includes("tunic") ||
+        i.name.toLowerCase().includes("jacket"),
+    )
+    .sort((a, b) => getArmorTier(b.name) - getArmorTier(a.name));
+  const legs = allGearItems
+    .filter(
+      (i) =>
+        i.name.toLowerCase().includes("leggings") ||
+        i.name.toLowerCase().includes("trousers") ||
+        i.name.toLowerCase().includes("pants"),
+    )
+    .sort((a, b) => getArmorTier(b.name) - getArmorTier(a.name));
+  const bootsList = allGearItems
+    .filter(
+      (i) =>
+        i.name.toLowerCase().includes("boots") ||
+        i.name.toLowerCase().includes("shoes") ||
+        i.name.toLowerCase().includes("oxfords"),
+    )
+    .sort((a, b) => getArmorTier(b.name) - getArmorTier(a.name));
+  const weapons = allGearItems
+    .filter((i) => getWeaponTier(i.name) > 0)
+    .sort((a, b) => getWeaponTier(b.name) - getWeaponTier(a.name));
 
   const helmet = helmets[0]?.name ?? "Glacite Helmet";
   const chest = chests[0]?.name ?? "Glacite Chestplate";

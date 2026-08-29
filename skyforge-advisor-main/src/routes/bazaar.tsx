@@ -258,14 +258,13 @@ function BazaarCard({ product, hot = false }: { product: BazaarProduct; hot?: bo
   const i = product;
 
   // Local snapshots (recorded while browsing)…
-  const localHistory: PricePoint[] = useMemo(() => getPriceHistory(i.id), [i.id, expanded]);
+  const localHistory: PricePoint[] = useMemo(() => getPriceHistory(i.id), [i.id]);
   // …plus server-side history (recorded across all visitors/sessions) once expanded.
   const serverQuery = useServerHistory([i.id], 24, expanded);
-  const serverSeries = serverQuery.series.get(i.id) ?? [];
-  const history: PricePoint[] = useMemo(
-    () => (expanded ? mergeHistory(localHistory, serverSeries) : localHistory),
-    [expanded, localHistory, serverSeries],
-  );
+  const history: PricePoint[] = useMemo(() => {
+    const serverSeries = serverQuery.series.get(i.id) ?? [];
+    return expanded ? mergeHistory(localHistory, serverSeries) : localHistory;
+  }, [expanded, localHistory, serverQuery.series, i.id]);
 
   const trendPct =
     history.length >= 2 && history[0]!.v > 0

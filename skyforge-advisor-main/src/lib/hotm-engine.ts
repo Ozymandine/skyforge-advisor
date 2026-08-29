@@ -107,7 +107,9 @@ export const HOTM_NODES: HotmNode[] = [
     powderType: "mithril",
     maxLevel: 100,
     description: "Grants a chance to instantly break adjacent blocks in a radius.",
-    perkFormula: (lvl) => ({ text: `Up to ${Math.min(5, 1 + Math.floor(lvl / 20))} adjacent blocks (${(lvl * 0.4).toFixed(1)}% chance)` }),
+    perkFormula: (lvl) => ({
+      text: `Up to ${Math.min(5, 1 + Math.floor(lvl / 20))} adjacent blocks (${(lvl * 0.4).toFixed(1)}% chance)`,
+    }),
     costFormula: (lvl) => Math.floor(Math.pow(lvl + 1, 2.6) + 10),
   },
   {
@@ -144,7 +146,8 @@ export const HOTM_NODES: HotmNode[] = [
     type: "ability",
     powderType: "mithril",
     maxLevel: 1,
-    description: "Pickaxe Ability: Throws your pickaxe, destroying all blocks in a 3-block radius. (110s Cooldown)",
+    description:
+      "Pickaxe Ability: Throws your pickaxe, destroying all blocks in a 3-block radius. (110s Cooldown)",
     perkFormula: () => ({ text: "Destroys 3-block sphere" }),
     costFormula: () => 0,
   },
@@ -183,8 +186,14 @@ export const HOTM_NODES: HotmNode[] = [
     powderType: "mithril",
     maxLevel: 10,
     description: "Unlocks extra HotM perk slots, tokens, and commission slots.",
-    perkFormula: (lvl) => ({ text: `Tier ${lvl}: +${lvl} Token, +${Math.min(2, Math.floor(lvl / 2))} Comm Slot` }),
-    costFormula: (lvl) => [50_000, 100_000, 250_000, 500_000, 1_000_000, 2_000_000, 4_000_000, 7_000_000, 10_000_000, 15_000_000][lvl] ?? 1_000_000,
+    perkFormula: (lvl) => ({
+      text: `Tier ${lvl}: +${lvl} Token, +${Math.min(2, Math.floor(lvl / 2))} Comm Slot`,
+    }),
+    costFormula: (lvl) =>
+      [
+        50_000, 100_000, 250_000, 500_000, 1_000_000, 2_000_000, 4_000_000, 7_000_000, 10_000_000,
+        15_000_000,
+      ][lvl] ?? 1_000_000,
   },
   {
     id: "goblin_killer",
@@ -209,7 +218,9 @@ export const HOTM_NODES: HotmNode[] = [
     powderType: "gemstone",
     maxLevel: 190,
     description: "Grants a high chance to dig through large veins of Hard Stone and Gemstones.",
-    perkFormula: (lvl) => ({ text: `Dig up to ${Math.min(7, 1 + Math.floor(lvl / 30))} extra blocks (${(lvl * 0.5).toFixed(1)}% chance)` }),
+    perkFormula: (lvl) => ({
+      text: `Dig up to ${Math.min(7, 1 + Math.floor(lvl / 30))} extra blocks (${(lvl * 0.5).toFixed(1)}% chance)`,
+    }),
     costFormula: (lvl) => Math.floor(Math.pow(lvl + 1, 2.2) + 20),
   },
   {
@@ -259,7 +270,10 @@ export const HOTM_NODES: HotmNode[] = [
     powderType: "gemstone",
     maxLevel: 50,
     description: "Grants +5.5 Mining Fortune per level.",
-    perkFormula: (lvl) => ({ fortune: Math.round(lvl * 5.5), text: `+${(lvl * 5.5).toFixed(1)} ☘ Mining Fortune` }),
+    perkFormula: (lvl) => ({
+      fortune: Math.round(lvl * 5.5),
+      text: `+${(lvl * 5.5).toFixed(1)} ☘ Mining Fortune`,
+    }),
     costFormula: (lvl) => Math.floor(Math.pow(lvl + 1, 3.2) + 50),
   },
   {
@@ -270,7 +284,8 @@ export const HOTM_NODES: HotmNode[] = [
     type: "perk",
     powderType: "gemstone",
     maxLevel: 20,
-    description: "Increases the chance to find Treasure Chests while mining in the Crystal Hollows.",
+    description:
+      "Increases the chance to find Treasure Chests while mining in the Crystal Hollows.",
     perkFormula: (lvl) => ({ text: `+${(lvl * 4).toFixed(0)}% Treasure Chest Find Chance` }),
     costFormula: (lvl) => Math.floor(Math.pow(lvl + 1, 3.4) + 60),
   },
@@ -285,7 +300,10 @@ export const HOTM_NODES: HotmNode[] = [
     powderType: "glacite",
     maxLevel: 50,
     description: "Grants +1 Cold Resistance and +10 Mining Speed in the Glacite Mines per level.",
-    perkFormula: (lvl) => ({ speed: lvl * 10, text: `+${lvl} Cold Resist, +${lvl * 10} ⸕ Glacite Speed` }),
+    perkFormula: (lvl) => ({
+      speed: lvl * 10,
+      text: `+${lvl} Cold Resist, +${lvl * 10} ⸕ Glacite Speed`,
+    }),
     costFormula: (lvl) => Math.floor(Math.pow(lvl + 1, 3.1) + 40),
   },
   {
@@ -334,7 +352,8 @@ export const HOTM_NODES: HotmNode[] = [
     type: "ability",
     powderType: "glacite",
     maxLevel: 1,
-    description: "Pickaxe Ability: Triggers a frenzy in Glacite Mineshafts, doubling drop rates for 20s.",
+    description:
+      "Pickaxe Ability: Triggers a frenzy in Glacite Mineshafts, doubling drop rates for 20s.",
     perkFormula: () => ({ text: "2× Mineshaft drops for 20s" }),
     costFormula: () => 0,
   },
@@ -373,7 +392,11 @@ export const HOTM_NODES: HotmNode[] = [
     powderType: "glacite",
     maxLevel: 50,
     description: "Grants bonus Mining Speed and Fortune for every completed Glacite Commission.",
-    perkFormula: (lvl) => ({ speed: lvl * 8, fortune: Math.round(lvl * 2), text: `+${lvl * 8} ⸕ Speed, +${lvl * 2} ☘ Fortune` }),
+    perkFormula: (lvl) => ({
+      speed: lvl * 8,
+      fortune: Math.round(lvl * 2),
+      text: `+${lvl * 8} ⸕ Speed, +${lvl * 2} ☘ Fortune`,
+    }),
     costFormula: (lvl) => Math.floor(Math.pow(lvl + 1, 3.1) + 40),
   },
   {
@@ -401,7 +424,8 @@ export const HOTM_PRESETS: HotmPreset[] = [
   {
     id: "gemstone_meta",
     name: "💎 Gemstone Mining Meta",
-    description: "Maximizes Mining Speed I/II, Mining Fortune I/II, and Powder Buff for peak Gemstone coin yields.",
+    description:
+      "Maximizes Mining Speed I/II, Mining Fortune I/II, and Powder Buff for peak Gemstone coin yields.",
     allocations: {
       mining_speed: 50,
       mining_fortune: 50,
@@ -415,7 +439,8 @@ export const HOTM_PRESETS: HotmPreset[] = [
   {
     id: "powder_grinding",
     name: "📦 Powder Grinding Setup",
-    description: "Max Great Explorer, Mole, Powder Buff, and Daily Powder for fastest Mithril & Gemstone powder farming in Crystal Hollows.",
+    description:
+      "Max Great Explorer, Mole, Powder Buff, and Daily Powder for fastest Mithril & Gemstone powder farming in Crystal Hollows.",
     allocations: {
       mole: 120,
       great_explorer: 20,
@@ -429,7 +454,8 @@ export const HOTM_PRESETS: HotmPreset[] = [
   {
     id: "glacite_mineshafts",
     name: "❄️ Glacite Mineshafts Meta",
-    description: "Optimized for Glacite Mineshafts, Frozen Corpse loot, Cold Resistance, and Sub-Zero Mining Speed.",
+    description:
+      "Optimized for Glacite Mineshafts, Frozen Corpse loot, Cold Resistance, and Sub-Zero Mining Speed.",
     allocations: {
       sub_zero_mining: 50,
       dead_mans_chest: 50,

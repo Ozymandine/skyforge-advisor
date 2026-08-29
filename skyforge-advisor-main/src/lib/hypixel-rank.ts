@@ -56,7 +56,9 @@ export type RawHypixelPlayerData = {
   monthlyRankColor?: string | null | undefined;
 };
 
-export function parseHypixelRank(playerData?: RawHypixelPlayerData | null | undefined): FormattedRank {
+export function parseHypixelRank(
+  playerData?: RawHypixelPlayerData | null | undefined,
+): FormattedRank {
   if (!playerData) {
     return {
       name: "NON",

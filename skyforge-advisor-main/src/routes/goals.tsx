@@ -68,7 +68,7 @@ function useRecommendations(): Recommendation[] {
     }
 
     return recs.slice(0, 6);
-  }, [data, account.profileId]);
+  }, [data]);
 }
 
 type Goal = {

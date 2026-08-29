@@ -190,7 +190,10 @@ export function calculateFarmingFortune(config: FarmingConfig) {
   const anitaFortune = anitaBonus * 4;
   const armorFortune = config.armorSet === "fermento" ? 140 : 80;
   const toolBase = (config.toolTier ?? 3) * 30;
-  const enchants = (config.hasDedication4 ? 36 : 0) + (config.hasCultivating10 ? 20 : 0) + (config.toolFortune ?? 70);
+  const enchants =
+    (config.hasDedication4 ? 36 : 0) +
+    (config.hasCultivating10 ? 20 : 0) +
+    (config.toolFortune ?? 70);
   const toolTotal = toolBase + enchants;
 
   const selectedPet = config.pet ?? config.activePet ?? "elephant";
@@ -199,9 +202,10 @@ export function calculateFarmingFortune(config: FarmingConfig) {
   let equipment = 0;
   if (selectedPet === "elephant") {
     petFortune = Math.round((petLevel / 100) * 180);
-    equipment = config.hasGreenBandana ? (gardenLevel * 4) : 40;
+    equipment = config.hasGreenBandana ? gardenLevel * 4 : 40;
   } else if (selectedPet === "mooshroom_cow") {
-    petFortune = Math.round((petLevel / 100) * 110) + Math.floor((config.totalStrength ?? 850) / 20);
+    petFortune =
+      Math.round((petLevel / 100) * 110) + Math.floor((config.totalStrength ?? 850) / 20);
     equipment = 40;
   }
 
@@ -272,7 +276,7 @@ export function calculateFarmingFortune(config: FarmingConfig) {
 
 export function calculateAllCropProfits(
   config: FarmingConfig,
-  bazaarPrices: Record<string, number> = {}
+  bazaarPrices: Record<string, number> = {},
 ): CropProfitReport[] {
   const { totalFortune } = calculateFarmingFortune(config);
   const blocksPerHour = 72_000;

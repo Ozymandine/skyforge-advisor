@@ -64,7 +64,8 @@ function CraftingPage() {
     staleTime: 60_000,
   });
 
-  const items = itemsQuery.data ?? [];
+  const rawItems = itemsQuery.data;
+  const items = useMemo(() => rawItems ?? [], [rawItems]);
   const byId = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
 
   const bazaarPrices = useMemo(() => {

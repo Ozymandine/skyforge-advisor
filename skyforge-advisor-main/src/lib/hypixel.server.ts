@@ -2389,9 +2389,13 @@ export async function getPlayerData(
       .map((u) => ({ upgrade: titleCase(String(u.upgrade)), level: Number(u.tier ?? 0) }));
 
     // Sacks counts decoder & valuation against live bazaar/NPC prices
-    const sacksRaw = (member["sacks_counts"] ?? (member["inventory"] as Record<string, unknown> | undefined)?.["sacks_counts"] ?? {}) as Record<string, number>;
+    const sacksRaw = (member["sacks_counts"] ??
+      (member["inventory"] as Record<string, unknown> | undefined)?.["sacks_counts"] ??
+      {}) as Record<string, number>;
     let sacks: import("./skyblock").SacksData | undefined;
-    const sackEntries = Object.entries(sacksRaw).filter(([, count]) => typeof count === "number" && count > 0);
+    const sackEntries = Object.entries(sacksRaw).filter(
+      ([, count]) => typeof count === "number" && count > 0,
+    );
     if (sackEntries.length > 0) {
       const bazaar = await getBazaar().catch(() => null);
       const bzMap = new Map<string, number>();
@@ -2403,7 +2407,7 @@ export async function getPlayerData(
       const sackItems: import("./skyblock").SackItem[] = [];
       let totalSacksValue = 0;
       for (const [id, count] of sackEntries) {
-        const unitPrice = bzMap.get(id) ?? (itemMeta.get(id)?.npcSell ?? 0);
+        const unitPrice = bzMap.get(id) ?? itemMeta.get(id)?.npcSell ?? 0;
         const val = Math.round(unitPrice * count);
         totalSacksValue += val;
         sackItems.push({
@@ -2427,7 +2431,10 @@ export async function getPlayerData(
     const bestiaryKills: Record<string, number> = {};
     const bestiaryDeaths: Record<string, number> = {};
 
-    const ingestKillDeathObject = (obj: unknown, defaultType: "kill" | "death" | "auto" = "auto") => {
+    const ingestKillDeathObject = (
+      obj: unknown,
+      defaultType: "kill" | "death" | "auto" = "auto",
+    ) => {
       if (!obj || typeof obj !== "object") return;
       for (const [rawKey, val] of Object.entries(obj as Record<string, unknown>)) {
         if (typeof val === "number" && val > 0) {
@@ -2471,7 +2478,9 @@ export async function getPlayerData(
         rankPlusColor?: string | null;
         monthlyRankColor?: string | null;
       };
-    }>(`${API}/player?uuid=${uuid}`, apiKey).then((r) => r?.player).catch(() => null);
+    }>(`${API}/player?uuid=${uuid}`, apiKey)
+      .then((r) => r?.player)
+      .catch(() => null);
 
     const normalizedHypixelPlayer = hypixelPlayer
       ? {

@@ -112,7 +112,8 @@ function Collections() {
   const { data, isLoading, error, connected } = usePlayer();
   const [active, setActive] = useState("All");
 
-  const collections = data?.collections ?? [];
+  const rawCollections = data?.collections;
+  const collections = useMemo(() => rawCollections ?? [], [rawCollections]);
 
   const categories = useMemo(() => {
     const map = new Map<
@@ -259,22 +260,35 @@ function Collections() {
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
               <div>
                 <h2 className="text-xl font-bold text-white">Minion Slot Unlock Roadmap</h2>
-                <p className="text-xs text-white/50">Unique minion crafting thresholds for profile expansion</p>
+                <p className="text-xs text-white/50">
+                  Unique minion crafting thresholds for profile expansion
+                </p>
               </div>
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              {calculateMinionSlotRoadmap(510).milestones.slice(3).map((m) => (
-                <div key={m.slotsCount} className="rounded-xl border border-white/5 bg-black/30 p-3 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-white">{m.slotsCount} Slots</span>
-                    <span className={m.unlocked ? "text-emerald-400 font-bold" : "text-amber-400 font-bold"}>
-                      {m.unlocked ? "UNLOCKED" : `${m.uniqueCraftsRemaining} left`}
-                    </span>
+              {calculateMinionSlotRoadmap(510)
+                .milestones.slice(3)
+                .map((m) => (
+                  <div
+                    key={m.slotsCount}
+                    className="rounded-xl border border-white/5 bg-black/30 p-3 text-xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-white">{m.slotsCount} Slots</span>
+                      <span
+                        className={
+                          m.unlocked ? "text-emerald-400 font-bold" : "text-amber-400 font-bold"
+                        }
+                      >
+                        {m.unlocked ? "UNLOCKED" : `${m.uniqueCraftsRemaining} left`}
+                      </span>
+                    </div>
+                    <p className="text-white/50 text-[11px] mt-1">
+                      {m.uniqueCraftsRequired} unique crafts
+                    </p>
                   </div>
-                  <p className="text-white/50 text-[11px] mt-1">{m.uniqueCraftsRequired} unique crafts</p>
-                </div>
-              ))}
+                ))}
             </div>
           </Panel>
 
@@ -282,8 +296,12 @@ function Collections() {
           <Panel className="border-amber-500/20 bg-gradient-to-br from-amber-500/[0.04] via-transparent to-yellow-500/[0.02]">
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
               <div>
-                <h2 className="text-xl font-bold text-white">Personal Bank Gold Interest Optimizer</h2>
-                <p className="text-xs text-white/50">Maximize 2% seasonal interest caps every 31 SkyBlock days</p>
+                <h2 className="text-xl font-bold text-white">
+                  Personal Bank Gold Interest Optimizer
+                </h2>
+                <p className="text-xs text-white/50">
+                  Maximize 2% seasonal interest caps every 31 SkyBlock days
+                </p>
               </div>
             </div>
 
@@ -295,10 +313,17 @@ function Collections() {
                 { tier: "Super Deluxe", cap: 1_000_000, req: 50_000_000 },
                 { tier: "Premier", cap: 2_000_000, req: 100_000_000 },
               ].map((b) => (
-                <div key={b.tier} className="rounded-xl border border-white/5 bg-black/30 p-3 text-xs">
+                <div
+                  key={b.tier}
+                  className="rounded-xl border border-white/5 bg-black/30 p-3 text-xs"
+                >
                   <h3 className="font-bold text-white">{b.tier} Account</h3>
-                  <p className="text-amber-300 font-mono font-bold mt-1">+{formatFull(b.cap)} Interest</p>
-                  <p className="text-white/40 text-[11px] mt-0.5">Optimal Balance: {formatFull(b.req)}</p>
+                  <p className="text-amber-300 font-mono font-bold mt-1">
+                    +{formatFull(b.cap)} Interest
+                  </p>
+                  <p className="text-white/40 text-[11px] mt-0.5">
+                    Optimal Balance: {formatFull(b.req)}
+                  </p>
                 </div>
               ))}
             </div>

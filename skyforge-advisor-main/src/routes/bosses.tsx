@@ -8,12 +8,7 @@ import {
   type BossTierAudit,
   type KuudraRoleAudit,
 } from "@/lib/boss-tactics";
-import {
-  Skull,
-  Flame,
-  CheckCircle2,
-  AlertCircle,
-} from "lucide-react";
+import { Skull, Flame, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/bosses")({
@@ -41,7 +36,8 @@ export function BossTacticsPage() {
             </h1>
           </div>
           <p className="mt-1.5 text-xs text-white/60 sm:text-sm">
-            Endgame qualification engine — Voidgloom Seraph T1–T4 survivability audits and Infernal Kuudra role optimizer.
+            Endgame qualification engine — Voidgloom Seraph T1–T4 survivability audits and Infernal
+            Kuudra role optimizer.
           </p>
         </div>
 
@@ -53,7 +49,7 @@ export function BossTacticsPage() {
               "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-none",
               activeTab === "voidgloom"
                 ? "bg-purple-500/20 text-purple-300 ring-1 ring-purple-500/40"
-                : "text-white/60 hover:text-white"
+                : "text-white/60 hover:text-white",
             )}
           >
             <Skull className="size-3.5" /> Voidgloom Seraph (T1–T4)
@@ -64,7 +60,7 @@ export function BossTacticsPage() {
               "flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-none",
               activeTab === "kuudra"
                 ? "bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40"
-                : "text-white/60 hover:text-white"
+                : "text-white/60 hover:text-white",
             )}
           >
             <Flame className="size-3.5" /> Infernal Kuudra (T1–T5)
@@ -96,9 +92,7 @@ export function BossTacticsPage() {
               <span className="text-xs font-bold uppercase text-white/60 tracking-wider">
                 Hitsphase Key Factor
               </span>
-              <p className="mt-2 font-mono text-xl font-bold text-white">
-                Reaper Scythe & Summons
-              </p>
+              <p className="mt-2 font-mono text-xl font-bold text-white">Reaper Scythe & Summons</p>
               <p className="mt-1 text-xs text-white/60">Shreds 30/60 hitsphase shield in &lt;3s</p>
             </div>
 
@@ -107,7 +101,9 @@ export function BossTacticsPage() {
                 Recommended Pet
               </span>
               <p className="mt-2 font-mono text-xl font-bold text-white">Mythic Enderman 100</p>
-              <p className="mt-1 text-xs text-white/60">-25% damage taken from all Enderman attacks</p>
+              <p className="mt-1 text-xs text-white/60">
+                -25% damage taken from all Enderman attacks
+              </p>
             </div>
           </div>
 
@@ -133,7 +129,7 @@ export function BossTacticsPage() {
                       "flex items-center gap-1 rounded-xl border px-2.5 py-1 text-xs font-bold",
                       tier.qualified
                         ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
-                        : "border-red-500/40 bg-red-500/20 text-red-300"
+                        : "border-red-500/40 bg-red-500/20 text-red-300",
                     )}
                   >
                     {tier.qualified ? (
@@ -150,7 +146,9 @@ export function BossTacticsPage() {
 
                 {/* Strategy Notes */}
                 <div className="space-y-1.5">
-                  <span className="text-[11px] font-bold uppercase text-white/50">Tactical Strategy:</span>
+                  <span className="text-[11px] font-bold uppercase text-white/50">
+                    Tactical Strategy:
+                  </span>
                   <ul className="space-y-1 text-xs text-white/80">
                     {tier.keyStrategies.map((strat: string, i: number) => (
                       <li key={i} className="flex items-start gap-2">
@@ -241,7 +239,7 @@ export function BossTacticsPage() {
                       "flex items-center gap-1 rounded-xl border px-2.5 py-1 text-xs font-bold shrink-0",
                       role.qualified
                         ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
-                        : "border-amber-500/40 bg-amber-500/20 text-amber-300"
+                        : "border-amber-500/40 bg-amber-500/20 text-amber-300",
                     )}
                   >
                     {role.qualified ? "Ready to Queue" : "Gear Needed"}
@@ -250,7 +248,9 @@ export function BossTacticsPage() {
 
                 {/* Required Gear */}
                 <div className="space-y-2">
-                  <span className="text-[11px] font-bold uppercase text-white/50">Required Gear:</span>
+                  <span className="text-[11px] font-bold uppercase text-white/50">
+                    Required Gear:
+                  </span>
                   <div className="space-y-1">
                     {role.requiredGear.map((item: string, idx: number) => (
                       <div key={idx} className="flex items-center gap-2 text-xs text-white/80">
@@ -275,4 +275,3 @@ export function BossTacticsPage() {
     </div>
   );
 }
-

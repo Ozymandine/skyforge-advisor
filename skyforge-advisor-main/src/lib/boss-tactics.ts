@@ -146,7 +146,7 @@ export function auditVoidgloomReadiness(player?: AdvisorPlayerInput | null | und
   }
 
   const overallScore = Math.round(
-    tiers.reduce((acc, curr) => acc + curr.scorePct, 0) / tiers.length
+    tiers.reduce((acc, curr) => acc + curr.scorePct, 0) / tiers.length,
   );
 
   return {
@@ -169,7 +169,8 @@ export function auditKuudraReadiness(player?: AdvisorPlayerInput | null | undefi
       roleName: "DPS",
       qualified: cata >= 34 && sbLevel >= 180,
       scorePct: Math.min(100, Math.round(((cata + sbLevel / 5) / 70) * 100)),
-      description: "Deals primary damage to Kuudra's tentacles and core with Duplex/Fatal Tempo Terminator.",
+      description:
+        "Deals primary damage to Kuudra's tentacles and core with Duplex/Fatal Tempo Terminator.",
       requiredGear: [
         "Terminator (Fatal Tempo V or Duplex V)",
         "3/4 Infernal/Fiery Terror Armor (10★)",
@@ -184,7 +185,8 @@ export function auditKuudraReadiness(player?: AdvisorPlayerInput | null | undefi
       roleName: "Stunner",
       qualified: true,
       scorePct: 90,
-      description: "Quickly dashes inside Kuudra, places the bomb, and mines the pods in under 12 seconds.",
+      description:
+        "Quickly dashes inside Kuudra, places the bomb, and mines the pods in under 12 seconds.",
       requiredGear: [
         "500% Max Speed Cap (Black Cat / Rogue Sword)",
         "Spring Boots or Bonzo Staff",
@@ -213,11 +215,7 @@ export function auditKuudraReadiness(player?: AdvisorPlayerInput | null | undefi
       qualified: cata >= 30,
       scorePct: 80,
       description: "Retrieves fuel cells and manages Kuudra pet drops.",
-      requiredGear: [
-        "Level 100 Kuudra Pet",
-        "Gyrokinetic Wand",
-        "Florid Zombie Sword",
-      ],
+      requiredGear: ["Level 100 Kuudra Pet", "Gyrokinetic Wand", "Florid Zombie Sword"],
       playerOwnedGear: ["Florid Zombie Sword"],
       missingGear: ["Level 100 Kuudra Pet"],
       expectedProfitPerKeyCoins: 3_900_000,

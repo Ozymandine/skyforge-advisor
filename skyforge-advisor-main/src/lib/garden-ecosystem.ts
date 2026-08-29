@@ -133,14 +133,62 @@ export type PestType = {
 };
 
 export const PEST_TYPES: PestType[] = [
-  { id: "mite", name: "Mite", favoredCrops: ["Wheat", "Carrot", "Potato"], vinylDrop: "Mite Vinyl", baseDropCoins: 45_000 },
-  { id: "cricket", name: "Cricket", favoredCrops: ["Melon", "Pumpkin"], vinylDrop: "Cricket Vinyl", baseDropCoins: 55_000 },
-  { id: "moth", name: "Moth", favoredCrops: ["Nether Wart", "Cocoa Beans"], vinylDrop: "Moth Vinyl", baseDropCoins: 65_000 },
-  { id: "worm", name: "Earthworm", favoredCrops: ["Mushroom", "Wheat"], vinylDrop: "Worm Vinyl", baseDropCoins: 50_000 },
-  { id: "mosquito", name: "Mosquito", favoredCrops: ["Sugar Cane", "Cactus"], vinylDrop: "Mosquito Vinyl", baseDropCoins: 60_000 },
-  { id: "beetle", name: "Beetle", favoredCrops: ["Pumpkin", "Melon"], vinylDrop: "Beetle Vinyl", baseDropCoins: 75_000 },
-  { id: "locust", name: "Locust", favoredCrops: ["Carrot", "Potato"], vinylDrop: "Locust Vinyl", baseDropCoins: 80_000 },
-  { id: "slug", name: "Slug", favoredCrops: ["Mushroom", "Sugar Cane"], vinylDrop: "Slug Vinyl", baseDropCoins: 70_000 },
+  {
+    id: "mite",
+    name: "Mite",
+    favoredCrops: ["Wheat", "Carrot", "Potato"],
+    vinylDrop: "Mite Vinyl",
+    baseDropCoins: 45_000,
+  },
+  {
+    id: "cricket",
+    name: "Cricket",
+    favoredCrops: ["Melon", "Pumpkin"],
+    vinylDrop: "Cricket Vinyl",
+    baseDropCoins: 55_000,
+  },
+  {
+    id: "moth",
+    name: "Moth",
+    favoredCrops: ["Nether Wart", "Cocoa Beans"],
+    vinylDrop: "Moth Vinyl",
+    baseDropCoins: 65_000,
+  },
+  {
+    id: "worm",
+    name: "Earthworm",
+    favoredCrops: ["Mushroom", "Wheat"],
+    vinylDrop: "Worm Vinyl",
+    baseDropCoins: 50_000,
+  },
+  {
+    id: "mosquito",
+    name: "Mosquito",
+    favoredCrops: ["Sugar Cane", "Cactus"],
+    vinylDrop: "Mosquito Vinyl",
+    baseDropCoins: 60_000,
+  },
+  {
+    id: "beetle",
+    name: "Beetle",
+    favoredCrops: ["Pumpkin", "Melon"],
+    vinylDrop: "Beetle Vinyl",
+    baseDropCoins: 75_000,
+  },
+  {
+    id: "locust",
+    name: "Locust",
+    favoredCrops: ["Carrot", "Potato"],
+    vinylDrop: "Locust Vinyl",
+    baseDropCoins: 80_000,
+  },
+  {
+    id: "slug",
+    name: "Slug",
+    favoredCrops: ["Mushroom", "Sugar Cane"],
+    vinylDrop: "Slug Vinyl",
+    baseDropCoins: 70_000,
+  },
 ];
 
 export type PestSpawnSchedule = {
@@ -188,7 +236,8 @@ export function calculateAnitaRoi(
     const fortuneBonus = tier * 4; // +4 Fortune per tier
     const goldMedalsNeeded = Math.ceil(tier / 2);
     const ticketsNeeded = tier * 25;
-    const totalCostCoins = goldMedalsNeeded * goldMedalValueCoins + ticketsNeeded * ticketPriceCoins;
+    const totalCostCoins =
+      goldMedalsNeeded * goldMedalValueCoins + ticketsNeeded * ticketPriceCoins;
 
     // +4 Fortune yields approx +0.4% increase in crop revenue
     const hourlyExtraCoins = Math.round(hourlyBaseCropRevenue * 0.004 * tier);
@@ -326,4 +375,3 @@ export const CROP_TUNING_GUIDES: CropTuningGuide[] = [
     notes: "Same layout as wheat/carrot; 5-wide rows with Soul Sand.",
   },
 ];
-

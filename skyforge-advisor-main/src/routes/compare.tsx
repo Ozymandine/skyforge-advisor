@@ -94,7 +94,11 @@ function ComparePage() {
     if (dataB) recordLeaderboard(dataB, computeWeight(dataB).total);
   }, [dataA, dataB]);
 
-  const leaderboard = useMemo(() => readLeaderboard(), [dataA, dataB]);
+  const leaderboard = useMemo(
+    () => readLeaderboard(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dataA?.uuid, dataB?.uuid],
+  );
 
   const compare = () => {
     if (!nameA.trim() || !nameB.trim()) return;

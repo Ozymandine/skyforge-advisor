@@ -254,8 +254,7 @@ function Dashboard() {
             <ProgressRing
               pct={
                 dashboardCoverage.length
-                  ? dashboardCoverage.reduce((sum, c) => sum + c.pct, 0) /
-                    dashboardCoverage.length
+                  ? dashboardCoverage.reduce((sum, c) => sum + c.pct, 0) / dashboardCoverage.length
                   : 0
               }
               size={132}
@@ -283,7 +282,8 @@ function Dashboard() {
                     SkyBlock Level Engine
                   </h2>
                   <p className="text-xs text-white/50">
-                    Total XP: {sbLevel.totalXp.toLocaleString()} XP · {sbLevel.xpToNextLevel} XP to Level {sbLevel.level + 1}
+                    Total XP: {sbLevel.totalXp.toLocaleString()} XP · {sbLevel.xpToNextLevel} XP to
+                    Level {sbLevel.level + 1}
                   </p>
                 </div>
               </div>
@@ -309,7 +309,7 @@ function Dashboard() {
                 <Link
                   key={cat.id}
                   to={target.to}
-                  search={target.search as any}
+                  search={target.search as unknown as Record<string, string>}
                   onClick={() => playClickSound()}
                   className="group relative rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-all duration-150 ease-out hover:transition-none hover:-translate-y-1 hover:border-sky-400/70 hover:bg-white/[0.09] hover:shadow-xl hover:shadow-sky-500/15 active:translate-y-0 cursor-pointer will-change-transform block"
                 >
@@ -330,7 +330,9 @@ function Dashboard() {
                     </span>
                   </div>
                   <div className="mt-2.5">
-                    <ProgressBar pct={Math.min(100, Math.round((cat.currentXp / cat.maxEstimatedXp) * 100))} />
+                    <ProgressBar
+                      pct={Math.min(100, Math.round((cat.currentXp / cat.maxEstimatedXp) * 100))}
+                    />
                   </div>
                   <p className="mt-2 truncate text-[10px] text-white/50 group-hover:text-white/70 transition-colors duration-75">
                     {cat.details}
@@ -347,8 +349,8 @@ function Dashboard() {
               <p className="eyebrow">Account intelligence</p>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight">Profile analysis</h2>
               <p className="mt-3 text-sm text-muted-foreground">
-                A verified completion view of the connected SkyBlock profile. Categories without
-                an authoritative value remain clearly marked instead of being estimated.
+                A verified completion view of the connected SkyBlock profile. Categories without an
+                authoritative value remain clearly marked instead of being estimated.
               </p>
             </div>
             <div className="glass-soft relative rounded-2xl px-6 py-5">
@@ -369,7 +371,7 @@ function Dashboard() {
                   <Link
                     key={c.label}
                     to={c.link.to}
-                    search={c.link.search as any}
+                    search={c.link.search as unknown as Record<string, string>}
                     onClick={() => playClickSound()}
                     className="glass-soft rounded-2xl p-5 transition-all duration-150 hover:-translate-y-1 hover:border-emerald-500/40 hover:bg-white/[0.08] hover:shadow-lg hover:shadow-emerald-500/10 active:translate-y-0 cursor-pointer block"
                   >
@@ -394,90 +396,89 @@ function Dashboard() {
               </Stagger>
             </div>
 
-              <div className="space-y-4">
-                <div className="glass-soft rounded-2xl p-5">
-                  <p className="eyebrow">Reference</p>
-                  <h3 className="mt-2 text-xl font-semibold">Account coverage</h3>
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    Live profile data is loaded from Hypixel. The dashboard updates automatically
-                    when your connected profile changes.
-                  </p>
-                  <dl className="mt-5 space-y-3 text-sm">
-                    {[
-                      ["Skill average", data.skillAverage.toFixed(2)],
-                      ["Total skill XP", formatFull(data.totalSkillXp)],
-                      ["Fairy Souls", formatFull(data.fairySouls)],
-                    ].map(([k, v]) => (
-                      <div key={k} className="flex justify-between border-b border-border pb-3">
-                        <dt className="text-muted-foreground">{k}</dt>
-                        <dd>{v}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
+            <div className="space-y-4">
+              <div className="glass-soft rounded-2xl p-5">
+                <p className="eyebrow">Reference</p>
+                <h3 className="mt-2 text-xl font-semibold">Account coverage</h3>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Live profile data is loaded from Hypixel. The dashboard updates automatically when
+                  your connected profile changes.
+                </p>
+                <dl className="mt-5 space-y-3 text-sm">
+                  {[
+                    ["Skill average", data.skillAverage.toFixed(2)],
+                    ["Total skill XP", formatFull(data.totalSkillXp)],
+                    ["Fairy Souls", formatFull(data.fairySouls)],
+                  ].map(([k, v]) => (
+                    <div key={k} className="flex justify-between border-b border-border pb-3">
+                      <dt className="text-muted-foreground">{k}</dt>
+                      <dd>{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
 
-                <div className="glass-soft rounded-2xl p-5">
-                  <p className="eyebrow">Recent activity</p>
-                  <ul className="mt-4 space-y-3 text-sm">
-                    <li className="flex gap-3">
-                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
-                      <div>
-                        <p>Profile refreshed from Hypixel</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(data.lastSave).toLocaleString()}
-                        </p>
-                      </div>
-                    </li>
-                    <li className="flex gap-3">
-                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
-                      <div>
-                        <p>{collectionCategories.length} collection categories loaded</p>
-                        <p className="text-xs text-muted-foreground">Live collection summary</p>
-                      </div>
-                    </li>
-                    <li className="flex gap-3">
-                      <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
-                      <div>
-                        <p>{data.profiles.length} profile(s) available</p>
-                        <p className="text-xs text-muted-foreground">Connected account state</p>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
+              <div className="glass-soft rounded-2xl p-5">
+                <p className="eyebrow">Recent activity</p>
+                <ul className="mt-4 space-y-3 text-sm">
+                  <li className="flex gap-3">
+                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
+                    <div>
+                      <p>Profile refreshed from Hypixel</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(data.lastSave).toLocaleString()}
+                      </p>
+                    </div>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
+                    <div>
+                      <p>{collectionCategories.length} collection categories loaded</p>
+                      <p className="text-xs text-muted-foreground">Live collection summary</p>
+                    </div>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
+                    <div>
+                      <p>{data.profiles.length} profile(s) available</p>
+                      <p className="text-xs text-muted-foreground">Connected account state</p>
+                    </div>
+                  </li>
+                </ul>
               </div>
             </div>
-          </Panel>
+          </div>
+        </Panel>
 
-          <Panel>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="eyebrow">Highlights</p>
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight">Top skills</h2>
-              </div>
-              <Link to="/skills" className="text-sm text-primary hover:underline">
-                View all skills
-              </Link>
+        <Panel>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="eyebrow">Highlights</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight">Top skills</h2>
             </div>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {topSkills.map((s) => (
-                <div key={s.key} className="glass-soft rounded-2xl p-5">
-                  <p className="text-sm font-medium">
-                    {s.name} {s.level}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {s.maxed
-                      ? `${formatFull(s.totalXp)} XP`
-                      : `${formatFull(s.currentXp)} / ${formatFull(s.neededXp)} XP`}
-                  </p>
-                  <div className="mt-4">
-                    <ProgressBar pct={s.pct} />
-                  </div>
+            <Link to="/skills" className="text-sm text-primary hover:underline">
+              View all skills
+            </Link>
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {topSkills.map((s) => (
+              <div key={s.key} className="glass-soft rounded-2xl p-5">
+                <p className="text-sm font-medium">
+                  {s.name} {s.level}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {s.maxed
+                    ? `${formatFull(s.totalXp)} XP`
+                    : `${formatFull(s.currentXp)} / ${formatFull(s.neededXp)} XP`}
+                </p>
+                <div className="mt-4">
+                  <ProgressBar pct={s.pct} />
                 </div>
-              ))}
-            </div>
-          </Panel>
-        </Stagger>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      </Stagger>
     </div>
   );
 }
-

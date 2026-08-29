@@ -20,15 +20,43 @@ export type FactionReputationTier = {
 
 export const FACTION_TIERS: FactionReputationTier[] = [
   { tier: "Novice", minRep: 0, maxRep: 3000, perks: ["Town entrance", "Basic vendor access"] },
-  { tier: "Recognized", minRep: 3000, maxRep: 7000, perks: ["Daily quest tier 2", "Corrupted bait recipe"] },
-  { tier: "Trusted", minRep: 7000, maxRep: 12000, perks: ["Faction armor reforge access", "Guard non-aggro"] },
-  { tier: "Respected", minRep: 12000, maxRep: 18000, perks: ["Kuudra T3 key craft unlock", "Trophy fish fillets +10%"] },
-  { tier: "Exalted", minRep: 18000, maxRep: 24000, perks: ["Kuudra T4 key craft unlock", "Town council perks"] },
-  { tier: "Overlord", minRep: 24000, maxRep: 27000, perks: ["Kuudra T5 Infernal unlock", "Maxed faction passives"] },
+  {
+    tier: "Recognized",
+    minRep: 3000,
+    maxRep: 7000,
+    perks: ["Daily quest tier 2", "Corrupted bait recipe"],
+  },
+  {
+    tier: "Trusted",
+    minRep: 7000,
+    maxRep: 12000,
+    perks: ["Faction armor reforge access", "Guard non-aggro"],
+  },
+  {
+    tier: "Respected",
+    minRep: 12000,
+    maxRep: 18000,
+    perks: ["Kuudra T3 key craft unlock", "Trophy fish fillets +10%"],
+  },
+  {
+    tier: "Exalted",
+    minRep: 18000,
+    maxRep: 24000,
+    perks: ["Kuudra T4 key craft unlock", "Town council perks"],
+  },
+  {
+    tier: "Overlord",
+    minRep: 24000,
+    maxRep: 27000,
+    perks: ["Kuudra T5 Infernal unlock", "Maxed faction passives"],
+  },
 ];
 
 export function getFactionStatus(reputation = 12500, faction: FactionType = "MAGE") {
-  const currentTier = FACTION_TIERS.slice().reverse().find((t) => reputation >= t.minRep) ?? FACTION_TIERS[0]!;
+  const currentTier =
+    FACTION_TIERS.slice()
+      .reverse()
+      .find((t) => reputation >= t.minRep) ?? FACTION_TIERS[0]!;
   const nextTier = FACTION_TIERS.find((t) => t.minRep > reputation);
   const repToNext = nextTier ? nextTier.minRep - reputation : 0;
 
@@ -98,7 +126,13 @@ export const KUUDRA_TIERS: KuudraTierDefinition[] = [
     name: "Infernal",
     combatRequirement: 36,
     recommendedArmor: "Infernal Tier 10★ (God Roll Mana Pool/Veteran)",
-    requiredWeapons: ["Hyperion", "Terminator (Duplex/Fatal)", "Precursor Eye", "Wither Cloak", "Edrag / GDrag 200"],
+    requiredWeapons: [
+      "Hyperion",
+      "Terminator (Duplex/Fatal)",
+      "Precursor Eye",
+      "Wither Cloak",
+      "Edrag / GDrag 200",
+    ],
     keyCostCoins: 6_500_000,
     expectedProfitPerRun: 24_000_000,
   },
@@ -174,11 +208,41 @@ export type ArmorTierProgression = {
 };
 
 export const CRIMSON_ARMOR_TIERS: ArmorTierProgression[] = [
-  { tierName: "Base", crimsonEssenceCost: 2500, kuudraTeethCost: 0, heavyPearlsCost: 0, coinsValue: 12_000_000 },
-  { tierName: "Hot", crimsonEssenceCost: 7500, kuudraTeethCost: 20, heavyPearlsCost: 10, coinsValue: 45_000_000 },
-  { tierName: "Burning", crimsonEssenceCost: 18000, kuudraTeethCost: 60, heavyPearlsCost: 30, coinsValue: 140_000_000 },
-  { tierName: "Fiery", crimsonEssenceCost: 45000, kuudraTeethCost: 160, heavyPearlsCost: 80, coinsValue: 450_000_000 },
-  { tierName: "Infernal", crimsonEssenceCost: 120000, kuudraTeethCost: 400, heavyPearlsCost: 200, coinsValue: 1_400_000_000 },
+  {
+    tierName: "Base",
+    crimsonEssenceCost: 2500,
+    kuudraTeethCost: 0,
+    heavyPearlsCost: 0,
+    coinsValue: 12_000_000,
+  },
+  {
+    tierName: "Hot",
+    crimsonEssenceCost: 7500,
+    kuudraTeethCost: 20,
+    heavyPearlsCost: 10,
+    coinsValue: 45_000_000,
+  },
+  {
+    tierName: "Burning",
+    crimsonEssenceCost: 18000,
+    kuudraTeethCost: 60,
+    heavyPearlsCost: 30,
+    coinsValue: 140_000_000,
+  },
+  {
+    tierName: "Fiery",
+    crimsonEssenceCost: 45000,
+    kuudraTeethCost: 160,
+    heavyPearlsCost: 80,
+    coinsValue: 450_000_000,
+  },
+  {
+    tierName: "Infernal",
+    crimsonEssenceCost: 120000,
+    kuudraTeethCost: 400,
+    heavyPearlsCost: 200,
+    coinsValue: 1_400_000_000,
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -192,10 +256,13 @@ export type KuudraChestDrop = {
 };
 
 export const KUUDRA_T5_CHEST_DROPS: KuudraChestDrop[] = [
-  { name: "God Roll Shard (Mana Pool X / Veteran X)", dropChance: "0.8%", marketValue: 650_000_000 },
+  {
+    name: "God Roll Shard (Mana Pool X / Veteran X)",
+    dropChance: "0.8%",
+    marketValue: 650_000_000,
+  },
   { name: "Kuudra Mandible", dropChance: "2.0%", marketValue: 85_000_000 },
   { name: "Wheel of Fate", dropChance: "5.0%", marketValue: 24_000_000 },
   { name: "Kuudra Follower Relic", dropChance: "1.5%", marketValue: 45_000_000 },
   { name: "Attribute Shard (Dominance / Vitality)", dropChance: "15.0%", marketValue: 18_000_000 },
 ];
-

@@ -40,9 +40,8 @@ export type BestiaryData = {
 export const BESTIARY_BRACKETS: Record<number, number[]> = {
   // 1: Standard Mobs (25 tiers)
   1: [
-    10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000,
-    200000, 300000, 400000, 500000, 600000, 700000, 800000, 900000, 1000000,
-    1500000, 2000000, 3000000,
+    10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 200000, 300000,
+    400000, 500000, 600000, 700000, 800000, 900000, 1000000, 1500000, 2000000, 3000000,
   ],
   // 2: Minibosses / Special Mobs (12 tiers)
   2: [5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000],
@@ -246,7 +245,10 @@ export const BESTIARY_FAMILIES: FamilyDefinition[] = [
   },
 ];
 
-export function calculateMobTier(kills: number, bracket: number): {
+export function calculateMobTier(
+  kills: number,
+  bracket: number,
+): {
   tier: number;
   maxTier: number;
   nextTierKills: number | null;
@@ -390,4 +392,3 @@ export function calculateBestiary(
     families,
   };
 }
-

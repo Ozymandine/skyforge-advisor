@@ -306,7 +306,11 @@ export function generateCraftFlips(
 
     if (sellPrice <= totalCraftCost) continue;
 
-    const { tax, netProfit, marginPct } = calculateNetProfit(totalCraftCost, sellPrice, targetMarket);
+    const { tax, netProfit, marginPct } = calculateNetProfit(
+      totalCraftCost,
+      sellPrice,
+      targetMarket,
+    );
     if (netProfit < 20_000 || marginPct < 3) continue;
 
     const weeklyVol = bazaarPrices.get(targetId)?.weeklyVolume ?? 200;
@@ -347,4 +351,3 @@ export function getBazaarCommand(itemId: string): string {
 export function getCraftCommand(itemId: string): string {
   return `/recipe ${itemId.toLowerCase().replace(/_/g, " ")}`;
 }
-

@@ -88,7 +88,8 @@ export const Route = createFileRoute("/skills")({
       { property: "og:title", content: "Skills & Specialization Suites — SkyForge Advisor" },
       {
         property: "og:description",
-        content: "Complete skill mastery hubs with specialized calculators for Dungeons, Kuudra, Rift, Farming, Mining, Combat, and Fishing.",
+        content:
+          "Complete skill mastery hubs with specialized calculators for Dungeons, Kuudra, Rift, Farming, Mining, Combat, and Fishing.",
       },
     ],
   }),
@@ -120,15 +121,17 @@ function SkillsRoute() {
   const [bestiarySearch, setBestiarySearch] = useState<string>("");
   const [bestiaryFilter, setBestiaryFilter] = useState<"all" | "incomplete" | "maxed">("all");
   const [selectedHotmNode, setSelectedHotmNode] = useState<HotmNode | null>(HOTM_NODES[0] ?? null);
-  const [customHotmAllocations, setCustomHotmAllocations] = useState<Record<string, number>>(() => ({
-    mining_speed: 50,
-    mining_fortune: 50,
-    mining_speed_2: 50,
-    mining_fortune_2: 50,
-    powder_buff: 50,
-    mining_speed_boost: 1,
-    peak_of_the_mountain: 7,
-  }));
+  const [customHotmAllocations, setCustomHotmAllocations] = useState<Record<string, number>>(
+    () => ({
+      mining_speed: 50,
+      mining_fortune: 50,
+      mining_speed_2: 50,
+      mining_fortune_2: 50,
+      powder_buff: 50,
+      mining_speed_boost: 1,
+      peak_of_the_mountain: 7,
+    }),
+  );
 
   const hotmBonus = useMemo(() => {
     return calculateTotalHotmBonus(customHotmAllocations);
@@ -139,11 +142,11 @@ function SkillsRoute() {
   const secretsFound = data?.dungeons?.secretsFound ?? 12_500;
   const totalRuns =
     (data?.dungeons?.floors?.reduce((sum, f) => sum + f.completions, 0) ?? 0) +
-    (data?.dungeons?.masterMode?.reduce((sum, f) => sum + f.completions, 0) ?? 0) || 1200;
+      (data?.dungeons?.masterMode?.reduce((sum, f) => sum + f.completions, 0) ?? 0) || 1200;
 
   const partyFinderEval = useMemo(
     () => evaluatePartyFinderReadiness(cataLvl, secretsFound, totalRuns, "F7"),
-    [cataLvl, secretsFound, totalRuns]
+    [cataLvl, secretsFound, totalRuns],
   );
   const masterModeOdds = useMemo(() => calculateMasterModeOdds(cataLvl, true, true), [cataLvl]);
   const starUpEstimates = useMemo(() => getStarUpEstimates(2800), []);
@@ -153,7 +156,7 @@ function SkillsRoute() {
   const factionStatus = useMemo(() => getFactionStatus(14500, "MAGE"), []);
   const kuudraReadiness = useMemo(
     () => evaluateKuudraReadiness(combatLvl, true, true, true, true),
-    [combatLvl]
+    [combatLvl],
   );
 
   // Rift Telemetry
@@ -177,7 +180,7 @@ function SkillsRoute() {
         petLevel: 100,
         hasGreenBandana: true,
       }),
-    [farmingLvl, gardenLvl]
+    [farmingLvl, gardenLvl],
   );
 
   const miningLvl = data?.skills.find((s) => s.key === "MINING")?.level ?? 50;
@@ -194,7 +197,7 @@ function SkillsRoute() {
         mithrilPowder: data?.hotm?.powders?.mithril ?? 2_000_000,
         gemstonePowder: data?.hotm?.powders?.gemstone ?? 4_000_000,
       }),
-    [miningLvl, hotmTier, data]
+    [miningLvl, hotmTier, data],
   );
 
   const combatCalc = useMemo(
@@ -211,17 +214,18 @@ function SkillsRoute() {
         hasGodPotion: true,
         hasBeacon5: true,
       }),
-    [data]
+    [data],
   );
 
   const trophyCalc = useMemo(
-    () => calculateTrophyProgress((data?.crimson?.dojo as Record<string, number> | undefined) ?? {}),
-    [data]
+    () =>
+      calculateTrophyProgress((data?.crimson?.dojo as Record<string, number> | undefined) ?? {}),
+    [data],
   );
 
   const experimentCalc = useMemo(
     () => getExperimentationOverview(data?.skills.find((s) => s.key === "ENCHANTING")?.level ?? 60),
-    [data]
+    [data],
   );
 
   const bestiaryData = useMemo(() => {
@@ -291,13 +295,13 @@ function SkillsRoute() {
                       "group relative flex h-10 items-center justify-center gap-2 rounded-xl px-3 text-xs font-semibold transition-all duration-150 cursor-pointer select-none border",
                       active
                         ? "bg-gradient-to-r from-emerald-500/25 via-teal-500/20 to-emerald-500/15 text-white border-emerald-500/50 shadow-md shadow-emerald-500/20"
-                        : "bg-white/[0.02] text-white/65 hover:bg-white/[0.06] hover:text-white border-white/[0.04] hover:border-white/10"
+                        : "bg-white/[0.02] text-white/65 hover:bg-white/[0.06] hover:text-white border-white/[0.04] hover:border-white/10",
                     )}
                   >
                     <Icon
                       className={cn(
                         "size-3.5 shrink-0 transition-colors",
-                        active ? "text-emerald-400" : "text-white/40 group-hover:text-white/80"
+                        active ? "text-emerald-400" : "text-white/40 group-hover:text-white/80",
                       )}
                     />
                     <span className="truncate">{tab.label}</span>
@@ -409,7 +413,8 @@ function SkillsRoute() {
                   <div className="mt-2">
                     <ProgressBar pct={bestiaryData.milestoneProgressPct} tone="gold" />
                     <span className="mt-1 block text-[10px] text-muted-foreground">
-                      {bestiaryData.totalTiersUnlocked} / {bestiaryData.maxTiers} total tiers unlocked
+                      {bestiaryData.totalTiersUnlocked} / {bestiaryData.maxTiers} total tiers
+                      unlocked
                     </span>
                   </div>
                 </Panel>
@@ -450,9 +455,7 @@ function SkillsRoute() {
                   <p className="mt-2 text-2xl font-bold font-mono text-purple-200">
                     +{(bestiaryData.milestone * 1_000_000).toLocaleString()}
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    +1M Combat XP per milestone
-                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">+1M Combat XP per milestone</p>
                 </Panel>
               </div>
 
@@ -508,10 +511,14 @@ function SkillsRoute() {
                           "rounded-lg px-3 py-1 text-xs font-semibold transition-all",
                           bestiaryFilter === status
                             ? "bg-primary text-primary-foreground shadow"
-                            : "border border-white/10 bg-white/5 text-muted-foreground hover:text-white"
+                            : "border border-white/10 bg-white/5 text-muted-foreground hover:text-white",
                         )}
                       >
-                        {status === "all" ? "All Mobs" : status === "incomplete" ? "Needs Kills" : "Maxed Tiers"}
+                        {status === "all"
+                          ? "All Mobs"
+                          : status === "incomplete"
+                            ? "Needs Kills"
+                            : "Maxed Tiers"}
                       </button>
                     ))}
                   </div>
@@ -526,7 +533,8 @@ function SkillsRoute() {
                       <div className="flex items-center gap-2.5">
                         <h3 className="text-base font-bold text-white">{fam.name}</h3>
                         <span className="rounded bg-white/5 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
-                          {fam.totalKills.toLocaleString()} kills · {fam.tiersUnlocked}/{fam.maxTiers} tiers
+                          {fam.totalKills.toLocaleString()} kills · {fam.tiersUnlocked}/
+                          {fam.maxTiers} tiers
                         </span>
                       </div>
                       <span className="text-xs font-mono text-primary font-bold">
@@ -563,17 +571,23 @@ function SkillsRoute() {
                                   "shrink-0 rounded-lg px-2 py-0.5 font-mono text-[10px] font-bold",
                                   isMaxed
                                     ? "border border-amber-500/40 bg-amber-500/15 text-amber-300"
-                                    : "border border-sky-500/30 bg-sky-500/10 text-sky-300"
+                                    : "border border-sky-500/30 bg-sky-500/10 text-sky-300",
                                 )}
                               >
-                                {isMaxed ? `MAX TIER ${mob.tier} ✪` : `Tier ${mob.tier} / ${mob.maxTier}`}
+                                {isMaxed
+                                  ? `MAX TIER ${mob.tier} ✪`
+                                  : `Tier ${mob.tier} / ${mob.maxTier}`}
                               </span>
                             </div>
 
                             {/* Kill Progress Bar to Next Tier */}
                             <div className="mt-3 space-y-1">
                               <div className="flex items-center justify-between font-mono text-[10px] text-muted-foreground">
-                                <span>{isMaxed ? "Mastered" : `${mob.kills.toLocaleString()} / ${mob.nextTierKills?.toLocaleString()}`}</span>
+                                <span>
+                                  {isMaxed
+                                    ? "Mastered"
+                                    : `${mob.kills.toLocaleString()} / ${mob.nextTierKills?.toLocaleString()}`}
+                                </span>
                                 <span className="font-bold text-white">{progressPct}%</span>
                               </div>
                               <ProgressBar pct={progressPct} tone={isMaxed ? "emerald" : "gold"} />
@@ -599,14 +613,21 @@ function SkillsRoute() {
               <Panel className="border-sky-500/20 bg-gradient-to-br from-sky-500/[0.04] via-transparent to-purple-500/[0.02]">
                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
                   <div className="flex items-center gap-3">
-                    <span className={cn("rounded-xl border px-3 py-1 font-mono text-sm font-black", partyFinderEval.badgeClass)}>
+                    <span
+                      className={cn(
+                        "rounded-xl border px-3 py-1 font-mono text-sm font-black",
+                        partyFinderEval.badgeClass,
+                      )}
+                    >
                       {partyFinderEval.readinessRating === "Carry" && "👑 S+ CARRY"}
                       {partyFinderEval.readinessRating === "Qualified" && "🟢 QUALIFIED"}
                       {partyFinderEval.readinessRating === "Borderline" && "🟡 BORDERLINE"}
                       {partyFinderEval.readinessRating === "Undergeared" && "🔴 UNDERGEARED"}
                     </span>
                     <div>
-                      <h2 className="text-xl font-bold text-white">Party Finder Reliability & Secrets Pace</h2>
+                      <h2 className="text-xl font-bold text-white">
+                        Party Finder Reliability & Secrets Pace
+                      </h2>
                       <p className="text-xs text-white/50">{partyFinderEval.feedback}</p>
                     </div>
                   </div>
@@ -615,26 +636,36 @@ function SkillsRoute() {
                 <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3">
                     <p className="text-xs text-white/50">Catacombs Level</p>
-                    <p className="font-mono text-lg font-bold text-sky-300 mt-1">Cata {partyFinderEval.cataLevel}</p>
+                    <p className="font-mono text-lg font-bold text-sky-300 mt-1">
+                      Cata {partyFinderEval.cataLevel}
+                    </p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3">
                     <p className="text-xs text-white/50">Total Secrets Found</p>
-                    <p className="font-mono text-lg font-bold text-purple-300 mt-1">{partyFinderEval.totalSecrets.toLocaleString()}</p>
+                    <p className="font-mono text-lg font-bold text-purple-300 mt-1">
+                      {partyFinderEval.totalSecrets.toLocaleString()}
+                    </p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3">
                     <p className="text-xs text-white/50">Secrets per Run</p>
-                    <p className="font-mono text-lg font-bold text-emerald-300 mt-1">{partyFinderEval.secretsPerRun} s/r</p>
+                    <p className="font-mono text-lg font-bold text-emerald-300 mt-1">
+                      {partyFinderEval.secretsPerRun} s/r
+                    </p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3">
                     <p className="text-xs text-white/50">Secret Benchmark</p>
-                    <p className="font-mono text-lg font-bold text-amber-300 mt-1">{partyFinderEval.secretBenchmark}</p>
+                    <p className="font-mono text-lg font-bold text-amber-300 mt-1">
+                      {partyFinderEval.secretBenchmark}
+                    </p>
                   </div>
                 </div>
               </Panel>
 
               {/* Master Mode Clearance Odds */}
               <Panel>
-                <h2 className="text-xl font-bold text-white mb-4">Master Mode Floor Clearance Odds (M1–M7)</h2>
+                <h2 className="text-xl font-bold text-white mb-4">
+                  Master Mode Floor Clearance Odds (M1–M7)
+                </h2>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {masterModeOdds.map((m) => (
                     <div
@@ -643,17 +674,25 @@ function SkillsRoute() {
                     >
                       <div className="flex items-center justify-between">
                         <h3 className="text-sm font-bold text-white">{m.name}</h3>
-                        <span className={cn(
-                          "rounded-lg border px-2 py-0.5 text-[10px] font-mono font-bold",
-                          m.clearanceOddsPct >= 80 ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10" :
-                          m.clearanceOddsPct >= 50 ? "border-amber-500/30 text-amber-400 bg-amber-500/10" :
-                          "border-red-500/30 text-red-400 bg-red-500/10"
-                        )}>
+                        <span
+                          className={cn(
+                            "rounded-lg border px-2 py-0.5 text-[10px] font-mono font-bold",
+                            m.clearanceOddsPct >= 80
+                              ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"
+                              : m.clearanceOddsPct >= 50
+                                ? "border-amber-500/30 text-amber-400 bg-amber-500/10"
+                                : "border-red-500/30 text-red-400 bg-red-500/10",
+                          )}
+                        >
                           {m.clearanceOddsPct}% Clearance Odds
                         </span>
                       </div>
-                      <p className="text-xs text-white/50 mt-2">Prerequisite: Cata {m.recommendedCata}+</p>
-                      <p className="text-[11px] text-white/40 mt-1 font-mono">Gear: {m.gearCheck}</p>
+                      <p className="text-xs text-white/50 mt-2">
+                        Prerequisite: Cata {m.recommendedCata}+
+                      </p>
+                      <p className="text-[11px] text-white/40 mt-1 font-mono">
+                        Gear: {m.gearCheck}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -663,8 +702,12 @@ function SkillsRoute() {
               <Panel>
                 <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
                   <div>
-                    <h2 className="text-xl font-bold text-white">Floor Drop Chest Profitability & EV</h2>
-                    <p className="text-xs text-white/50">Expected net coin returns per S+ run after chest unlock costs</p>
+                    <h2 className="text-xl font-bold text-white">
+                      Floor Drop Chest Profitability & EV
+                    </h2>
+                    <p className="text-xs text-white/50">
+                      Expected net coin returns per S+ run after chest unlock costs
+                    </p>
                   </div>
                 </div>
 
@@ -692,7 +735,9 @@ function SkillsRoute() {
                             key={drop.name}
                             className="flex items-center justify-between rounded-lg bg-black/30 px-3 py-1.5 text-xs"
                           >
-                            <span className="text-white/80">{drop.name} ({drop.fractionString})</span>
+                            <span className="text-white/80">
+                              {drop.name} ({drop.fractionString})
+                            </span>
                             <span className="font-mono font-bold text-emerald-300">
                               +{formatFull(drop.netProfit)}
                             </span>
@@ -717,17 +762,24 @@ function SkillsRoute() {
                       <span className="rounded-xl border border-red-500/40 bg-red-500/15 px-3 py-1 font-mono text-base font-black text-red-300">
                         {factionStatus.faction} · {factionStatus.tierName}
                       </span>
-                      <h2 className="text-2xl font-bold text-white">Faction Reputation: {factionStatus.reputation.toLocaleString()} / 27,000</h2>
+                      <h2 className="text-2xl font-bold text-white">
+                        Faction Reputation: {factionStatus.reputation.toLocaleString()} / 27,000
+                      </h2>
                     </div>
                     <p className="text-xs text-white/50 mt-1">
-                      {factionStatus.isMaxed ? "Maxed reputation tier achieved!" : `${factionStatus.repToNext.toLocaleString()} rep needed for next tier`}
+                      {factionStatus.isMaxed
+                        ? "Maxed reputation tier achieved!"
+                        : `${factionStatus.repToNext.toLocaleString()} rep needed for next tier`}
                     </p>
                   </div>
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   {factionStatus.perks.map((p) => (
-                    <span key={p} className="rounded-lg border border-white/10 bg-black/40 px-2.5 py-1 text-xs text-white/80">
+                    <span
+                      key={p}
+                      className="rounded-lg border border-white/10 bg-black/40 px-2.5 py-1 text-xs text-white/80"
+                    >
                       ✓ {p}
                     </span>
                   ))}
@@ -736,7 +788,9 @@ function SkillsRoute() {
 
               {/* Kuudra Tier Gateways (T1-T5) */}
               <Panel>
-                <h2 className="text-xl font-bold text-white mb-4">Kuudra Tier Gateways & Party Requirements (T1–T5)</h2>
+                <h2 className="text-xl font-bold text-white mb-4">
+                  Kuudra Tier Gateways & Party Requirements (T1–T5)
+                </h2>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {kuudraReadiness.map((k) => (
                     <div
@@ -744,22 +798,32 @@ function SkillsRoute() {
                       className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur"
                     >
                       <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-white">T{k.tier.tierNumber}: {k.tier.name} Kuudra</h3>
-                        <span className={cn(
-                          "rounded-lg border px-2 py-0.5 text-[10px] font-mono font-bold",
-                          k.qualified ? "border-emerald-500/30 text-emerald-300 bg-emerald-500/10" : "border-red-500/30 text-red-300 bg-red-500/10"
-                        )}>
+                        <h3 className="text-sm font-bold text-white">
+                          T{k.tier.tierNumber}: {k.tier.name} Kuudra
+                        </h3>
+                        <span
+                          className={cn(
+                            "rounded-lg border px-2 py-0.5 text-[10px] font-mono font-bold",
+                            k.qualified
+                              ? "border-emerald-500/30 text-emerald-300 bg-emerald-500/10"
+                              : "border-red-500/30 text-red-300 bg-red-500/10",
+                          )}
+                        >
                           {k.qualified ? "QUALIFIED" : "UNQUALIFIED"}
                         </span>
                       </div>
                       <div className="mt-3 space-y-1 text-xs text-white/60">
                         <div className="flex justify-between">
                           <span>Combat Level:</span>
-                          <span className="font-mono text-white">Combat {k.tier.combatRequirement}+</span>
+                          <span className="font-mono text-white">
+                            Combat {k.tier.combatRequirement}+
+                          </span>
                         </div>
                         <div className="flex justify-between">
                           <span>Key Cost / Profit:</span>
-                          <span className="font-mono text-emerald-400">~+{formatFull(k.tier.expectedProfitPerRun)} / run</span>
+                          <span className="font-mono text-emerald-400">
+                            ~+{formatFull(k.tier.expectedProfitPerRun)} / run
+                          </span>
                         </div>
                       </div>
                       <div className="mt-2 text-[11px] font-mono text-white/40">
@@ -772,16 +836,23 @@ function SkillsRoute() {
 
               {/* Crimson Armor Tier-Up Engine */}
               <Panel>
-                <h2 className="text-xl font-bold text-white mb-4">Crimson / Aurora / Terror Armor Tier-Up Scaling</h2>
+                <h2 className="text-xl font-bold text-white mb-4">
+                  Crimson / Aurora / Terror Armor Tier-Up Scaling
+                </h2>
                 <div className="grid gap-3 sm:grid-cols-5">
                   {CRIMSON_ARMOR_TIERS.map((tier) => (
-                    <div key={tier.tierName} className="rounded-xl border border-white/5 bg-black/30 p-3 text-xs">
+                    <div
+                      key={tier.tierName}
+                      className="rounded-xl border border-white/5 bg-black/30 p-3 text-xs"
+                    >
                       <h3 className="font-bold text-white text-sm">{tier.tierName} Tier (10★)</h3>
                       <div className="mt-2 space-y-1 text-white/60">
                         <p>Essence: {tier.crimsonEssenceCost.toLocaleString()}</p>
                         <p>Kuudra Teeth: {tier.kuudraTeethCost}</p>
                         <p>Heavy Pearls: {tier.heavyPearlsCost}</p>
-                        <p className="font-bold text-amber-300 pt-1 border-t border-white/10">~{formatFull(tier.coinsValue)}</p>
+                        <p className="font-bold text-amber-300 pt-1 border-t border-white/10">
+                          ~{formatFull(tier.coinsValue)}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -803,43 +874,70 @@ function SkillsRoute() {
                       </span>
                       <h2 className="text-2xl font-bold text-white">Dimensional Rift Time</h2>
                     </div>
-                    <p className="text-xs text-white/50 mt-1">Base 8m + Infused Armor + 8 Timecharms + Bottled Ooze</p>
+                    <p className="text-xs text-white/50 mt-1">
+                      Base 8m + Infused Armor + 8 Timecharms + Bottled Ooze
+                    </p>
                   </div>
                 </div>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-4">
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3 text-xs">
                     <p className="text-white/50">Base Time</p>
-                    <p className="font-mono text-base font-bold text-indigo-300 mt-1">{riftTime.breakdown.base}s</p>
+                    <p className="font-mono text-base font-bold text-indigo-300 mt-1">
+                      {riftTime.breakdown.base}s
+                    </p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3 text-xs">
                     <p className="text-white/50">Infused Armor</p>
-                    <p className="font-mono text-base font-bold text-indigo-300 mt-1">+{riftTime.breakdown.armor}s</p>
+                    <p className="font-mono text-base font-bold text-indigo-300 mt-1">
+                      +{riftTime.breakdown.armor}s
+                    </p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3 text-xs">
                     <p className="text-white/50">Timecharms</p>
-                    <p className="font-mono text-base font-bold text-indigo-300 mt-1">+{riftTime.breakdown.timecharms}s</p>
+                    <p className="font-mono text-base font-bold text-indigo-300 mt-1">
+                      +{riftTime.breakdown.timecharms}s
+                    </p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3 text-xs">
                     <p className="text-white/50">Bottled Ooze</p>
-                    <p className="font-mono text-base font-bold text-indigo-300 mt-1">+{riftTime.breakdown.ooze}s</p>
+                    <p className="font-mono text-base font-bold text-indigo-300 mt-1">
+                      +{riftTime.breakdown.ooze}s
+                    </p>
                   </div>
                 </div>
               </Panel>
 
               {/* Vampire Slayer (Bloodfiend T1-T5) */}
               <Panel>
-                <h2 className="text-xl font-bold text-white mb-4">Vampire Slayer (Riftstalker Bloodfiend T1–T5)</h2>
+                <h2 className="text-xl font-bold text-white mb-4">
+                  Vampire Slayer (Riftstalker Bloodfiend T1–T5)
+                </h2>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {VAMPIRE_SLAYER_TIERS.map((vamp) => (
-                    <div key={vamp.name} className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur">
+                    <div
+                      key={vamp.name}
+                      className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur"
+                    >
                       <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-white">Tier {vamp.tier}: {vamp.name}</h3>
-                        <span className="font-mono text-xs font-bold text-rose-400">{vamp.hp} HP</span>
+                        <h3 className="text-sm font-bold text-white">
+                          Tier {vamp.tier}: {vamp.name}
+                        </h3>
+                        <span className="font-mono text-xs font-bold text-rose-400">
+                          {vamp.hp} HP
+                        </span>
                       </div>
                       <div className="mt-3 space-y-1 text-xs text-white/60">
-                        <p>Required Stake: <span className="font-mono text-white">{vamp.requiredWeapon}</span></p>
-                        <p>Motes Cost: <span className="font-mono text-indigo-300">{vamp.moteCost.toLocaleString()} Motes</span></p>
+                        <p>
+                          Required Stake:{" "}
+                          <span className="font-mono text-white">{vamp.requiredWeapon}</span>
+                        </p>
+                        <p>
+                          Motes Cost:{" "}
+                          <span className="font-mono text-indigo-300">
+                            {vamp.moteCost.toLocaleString()} Motes
+                          </span>
+                        </p>
                         <div className="mt-2 border-t border-white/10 pt-2 text-[11px] text-white/50">
                           Mechanics: {vamp.mechanics.join(" · ")}
                         </div>
@@ -851,15 +949,32 @@ function SkillsRoute() {
 
               {/* Motes Export Economy */}
               <Panel>
-                <h2 className="text-xl font-bold text-white mb-4">Rift Motes Export Economy & Real-SkyBlock Conversion</h2>
+                <h2 className="text-xl font-bold text-white mb-4">
+                  Rift Motes Export Economy & Real-SkyBlock Conversion
+                </h2>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   {RIFT_EXPORT_ITEMS.map((item) => (
-                    <div key={item.name} className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur">
+                    <div
+                      key={item.name}
+                      className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur"
+                    >
                       <h3 className="text-sm font-bold text-white">{item.name}</h3>
                       <div className="mt-3 space-y-1 text-xs text-white/60">
-                        <p>Cost: <span className="font-mono text-indigo-300">{item.motesCost.toLocaleString()} Motes</span></p>
-                        <p>SkyBlock Value: <span className="font-mono font-bold text-emerald-400">~{formatFull(item.realSkyBlockValueCoins)}</span></p>
-                        <p className="text-sky-300 font-mono text-[11px] pt-1 border-t border-white/10">{item.coinsPerMote} coins / Mote</p>
+                        <p>
+                          Cost:{" "}
+                          <span className="font-mono text-indigo-300">
+                            {item.motesCost.toLocaleString()} Motes
+                          </span>
+                        </p>
+                        <p>
+                          SkyBlock Value:{" "}
+                          <span className="font-mono font-bold text-emerald-400">
+                            ~{formatFull(item.realSkyBlockValueCoins)}
+                          </span>
+                        </p>
+                        <p className="text-sky-300 font-mono text-[11px] pt-1 border-t border-white/10">
+                          {item.coinsPerMote} coins / Mote
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -878,7 +993,8 @@ function SkillsRoute() {
                       +{farmingCalc.universalFortune} ☘ Farming Fortune
                     </span>
                     <p className="text-xs text-white/50 mt-1">
-                      Calculated across Farming {farmingLvl}, Garden {gardenLvl}, Elephant Pet 100, and Fermento Armor
+                      Calculated across Farming {farmingLvl}, Garden {gardenLvl}, Elephant Pet 100,
+                      and Fermento Armor
                     </p>
                   </div>
                 </div>
@@ -891,12 +1007,23 @@ function SkillsRoute() {
                     { label: "Anita Bonus", value: `+${farmingCalc.breakdown.anita}` },
                     { label: "Armor Set", value: `+${farmingCalc.breakdown.armor}` },
                     { label: "T3 Hoe / Dicer", value: `+${farmingCalc.breakdown.toolBase}` },
-                    { label: "Enchants (Dedication/Cult.)", value: `+${farmingCalc.breakdown.enchants}` },
-                    { label: "Elephant Pet & Bandana", value: `+${farmingCalc.breakdown.pet + farmingCalc.breakdown.equipment}` },
+                    {
+                      label: "Enchants (Dedication/Cult.)",
+                      value: `+${farmingCalc.breakdown.enchants}`,
+                    },
+                    {
+                      label: "Elephant Pet & Bandana",
+                      value: `+${farmingCalc.breakdown.pet + farmingCalc.breakdown.equipment}`,
+                    },
                   ].map((stat) => (
-                    <div key={stat.label} className="rounded-xl border border-white/5 bg-black/30 p-3">
+                    <div
+                      key={stat.label}
+                      className="rounded-xl border border-white/5 bg-black/30 p-3"
+                    >
                       <p className="text-xs text-white/50">{stat.label}</p>
-                      <p className="font-mono text-base font-bold text-amber-300 mt-1">{stat.value}</p>
+                      <p className="font-mono text-base font-bold text-amber-300 mt-1">
+                        {stat.value}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -904,7 +1031,9 @@ function SkillsRoute() {
 
               {/* Crop Yields Table */}
               <Panel>
-                <h2 className="text-xl font-bold text-white mb-4">Estimated Crop Yields & Coin Production</h2>
+                <h2 className="text-xl font-bold text-white mb-4">
+                  Estimated Crop Yields & Coin Production
+                </h2>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {farmingCalc.cropYields.map((cy) => (
                     <div
@@ -923,7 +1052,9 @@ function SkillsRoute() {
                       <div className="mt-3 space-y-1.5 rounded-xl bg-black/30 p-2.5 text-xs">
                         <div className="flex justify-between text-white/60">
                           <span>Harvest / Hour:</span>
-                          <span className="font-mono text-white">{formatFull(cy.cropsPerHour)} items</span>
+                          <span className="font-mono text-white">
+                            {formatFull(cy.cropsPerHour)} items
+                          </span>
                         </div>
                         <div className="flex justify-between text-white/60">
                           <span>Coins / Hour:</span>
@@ -1011,15 +1142,19 @@ function SkillsRoute() {
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-950/80 p-4 backdrop-blur-md">
                 <div className="flex items-center gap-6">
                   <div>
-                    <span className="text-xs text-muted-foreground font-semibold">Total Mining Speed:</span>
+                    <span className="text-xs text-muted-foreground font-semibold">
+                      Total Mining Speed:
+                    </span>
                     <p className="text-xl font-bold font-mono text-cyan-300">
                       {(miningCalc.miningSpeed + hotmBonus.totalSpeed).toLocaleString()} ⸕
                     </p>
                   </div>
                   <div>
-                    <span className="text-xs text-muted-foreground font-semibold">Total Mining Fortune:</span>
+                    <span className="text-xs text-muted-foreground font-semibold">
+                      Total Mining Fortune:
+                    </span>
                     <p className="text-xl font-bold font-mono text-emerald-300">
-                      +{(miningCalc.miningFortune + hotmBonus.totalFortune)} ☘
+                      +{miningCalc.miningFortune + hotmBonus.totalFortune} ☘
                     </p>
                   </div>
                 </div>
@@ -1057,7 +1192,8 @@ function SkillsRoute() {
                   <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
                     <div>
                       <h3 className="text-base font-bold text-white flex items-center gap-2">
-                        <Pickaxe className="size-4 text-cyan-400" /> Heart of the Mountain Tree (Tiers 1–10)
+                        <Pickaxe className="size-4 text-cyan-400" /> Heart of the Mountain Tree
+                        (Tiers 1–10)
                       </h3>
                       <p className="text-xs text-muted-foreground">
                         Click any node to inspect formulas, level up, or customize allocations.
@@ -1077,10 +1213,16 @@ function SkillsRoute() {
                           key={tierNum}
                           className="flex items-center gap-4 rounded-xl border border-white/5 bg-black/30 p-3"
                         >
-                          <span className={cn(
-                            "w-16 shrink-0 font-mono text-xs font-bold",
-                            isGlacite ? "text-blue-300" : isGemstone ? "text-pink-300" : "text-emerald-300"
-                          )}>
+                          <span
+                            className={cn(
+                              "w-16 shrink-0 font-mono text-xs font-bold",
+                              isGlacite
+                                ? "text-blue-300"
+                                : isGemstone
+                                  ? "text-pink-300"
+                                  : "text-emerald-300",
+                            )}
+                          >
                             Tier {tierNum}
                           </span>
 
@@ -1102,16 +1244,20 @@ function SkillsRoute() {
                                     isSelected
                                       ? "border-primary bg-primary/20 shadow-lg shadow-primary/10"
                                       : isMaxed
-                                      ? "border-amber-500/40 bg-amber-500/10 text-white hover:border-amber-500"
-                                      : currLvl > 0
-                                      ? "border-cyan-500/30 bg-cyan-500/10 text-white hover:border-cyan-400"
-                                      : "border-white/10 bg-white/5 text-muted-foreground hover:border-white/20 hover:text-white"
+                                        ? "border-amber-500/40 bg-amber-500/10 text-white hover:border-amber-500"
+                                        : currLvl > 0
+                                          ? "border-cyan-500/30 bg-cyan-500/10 text-white hover:border-cyan-400"
+                                          : "border-white/10 bg-white/5 text-muted-foreground hover:border-white/20 hover:text-white",
                                   )}
                                 >
                                   <div>
                                     <div className="flex items-center gap-1.5 text-xs font-bold">
-                                      {node.type === "ability" && <span className="text-amber-400">⭐</span>}
-                                      {node.type === "peak" && <span className="text-purple-400">🏔️</span>}
+                                      {node.type === "ability" && (
+                                        <span className="text-amber-400">⭐</span>
+                                      )}
+                                      {node.type === "peak" && (
+                                        <span className="text-purple-400">🏔️</span>
+                                      )}
                                       <span className={isSelected ? "text-primary" : "text-white"}>
                                         {node.name}
                                       </span>
@@ -1137,15 +1283,19 @@ function SkillsRoute() {
                       <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="text-base font-bold text-white">{selectedHotmNode.name}</h4>
-                            <span className={cn(
-                              "rounded px-2 py-0.5 font-mono text-[10px] font-bold uppercase",
-                              selectedHotmNode.powderType === "glacite"
-                                ? "bg-blue-500/20 text-blue-300"
-                                : selectedHotmNode.powderType === "gemstone"
-                                ? "bg-pink-500/20 text-pink-300"
-                                : "bg-emerald-500/20 text-emerald-300"
-                            )}>
+                            <h4 className="text-base font-bold text-white">
+                              {selectedHotmNode.name}
+                            </h4>
+                            <span
+                              className={cn(
+                                "rounded px-2 py-0.5 font-mono text-[10px] font-bold uppercase",
+                                selectedHotmNode.powderType === "glacite"
+                                  ? "bg-blue-500/20 text-blue-300"
+                                  : selectedHotmNode.powderType === "gemstone"
+                                    ? "bg-pink-500/20 text-pink-300"
+                                    : "bg-emerald-500/20 text-emerald-300",
+                              )}
+                            >
                               {selectedHotmNode.powderType}
                             </span>
                           </div>
@@ -1164,20 +1314,27 @@ function SkillsRoute() {
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Current Level:</span>
                           <span className="font-bold text-white">
-                            {customHotmAllocations[selectedHotmNode.id] ?? 0} / {selectedHotmNode.maxLevel}
+                            {customHotmAllocations[selectedHotmNode.id] ?? 0} /{" "}
+                            {selectedHotmNode.maxLevel}
                           </span>
                         </div>
                         <div className="flex justify-between text-emerald-400 font-bold">
                           <span>Current Bonus:</span>
                           <span>
-                            {selectedHotmNode.perkFormula(customHotmAllocations[selectedHotmNode.id] ?? 0).text}
+                            {
+                              selectedHotmNode.perkFormula(
+                                customHotmAllocations[selectedHotmNode.id] ?? 0,
+                              ).text
+                            }
                           </span>
                         </div>
                       </div>
 
                       {/* Level Stepper Buttons */}
                       <div className="space-y-2">
-                        <label className="text-xs font-semibold text-muted-foreground">Adjust Allocation:</label>
+                        <label className="text-xs font-semibold text-muted-foreground">
+                          Adjust Allocation:
+                        </label>
                         <div className="grid grid-cols-5 gap-1.5 font-mono text-xs font-bold">
                           <button
                             onClick={() => {
@@ -1196,7 +1353,10 @@ function SkillsRoute() {
                               playClickSound();
                               setCustomHotmAllocations((prev) => ({
                                 ...prev,
-                                [selectedHotmNode.id]: Math.max(0, (prev[selectedHotmNode.id] ?? 0) - 1),
+                                [selectedHotmNode.id]: Math.max(
+                                  0,
+                                  (prev[selectedHotmNode.id] ?? 0) - 1,
+                                ),
                               }));
                             }}
                             className="rounded-lg border border-white/10 bg-white/5 py-1.5 text-white hover:bg-white/10"
@@ -1208,7 +1368,10 @@ function SkillsRoute() {
                               playClickSound();
                               setCustomHotmAllocations((prev) => ({
                                 ...prev,
-                                [selectedHotmNode.id]: Math.min(selectedHotmNode.maxLevel, (prev[selectedHotmNode.id] ?? 0) + 1),
+                                [selectedHotmNode.id]: Math.min(
+                                  selectedHotmNode.maxLevel,
+                                  (prev[selectedHotmNode.id] ?? 0) + 1,
+                                ),
                               }));
                             }}
                             className="rounded-lg border border-white/10 bg-white/5 py-1.5 text-white hover:bg-white/10"
@@ -1220,7 +1383,10 @@ function SkillsRoute() {
                               playClickSound();
                               setCustomHotmAllocations((prev) => ({
                                 ...prev,
-                                [selectedHotmNode.id]: Math.min(selectedHotmNode.maxLevel, (prev[selectedHotmNode.id] ?? 0) + 5),
+                                [selectedHotmNode.id]: Math.min(
+                                  selectedHotmNode.maxLevel,
+                                  (prev[selectedHotmNode.id] ?? 0) + 5,
+                                ),
                               }));
                             }}
                             className="rounded-lg border border-white/10 bg-white/5 py-1.5 text-white hover:bg-white/10"
@@ -1243,7 +1409,9 @@ function SkillsRoute() {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-xs text-muted-foreground">Select a node from the tree to view and allocate powder.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Select a node from the tree to view and allocate powder.
+                    </p>
                   )}
                 </Panel>
               </div>
@@ -1256,19 +1424,27 @@ function SkillsRoute() {
                 <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3">
                     <p className="text-xs text-muted-foreground">Hard Stone</p>
-                    <p className="font-mono text-base font-bold text-cyan-300 mt-1">1 tick (Instant)</p>
+                    <p className="font-mono text-base font-bold text-cyan-300 mt-1">
+                      1 tick (Instant)
+                    </p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3">
                     <p className="text-xs text-muted-foreground">Mithril Ore</p>
-                    <p className="font-mono text-base font-bold text-cyan-300 mt-1">~4 ticks (0.20s)</p>
+                    <p className="font-mono text-base font-bold text-cyan-300 mt-1">
+                      ~4 ticks (0.20s)
+                    </p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3">
                     <p className="text-xs text-muted-foreground">Ruby Gemstone</p>
-                    <p className="font-mono text-base font-bold text-pink-300 mt-1">~12 ticks (0.60s)</p>
+                    <p className="font-mono text-base font-bold text-pink-300 mt-1">
+                      ~12 ticks (0.60s)
+                    </p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3">
                     <p className="text-xs text-muted-foreground">Jasper / Opal Gemstone</p>
-                    <p className="font-mono text-base font-bold text-purple-300 mt-1">~18 ticks (0.90s)</p>
+                    <p className="font-mono text-base font-bold text-purple-300 mt-1">
+                      ~18 ticks (0.90s)
+                    </p>
                   </div>
                 </div>
               </Panel>
@@ -1293,19 +1469,27 @@ function SkillsRoute() {
                 <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3">
                     <p className="text-xs text-white/50">GDrag Pet (Level 200)</p>
-                    <p className="font-mono text-base font-bold text-purple-300 mt-1">+{combatCalc.breakdown.pet} MF</p>
+                    <p className="font-mono text-base font-bold text-purple-300 mt-1">
+                      +{combatCalc.breakdown.pet} MF
+                    </p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3">
                     <p className="text-xs text-white/50">Sorrow Armor Set</p>
-                    <p className="font-mono text-base font-bold text-purple-300 mt-1">+{combatCalc.breakdown.armor} MF</p>
+                    <p className="font-mono text-base font-bold text-purple-300 mt-1">
+                      +{combatCalc.breakdown.armor} MF
+                    </p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3">
                     <p className="text-xs text-white/50">God Potion & Cookie</p>
-                    <p className="font-mono text-base font-bold text-purple-300 mt-1">+{combatCalc.breakdown.buffs} MF</p>
+                    <p className="font-mono text-base font-bold text-purple-300 mt-1">
+                      +{combatCalc.breakdown.buffs} MF
+                    </p>
                   </div>
                   <div className="rounded-xl border border-white/5 bg-black/30 p-3">
                     <p className="text-xs text-white/50">Enrichments & Bestiary</p>
-                    <p className="font-mono text-base font-bold text-purple-300 mt-1">+{combatCalc.breakdown.enrichments + combatCalc.breakdown.bestiary} MF</p>
+                    <p className="font-mono text-base font-bold text-purple-300 mt-1">
+                      +{combatCalc.breakdown.enrichments + combatCalc.breakdown.bestiary} MF
+                    </p>
                   </div>
                 </div>
               </Panel>
@@ -1325,7 +1509,8 @@ function SkillsRoute() {
                       <h2 className="text-2xl font-bold text-white">Crimson Isle Trophy Fish</h2>
                     </div>
                     <p className="text-xs text-white/50 mt-1">
-                      {trophyCalc.uniqueSpecies} / 17 species discovered · {trophyCalc.diamondTierCount} Diamond Tiers
+                      {trophyCalc.uniqueSpecies} / 17 species discovered ·{" "}
+                      {trophyCalc.diamondTierCount} Diamond Tiers
                     </p>
                   </div>
                 </div>
@@ -1342,7 +1527,9 @@ function SkillsRoute() {
                           {tp.species.rarity}
                         </span>
                       </div>
-                      <p className="text-[11px] text-white/40 mt-1">Condition: {tp.species.specialCondition}</p>
+                      <p className="text-[11px] text-white/40 mt-1">
+                        Condition: {tp.species.specialCondition}
+                      </p>
                       <div className="mt-3 grid grid-cols-4 gap-1 text-center text-[10px] font-mono font-bold">
                         <span className="rounded bg-amber-950/40 border border-amber-800/40 py-1 text-amber-600">
                           B: {tp.counts.BRONZE}
@@ -1371,9 +1558,12 @@ function SkillsRoute() {
                 <Panel className="border-rose-500/20 bg-gradient-to-br from-rose-500/[0.03] via-transparent to-amber-500/[0.02]">
                   <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-white/10 pb-4">
                     <div>
-                      <h2 className="text-xl font-bold tracking-tight text-white">Slayer Progression & Passives</h2>
+                      <h2 className="text-xl font-bold tracking-tight text-white">
+                        Slayer Progression & Passives
+                      </h2>
                       <p className="text-xs text-white/50">
-                        {data.slayerOverview.totalXp.toLocaleString()} total Slayer XP · {data.slayerOverview.totalKills.toLocaleString()} boss kills
+                        {data.slayerOverview.totalXp.toLocaleString()} total Slayer XP ·{" "}
+                        {data.slayerOverview.totalKills.toLocaleString()} boss kills
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -1402,7 +1592,8 @@ function SkillsRoute() {
                           </span>
                         </div>
                         <div className="mt-2 text-xs font-mono text-white/60">
-                          {boss.currentXp.toLocaleString()} XP · {boss.totalKills.toLocaleString()} Kills
+                          {boss.currentXp.toLocaleString()} XP · {boss.totalKills.toLocaleString()}{" "}
+                          Kills
                         </div>
                       </div>
                     ))}

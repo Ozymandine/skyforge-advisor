@@ -69,11 +69,36 @@ export type BankTier = {
 };
 
 export const BANK_INTEREST_TIERS: BankTier[] = [
-  { tierName: "Starter Bank", goldInterestCapCoins: 200_000, requiredPurseBalance: 10_000_000, cooldownHours: 31 },
-  { tierName: "Gold Account", goldInterestCapCoins: 300_000, requiredPurseBalance: 15_000_000, cooldownHours: 31 },
-  { tierName: "Deluxe Account", goldInterestCapCoins: 500_000, requiredPurseBalance: 25_000_000, cooldownHours: 31 },
-  { tierName: "Super Deluxe Account", goldInterestCapCoins: 1_000_000, requiredPurseBalance: 50_000_000, cooldownHours: 31 },
-  { tierName: "Premier Account", goldInterestCapCoins: 2_000_000, requiredPurseBalance: 100_000_000, cooldownHours: 31 },
+  {
+    tierName: "Starter Bank",
+    goldInterestCapCoins: 200_000,
+    requiredPurseBalance: 10_000_000,
+    cooldownHours: 31,
+  },
+  {
+    tierName: "Gold Account",
+    goldInterestCapCoins: 300_000,
+    requiredPurseBalance: 15_000_000,
+    cooldownHours: 31,
+  },
+  {
+    tierName: "Deluxe Account",
+    goldInterestCapCoins: 500_000,
+    requiredPurseBalance: 25_000_000,
+    cooldownHours: 31,
+  },
+  {
+    tierName: "Super Deluxe Account",
+    goldInterestCapCoins: 1_000_000,
+    requiredPurseBalance: 50_000_000,
+    cooldownHours: 31,
+  },
+  {
+    tierName: "Premier Account",
+    goldInterestCapCoins: 2_000_000,
+    requiredPurseBalance: 100_000_000,
+    cooldownHours: 31,
+  },
 ];
 
 export function calculateBankInterest(currentBankBalance: number): {
@@ -81,7 +106,9 @@ export function calculateBankInterest(currentBankBalance: number): {
   tier: BankTier;
   optimalBalanceForCap: number;
 } {
-  const tier = BANK_INTEREST_TIERS.find((t) => currentBankBalance <= t.requiredPurseBalance) ?? BANK_INTEREST_TIERS[4]!;
+  const tier =
+    BANK_INTEREST_TIERS.find((t) => currentBankBalance <= t.requiredPurseBalance) ??
+    BANK_INTEREST_TIERS[4]!;
   // 2% interest up to cap
   const interestGained = Math.min(tier.goldInterestCapCoins, Math.round(currentBankBalance * 0.02));
 
@@ -91,4 +118,3 @@ export function calculateBankInterest(currentBankBalance: number): {
     optimalBalanceForCap: tier.requiredPurseBalance,
   };
 }
-

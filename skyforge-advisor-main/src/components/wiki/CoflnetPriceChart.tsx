@@ -32,16 +32,17 @@ export default function CoflnetPriceChart({
     staleTime: 15 * 60_000,
   });
 
-  const points = historyQuery.data?.points ?? [];
+  const rawPoints = historyQuery.data?.points;
 
   const chartData = useMemo(() => {
+    const points = rawPoints ?? [];
     return points.map((p) => ({
       date: new Date(p.t).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
       price: Math.round(p.v),
       volume: p.s ?? 0,
       timestamp: p.t,
     }));
-  }, [points]);
+  }, [rawPoints]);
 
   const stats = useMemo(() => {
     if (chartData.length < 2) return null;
@@ -203,4 +204,3 @@ export default function CoflnetPriceChart({
     </div>
   );
 }
-

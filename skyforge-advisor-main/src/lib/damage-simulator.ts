@@ -300,8 +300,10 @@ export function calculateSimulation(loadout: SimulatorLoadout): SimulationResult
   // Additive Enchantments & Bonuses
   let additiveEnchants = 0;
   additiveEnchants += loadout.combatLevel * 4; // 4% per Combat level
-  if (loadout.weapon.enchants["sharpness"]) additiveEnchants += (loadout.weapon.enchants["sharpness"] ?? 0) * 6.5;
-  if (loadout.weapon.enchants["giant_killer"]) additiveEnchants += Math.min(60, (loadout.weapon.enchants["giant_killer"] ?? 0) * 10);
+  if (loadout.weapon.enchants["sharpness"])
+    additiveEnchants += (loadout.weapon.enchants["sharpness"] ?? 0) * 6.5;
+  if (loadout.weapon.enchants["giant_killer"])
+    additiveEnchants += Math.min(60, (loadout.weapon.enchants["giant_killer"] ?? 0) * 10);
   if (loadout.weapon.enchants["execute"]) additiveEnchants += 25;
 
   const targetMob = MOB_TARGETS[loadout.targetMob] ?? MOB_TARGETS["necron_m7"]!;
@@ -316,7 +318,8 @@ export function calculateSimulation(loadout: SimulatorLoadout): SimulationResult
   const rawSingleHit = baseDamage * critMultiplier * additiveMult;
 
   // First Strike bonus (+100% to +125% additive on first hit)
-  const firstStrikeMult = 1 + (additiveEnchants + (loadout.weapon.enchants["first_strike"] ? 100 : 0)) / 100;
+  const firstStrikeMult =
+    1 + (additiveEnchants + (loadout.weapon.enchants["first_strike"] ? 100 : 0)) / 100;
   const rawFirstStrike = baseDamage * critMultiplier * firstStrikeMult;
 
   // Apply Mob Defense Mitigation
@@ -331,15 +334,19 @@ export function calculateSimulation(loadout: SimulatorLoadout): SimulationResult
   const dps = Math.round(singleHitDamage * attackSpeedHitsPerSecond * ferocityMultiplier);
 
   // Ability / Mage Scaling
-  const abilityDamage = Math.round(15_000 * (1 + totalIntelligence / 100) * (1 + (loadout.combatLevel * 0.5) / 100));
+  const abilityDamage = Math.round(
+    15_000 * (1 + totalIntelligence / 100) * (1 + (loadout.combatLevel * 0.5) / 100),
+  );
 
-  const mobKillTimeSeconds = targetMob.maxHp > 0 ? Number((targetMob.maxHp / Math.max(1, dps)).toFixed(1)) : 0;
+  const mobKillTimeSeconds =
+    targetMob.maxHp > 0 ? Number((targetMob.maxHp / Math.max(1, dps)).toFixed(1)) : 0;
 
   // Upgrade ROI Analyzer
   const upgradeSuggestions = [
     {
       title: "Tune to Hurtful / Silky Power",
-      description: "Optimizes MP ratio into Crit Damage to balance 1:1 Strength/CD formula scaling.",
+      description:
+        "Optimizes MP ratio into Crit Damage to balance 1:1 Strength/CD formula scaling.",
       dpsGainPct: 14.8,
       estimatedCostCoins: 1_200_000,
     },
@@ -351,13 +358,15 @@ export function calculateSimulation(loadout: SimulatorLoadout): SimulationResult
     },
     {
       title: "Legion V on Armor Set",
-      description: "Grants +0.28% all stats per nearby player/entity (up to +5.6% total stats in dungeons).",
+      description:
+        "Grants +0.28% all stats per nearby player/entity (up to +5.6% total stats in dungeons).",
       dpsGainPct: 8.5,
       estimatedCostCoins: 35_000_000,
     },
     {
       title: "Master Stars (1✪ to 3✪)",
-      description: "Increases all weapon and armor base stats by +5% per Master Star inside Master Mode.",
+      description:
+        "Increases all weapon and armor base stats by +5% per Master Star inside Master Mode.",
       dpsGainPct: 15.0,
       estimatedCostCoins: 65_000_000,
     },
@@ -379,4 +388,3 @@ export function calculateSimulation(loadout: SimulatorLoadout): SimulationResult
     upgradeSuggestions,
   };
 }
-

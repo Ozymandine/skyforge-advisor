@@ -24,7 +24,7 @@ import {
   VolumeX,
   Radio,
 } from "lucide-react";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useDeferredValue } from "react";
 
 import { PageHero, Panel, StatRow, ProgressBar } from "@/components/layout/app-shell";
 import { LoadState, ErrorState } from "@/components/data-states";
@@ -64,7 +64,8 @@ export const Route = createFileRoute("/flips")({
       { property: "og:title", content: "Market Flips & Arbitrage Matrix — SkyForge Advisor" },
       {
         property: "og:description",
-        content: "Complete flip finder with cross-market arbitrage, pet leveling margins, and anti-manipulation spoof detectors.",
+        content:
+          "Complete flip finder with cross-market arbitrage, pet leveling margins, and anti-manipulation spoof detectors.",
       },
     ],
   }),
@@ -87,6 +88,7 @@ function FlipsRoute() {
   const [activeTab, setActiveTab] = useState<TabType>("bazaar");
   const [budgetTier, setBudgetTier] = useState<BudgetTier>("all");
   const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query);
   const [minProfit, setMinProfit] = useState<number>(50_000);
   const [minMargin, setMinMargin] = useState<number>(3);
   const [hideTraps, setHideTraps] = useState<boolean>(true);
@@ -132,7 +134,11 @@ function FlipsRoute() {
   const bzMap = useMemo(() => {
     const map = new Map<string, { buyPrice: number; sellPrice: number; weeklyVolume?: number }>();
     for (const p of bazaarData?.products ?? []) {
-      map.set(p.id, { buyPrice: p.buyPrice, sellPrice: p.sellPrice, weeklyVolume: p.buyMovingWeek });
+      map.set(p.id, {
+        buyPrice: p.buyPrice,
+        sellPrice: p.sellPrice,
+        weeklyVolume: p.buyMovingWeek,
+      });
     }
     return map;
   }, [bazaarData]);
@@ -160,7 +166,7 @@ function FlipsRoute() {
   // Process Bazaar Flips
   const bazaarFlips = useMemo(() => {
     if (!bazaarData?.products) return [];
-    const q = query.toLowerCase();
+    const q = deferredQuery.toLowerCase();
 
     return bazaarData.products
       .filter((p) => p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q))
@@ -189,12 +195,12 @@ function FlipsRoute() {
       .filter((p) => p.netProfit >= minProfit && p.marginPct >= minMargin)
       .filter((p) => (!hideTraps ? true : !p.velocity.isTrap))
       .sort((a, b) => b.netProfit - a.netProfit || b.marginPct - a.marginPct);
-  }, [bazaarData, query, minProfit, minMargin, hideTraps, budgetTier]);
+  }, [bazaarData, deferredQuery, minProfit, minMargin, hideTraps, budgetTier]);
 
   // Process Auction Flips
   const auctionFlips = useMemo(() => {
     if (!auctionsData?.entries) return [];
-    const q = query.toLowerCase();
+    const q = deferredQuery.toLowerCase();
 
     return auctionsData.entries
       .filter((a) => a.bin && a.profit > 0)
@@ -202,9 +208,17 @@ function FlipsRoute() {
       .map((a) => {
         const sellPrice = a.lowestBin ?? a.price + a.profit;
         const { tax, netProfit, marginPct } = calculateNetProfit(a.price, sellPrice, "ah");
-        const manipulation = detectPriceManipulation(sellPrice, a.lowestBin ? a.lowestBin * 0.9 : a.price);
+        const manipulation = detectPriceManipulation(
+          sellPrice,
+          a.lowestBin ? a.lowestBin * 0.9 : a.price,
+        );
         const velocity = calculateVelocityIndex(50, 4, marginPct);
-        const risk = calculateRiskRating(50, marginPct, manipulation.isManipulated, velocity.isTrap);
+        const risk = calculateRiskRating(
+          50,
+          marginPct,
+          manipulation.isManipulated,
+          velocity.isTrap,
+        );
 
         return {
           ...a,
@@ -227,7 +241,7 @@ function FlipsRoute() {
       .filter((a) => a.netProfit >= minProfit && a.marginPct >= minMargin)
       .filter((a) => (!hideTraps ? true : !a.manipulation.isManipulated))
       .sort((a, b) => b.netProfit - a.netProfit);
-  }, [auctionsData, query, minProfit, minMargin, hideTraps, budgetTier]);
+  }, [auctionsData, deferredQuery, minProfit, minMargin, hideTraps, budgetTier]);
 
   // Process Craft Flips
   const craftFlips = useMemo(() => {
@@ -236,13 +250,13 @@ function FlipsRoute() {
     for (const p of bazaarData.products) names.set(p.id, p.name);
 
     const allCrafts = generateCraftFlips(bzMap, ahMap, names, 50);
-    const q = query.toLowerCase();
+    const q = deferredQuery.toLowerCase();
 
     return allCrafts
       .filter((c) => c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))
       .filter((c) => c.netProfit >= minProfit && c.marginPct >= minMargin)
       .filter((c) => (!hideTraps ? true : !c.velocity.isTrap));
-  }, [bazaarData, bzMap, ahMap, query, minProfit, minMargin, hideTraps]);
+  }, [bazaarData, bzMap, ahMap, deferredQuery, minProfit, minMargin, hideTraps]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -259,10 +273,20 @@ function FlipsRoute() {
             { id: "bazaar", label: "Bazaar Flips", count: bazaarFlips.length, icon: TrendingUp },
             { id: "auctions", label: "AH Undercuts", count: auctionFlips.length, icon: Hammer },
             { id: "crafts", label: "Craft Margins", count: craftFlips.length, icon: Boxes },
-            { id: "arbitrage", label: "AH ↔ BZ Arbitrage", count: crossArbitrage.length, icon: RefreshCw },
+            {
+              id: "arbitrage",
+              label: "AH ↔ BZ Arbitrage",
+              count: crossArbitrage.length,
+              icon: RefreshCw,
+            },
             { id: "pets", label: "Pet Leveling ROI", count: petFlips.length, icon: Dog },
             { id: "minions", label: "Minion Setup Payback", count: minionSetups.length, icon: Bot },
-            { id: "dark_auction", label: "Sirius Bid Ceilings", count: daCeilings.length, icon: Crown },
+            {
+              id: "dark_auction",
+              label: "Sirius Bid Ceilings",
+              count: daCeilings.length,
+              icon: Crown,
+            },
             { id: "scorecard", label: "Scorecard", count: null, icon: Scale },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -275,7 +299,7 @@ function FlipsRoute() {
                   "flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all",
                   active
                     ? "border border-sky-400/40 bg-sky-500/20 text-white shadow-lg shadow-sky-500/10"
-                    : "border border-white/5 bg-white/[0.02] text-white/60 hover:bg-white/[0.05] hover:text-white"
+                    : "border border-white/5 bg-white/[0.02] text-white/60 hover:bg-white/[0.05] hover:text-white",
                 )}
               >
                 <Icon className="size-3.5 text-sky-400" />
@@ -307,7 +331,7 @@ function FlipsRoute() {
                   "rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all",
                   budgetTier === b.id
                     ? "bg-white/20 text-white font-bold"
-                    : "text-white/50 hover:text-white"
+                    : "text-white/50 hover:text-white",
                 )}
               >
                 {b.label}
@@ -328,7 +352,7 @@ function FlipsRoute() {
               "flex items-center gap-2 rounded-xl border px-3.5 py-1.5 text-xs font-bold transition-none",
               soundEnabled
                 ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-300 shadow-lg shadow-emerald-500/10"
-                : "border-white/10 bg-white/[0.04] text-white/60 hover:bg-white/10 hover:text-white"
+                : "border-white/10 bg-white/[0.04] text-white/60 hover:bg-white/10 hover:text-white",
             )}
             title="Play Minecraft audio chime when copying or finding top flips"
           >
@@ -374,7 +398,12 @@ function FlipsRoute() {
                           <span className="font-mono text-[10px] text-white/40">{flip.id}</span>
                         </div>
                       </div>
-                      <span className={cn("rounded-lg border px-2 py-0.5 text-[10px] font-bold shrink-0", flip.risk.badgeClass)}>
+                      <span
+                        className={cn(
+                          "rounded-lg border px-2 py-0.5 text-[10px] font-bold shrink-0",
+                          flip.risk.badgeClass,
+                        )}
+                      >
                         {flip.risk.label}
                       </span>
                     </div>
@@ -414,7 +443,7 @@ function FlipsRoute() {
                       "mt-4 flex w-full items-center justify-center gap-2 rounded-xl border py-2 text-xs font-bold transition-all",
                       isCopied
                         ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
-                        : "border-sky-400/30 bg-sky-500/15 text-sky-300 hover:bg-sky-500/25"
+                        : "border-sky-400/30 bg-sky-500/15 text-sky-300 hover:bg-sky-500/25",
                     )}
                   >
                     {isCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
@@ -443,13 +472,22 @@ function FlipsRoute() {
                   <div>
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <ItemIcon id={flip.id ?? flip.name} name={flip.name} className="size-8 shrink-0" />
+                        <ItemIcon
+                          id={flip.id ?? flip.name}
+                          name={flip.name}
+                          className="size-8 shrink-0"
+                        />
                         <div className="min-w-0">
                           <h3 className="truncate text-sm font-bold text-white">{flip.name}</h3>
                           <span className="font-mono text-[10px] text-white/40">{flip.rarity}</span>
                         </div>
                       </div>
-                      <span className={cn("rounded-lg border px-2 py-0.5 text-[10px] font-bold shrink-0", flip.risk.badgeClass)}>
+                      <span
+                        className={cn(
+                          "rounded-lg border px-2 py-0.5 text-[10px] font-bold shrink-0",
+                          flip.risk.badgeClass,
+                        )}
+                      >
                         {flip.risk.label}
                       </span>
                     </div>
@@ -489,7 +527,7 @@ function FlipsRoute() {
                       "mt-4 flex w-full items-center justify-center gap-2 rounded-xl border py-2 text-xs font-bold transition-all",
                       isCopied
                         ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
-                        : "border-purple-400/30 bg-purple-500/15 text-purple-300 hover:bg-purple-500/25"
+                        : "border-purple-400/30 bg-purple-500/15 text-purple-300 hover:bg-purple-500/25",
                     )}
                   >
                     {isCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
@@ -536,7 +574,9 @@ function FlipsRoute() {
                   </div>
 
                   <div className="mt-4">
-                    <p className="text-xs font-semibold text-white/70 mb-2">Required Ingredients (Bazaar Buy Orders):</p>
+                    <p className="text-xs font-semibold text-white/70 mb-2">
+                      Required Ingredients (Bazaar Buy Orders):
+                    </p>
                     <div className="space-y-1.5">
                       {flip.ingredients.map((ing) => (
                         <div
@@ -546,7 +586,9 @@ function FlipsRoute() {
                           <span className="text-white/80">
                             {ing.amount}x {ing.name}
                           </span>
-                          <span className="font-mono text-white/50">{formatFull(ing.totalCost)} coins</span>
+                          <span className="font-mono text-white/50">
+                            {formatFull(ing.totalCost)} coins
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -555,11 +597,15 @@ function FlipsRoute() {
                   <div className="mt-4 flex items-center justify-between border-t border-white/10 pt-3 text-xs">
                     <div>
                       <span className="text-white/50">Total Craft Cost:</span>{" "}
-                      <span className="font-mono font-bold text-white">{formatFull(flip.craftCost)}</span>
+                      <span className="font-mono font-bold text-white">
+                        {formatFull(flip.craftCost)}
+                      </span>
                     </div>
                     <div>
                       <span className="text-white/50">Market Value:</span>{" "}
-                      <span className="font-mono font-bold text-white">{formatFull(flip.sellPrice)}</span>
+                      <span className="font-mono font-bold text-white">
+                        {formatFull(flip.sellPrice)}
+                      </span>
                     </div>
                   </div>
 
@@ -569,7 +615,7 @@ function FlipsRoute() {
                       "mt-4 flex w-full items-center justify-center gap-2 rounded-xl border py-2 text-xs font-bold transition-all",
                       isCopied
                         ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
-                        : "border-amber-400/30 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25"
+                        : "border-amber-400/30 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25",
                     )}
                   >
                     {isCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
@@ -588,8 +634,12 @@ function FlipsRoute() {
           <Panel>
             <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
               <div>
-                <h2 className="text-xl font-bold text-white">Cross-Market AH ↔ Bazaar Arbitrage Matrix</h2>
-                <p className="text-xs text-white/50">Instant margin gaps between Bazaar orders and Auction House Lowest BIN</p>
+                <h2 className="text-xl font-bold text-white">
+                  Cross-Market AH ↔ Bazaar Arbitrage Matrix
+                </h2>
+                <p className="text-xs text-white/50">
+                  Instant margin gaps between Bazaar orders and Auction House Lowest BIN
+                </p>
               </div>
             </div>
 
@@ -620,7 +670,9 @@ function FlipsRoute() {
                         </div>
                         <div className="flex justify-between border-t border-white/10 pt-1.5 font-bold">
                           <span className="text-emerald-300">Net Profit:</span>
-                          <span className="font-mono text-emerald-400">+{formatFull(a.netProfit)}</span>
+                          <span className="font-mono text-emerald-400">
+                            +{formatFull(a.netProfit)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -631,7 +683,7 @@ function FlipsRoute() {
                         "mt-4 flex w-full items-center justify-center gap-2 rounded-xl border py-2 text-xs font-bold transition-all",
                         isCopied
                           ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
-                          : "border-emerald-400/30 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25"
+                          : "border-emerald-400/30 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25",
                       )}
                     >
                       {isCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
@@ -652,7 +704,9 @@ function FlipsRoute() {
             <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
               <div>
                 <h2 className="text-xl font-bold text-white">Pet Leveling Margins & ROI</h2>
-                <p className="text-xs text-white/50">Level 1 buy cost + candy/XP investment vs Level 100/200 resale price</p>
+                <p className="text-xs text-white/50">
+                  Level 1 buy cost + candy/XP investment vs Level 100/200 resale price
+                </p>
               </div>
             </div>
 
@@ -676,15 +730,21 @@ function FlipsRoute() {
                     </div>
                     <div className="flex justify-between text-white/60">
                       <span>Lv {pet.maxLevel} Market Resale:</span>
-                      <span className="font-mono text-white">{formatFull(pet.levelMaxSellPrice)}</span>
+                      <span className="font-mono text-white">
+                        {formatFull(pet.levelMaxSellPrice)}
+                      </span>
                     </div>
                     <div className="flex justify-between text-white/50 text-[11px]">
                       <span>XP Required:</span>
-                      <span className="font-mono text-sky-300">{(pet.xpRequired / 1_000_000).toFixed(1)}M XP</span>
+                      <span className="font-mono text-sky-300">
+                        {(pet.xpRequired / 1_000_000).toFixed(1)}M XP
+                      </span>
                     </div>
                     <div className="flex justify-between border-t border-white/10 pt-1.5 font-bold">
                       <span className="text-emerald-300">Net Profit:</span>
-                      <span className="font-mono text-emerald-400">+{formatFull(pet.netProfit)} ({pet.roiPct}%)</span>
+                      <span className="font-mono text-emerald-400">
+                        +{formatFull(pet.netProfit)} ({pet.roiPct}%)
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -700,8 +760,12 @@ function FlipsRoute() {
           <Panel>
             <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
               <div>
-                <h2 className="text-xl font-bold text-white">Full Minion Setup ROI & Payback Engine</h2>
-                <p className="text-xs text-white/50">Initial setup cost vs daily coin generation & days to break even</p>
+                <h2 className="text-xl font-bold text-white">
+                  Full Minion Setup ROI & Payback Engine
+                </h2>
+                <p className="text-xs text-white/50">
+                  Initial setup cost vs daily coin generation & days to break even
+                </p>
               </div>
             </div>
 
@@ -712,7 +776,9 @@ function FlipsRoute() {
                   className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 backdrop-blur"
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-white">{m.minionName} T{m.tier}</h3>
+                    <h3 className="text-sm font-bold text-white">
+                      {m.minionName} T{m.tier}
+                    </h3>
                     <span className="rounded-lg border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-300">
                       {m.paybackDays} Days Payback
                     </span>
@@ -727,11 +793,15 @@ function FlipsRoute() {
                     </div>
                     <div className="flex justify-between text-white/60">
                       <span>Daily Profit:</span>
-                      <span className="font-mono text-emerald-400">+{formatFull(m.dailyCoinProfit)} / day</span>
+                      <span className="font-mono text-emerald-400">
+                        +{formatFull(m.dailyCoinProfit)} / day
+                      </span>
                     </div>
                     <div className="flex justify-between border-t border-white/10 pt-1.5 font-bold">
                       <span className="text-sky-300">30-Day Profit:</span>
-                      <span className="font-mono text-sky-400">+{formatFull(m.tier30DayProfit)}</span>
+                      <span className="font-mono text-sky-400">
+                        +{formatFull(m.tier30DayProfit)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -747,8 +817,12 @@ function FlipsRoute() {
           <Panel>
             <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
               <div>
-                <h2 className="text-xl font-bold text-white">Sirius Dark Auction Bid Ceiling Estimator</h2>
-                <p className="text-xs text-white/50">Maximum profitable bid limit with a 10% safety margin after AH listing fees</p>
+                <h2 className="text-xl font-bold text-white">
+                  Sirius Dark Auction Bid Ceiling Estimator
+                </h2>
+                <p className="text-xs text-white/50">
+                  Maximum profitable bid limit with a 10% safety margin after AH listing fees
+                </p>
               </div>
             </div>
 
@@ -768,7 +842,9 @@ function FlipsRoute() {
                   <div className="mt-3 space-y-1.5 rounded-xl bg-black/30 p-3 text-xs">
                     <div className="flex justify-between text-white/60">
                       <span>AH Lowest BIN Value:</span>
-                      <span className="font-mono text-white">{formatFull(item.currentAhMarketValue)}</span>
+                      <span className="font-mono text-white">
+                        {formatFull(item.currentAhMarketValue)}
+                      </span>
                     </div>
                     <div className="flex justify-between text-amber-300 font-bold">
                       <span>Max Safe Bid Ceiling:</span>
@@ -776,7 +852,9 @@ function FlipsRoute() {
                     </div>
                     <div className="flex justify-between border-t border-white/10 pt-1.5 font-bold">
                       <span className="text-emerald-300">Target Profit Margin:</span>
-                      <span className="font-mono text-emerald-400">+{formatFull(item.projectedResaleProfit)} (10%)</span>
+                      <span className="font-mono text-emerald-400">
+                        +{formatFull(item.projectedResaleProfit)} (10%)
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -823,11 +901,13 @@ function FlipsRoute() {
                 <ol className="mt-4 space-y-3 text-sm leading-relaxed text-muted-foreground">
                   <li className="flex gap-3">
                     <span className="font-mono font-bold text-primary">1.</span>
-                    Every hour, the site logs its top flip suggestions with the exact price and expected margin at that moment.
+                    Every hour, the site logs its top flip suggestions with the exact price and
+                    expected margin at that moment.
                   </li>
                   <li className="flex gap-3">
                     <span className="font-mono font-bold text-primary">2.</span>
-                    After at least 10 minutes, each suggestion is re-priced against the live market with tax applied.
+                    After at least 10 minutes, each suggestion is re-priced against the live market
+                    with tax applied.
                   </li>
                 </ol>
               </Panel>
@@ -836,7 +916,8 @@ function FlipsRoute() {
             <Panel>
               <p className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Target className="size-4 text-primary" />
-                The scorecard is being built — suggestions need at least 10 minutes of market movement before they can be scored.
+                The scorecard is being built — suggestions need at least 10 minutes of market
+                movement before they can be scored.
               </p>
             </Panel>
           )}

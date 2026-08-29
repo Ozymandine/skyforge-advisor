@@ -68,10 +68,7 @@ function getAudioContext(): AudioContext | null {
 /**
  * Synthesizes and plays a zero-latency tone using Web Audio API oscillators and gain envelopes.
  */
-export function playChime(
-  type: ChimeProfile = "crystal",
-  volume: number = 0.7,
-): void {
+export function playChime(type: ChimeProfile = "crystal", volume: number = 0.7): void {
   const ctx = getAudioContext();
   if (!ctx) return;
 
@@ -176,4 +173,3 @@ export function playChime(
     }
   }
 }
-

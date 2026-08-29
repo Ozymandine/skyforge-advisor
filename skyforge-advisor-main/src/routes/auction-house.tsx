@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Filter, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState, useDeferredValue } from "react";
 
 import { ErrorState, LoadState } from "@/components/data-states";
 import {
@@ -53,6 +53,7 @@ const sorts = {
 
 function AuctionHouse() {
   const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query);
   const [filter, setFilter] = useState("All listings");
   const [sort, setSort] = useState<keyof typeof sorts>("Flip profit");
   const [inspecting, setInspecting] = useState<InspectableItem | null>(null);
@@ -79,7 +80,7 @@ function AuctionHouse() {
 
   const listings = useMemo(() => {
     if (!data) return [];
-    const q = query.toLowerCase();
+    const q = deferredQuery.toLowerCase();
     const minProfitNum = Number(minProfit.replace(/[^0-9.]/g, "")) || 0;
     const maxPriceNum = Number(maxPrice.replace(/[^0-9.]/g, "")) || Infinity;
     const minMarginNum = Number(minMargin.replace(/[^0-9.]/g, "")) || 0;
@@ -105,7 +106,7 @@ function AuctionHouse() {
         return true;
       })
       .sort(sorts[sort]);
-  }, [data, query, filter, sort, minProfit, maxPrice, minMargin, category]);
+  }, [data, deferredQuery, filter, sort, minProfit, maxPrice, minMargin, category]);
 
   // Flip finder summary over the filtered set.
   const flipSummary = useMemo(() => {

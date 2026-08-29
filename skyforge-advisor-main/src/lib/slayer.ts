@@ -33,26 +33,29 @@ export type SlayerOverview = {
 // ---------------------------------------------------------------------------
 
 export const STANDARD_SLAYER_XP = [
-  5,        // LVL 1
-  15,       // LVL 2
-  200,      // LVL 3
-  1_000,    // LVL 4
-  5_000,    // LVL 5
-  20_000,   // LVL 6
-  100_000,  // LVL 7
-  400_000,  // LVL 8
-  1_000_000 // LVL 9
+  5, // LVL 1
+  15, // LVL 2
+  200, // LVL 3
+  1_000, // LVL 4
+  5_000, // LVL 5
+  20_000, // LVL 6
+  100_000, // LVL 7
+  400_000, // LVL 8
+  1_000_000, // LVL 9
 ];
 
 export const VAMPIRE_SLAYER_XP = [
-  20,   // LVL 1
-  75,   // LVL 2
-  240,  // LVL 3
-  840,  // LVL 4
+  20, // LVL 1
+  75, // LVL 2
+  240, // LVL 3
+  840, // LVL 4
   2400, // LVL 5
 ];
 
-export function computeSlayerLevel(xp: number, isVampire = false): {
+export function computeSlayerLevel(
+  xp: number,
+  isVampire = false,
+): {
   level: number;
   maxLevel: number;
   neededXp: number;
@@ -159,14 +162,16 @@ const BOSS_DISPLAY_NAMES: Record<string, string> = {
 };
 
 export function calculateSlayerOverview(
-  slayerData: Record<
-    string,
-    {
-      xp?: number;
-      boss_kills_tier?: Record<string, number>;
-      claimed_levels?: Record<string, unknown>;
-    }
-  > | undefined,
+  slayerData:
+    | Record<
+        string,
+        {
+          xp?: number;
+          boss_kills_tier?: Record<string, number>;
+          claimed_levels?: Record<string, unknown>;
+        }
+      >
+    | undefined,
 ): SlayerOverview {
   let totalXp = 0;
   let totalKills = 0;
@@ -246,4 +251,3 @@ export function calculateSlayerOverview(
     },
   };
 }
-

@@ -116,7 +116,6 @@ function Wiki() {
     });
   };
 
-
   /* --------------------------------------------------------------------------
    * DATA
    * ------------------------------------------------------------------------ */
@@ -257,7 +256,7 @@ function Wiki() {
     /*
      * Full result set — rendering is paginated below.
      */
-  }, [allSearchableItems, category, query]);
+  }, [allSearchableItems, category, deferredQuery]);
 
   const totalMatches = results.length;
   const shownResults = results.slice(0, visible);
