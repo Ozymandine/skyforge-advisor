@@ -1,31 +1,31 @@
 "use client";
 
 import {
-  Search,
-  SlidersHorizontal,
-  X,
-  Check,
-  ChevronDown,
-  ChevronRight,
-  BarChart3,
-  Coins,
-  ShoppingCart,
-  Store,
-  Tag,
-  Lock,
-  Hammer,
-  ArrowRight,
-  TrendingUp,
-  Boxes,
-  Gem,
-  Sparkles,
-  Trophy,
-  Bot,
-  MapPin,
-  ScrollText,
-  BookOpen,
-  ExternalLink,
-} from "lucide-react";
+  IconSearch,
+  IconSlidersHorizontal,
+  IconX,
+  IconCheck,
+  IconChevronDown,
+  IconChevronRight,
+  IconBarChart3,
+  IconCoins,
+  IconShoppingCart,
+  IconStore,
+  IconTag,
+  IconLock,
+  IconHammer,
+  IconArrowRight,
+  IconTrendingUp,
+  IconBoxes,
+  IconGem,
+  IconSparkles,
+  IconTrophy,
+  IconBot,
+  IconMapPin,
+  IconScrollText,
+  IconBookOpen,
+  IconExternalLink,
+} from "@/components/ui/icon";
 import { Link } from "@tanstack/react-router";
 import { memo, useDeferredValue, useEffect, useMemo, useState } from "react";
 
@@ -522,10 +522,9 @@ export function WikiPage({
               <div className="flex flex-col gap-3 lg:flex-row">
                 {/* Search */}
                 <div className="relative min-w-0 flex-1">
-                  <Search
-                    size={18}
+                  <IconSearch
                     aria-hidden="true"
-                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
                   />
 
                   <input
@@ -552,7 +551,7 @@ export function WikiPage({
                       aria-label="Clear search"
                       className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                     >
-                      <X size={15} aria-hidden="true" />
+                      <IconX className="size-4" aria-hidden="true" />
                     </button>
                   )}
                 </div>
@@ -574,7 +573,7 @@ export function WikiPage({
                         : "hover:border-ring/40 hover:bg-muted/60",
                     )}
                   >
-                    <SlidersHorizontal size={16} aria-hidden="true" />
+                    <IconSlidersHorizontal className="size-4" aria-hidden="true" />
 
                     <span>Filters</span>
 
@@ -584,13 +583,12 @@ export function WikiPage({
                       </span>
                     )}
 
-                    <ChevronDown
-                      size={14}
-                      aria-hidden="true"
+                    <IconChevronDown
                       className={cn(
-                        "transition-transform duration-150",
+                        "size-4 transition-transform duration-150",
                         filtersOpen && "rotate-180",
                       )}
+                      aria-hidden="true"
                     />
                   </button>
 
@@ -698,10 +696,9 @@ export function WikiPage({
                                     </span>
 
                                     {active && (
-                                      <Check
-                                        size={15}
+                                      <IconCheck
+                                        className="size-4 text-primary"
                                         aria-hidden="true"
-                                        className="text-primary"
                                       />
                                     )}
                                   </div>
@@ -880,7 +877,7 @@ function DetailSection({
   hint,
   children,
 }: {
-  icon: typeof Coins;
+  icon: React.ComponentType<{ className?: string; size?: number; "aria-hidden"?: boolean }>;
   title: string;
   hint?: string;
   children: React.ReactNode;
@@ -888,7 +885,7 @@ function DetailSection({
   return (
     <section>
       <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-        <Icon size={12} aria-hidden="true" className="text-primary/70" />
+        <Icon className="size-3 text-primary/70" aria-hidden={true} />
         {title}
         {hint ? (
           <span className="ml-auto text-[10px] font-medium normal-case tracking-normal text-muted-foreground/50">
@@ -910,7 +907,7 @@ function PriceTile({
 }: {
   label: string;
   value: number | null;
-  icon: typeof Coins;
+  icon: React.ComponentType<{ className?: string; size?: number; "aria-hidden"?: boolean }>;
   tone: string;
 }) {
   return (
@@ -921,7 +918,7 @@ function PriceTile({
       )}
     >
       <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider opacity-80">
-        <Icon size={11} aria-hidden="true" />
+        <Icon className="size-2.5" aria-hidden={true} />
         {label}
       </div>
 
@@ -1047,7 +1044,7 @@ function WikiItemDetailCard({
               "text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground",
             )}
           >
-            <X size={16} aria-hidden="true" />
+            <IconX className="size-4" aria-hidden="true" />
           </button>
 
           <div className="flex items-center gap-3.5 pr-9">
@@ -1102,30 +1099,30 @@ function WikiItemDetailCard({
             {
               label: "Top price",
               value: formatCompact(bestPrice),
-              icon: Coins,
+              icon: IconCoins,
               tone: "text-amber-300",
             },
             {
               label: "Orders/wk",
               value: weeklyVolume > 0 ? formatCompact(weeklyVolume) : "—",
-              icon: TrendingUp,
+              icon: IconTrendingUp,
               tone: "text-sky-300",
             },
             {
               label: "Listings",
               value: item.auctionHouse ? String(item.auctionHouse.listings) : "—",
-              icon: Tag,
+              icon: IconTag,
               tone: "text-purple-300",
             },
             {
               label: "Museum",
               value: item.museumValue != null ? formatCompact(item.museumValue) : "—",
-              icon: Gem,
+              icon: IconGem,
               tone: "text-pink-300",
             },
           ].map((tile) => (
             <div key={tile.label} className="px-2 py-2.5 text-center">
-              <tile.icon size={13} aria-hidden="true" className={cn("mx-auto", tile.tone)} />
+              <tile.icon className={cn("size-4 mx-auto", tile.tone)} aria-hidden="true" />
               <p className="mt-1 font-mono text-sm font-bold leading-none text-white">
                 {tile.value}
               </p>
@@ -1139,22 +1136,27 @@ function WikiItemDetailCard({
         {/* Body */}
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4">
           {/* Market */}
-          <DetailSection icon={Coins} title="Market">
+          <DetailSection icon={IconCoins} title="Market">
             <div className="grid grid-cols-2 gap-2">
               <PriceTile
                 label="Bazaar buy"
                 value={bazaarBuy}
-                icon={ShoppingCart}
+                icon={IconShoppingCart}
                 tone={PRICE_TONES.buy}
               />
               <PriceTile
                 label="Bazaar sell"
                 value={bazaarSell}
-                icon={Store}
+                icon={IconStore}
                 tone={PRICE_TONES.sell}
               />
-              <PriceTile label="Lowest BIN" value={lowestBin} icon={Tag} tone={PRICE_TONES.bin} />
-              <PriceTile label="NPC sell" value={npcSell} icon={Coins} tone={PRICE_TONES.npc} />
+              <PriceTile
+                label="Lowest BIN"
+                value={lowestBin}
+                icon={IconTag}
+                tone={PRICE_TONES.bin}
+              />
+              <PriceTile label="NPC sell" value={npcSell} icon={IconCoins} tone={PRICE_TONES.npc} />
             </div>
 
             {bazaarBuy != null && bazaarSell != null && (
@@ -1230,7 +1232,7 @@ function WikiItemDetailCard({
 
           {/* Stats */}
           {allStats.length > 0 && (
-            <DetailSection icon={BarChart3} title="Stats" hint={`${allStats.length} tracked`}>
+            <DetailSection icon={IconBarChart3} title="Stats" hint={`${allStats.length} tracked`}>
               <ul className="space-y-2.5">
                 {allStats.map(([name, value]) => {
                   const pct = Math.max(3, (Math.abs(value) / maxStat) * 100);
@@ -1262,7 +1264,7 @@ function WikiItemDetailCard({
 
           {/* Abilities */}
           {abilities.length > 0 && (
-            <DetailSection icon={Sparkles} title="Abilities">
+            <DetailSection icon={IconSparkles} title="Abilities">
               <div className="space-y-2">
                 {abilities.map((ability, i) => (
                   <div key={i} className="rounded-xl border border-white/10 bg-black/25 p-3">
@@ -1293,14 +1295,14 @@ function WikiItemDetailCard({
 
           {/* Requirements */}
           {requirements.length > 0 && (
-            <DetailSection icon={Lock} title="Requirements">
+            <DetailSection icon={IconLock} title="Requirements">
               <div className="flex flex-wrap gap-1.5">
                 {requirements.map((req, i) => (
                   <span
                     key={i}
                     className="inline-flex items-center gap-1 rounded-lg border border-orange-400/25 bg-orange-400/10 px-2 py-1 text-[11px] font-semibold text-orange-300"
                   >
-                    <Lock size={10} aria-hidden="true" />
+                    <IconLock className="size-2.5" aria-hidden={true} />
                     {req.type}
                     {req.level != null ? ` ${req.level}` : ""}
                     {req.value ? `: ${req.value}` : ""}
@@ -1312,7 +1314,7 @@ function WikiItemDetailCard({
 
           {/* Crafting */}
           {(gridCells || recipeIngredients.length > 0) && (
-            <DetailSection icon={Hammer} title="Crafting">
+            <DetailSection icon={IconHammer} title="Crafting">
               {gridCells ? (
                 <div className="flex items-center gap-2.5">
                   <div className="grid shrink-0 grid-cols-3 gap-1 rounded-xl border border-white/10 bg-black/40 p-1.5">
@@ -1345,10 +1347,9 @@ function WikiItemDetailCard({
                     ))}
                   </div>
 
-                  <ArrowRight
-                    size={16}
+                  <IconArrowRight
+                    className="shrink-0 size-4 text-muted-foreground"
                     aria-hidden="true"
-                    className="shrink-0 text-muted-foreground"
                   />
 
                   <div className="flex flex-col items-center gap-0.5 rounded-xl border border-primary/30 bg-primary/10 p-1.5">
@@ -1398,7 +1399,7 @@ function WikiItemDetailCard({
 
           {/* Used to craft */}
           {usedIn.length > 0 && (
-            <DetailSection icon={Boxes} title="Used to craft" hint={`${usedIn.length} recipes`}>
+            <DetailSection icon={IconBoxes} title="Used to craft" hint={`${usedIn.length} recipes`}>
               <ul className="max-h-52 space-y-1 overflow-y-auto pr-1 text-sm">
                 {usedIn.map((entry) => (
                   <li key={entry.id}>
@@ -1428,11 +1429,11 @@ function WikiItemDetailCard({
 
           {/* Sources */}
           {(item.collection || item.minionSource || item.npcSource || obtainedFrom.length > 0) && (
-            <DetailSection icon={MapPin} title="How to get">
+            <DetailSection icon={IconMapPin} title="How to get">
               <div className="space-y-1.5">
                 {item.collection ? (
                   <p className="flex items-center gap-2 rounded-lg bg-black/25 px-2.5 py-1.5 text-xs text-muted-foreground">
-                    <Trophy size={12} aria-hidden="true" className="shrink-0 text-yellow-300" />
+                    <IconTrophy className="shrink-0 size-3 text-yellow-300" aria-hidden="true" />
                     <span>
                       Collection:{" "}
                       <span className="font-semibold text-foreground/80">{item.collection}</span>
@@ -1442,7 +1443,7 @@ function WikiItemDetailCard({
 
                 {item.minionSource ? (
                   <p className="flex items-center gap-2 rounded-lg bg-black/25 px-2.5 py-1.5 text-xs text-muted-foreground">
-                    <Bot size={12} aria-hidden="true" className="shrink-0 text-cyan-300" />
+                    <IconBot className="shrink-0 size-3 text-cyan-300" aria-hidden="true" />
                     <span>
                       Minion:{" "}
                       <span className="font-semibold text-foreground/80">{item.minionSource}</span>
@@ -1452,7 +1453,7 @@ function WikiItemDetailCard({
 
                 {item.npcSource ? (
                   <p className="flex items-center gap-2 rounded-lg bg-black/25 px-2.5 py-1.5 text-xs text-muted-foreground">
-                    <Store size={12} aria-hidden="true" className="shrink-0 text-emerald-300" />
+                    <IconStore className="shrink-0 size-3 text-emerald-300" aria-hidden="true" />
                     <span>
                       NPC:{" "}
                       <span className="font-semibold text-foreground/80">{item.npcSource}</span>
@@ -1462,7 +1463,7 @@ function WikiItemDetailCard({
 
                 {obtainedFrom.length > 0 ? (
                   <p className="flex flex-wrap items-center gap-1.5 rounded-lg bg-black/25 px-2.5 py-1.5 text-xs text-muted-foreground">
-                    <MapPin size={12} aria-hidden="true" className="shrink-0 text-pink-300" />
+                    <IconMapPin className="shrink-0 size-3 text-pink-300" aria-hidden="true" />
                     {obtainedFrom.slice(0, 4).map((source) => (
                       <span
                         key={source}
@@ -1479,7 +1480,7 @@ function WikiItemDetailCard({
 
           {/* Upgrade path */}
           {upgradePath.length > 0 && (
-            <DetailSection icon={TrendingUp} title="Upgrade path">
+            <DetailSection icon={IconTrendingUp} title="Upgrade path">
               <div className="flex flex-wrap items-center gap-1">
                 {upgradePath.map((step, i) => (
                   <span key={step + String(i)} className="flex items-center gap-1">
@@ -1487,10 +1488,9 @@ function WikiItemDetailCard({
                       {step}
                     </code>
                     {i < upgradePath.length - 1 ? (
-                      <ArrowRight
-                        size={11}
+                      <IconArrowRight
+                        className="size-3 text-muted-foreground/50"
                         aria-hidden="true"
-                        className="text-muted-foreground/50"
                       />
                     ) : null}
                   </span>
@@ -1501,7 +1501,7 @@ function WikiItemDetailCard({
 
           {/* Enchantments & reforges */}
           {(enchantments.length > 0 || reforges.length > 0) && (
-            <DetailSection icon={Gem} title="Enchants & reforges">
+            <DetailSection icon={IconGem} title="Enchants & reforges">
               <div className="space-y-2">
                 {enchantments.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
@@ -1534,7 +1534,7 @@ function WikiItemDetailCard({
 
           {/* Minecraft tooltip lore */}
           {lore.length > 0 && (
-            <DetailSection icon={ScrollText} title="Tooltip">
+            <DetailSection icon={IconScrollText} title="Tooltip">
               <div className="rounded-xl border border-slate-700/60 bg-slate-950/90 p-3 font-mono text-[13px] leading-5 text-slate-200">
                 {lore.map((line, i) => (
                   <p key={i} className={i === 0 ? "text-white" : undefined}>
@@ -1547,7 +1547,7 @@ function WikiItemDetailCard({
 
           {/* Description */}
           {description && (
-            <DetailSection icon={BookOpen} title="Description">
+            <DetailSection icon={IconBookOpen} title="Description">
               <p className="text-sm leading-6 text-muted-foreground">{description}</p>
             </DetailSection>
           )}
@@ -1566,7 +1566,7 @@ function WikiItemDetailCard({
               )}
             >
               Open full page
-              <ChevronRight size={15} aria-hidden="true" />
+              <IconChevronRight className="size-4" aria-hidden="true" />
             </Link>
 
             {wikiUrl ? (
@@ -1577,7 +1577,7 @@ function WikiItemDetailCard({
                 aria-label="Official wiki"
                 className="flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-muted-foreground transition hover:text-foreground"
               >
-                <ExternalLink size={15} aria-hidden="true" />
+                <IconExternalLink className="size-4" aria-hidden="true" />
               </a>
             ) : null}
           </div>
@@ -1745,7 +1745,7 @@ const WikiItemCard = memo(function WikiItemCard({
           <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/60">
             {item.abilities && item.abilities.length > 0 && (
               <>
-                <BarChart3 size={11} aria-hidden="true" />
+                <IconBarChart3 className="size-3" aria-hidden="true" />
 
                 <span>
                   {item.abilities.length} {item.abilities.length === 1 ? "ability" : "abilities"}
@@ -1754,10 +1754,9 @@ const WikiItemCard = memo(function WikiItemCard({
             )}
           </div>
 
-          <ChevronRight
-            size={15}
+          <IconChevronRight
+            className="shrink-0 size-4 text-muted-foreground/40 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-primary"
             aria-hidden="true"
-            className="shrink-0 text-muted-foreground/40 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-primary"
           />
         </div>
       </div>
@@ -1781,7 +1780,7 @@ function WikiEmptyState({
   return (
     <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 bg-card/40 px-6 text-center">
       <div className="mb-5 flex size-16 items-center justify-center rounded-2xl border border-border/70 bg-muted/40 shadow-sm">
-        <Search aria-hidden="true" size={26} className="text-muted-foreground" />
+        <IconSearch aria-hidden="true" className="size-6 text-muted-foreground" />
       </div>
 
       <h2 className="text-lg font-semibold text-foreground">

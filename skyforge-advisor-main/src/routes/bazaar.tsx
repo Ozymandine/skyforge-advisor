@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, RefreshCw, Search, Star } from "lucide-react";
+import { IconChevronDown, IconRefreshCw, IconSearch, IconStar } from "@/assets/icons";
 import { Suspense, lazy, useEffect, useMemo, useRef, useState, useDeferredValue } from "react";
 
 const BazaarHistoryChart = lazy(() => import("@/components/bazaar-history-chart"));
@@ -179,7 +179,7 @@ function Bazaar() {
             onClick={() => refetch()}
             className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium backdrop-blur-md transition-all hover:bg-white/10"
           >
-            <RefreshCw className={`size-3.5 ${isFetching ? "animate-spin" : ""}`} /> Refresh
+            <IconRefreshCw className={`size-3.5 ${isFetching ? "animate-spin" : ""}`} /> Refresh
           </button>
         </div>
         {data && (
@@ -198,7 +198,7 @@ function Bazaar() {
         <Panel>
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex min-w-56 flex-1 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 backdrop-blur-md">
-              <Search className="size-4 text-muted-foreground" />
+              <IconSearch className="size-4 text-muted-foreground" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -292,7 +292,7 @@ function BazaarCard({ product, hot = false }: { product: BazaarProduct; hot?: bo
                 title={watchlist.has(i.id) ? "Remove from watchlist" : "Add to watchlist"}
                 className="group flex min-w-0 cursor-pointer text-left"
               >
-                <Star
+                <IconStar
                   className={`mt-1 mr-1.5 size-3.5 shrink-0 transition-all duration-75 ${
                     watchlist.has(i.id)
                       ? "fill-gold text-gold"
@@ -374,7 +374,7 @@ function BazaarCard({ product, hot = false }: { product: BazaarProduct; hot?: bo
           </span>
           <span className="flex items-center gap-1">
             {history.length >= 2 ? `${history.length} price points` : "Building history…"}
-            <ChevronDown
+            <IconChevronDown
               className={`size-3.5 transition-transform ${expanded ? "rotate-180" : ""}`}
             />
           </span>

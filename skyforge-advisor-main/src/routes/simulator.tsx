@@ -10,17 +10,17 @@ import {
   type SimulatorLoadout,
 } from "@/lib/damage-simulator";
 import {
-  Swords,
-  Shield,
-  Zap,
-  Target,
-  Sparkles,
-  Flame,
-  TrendingUp,
-  RotateCcw,
-  Sliders,
-  Crosshair,
-} from "lucide-react";
+  IconSwords,
+  IconShield,
+  IconZap,
+  IconTarget,
+  IconSparkles,
+  IconFlame,
+  IconTrendingUp,
+  IconRotateCcw,
+  IconSliders,
+  IconCrosshair,
+} from "@/assets/icons";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/simulator")({
@@ -63,7 +63,7 @@ export function SimulatorPage() {
         <div>
           <div className="flex items-center gap-2.5">
             <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-black shadow-lg">
-              <Swords className="size-5" />
+              <IconSwords className="size-5" />
             </div>
             <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
               Damage & Gear Simulator
@@ -81,14 +81,14 @@ export function SimulatorPage() {
               onClick={loadFromProfile}
               className="flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3.5 py-2 text-xs font-bold text-emerald-300 transition-none hover:bg-emerald-500/25 active:bg-emerald-500/30"
             >
-              <Sparkles className="size-3.5" /> Sync Profile
+              <IconSparkles className="size-3.5" /> Sync Profile
             </button>
           )}
           <button
             onClick={resetDefaults}
             className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2 text-xs font-bold text-white/70 transition-none hover:bg-white/10 hover:text-white"
           >
-            <RotateCcw className="size-3.5" /> Reset
+            <IconRotateCcw className="size-3.5" /> Reset
           </button>
         </div>
       </div>
@@ -99,7 +99,7 @@ export function SimulatorPage() {
         <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/10 to-transparent p-5">
           <div className="flex items-center justify-between text-amber-400">
             <span className="text-xs font-bold uppercase tracking-wider">Single Hit Damage</span>
-            <Flame className="size-4" />
+            <IconFlame className="size-4" />
           </div>
           <p className="mt-2 font-mono text-3xl font-black text-white">
             {formatNumber(result.singleHitDamage)}
@@ -116,7 +116,7 @@ export function SimulatorPage() {
         <div className="rounded-2xl border border-red-500/30 bg-gradient-to-b from-red-500/10 to-transparent p-5">
           <div className="flex items-center justify-between text-red-400">
             <span className="text-xs font-bold uppercase tracking-wider">Sustained DPS</span>
-            <Zap className="size-4" />
+            <IconZap className="size-4" />
           </div>
           <p className="mt-2 font-mono text-3xl font-black text-white">
             {formatNumber(result.dps)}
@@ -134,7 +134,7 @@ export function SimulatorPage() {
         <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-b from-emerald-500/10 to-transparent p-5">
           <div className="flex items-center justify-between text-emerald-400">
             <span className="text-xs font-bold uppercase tracking-wider">Effective HP (EHP)</span>
-            <Shield className="size-4" />
+            <IconShield className="size-4" />
           </div>
           <p className="mt-2 font-mono text-3xl font-black text-white">
             {formatNumber(result.effectiveHealth)}
@@ -151,7 +151,7 @@ export function SimulatorPage() {
         <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-b from-cyan-500/10 to-transparent p-5">
           <div className="flex items-center justify-between text-cyan-400">
             <span className="text-xs font-bold uppercase tracking-wider">Mage Ability DPS</span>
-            <Sparkles className="size-4" />
+            <IconSparkles className="size-4" />
           </div>
           <p className="mt-2 font-mono text-3xl font-black text-white">
             {formatNumber(result.abilityDamage)}
@@ -172,7 +172,7 @@ export function SimulatorPage() {
           <Panel className="space-y-4">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div className="flex items-center gap-2">
-                <Target className="size-4 text-emerald-400" />
+                <IconTarget className="size-4 text-emerald-400" />
                 <h2 className="text-sm font-bold text-white uppercase tracking-wider">
                   Target Mob & Environment
                 </h2>
@@ -249,7 +249,7 @@ export function SimulatorPage() {
           <Panel className="space-y-4">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div className="flex items-center gap-2">
-                <Sliders className="size-4 text-sky-400" />
+                <IconSliders className="size-4 text-sky-400" />
                 <h2 className="text-sm font-bold text-white uppercase tracking-wider">
                   Core Progression & Magical Power
                 </h2>
@@ -357,7 +357,7 @@ export function SimulatorPage() {
           <Panel className="space-y-4">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div className="flex items-center gap-2">
-                <Swords className="size-4 text-red-400" />
+                <IconSwords className="size-4 text-red-400" />
                 <h2 className="text-sm font-bold text-white uppercase tracking-wider">
                   Primary Weapon & Pet
                 </h2>
@@ -456,7 +456,7 @@ export function SimulatorPage() {
         <div className="space-y-6">
           <Panel className="space-y-4">
             <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-              <TrendingUp className="size-4 text-emerald-400" />
+              <IconTrendingUp className="size-4 text-emerald-400" />
               <h2 className="text-sm font-bold text-white uppercase tracking-wider">
                 Highest ROI Upgrades
               </h2>
@@ -501,7 +501,7 @@ export function SimulatorPage() {
           {/* Stat Totals Summary */}
           <Panel className="space-y-3">
             <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-              <Crosshair className="size-4 text-purple-400" />
+              <IconCrosshair className="size-4 text-purple-400" />
               <h3 className="text-xs font-bold uppercase text-white tracking-wider">
                 Active Combat Stats
               </h3>

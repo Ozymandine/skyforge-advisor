@@ -8,7 +8,7 @@ import {
   type BossTierAudit,
   type KuudraRoleAudit,
 } from "@/lib/boss-tactics";
-import { Skull, Flame, CheckCircle2, AlertCircle } from "lucide-react";
+import { IconSkull, IconFlame, IconCheckCircle2, IconAlertCircle } from "@/assets/icons";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/bosses")({
@@ -29,7 +29,7 @@ export function BossTacticsPage() {
         <div>
           <div className="flex items-center gap-2.5">
             <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-lg">
-              <Skull className="size-5" />
+              <IconSkull className="size-5" />
             </div>
             <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
               Boss Tactics & Combat Hub
@@ -52,7 +52,7 @@ export function BossTacticsPage() {
                 : "text-white/60 hover:text-white",
             )}
           >
-            <Skull className="size-3.5" /> Voidgloom Seraph (T1–T4)
+            <IconSkull className="size-3.5" /> Voidgloom Seraph (T1–T4)
           </button>
           <button
             onClick={() => setActiveTab("kuudra")}
@@ -63,7 +63,7 @@ export function BossTacticsPage() {
                 : "text-white/60 hover:text-white",
             )}
           >
-            <Flame className="size-3.5" /> Infernal Kuudra (T1–T5)
+            <IconFlame className="size-3.5" /> Infernal Kuudra (T1–T5)
           </button>
         </div>
       </div>
@@ -134,11 +134,11 @@ export function BossTacticsPage() {
                   >
                     {tier.qualified ? (
                       <>
-                        <CheckCircle2 className="size-3.5" /> Qualified
+                        <IconCheckCircle2 className="size-3.5" /> Qualified
                       </>
                     ) : (
                       <>
-                        <AlertCircle className="size-3.5" /> Incomplete
+                        <IconAlertCircle className="size-3.5" /> Incomplete
                       </>
                     )}
                   </span>
@@ -254,7 +254,7 @@ export function BossTacticsPage() {
                   <div className="space-y-1">
                     {role.requiredGear.map((item: string, idx: number) => (
                       <div key={idx} className="flex items-center gap-2 text-xs text-white/80">
-                        <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                        <IconCheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
                         <span>{item}</span>
                       </div>
                     ))}

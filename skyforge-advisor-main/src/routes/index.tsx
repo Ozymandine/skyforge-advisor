@@ -6,21 +6,22 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import {
-  ArrowRight,
-  BarChart3,
-  BookOpen,
-  Coins,
-  Hammer,
-  KeyRound,
-  Sparkles,
-  TrendingUp,
-  User,
-  Swords,
-  Skull,
-  Sprout,
-  Bot,
-  Search,
-} from "lucide-react";
+  IconArrowRight,
+  IconBarChart3,
+  IconBookOpen,
+  IconCoins,
+  IconHammer,
+  IconKeyRound,
+  IconSparkles,
+  IconTrendingUp,
+  IconUser,
+  IconSwords,
+  IconSkull,
+  IconSprout,
+  IconBot,
+  IconSearch,
+  IconTarget,
+} from "@/assets/icons";
 
 import { Panel } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
@@ -53,67 +54,67 @@ export const Route = createFileRoute("/")({
 const FEATURES = [
   {
     to: "/advisor",
-    icon: Bot,
+    icon: IconBot,
     title: "Autonomous Progression Advisor",
     body: "Real-time account audit across MP, Slayers, Dungeons, and Minions with 1-click in-game commands.",
     badge: "NEW",
   },
   {
     to: "/simulator",
-    icon: Swords,
+    icon: IconSwords,
     title: "Damage & Gear Lab",
     body: "Live Hypixel damage formula sandbox, Catacombs scaling, mob defenses, and cost-to-DPS optimizer.",
     badge: "NEW",
   },
   {
     to: "/bosses",
-    icon: Skull,
+    icon: IconSkull,
     title: "Boss Tactics & Kuudra Hub",
     body: "Voidgloom T1–T4 hitsphase/survival audit and Infernal Kuudra role qualifications with profit-per-key forecasts.",
     badge: "NEW",
   },
   {
     to: "/garden",
-    icon: Sprout,
+    icon: IconSprout,
     title: "Garden & Farming Engine",
     body: "Universal Farming Fortune breakdown, live coins/hr across 10 crops, and Jacob's Contest medal brackets.",
     badge: "NEW",
   },
   {
     to: "/flips",
-    icon: TargetIcon,
+    icon: IconTarget,
     title: "Live Flip Radar & Audio Sniper",
     body: "Synthesized Web Audio Minecraft chimes, margin filters, liquidity scores, and 1-click clipboard execution.",
     badge: "UPDATED",
   },
   {
     to: "/dashboard",
-    icon: User,
+    icon: IconUser,
     title: "Profile Command Center",
     body: "Skills, dungeons, slayers, fairy souls, and inventory decoded live from Hypixel.",
   },
   {
     to: "/net-worth",
-    icon: Coins,
+    icon: IconCoins,
     title: "Net Worth & Valuation",
     body: "Every container and accessory priced against live Bazaar and AH order books.",
   },
   {
     to: "/wiki",
-    icon: BookOpen,
+    icon: IconBookOpen,
     title: "8,700+ Item Wiki",
     body: "Real stats, abilities, requirements and crafting grids from the NEU dataset, linked to live prices.",
   },
   {
     to: "/crafting",
-    icon: Hammer,
+    icon: IconHammer,
     title: "Crafting Cost Trees",
     body: "Full dependency trees priced to raw materials with the cheapest craft path highlighted.",
   },
 ];
 
 function TargetIcon(props: { className?: string }) {
-  return <BarChart3 {...props} />;
+  return <IconTarget {...props} />;
 }
 
 function Landing() {
@@ -195,7 +196,7 @@ function Landing() {
           className="mx-auto mt-8 flex max-w-lg flex-wrap items-center justify-center gap-2"
         >
           <div className="relative flex-1 min-w-[240px]">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
               value={searchIgn}
               onChange={(e) => setSearchIgn(e.target.value)}
@@ -207,7 +208,7 @@ function Landing() {
             type="submit"
             className="flex items-center gap-2 rounded-2xl border border-primary/40 bg-primary/20 px-6 py-3.5 text-sm font-semibold text-primary transition-all duration-75 ease-out hover:scale-[1.02] hover:bg-primary/30 active:scale-95"
           >
-            <Sparkles className="size-4" /> Explore Profile
+            <IconSparkles className="size-4" /> Explore Profile
           </button>
         </form>
 
@@ -317,7 +318,7 @@ function Landing() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-              <TrendingUp className="size-5 text-primary" /> Live flips, right now
+              <IconTrendingUp className="size-5 text-primary" /> Live flips, right now
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Real Bazaar data — this is what the flip board looks like at this exact moment.
@@ -327,7 +328,7 @@ function Landing() {
             to="/bazaar"
             className="flex items-center gap-1.5 text-sm text-primary hover:underline"
           >
-            Open the flip board <ArrowRight className="size-3.5" />
+            Open the flip board <IconArrowRight className="size-3.5" />
           </Link>
         </div>
 
@@ -371,7 +372,7 @@ function Landing() {
               scored suggestions
             </p>
             <span className="flex items-center gap-1 text-xs text-emerald-300">
-              See the full scorecard <ArrowRight className="size-3.5" />
+              See the full scorecard <IconArrowRight className="size-3.5" />
             </span>
           </Link>
         )}
@@ -398,7 +399,7 @@ function Landing() {
               <p className="mt-3 font-semibold text-white">{feature.title}</p>
               <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{feature.body}</p>
               <span className="mt-3 flex items-center gap-1 text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                Open <ArrowRight className="size-3" />
+                Open <IconArrowRight className="size-3" />
               </span>
             </Link>
           ))}

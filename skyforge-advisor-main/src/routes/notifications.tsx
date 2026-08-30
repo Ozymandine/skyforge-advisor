@@ -1,6 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, Coins, Gavel, Plus, RefreshCw, Sparkles, Target, Trash2 } from "lucide-react";
+import {
+  IconBell,
+  IconCoins,
+  IconGavel,
+  IconPlus,
+  IconRefreshCw,
+  IconSparkles,
+  IconTarget,
+  IconTrash2,
+} from "@/assets/icons";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Chip, PageHero, Panel } from "@/components/layout/app-shell";
@@ -24,12 +33,12 @@ import {
 import { formatDuration, formatNumber } from "@/lib/skyblock";
 import { MAX_FAIRY_SOULS } from "@/lib/constants";
 
-const icons: Record<string, typeof Bell> = {
-  market: Coins,
-  auction: Gavel,
-  goal: Target,
-  skill: Sparkles,
-  sync: RefreshCw,
+const icons: Record<string, typeof IconBell> = {
+  market: IconCoins,
+  auction: IconGavel,
+  goal: IconTarget,
+  skill: IconSparkles,
+  sync: IconRefreshCw,
 };
 
 type NotificationItem = FeedItem;
@@ -374,7 +383,7 @@ function Notifications() {
                 disabled={!draftItem || !draftThreshold}
                 className="flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/15 px-4 py-2 text-sm font-medium text-primary transition-all duration-75 ease-out hover:scale-[1.03] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <Plus className="size-4" /> Add alert
+                <IconPlus className="size-4" /> Add alert
               </button>
             </div>
 
@@ -399,7 +408,7 @@ function Notifications() {
                       aria-label="Remove alert"
                       className="rounded-lg p-1.5 text-muted-foreground transition-all hover:bg-white/10 hover:text-danger"
                     >
-                      <Trash2 className="size-4" />
+                      <IconTrash2 className="size-4" />
                     </button>
                   </li>
                 ))}
@@ -456,7 +465,7 @@ function Notifications() {
 
             <ul className="mt-6 space-y-3">
               {filtered.map((notification) => {
-                const Icon = icons[notification.kind] ?? Bell;
+                const Icon = icons[notification.kind] ?? IconBell;
                 return (
                   <li
                     key={notification.id}

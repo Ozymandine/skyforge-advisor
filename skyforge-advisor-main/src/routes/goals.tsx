@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, Plus, Sparkles, X } from "lucide-react";
+import { IconCheck, IconPlus, IconSparkles, IconX } from "@/assets/icons";
 import { useEffect, useMemo, useState } from "react";
 
 import { PageHero, Panel, ProgressBar } from "@/components/layout/app-shell";
@@ -268,7 +268,7 @@ function Goals() {
           {recommendations.length > 0 && (
             <Panel>
               <div className="flex items-center gap-2">
-                <Sparkles className="size-4 text-primary" />
+                <IconSparkles className="size-4 text-primary" />
                 <h2 className="text-xl font-semibold">Recommended next steps</h2>
               </div>
               <p className="mt-2 text-sm text-muted-foreground">
@@ -312,7 +312,7 @@ function Goals() {
                     }}
                     className="flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/15 px-3 py-2 text-sm font-medium text-primary"
                   >
-                    <Plus className="size-4" /> Add
+                    <IconPlus className="size-4" /> Add
                   </button>
                 </div>
               </div>
@@ -363,7 +363,7 @@ function Goals() {
                                 : "border-border"
                             }`}
                           >
-                            {task.done && <Check className="size-3" />}
+                            {task.done && <IconCheck className="size-3" />}
                           </span>
                           <span
                             className={`min-w-0 truncate ${
@@ -378,7 +378,7 @@ function Goals() {
                           aria-label={`Remove task: ${task.label}`}
                           className="shrink-0 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-white/10 hover:text-danger group-hover:opacity-100"
                         >
-                          <X className="size-3.5" />
+                          <IconX className="size-3.5" />
                         </button>
                       </li>
                     ))}
@@ -403,7 +403,7 @@ function Goals() {
                       disabled={!draftTask[list].trim()}
                       className="flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/15 px-3 py-2 text-sm font-medium text-primary disabled:opacity-50"
                     >
-                      <Plus className="size-4" /> Add
+                      <IconPlus className="size-4" /> Add
                     </button>
                   </div>
                 </Panel>

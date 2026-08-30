@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Filter, RefreshCw, Search, SlidersHorizontal } from "lucide-react";
+import { IconFilter, IconRefreshCw, IconSearch, IconSlidersHorizontal } from "@/assets/icons";
 import { Suspense, lazy, useEffect, useMemo, useRef, useState, useDeferredValue } from "react";
 
 import { ErrorState, LoadState } from "@/components/data-states";
@@ -196,7 +196,7 @@ function AuctionHouse() {
             onClick={() => refetch()}
             className="flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-1.5 text-xs font-medium transition-all duration-75 ease-out hover:scale-[1.03] hover:border-ring/40 active:scale-95"
           >
-            <RefreshCw className={`size-3.5 ${isFetching ? "animate-spin" : ""}`} /> Refresh
+            <IconRefreshCw className={`size-3.5 ${isFetching ? "animate-spin" : ""}`} /> Refresh
           </button>
         </div>
         {data && (
@@ -215,7 +215,7 @@ function AuctionHouse() {
         <Panel>
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex min-w-56 flex-1 items-center gap-2 rounded-xl border border-input bg-secondary/40 px-3 py-2 transition-all duration-75 hover:border-ring/40">
-              <Search className="size-4 text-muted-foreground" />
+              <IconSearch className="size-4 text-muted-foreground" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -242,7 +242,7 @@ function AuctionHouse() {
             ))}
             <Chip active={showFlipConfig} onClick={() => setShowFlipConfig((v) => !v)}>
               <span className="flex items-center gap-1.5">
-                <SlidersHorizontal className="size-3" /> Flip finder
+                <IconSlidersHorizontal className="size-3" /> Flip finder
               </span>
             </Chip>
           </div>
@@ -250,7 +250,7 @@ function AuctionHouse() {
           {showFlipConfig && (
             <div className="mt-4 rounded-2xl border border-primary/25 bg-primary/5 p-4">
               <p className="flex items-center gap-2 text-sm font-semibold">
-                <Filter className="size-4 text-primary" /> Flip finder
+                <IconFilter className="size-4 text-primary" /> Flip finder
                 <span className="text-xs font-normal text-muted-foreground">
                   {flipSummary.count} qualifying flips · best margin{" "}
                   {flipSummary.bestMargin.toFixed(0)}% · {formatNumber(flipSummary.totalProfit)}{" "}

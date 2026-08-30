@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { KeyRound, Loader2 } from "lucide-react";
+import { IconKeyRound, IconLoader2 } from "@/assets/icons";
 import type { ReactNode } from "react";
 
 import { Panel } from "@/components/layout/app-shell";
@@ -8,7 +8,7 @@ export function ConnectPrompt({ what }: { what: string }) {
   return (
     <Panel className="text-center">
       <div className="mx-auto flex size-11 items-center justify-center rounded-2xl bg-primary/15 text-primary ring-1 ring-primary/30">
-        <KeyRound className="size-5" />
+        <IconKeyRound className="size-5" />
       </div>
       <h2 className="mt-4 text-xl font-semibold">Connect your Hypixel account</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
@@ -28,7 +28,7 @@ export function ConnectPrompt({ what }: { what: string }) {
 export function LoadState({ children }: { children: ReactNode }) {
   return (
     <Panel className="flex items-center justify-center gap-3 py-14 text-sm text-muted-foreground">
-      <Loader2 className="size-4 animate-spin text-primary" />
+      <IconLoader2 className="size-4 animate-spin text-primary" />
       {children}
     </Panel>
   );

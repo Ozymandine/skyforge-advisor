@@ -1,29 +1,29 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Target,
-  TrendingUp,
-  Scale,
-  Hammer,
-  AlertTriangle,
-  Check,
-  Copy,
-  Flame,
-  ShieldCheck,
-  Zap,
-  Boxes,
-  ArrowRight,
-  Filter,
-  RefreshCw,
-  Sparkles,
-  Coins,
-  Crown,
-  Dog,
-  Bot,
-  Volume2,
-  VolumeX,
-  Radio,
-} from "lucide-react";
+  IconTarget,
+  IconTrendingUp,
+  IconScale,
+  IconHammer,
+  IconAlertTriangle,
+  IconCheck,
+  IconCopy,
+  IconFlame,
+  IconShieldCheck,
+  IconZap,
+  IconBoxes,
+  IconArrowRight,
+  IconFilter,
+  IconRefreshCw,
+  IconSparkles,
+  IconCoins,
+  IconCrown,
+  IconDog,
+  IconBot,
+  IconVolume2,
+  IconVolumeX,
+  IconRadio,
+} from "@/assets/icons";
 import { useMemo, useState, useEffect, useDeferredValue } from "react";
 
 import { PageHero, Panel, StatRow, ProgressBar } from "@/components/layout/app-shell";
@@ -270,24 +270,34 @@ function FlipsRoute() {
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
         <div className="flex flex-wrap gap-2">
           {[
-            { id: "bazaar", label: "Bazaar Flips", count: bazaarFlips.length, icon: TrendingUp },
-            { id: "auctions", label: "AH Undercuts", count: auctionFlips.length, icon: Hammer },
-            { id: "crafts", label: "Craft Margins", count: craftFlips.length, icon: Boxes },
+            {
+              id: "bazaar",
+              label: "Bazaar Flips",
+              count: bazaarFlips.length,
+              icon: IconTrendingUp,
+            },
+            { id: "auctions", label: "AH Undercuts", count: auctionFlips.length, icon: IconHammer },
+            { id: "crafts", label: "Craft Margins", count: craftFlips.length, icon: IconBoxes },
             {
               id: "arbitrage",
               label: "AH ↔ BZ Arbitrage",
               count: crossArbitrage.length,
-              icon: RefreshCw,
+              icon: IconRefreshCw,
             },
-            { id: "pets", label: "Pet Leveling ROI", count: petFlips.length, icon: Dog },
-            { id: "minions", label: "Minion Setup Payback", count: minionSetups.length, icon: Bot },
+            { id: "pets", label: "Pet Leveling ROI", count: petFlips.length, icon: IconDog },
+            {
+              id: "minions",
+              label: "Minion Setup Payback",
+              count: minionSetups.length,
+              icon: IconBot,
+            },
             {
               id: "dark_auction",
               label: "Sirius Bid Ceilings",
               count: daCeilings.length,
-              icon: Crown,
+              icon: IconCrown,
             },
-            { id: "scorecard", label: "Scorecard", count: null, icon: Scale },
+            { id: "scorecard", label: "Scorecard", count: null, icon: IconScale },
           ].map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
@@ -302,7 +312,7 @@ function FlipsRoute() {
                     : "border border-white/5 bg-white/[0.02] text-white/60 hover:bg-white/[0.05] hover:text-white",
                 )}
               >
-                <Icon className="size-3.5 text-sky-400" />
+                <IconTrendingUp className="size-3.5 text-sky-400" />
                 <span>{tab.label}</span>
                 {tab.count !== null && (
                   <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] font-mono font-bold text-white/80">
@@ -358,12 +368,12 @@ function FlipsRoute() {
           >
             {soundEnabled ? (
               <>
-                <Volume2 className="size-3.5 text-emerald-400" />
+                <IconVolume2 className="size-3.5 text-emerald-400" />
                 <span>Audio Radar: ON</span>
               </>
             ) : (
               <>
-                <VolumeX className="size-3.5 text-white/40" />
+                <IconVolumeX className="size-3.5 text-white/40" />
                 <span>Audio Radar: OFF</span>
               </>
             )}
@@ -446,7 +456,11 @@ function FlipsRoute() {
                         : "border-sky-400/30 bg-sky-500/15 text-sky-300 hover:bg-sky-500/25",
                     )}
                   >
-                    {isCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                    {isCopied ? (
+                      <IconCheck className="size-3.5" />
+                    ) : (
+                      <IconCopy className="size-3.5" />
+                    )}
                     <span>{isCopied ? "Command Copied!" : `Copy ${cmd}`}</span>
                   </button>
                 </div>
@@ -515,7 +529,7 @@ function FlipsRoute() {
 
                     {flip.manipulation.isManipulated && (
                       <div className="mt-3 flex items-start gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-[10px] text-red-300">
-                        <AlertTriangle className="size-3.5 shrink-0 mt-0.5" />
+                        <IconAlertTriangle className="size-3.5 shrink-0 mt-0.5" />
                         <span>{flip.manipulation.reason}</span>
                       </div>
                     )}
@@ -530,7 +544,11 @@ function FlipsRoute() {
                         : "border-purple-400/30 bg-purple-500/15 text-purple-300 hover:bg-purple-500/25",
                     )}
                   >
-                    {isCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                    {isCopied ? (
+                      <IconCheck className="size-3.5" />
+                    ) : (
+                      <IconCopy className="size-3.5" />
+                    )}
                     <span>{isCopied ? "Command Copied!" : `Copy ${cmd}`}</span>
                   </button>
                 </div>
@@ -618,7 +636,11 @@ function FlipsRoute() {
                         : "border-amber-400/30 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25",
                     )}
                   >
-                    {isCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                    {isCopied ? (
+                      <IconCheck className="size-3.5" />
+                    ) : (
+                      <IconCopy className="size-3.5" />
+                    )}
                     <span>{isCopied ? "Command Copied!" : `Copy ${cmd}`}</span>
                   </button>
                 </div>
@@ -686,7 +708,11 @@ function FlipsRoute() {
                           : "border-emerald-400/30 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25",
                       )}
                     >
-                      {isCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                      {isCopied ? (
+                        <IconCheck className="size-3.5" />
+                      ) : (
+                        <IconCopy className="size-3.5" />
+                      )}
                       <span>{isCopied ? "Command Copied!" : `Copy ${a.commandBuy}`}</span>
                     </button>
                   </div>
@@ -896,7 +922,7 @@ function FlipsRoute() {
 
               <Panel>
                 <h2 className="flex items-center gap-2 text-xl font-semibold">
-                  <Scale className="size-5 text-primary" /> How scoring works
+                  <IconScale className="size-5 text-primary" /> How scoring works
                 </h2>
                 <ol className="mt-4 space-y-3 text-sm leading-relaxed text-muted-foreground">
                   <li className="flex gap-3">
@@ -915,7 +941,7 @@ function FlipsRoute() {
           ) : (
             <Panel>
               <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Target className="size-4 text-primary" />
+                <IconTarget className="size-4 text-primary" />
                 The scorecard is being built — suggestions need at least 10 minutes of market
                 movement before they can be scored.
               </p>

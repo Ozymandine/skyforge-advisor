@@ -9,7 +9,14 @@ import {
   type FarmingConfig,
   type CropProfitReport,
 } from "@/lib/farming-calculator";
-import { Sprout, Coins, Trophy, Sliders, TrendingUp, Sparkles } from "lucide-react";
+import {
+  IconSprout,
+  IconCoins,
+  IconTrophy,
+  IconSliders,
+  IconTrendingUp,
+  IconSparkles,
+} from "@/assets/icons";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/garden")({
@@ -44,7 +51,7 @@ export function GardenPage() {
         <div>
           <div className="flex items-center gap-2.5">
             <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-green-600 text-black shadow-lg">
-              <Sprout className="size-5" />
+              <IconSprout className="size-5" />
             </div>
             <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
               Garden & Farming Fortune Engine
@@ -65,7 +72,7 @@ export function GardenPage() {
             <span className="text-xs font-bold uppercase tracking-wider">
               Total Farming Fortune
             </span>
-            <Sparkles className="size-4" />
+            <IconSparkles className="size-4" />
           </div>
           <p className="mt-2 font-mono text-3xl font-black text-white">{fortune.totalFortune} ☘</p>
           <p className="mt-1 text-xs text-white/60">Base + Level + Plots + Pet + Tool</p>
@@ -75,7 +82,7 @@ export function GardenPage() {
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5">
           <div className="flex items-center justify-between text-amber-400">
             <span className="text-xs font-bold uppercase tracking-wider">Top Earning Crop</span>
-            <TrendingUp className="size-4" />
+            <IconTrendingUp className="size-4" />
           </div>
           <p className="mt-2 font-mono text-3xl font-black text-white">
             {topCrop?.name ?? "Melon"}
@@ -89,7 +96,7 @@ export function GardenPage() {
         <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-5">
           <div className="flex items-center justify-between text-yellow-400">
             <span className="text-xs font-bold uppercase tracking-wider">Jacob Medal Forecast</span>
-            <Trophy className="size-4" />
+            <IconTrophy className="size-4" />
           </div>
           <p className="mt-2 font-mono text-3xl font-black text-yellow-300">
             {topCrop?.predictedMedal} Medal
@@ -106,7 +113,7 @@ export function GardenPage() {
           <Panel className="space-y-4">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div className="flex items-center gap-2">
-                <Coins className="size-4 text-emerald-400" />
+                <IconCoins className="size-4 text-emerald-400" />
                 <h2 className="text-sm font-bold text-white uppercase tracking-wider">
                   Crop Leaderboard (Live Coins / Hour)
                 </h2>
@@ -176,7 +183,7 @@ export function GardenPage() {
         <div className="space-y-6">
           <Panel className="space-y-4">
             <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-              <Sliders className="size-4 text-emerald-400" />
+              <IconSliders className="size-4 text-emerald-400" />
               <h2 className="text-sm font-bold text-white uppercase tracking-wider">
                 Farming Fortune Modifiers
               </h2>
@@ -283,7 +290,7 @@ export function GardenPage() {
           {/* Fortune Breakdown Card */}
           <Panel className="space-y-3">
             <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-              <Sparkles className="size-4 text-emerald-400" />
+              <IconSparkles className="size-4 text-emerald-400" />
               <h3 className="text-xs font-bold uppercase text-white tracking-wider">
                 Fortune Breakdown
               </h3>

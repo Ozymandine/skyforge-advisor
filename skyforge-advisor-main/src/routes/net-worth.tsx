@@ -12,7 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Share2 } from "lucide-react";
+import { IconShare2 } from "@/assets/icons";
 
 import { useShare } from "@/hooks/use-share";
 import { fetchBazaar } from "@/lib/hypixel.functions";
@@ -230,7 +230,7 @@ function NetWorth() {
               onClick={handleShare}
               className="flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-5 py-2.5 text-sm font-medium text-primary transition-all duration-75 ease-out hover:scale-[1.03] hover:bg-primary/25 active:scale-95"
             >
-              <Share2 className="size-4" />
+              <IconShare2 className="size-4" />
               {copied ? "Copied!" : "Share"}
             </button>
           ) : undefined

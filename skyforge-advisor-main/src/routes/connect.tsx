@@ -6,7 +6,7 @@
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ExternalLink, KeyRound, CheckCircle2, AlertCircle } from "lucide-react";
+import { IconExternalLink, IconKeyRound, IconCheckCircle2, IconAlertCircle } from "@/assets/icons";
 
 import { PageHero, Panel } from "@/components/layout/app-shell";
 import { useAccount, usePlayer } from "@/hooks/use-account";
@@ -132,11 +132,12 @@ function Connect() {
                 >
                   {keyValidShape ? (
                     <>
-                      <CheckCircle2 className="size-3.5" /> Valid key shape
+                      <IconCheckCircle2 className="size-3.5" /> Valid key shape
                     </>
                   ) : (
                     <>
-                      <AlertCircle className="size-3.5" /> Keys are UUID-shaped — check formatting
+                      <IconAlertCircle className="size-3.5" /> Keys are UUID-shaped — check
+                      formatting
                     </>
                   )}
                 </p>
@@ -147,13 +148,13 @@ function Connect() {
 
         {error && (
           <p className="mt-6 flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
-            <AlertCircle className="size-4" /> {error}
+            <IconAlertCircle className="size-4" /> {error}
           </p>
         )}
 
         {player.error && account.connected && (
           <p className="mt-6 flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-2.5 text-xs text-amber-300">
-            <AlertCircle className="size-4 shrink-0" />
+            <IconAlertCircle className="size-4 shrink-0" />
             Last attempt failed: {(player.error as Error).message} — double-check the key or
             generate a new one.
           </p>
@@ -180,7 +181,7 @@ function Connect() {
       {account.connected && (
         <Panel className="border-emerald-500/30 bg-emerald-500/5">
           <p className="flex items-center gap-2 text-sm font-medium text-emerald-300">
-            <CheckCircle2 className="size-4" /> Connected as {account.username}
+            <IconCheckCircle2 className="size-4" /> Connected as {account.username}
           </p>
           <button
             onClick={() => {

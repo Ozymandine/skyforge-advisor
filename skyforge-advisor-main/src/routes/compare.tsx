@@ -4,7 +4,7 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Crown, Swords, Trophy } from "lucide-react";
+import { IconCrown, IconSwords, IconTrophy } from "@/assets/icons";
 import { useEffect, useMemo, useState } from "react";
 
 import { PageHero, Panel, ProgressBar, StatRow } from "@/components/layout/app-shell";
@@ -146,7 +146,7 @@ function ComparePage() {
                 disabled={!nameA.trim() || !nameB.trim()}
                 className="flex items-center justify-center gap-2 rounded-xl border border-primary/40 bg-primary/15 px-6 py-2.5 text-sm font-medium text-primary transition-all duration-75 ease-out hover:scale-[1.03] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <Swords className="size-4" /> Compare
+                <IconSwords className="size-4" /> Compare
               </button>
               <label className="text-xs text-muted-foreground">
                 Player B
@@ -217,7 +217,7 @@ function WinnerBanner({ a, b }: { a: PlayerData; b: PlayerData }) {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <span className="flex size-14 items-center justify-center rounded-2xl border border-gold/40 bg-gold/15 text-gold shadow-[0_0_24px_rgba(250,204,21,0.25)]">
-            <Crown className="size-7" />
+            <IconCrown className="size-7" />
           </span>
           <div>
             <p className="eyebrow">Overall Progression Winner</p>
@@ -336,7 +336,7 @@ function WeightPanels({ a, b }: { a: PlayerData; b: PlayerData }) {
   return (
     <Panel>
       <h2 className="flex items-center gap-2 text-lg font-semibold">
-        <Trophy className="size-4 text-gold" /> Weight breakdown
+        <IconTrophy className="size-4 text-gold" /> Weight breakdown
       </h2>
       <p className="mt-1 text-xs text-muted-foreground">
         Senither-style score from skills, Catacombs and slayer kills.

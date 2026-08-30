@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { IconSearch } from "@/assets/icons";
 
 import { Chip } from "@/components/layout/app-shell";
 
@@ -22,7 +22,7 @@ export function WikiSearch({
   return (
     <div className="space-y-3 border-b border-border/60 p-4">
       <div className="group flex items-center gap-3 rounded-xl border border-input bg-secondary/40 px-3 py-2.5 transition-colors duration-150 focus-within:border-ring/50 focus-within:bg-secondary/60 hover:border-ring/30">
-        <Search
+        <IconSearch
           aria-hidden="true"
           className="size-4 shrink-0 text-muted-foreground transition-colors group-focus-within:text-foreground"
         />

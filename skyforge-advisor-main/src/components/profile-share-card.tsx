@@ -4,7 +4,7 @@
 // so the download needs no external libraries.
 
 import { useMemo, useRef, useState } from "react";
-import { Download, Share2 } from "lucide-react";
+import { IconDownload, IconShare2 } from "@/assets/icons";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { formatFull } from "@/lib/skyblock";
@@ -143,7 +143,7 @@ export function ProfileShareCard({ data }: { data: ShareCardData | null }) {
         onClick={() => setOpen(true)}
         className="flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-5 py-2.5 text-sm font-medium text-primary transition-all duration-75 ease-out hover:scale-[1.03] hover:bg-primary/25 active:scale-95"
       >
-        <Share2 className="size-4" /> Profile card
+        <IconShare2 className="size-4" /> Profile card
       </button>
 
       <Dialog
@@ -176,7 +176,7 @@ export function ProfileShareCard({ data }: { data: ShareCardData | null }) {
               />
               <div className="flex flex-wrap gap-2">
                 <Button onClick={download} className="flex-1 gap-2">
-                  <Download className="size-4" /> Download PNG
+                  <IconDownload className="size-4" /> Download PNG
                 </Button>
                 <Button
                   variant="outline"
@@ -186,7 +186,7 @@ export function ProfileShareCard({ data }: { data: ShareCardData | null }) {
                     void navigator.clipboard.writeText(url).catch(() => {});
                   }}
                 >
-                  <Share2 className="size-4" /> Copy Public Link
+                  <IconShare2 className="size-4" /> Copy Public Link
                 </Button>
               </div>
             </div>

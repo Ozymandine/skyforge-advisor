@@ -7,15 +7,15 @@ import { useState, useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Trophy,
-  Search,
-  ChevronRight,
-  Target,
-  RefreshCw,
-  Pin,
-  ExternalLink,
-  UserCheck,
-} from "lucide-react";
+  IconTrophy,
+  IconSearch,
+  IconChevronRight,
+  IconTarget,
+  IconRefreshCw,
+  IconPin,
+  IconExternalLink,
+  IconUserCheck,
+} from "@/assets/icons";
 import { usePlayer, useAccount } from "@/hooks/use-account";
 import { PageHero, Panel } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
@@ -230,7 +230,7 @@ function LeaderboardsRoute() {
                   }}
                 />
               ) : (
-                <Target className="size-6 text-emerald-400" />
+                <IconTarget className="size-6 text-emerald-400" />
               )}
             </div>
 
@@ -292,7 +292,7 @@ function LeaderboardsRoute() {
       {/* Loading state indicator */}
       {eliteLeaderboardQuery.isLoading && (
         <div className="flex items-center justify-center py-16 text-muted-foreground text-sm gap-2">
-          <RefreshCw className="size-4 animate-spin text-emerald-400" />
+          <IconRefreshCw className="size-4 animate-spin text-emerald-400" />
           <span>Fetching Top 100 leaderboard from Elite SkyBlock...</span>
         </div>
       )}
@@ -303,7 +303,7 @@ function LeaderboardsRoute() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-white/10 pb-4">
             <div>
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Trophy className="size-5 text-amber-400" />
+                <IconTrophy className="size-5 text-amber-400" />
                 {eliteLeaderboardQuery.data?.title || activeSubcategory.name} Top 100
               </h3>
               <p className="text-xs text-muted-foreground mt-0.5">
@@ -314,7 +314,7 @@ function LeaderboardsRoute() {
             {/* Search Player Input */}
             <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 sm:w-80">
               <div className="relative flex-1">
-                <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <IconSearch className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="text"
                   value={searchInput}
@@ -416,7 +416,7 @@ function LeaderboardsRoute() {
                       params={{ username: p.ign }}
                       className="rounded-lg border border-white/10 bg-white/5 p-1.5 text-muted-foreground hover:bg-white/10 hover:text-white transition-colors"
                     >
-                      <ChevronRight className="size-4" />
+                      <IconChevronRight className="size-4" />
                     </Link>
                   </div>
                 </div>
@@ -436,7 +436,7 @@ function LeaderboardsRoute() {
                 <div className="flex items-center justify-between py-3.5 px-4 rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-r from-emerald-950/50 via-emerald-900/20 to-black/70 shadow-lg shadow-emerald-500/10">
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div className="flex items-center gap-1 rounded-lg border border-emerald-500/40 bg-emerald-500/20 px-2.5 py-1 font-mono text-xs font-black text-emerald-300">
-                      <Pin className="size-3" />
+                      <IconPin className="size-3" />
                       <span>{activeStanding.approximateRank}</span>
                     </div>
 
@@ -483,7 +483,7 @@ function LeaderboardsRoute() {
                       params={{ username: inspectedPlayer.username }}
                       className="rounded-lg border border-emerald-500/30 bg-emerald-500/20 p-2 text-emerald-300 hover:bg-emerald-500/30 transition-colors"
                     >
-                      <ChevronRight className="size-4" />
+                      <IconChevronRight className="size-4" />
                     </Link>
                   </div>
                 </div>

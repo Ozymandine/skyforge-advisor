@@ -5,7 +5,14 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ChevronDown, Hammer, Layers, Search, ShoppingCart } from "lucide-react";
+import {
+  IconArrowRight,
+  IconChevronDown,
+  IconHammer,
+  IconLayers,
+  IconSearch,
+  IconShoppingCart,
+} from "@/assets/icons";
 import { useMemo, useState } from "react";
 
 import { PageHero, Panel, ProgressBar } from "@/components/layout/app-shell";
@@ -238,7 +245,7 @@ function CraftingPage() {
         <>
           <Panel>
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 backdrop-blur-md">
-              <Search className="size-4 text-muted-foreground" />
+              <IconSearch className="size-4 text-muted-foreground" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -297,12 +304,12 @@ function CraftingPage() {
                       <p className="mt-1 flex items-center gap-2 text-2xl font-bold">
                         {verdict === "craft" && (
                           <>
-                            <Hammer className="size-6 text-emerald-400" /> Craft it
+                            <IconHammer className="size-6 text-emerald-400" /> Craft it
                           </>
                         )}
                         {verdict === "buy" && (
                           <>
-                            <ShoppingCart className="size-6 text-cyan-300" /> Buy it
+                            <IconShoppingCart className="size-6 text-cyan-300" /> Buy it
                           </>
                         )}
                         {verdict === "tie" && "Even either way"}
@@ -376,7 +383,7 @@ function CraftingPage() {
                           ×{formatNumber(ing.amount)} · via {ing.source}
                         </p>
                       </div>
-                      <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
+                      <IconArrowRight className="size-3.5 shrink-0 text-muted-foreground" />
                       <p className="shrink-0 text-right font-mono text-sm font-semibold">
                         {ing.unitPrice !== null ? formatNumber(ing.unitPrice * ing.amount) : "?"}
                       </p>
@@ -397,7 +404,7 @@ function CraftingPage() {
             <Panel>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="flex items-center gap-2 text-lg font-semibold">
-                  <Layers className="size-4 text-primary" /> Dependency tree
+                  <IconLayers className="size-4 text-primary" /> Dependency tree
                 </h2>
                 <p className="text-xs text-muted-foreground">
                   {rawCount} raw materials ·{" "}
@@ -459,7 +466,9 @@ function TreeNode({ node, depth }: { node: CraftNode; depth: number }) {
             aria-label={open ? "Collapse" : "Expand"}
             className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
           >
-            <ChevronDown className={`size-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+            <IconChevronDown
+              className={`size-3.5 transition-transform ${open ? "rotate-180" : ""}`}
+            />
           </button>
         ) : (
           <span className="w-3.5 shrink-0" />

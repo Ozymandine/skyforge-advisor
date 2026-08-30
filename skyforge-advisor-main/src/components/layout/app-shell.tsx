@@ -1,37 +1,38 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
-  Menu,
-  X,
-  Bell,
-  Swords,
-  BookOpen,
-  Boxes,
-  Compass,
-  Coins,
-  Gauge,
-  Hammer,
-  KeyRound,
-  LayoutDashboard,
-  LineChart,
-  PanelLeftClose,
-  PanelLeftOpen,
-  RefreshCw,
-  Search,
-  Settings,
-  Sparkles,
-  Target,
-  TrendingUp,
-  ChevronDown,
-  Check,
-  Sun,
-  Moon,
-  User,
-  Calendar,
-  Bot,
-  Skull,
-  Sprout,
-  Trophy,
-} from "lucide-react";
+  IconArrowRight,
+  IconBell,
+  IconBookOpen,
+  IconBoxes,
+  IconCalendar,
+  IconChevronDown,
+  IconCheck,
+  IconCoins,
+  IconCompass,
+  IconGauge,
+  IconHammer,
+  IconKeyRound,
+  IconLayoutDashboard,
+  IconLineChart,
+  IconMenu,
+  IconMoon,
+  IconPanelLeftClose,
+  IconPanelLeftOpen,
+  IconRefreshCw,
+  IconSearch,
+  IconSettings,
+  IconSkull,
+  IconSprout,
+  IconSparkles,
+  IconSun,
+  IconSwords,
+  IconTarget,
+  IconTrophy,
+  IconTrendingUp,
+  IconUser,
+  IconBot,
+  IconX,
+} from "@/assets/icons";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -68,37 +69,37 @@ import {
 const nav = [
   {
     group: "Overview",
-    items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }],
+    items: [{ to: "/dashboard", label: "Dashboard", icon: IconLayoutDashboard }],
   },
   {
     group: "Progression",
     items: [
-      { to: "/skills", label: "Skills", icon: Sparkles },
-      { to: "/collections", label: "Collections", icon: Compass },
-      { to: "/inventory", label: "Inventory", icon: Boxes },
+      { to: "/skills", label: "Skills", icon: IconSparkles },
+      { to: "/collections", label: "Collections", icon: IconCompass },
+      { to: "/inventory", label: "Inventory", icon: IconBoxes },
     ],
   },
   {
     group: "Economy",
     items: [
-      { to: "/bazaar", label: "Bazaar", icon: TrendingUp },
-      { to: "/auction-house", label: "Auction House", icon: Hammer },
+      { to: "/bazaar", label: "Bazaar", icon: IconTrendingUp },
+      { to: "/auction-house", label: "Auction House", icon: IconHammer },
     ],
   },
   {
     group: "Tools",
     items: [
-      { to: "/leaderboards", label: "Leaderboards", icon: Trophy },
-      { to: "/calendar", label: "Calendar", icon: Calendar },
-      { to: "/analytics", label: "Analytics", icon: LineChart },
-      { to: "/wiki", label: "Wiki", icon: BookOpen },
+      { to: "/leaderboards", label: "Leaderboards", icon: IconTrophy },
+      { to: "/calendar", label: "Calendar", icon: IconCalendar },
+      { to: "/analytics", label: "Analytics", icon: IconLineChart },
+      { to: "/wiki", label: "Wiki", icon: IconBookOpen },
     ],
   },
   {
     group: "Profile",
     items: [
-      { to: "/notifications", label: "Notifications", icon: Bell },
-      { to: "/settings", label: "Settings", icon: Settings },
+      { to: "/notifications", label: "Notifications", icon: IconBell },
+      { to: "/settings", label: "Settings", icon: IconSettings },
     ],
   },
 ] as const;
@@ -184,7 +185,11 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
           aria-label="Toggle sidebar"
           className="flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] py-1.5 text-muted-foreground transition-all duration-150 hover:transition-none hover:bg-white/15 hover:text-foreground hover:border-white/20 active:bg-white/20 cursor-pointer"
         >
-          {collapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
+          {collapsed ? (
+            <IconPanelLeftOpen className="size-4" />
+          ) : (
+            <IconPanelLeftClose className="size-4" />
+          )}
         </button>
       </div>
 
@@ -257,7 +262,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                   </div>
                 )}
                 {!collapsed && (
-                  <ChevronDown className="size-3 text-muted-foreground shrink-0 ml-auto" />
+                  <IconChevronDown className="size-3 text-muted-foreground shrink-0 ml-auto" />
                 )}
               </div>
             </DropdownMenuTrigger>
@@ -283,7 +288,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     </p>
                   </div>
                   {activeProfile?.profileId === p.profileId && (
-                    <Check className="size-4 text-emerald-400 shrink-0" />
+                    <IconCheck className="size-4 text-emerald-400 shrink-0" />
                   )}
                 </DropdownMenuItem>
               ))}
@@ -296,7 +301,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                   to="/connect"
                   className="flex items-center gap-2 text-xs text-muted-foreground hover:text-white"
                 >
-                  <KeyRound className="size-3.5 text-primary" /> Switch / Reconnect Account
+                  <IconKeyRound className="size-3.5 text-primary" /> Switch / Reconnect Account
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -310,7 +315,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
               collapsed && "justify-center p-2",
             )}
           >
-            <KeyRound className="size-4 shrink-0 text-emerald-400" />
+            <IconKeyRound className="size-4 shrink-0 text-emerald-400" />
             {!collapsed && <span className="truncate text-xs">Connect Account</span>}
           </Link>
         )}
@@ -443,11 +448,11 @@ function Header({
 
   const themeIcon =
     theme === "light" ? (
-      <Moon className="size-4 text-indigo-400" />
+      <IconMoon className="size-4 text-indigo-400" />
     ) : theme === "solid" ? (
-      <Sun className="size-4 text-slate-300" />
+      <IconSun className="size-4 text-slate-300" />
     ) : (
-      <Sun className="size-4 text-amber-400" />
+      <IconSun className="size-4 text-amber-400" />
     );
 
   return (
@@ -457,7 +462,7 @@ function Header({
           onClick={onOpenSearch}
           className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-muted-foreground transition-none hover:border-white/20 hover:bg-white/10 active:opacity-80 sm:max-w-xl"
         >
-          <Search className="size-4 shrink-0" />
+          <IconSearch className="size-4 shrink-0" />
           <span className="truncate">Search or type a command...</span>
           <kbd className="ml-auto hidden rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:block">
             ⌘K
@@ -490,7 +495,7 @@ function Header({
               to="/connect"
               className="flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/20 px-3.5 py-2 text-xs font-bold text-primary transition-all duration-150 hover:bg-primary/30 hover:scale-[1.02] active:scale-95 shadow-lg shadow-primary/10"
             >
-              <KeyRound className="size-3.5" /> Connect
+              <IconKeyRound className="size-3.5" /> Connect
             </Link>
           )}
 
@@ -500,7 +505,7 @@ function Header({
             aria-label="Open navigation"
             className="rounded-lg p-2 text-muted-foreground transition-none hover:bg-white/10 hover:text-foreground active:opacity-75 lg:hidden"
           >
-            <Menu className="size-4" />
+            <IconMenu className="size-4" />
           </button>
 
           {/* Refresh Button */}
@@ -509,13 +514,13 @@ function Header({
             aria-label="Refresh data"
             className="rounded-lg p-2 text-muted-foreground transition-none hover:bg-white/10 hover:text-foreground active:opacity-75"
           >
-            <RefreshCw className={cn("size-4", player.isFetching && "animate-spin")} />
+            <IconRefreshCw className={cn("size-4", player.isFetching && "animate-spin")} />
           </button>
 
           {/* Notifications Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger className="relative rounded-lg p-2 text-muted-foreground transition-none hover:bg-white/10 hover:text-foreground active:opacity-75 outline-none">
-              <Bell className="size-4" />
+              <IconBell className="size-4" />
               {feed.unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-emerald-400 text-[9px] font-bold text-black ring-2 ring-background">
                   {feed.unreadCount > 9 ? "9+" : feed.unreadCount}
@@ -591,7 +596,7 @@ function Header({
             aria-label="Settings"
             className="rounded-lg p-2 text-muted-foreground transition-none hover:bg-white/10 hover:text-foreground active:opacity-75"
           >
-            <Settings className="size-4" />
+            <IconSettings className="size-4" />
           </Link>
         </div>
       </div>
@@ -705,7 +710,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="flex flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
             activeProps={{ className: "text-emerald-400 font-bold" }}
           >
-            <LayoutDashboard className="size-4" />
+            <IconLayoutDashboard className="size-4" />
             <span className="text-[10px]">Dashboard</span>
           </Link>
           <Link
@@ -713,7 +718,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="flex flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
             activeProps={{ className: "text-sky-400 font-bold" }}
           >
-            <Bot className="size-4" />
+            <IconBot className="size-4" />
             <span className="text-[10px]">Advisor</span>
           </Link>
           <Link
@@ -721,7 +726,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="flex flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
             activeProps={{ className: "text-amber-400 font-bold" }}
           >
-            <Swords className="size-4" />
+            <IconSwords className="size-4" />
             <span className="text-[10px]">Damage</span>
           </Link>
           <Link
@@ -729,14 +734,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="flex flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
             activeProps={{ className: "text-emerald-400 font-bold" }}
           >
-            <Target className="size-4" />
+            <IconTarget className="size-4" />
             <span className="text-[10px]">Flips</span>
           </Link>
           <button
             onClick={() => setNavOpen(true)}
             className="flex flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
           >
-            <Menu className="size-4" />
+            <IconMenu className="size-4" />
             <span className="text-[10px]">Menu</span>
           </button>
         </div>
@@ -759,7 +764,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 aria-label="Close navigation"
                 className="rounded-lg p-2 text-muted-foreground hover:bg-white/10 hover:text-foreground"
               >
-                <X className="size-4" />
+                <IconX className="size-4" />
               </button>
             </div>
             <div className="mt-6">
@@ -808,7 +813,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   }}
                   className="flex items-center gap-2"
                 >
-                  <TrendingUp className="size-4 text-emerald-400" />
+                  <IconTrendingUp className="size-4 text-emerald-400" />
                   <span className="min-w-0 flex-1 truncate">{p.name}</span>
                   <span className="shrink-0 font-mono text-[10px] text-emerald-400">
                     +{formatNumber(p.profitPerHour)}/hr
@@ -831,7 +836,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   }}
                   className="flex items-center gap-2"
                 >
-                  <BookOpen className="size-4 text-sky-400" />
+                  <IconBookOpen className="size-4 text-sky-400" />
                   <span className="min-w-0 flex-1 truncate">{i.name}</span>
                   <span className="shrink-0 font-mono text-[10px] text-muted-foreground">
                     {i.rarity}
@@ -873,7 +878,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 }}
                 className="flex gap-2"
               >
-                <User className="size-4 text-emerald-400" /> View profile:{" "}
+                <IconUser className="size-4 text-emerald-400" /> View profile:{" "}
                 <span className="font-semibold">{search.trim()}</span>
               </CommandItem>
             )}
@@ -886,7 +891,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               }}
               className="flex gap-2"
             >
-              <KeyRound className="size-4" /> Connect a profile (API key)
+              <IconKeyRound className="size-4" /> Connect a profile (API key)
             </CommandItem>
             <CommandItem
               value="refresh profile"
@@ -896,7 +901,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               }}
               className="flex gap-2"
             >
-              <RefreshCw className="size-4" /> Refresh profile data
+              <IconRefreshCw className="size-4" /> Refresh profile data
             </CommandItem>
             <CommandItem
               value="toggle theme"
@@ -906,16 +911,16 @@ export function AppShell({ children }: { children: ReactNode }) {
               }}
               className="flex gap-2"
             >
-              <Sun className="size-4" /> Cycle theme
+              <IconSun className="size-4" /> Cycle theme
             </CommandItem>
             <CommandItem value="top bazaar flip" asChild>
               <Link to="/bazaar" onClick={() => setOpen(false)} className="flex gap-2">
-                <TrendingUp className="size-4" /> View top Bazaar flips
+                <IconTrendingUp className="size-4" /> View top Bazaar flips
               </Link>
             </CommandItem>
             <CommandItem value="best auction flip" asChild>
               <Link to="/auction-house" onClick={() => setOpen(false)} className="flex gap-2">
-                <Hammer className="size-4" /> View best auction flips
+                <IconHammer className="size-4" /> View best auction flips
               </Link>
             </CommandItem>
           </CommandGroup>

@@ -11,7 +11,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { TrendingUp, TrendingDown, History, AlertCircle, Loader2 } from "lucide-react";
+import {
+  IconTrendingUp,
+  IconTrendingDown,
+  IconHistory,
+  IconAlertCircle,
+  IconLoader2,
+} from "@/components/ui/icon";
 
 import { fetchExternalPriceHistory } from "@/lib/hypixel.functions";
 import { formatNumber } from "@/lib/skyblock";
@@ -61,7 +67,7 @@ export default function CoflnetPriceChart({
       {/* Header Controls & Summary Stats */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
         <div className="flex items-center gap-2">
-          <History className="size-4 text-sky-400" />
+          <IconHistory className="size-4 text-sky-400" />
           <span className="text-xs font-bold uppercase tracking-wider text-white/70">
             Coflnet Price History
           </span>
@@ -75,9 +81,9 @@ export default function CoflnetPriceChart({
               )}
             >
               {stats.changePct >= 0 ? (
-                <TrendingUp className="size-3" />
+                <IconTrendingUp className="size-3" />
               ) : (
-                <TrendingDown className="size-3" />
+                <IconTrendingDown className="size-3" />
               )}
               {stats.changePct >= 0 ? "+" : ""}
               {stats.changePct.toFixed(1)}% ({days}d)
@@ -140,12 +146,12 @@ export default function CoflnetPriceChart({
       <div className="h-64 w-full">
         {historyQuery.isLoading ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-xs text-white/40">
-            <Loader2 className="size-5 animate-spin text-sky-400" />
+            <IconLoader2 className="size-5 animate-spin text-sky-400" />
             Loading historical market samples…
           </div>
         ) : chartData.length < 2 ? (
           <div className="flex h-full flex-col items-center justify-center gap-1 text-center text-xs text-white/40 p-4">
-            <AlertCircle className="size-5 text-white/30" />
+            <IconAlertCircle className="size-5 text-white/30" />
             <p>No historical Coflnet auction samples found for {itemName || itemId}.</p>
             <p className="text-[11px] text-white/30">
               (Historical trends populate for actively traded Auction House and Bazaar goods).

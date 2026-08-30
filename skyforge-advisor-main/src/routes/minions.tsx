@@ -2,17 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  TrendingUp,
-  Award,
-  Zap,
-  Sparkles,
-  Search,
-  CheckCircle2,
-  Lock,
-  ArrowUpRight,
-  Coins,
-  Compass,
-} from "lucide-react";
+  IconTrendingUp,
+  IconAward,
+  IconZap,
+  IconSparkles,
+  IconSearch,
+  IconCheckCircle2,
+  IconLock,
+  IconArrowUpRight,
+  IconCoins,
+  IconCompass,
+} from "@/assets/icons";
 
 import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
 import {
@@ -140,7 +140,7 @@ export function MinionsRoute() {
                 setTab("leaderboard");
               }}
             >
-              <TrendingUp className="size-3.5" /> Profit Leaderboard
+              <IconTrendingUp className="size-3.5" /> Profit Leaderboard
             </Chip>
             <Chip
               active={tab === "slots"}
@@ -149,7 +149,8 @@ export function MinionsRoute() {
                 setTab("slots");
               }}
             >
-              <Award className="size-3.5" /> Slot Progression ({slotProgression.uniqueCraftsCount}
+              <IconAward className="size-3.5" /> Slot Progression (
+              {slotProgression.uniqueCraftsCount}
               /850)
             </Chip>
             <Chip
@@ -159,7 +160,7 @@ export function MinionsRoute() {
                 setTab("fuels");
               }}
             >
-              <Zap className="size-3.5" /> Fuel & Upgrade ROI
+              <IconZap className="size-3.5" /> Fuel & Upgrade ROI
             </Chip>
           </div>
         }
@@ -172,7 +173,7 @@ export function MinionsRoute() {
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Unlocked Minion Slots
             </span>
-            <Award className="size-4 text-amber-400" />
+            <IconAward className="size-4 text-amber-400" />
           </div>
           <p className="mt-2 text-2xl font-bold font-mono text-amber-300">
             {slotProgression.totalSlotsUnlocked}{" "}
@@ -195,7 +196,7 @@ export function MinionsRoute() {
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Next Slot Goal
             </span>
-            <Compass className="size-4 text-primary" />
+            <IconCompass className="size-4 text-primary" />
           </div>
           <p className="mt-2 text-2xl font-bold font-mono text-white">
             {slotProgression.craftsForNextSlot}{" "}
@@ -214,7 +215,7 @@ export function MinionsRoute() {
             <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
               Top AFK Minion Meta
             </span>
-            <Coins className="size-4 text-emerald-400" />
+            <IconCoins className="size-4 text-emerald-400" />
           </div>
           <p className="mt-2 text-lg font-bold text-white truncate">
             {topAfkMinion?.minion.name ?? "Slime XI"}
@@ -230,7 +231,7 @@ export function MinionsRoute() {
             <span className="text-xs font-semibold text-purple-300 uppercase tracking-wider">
               Top Bazaar Meta
             </span>
-            <Sparkles className="size-4 text-purple-400" />
+            <IconSparkles className="size-4 text-purple-400" />
           </div>
           <p className="mt-2 text-lg font-bold text-white truncate">
             {topBazaarMinion?.minion.name ?? "Sheep XII"}
@@ -376,7 +377,7 @@ export function MinionsRoute() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Award className="size-5 text-amber-400" /> Minion Slot Roadmap
+                  <IconAward className="size-5 text-amber-400" /> Minion Slot Roadmap
                 </h3>
                 <p className="text-xs text-muted-foreground">
                   Craft unique minion tiers to expand your island's production capacity.
@@ -404,8 +405,8 @@ export function MinionsRoute() {
           {/* Cheapest Missing Crafts */}
           <Panel className="bg-slate-950/80">
             <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <TrendingUp className="size-4 text-emerald-400" /> Cheapest Unique Crafts to Unlock
-              Next Slot
+              <IconTrendingUp className="size-4 text-emerald-400" /> Cheapest Unique Crafts to
+              Unlock Next Slot
             </h3>
             <p className="mt-1 text-xs text-muted-foreground">
               Ranked by lowest Bazaar material cost to unlock your next minion slot with the fewest
@@ -445,7 +446,7 @@ export function MinionsRoute() {
             {/* Permanent Fuels */}
             <Panel className="bg-slate-950/80">
               <h3 className="text-sm font-bold text-amber-300 flex items-center gap-2">
-                <Zap className="size-4" /> Permanent Fuel Options
+                <IconZap className="size-4" /> Permanent Fuel Options
               </h3>
               <p className="mt-1 text-xs text-muted-foreground">
                 One-time cost fuels that provide permanent continuous speed boosts.
@@ -473,7 +474,7 @@ export function MinionsRoute() {
             {/* Consumable Fuels */}
             <Panel className="bg-slate-950/80">
               <h3 className="text-sm font-bold text-purple-300 flex items-center gap-2">
-                <Sparkles className="size-4" /> Consumable & Timed Boosters
+                <IconSparkles className="size-4" /> Consumable & Timed Boosters
               </h3>
               <p className="mt-1 text-xs text-muted-foreground">
                 High-power timed fuels used for max output scaling or special events.

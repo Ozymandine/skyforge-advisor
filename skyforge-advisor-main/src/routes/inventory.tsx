@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Calculator, Check, Plus, Search } from "lucide-react";
+import { IconCalculator, IconCheck, IconPlus, IconSearch } from "@/assets/icons";
 
 import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
 import {
@@ -501,7 +501,7 @@ function AccessoriesSection() {
       <Panel>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Calculator className="size-5 text-primary" />
+            <IconCalculator className="size-5 text-primary" />
             <h2 className="text-xl font-semibold">Magical Power Calculator</h2>
           </div>
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -703,7 +703,7 @@ function AccessoriesSection() {
                         : "border-border/60 bg-secondary/20 text-muted-foreground"
                     }`}
                   >
-                    {tier.owned && <Check size={11} />}
+                    {tier.owned && <IconCheck className="size-11" />}
                     {tier.name}
                   </span>
                 ))}
@@ -721,7 +721,7 @@ function AccessoriesSection() {
         </p>
         {missingTiers.length === 0 ? (
           <p className="mt-4 flex items-center gap-2 text-sm text-emerald-400">
-            <Check size={16} /> You own every tier in the catalog. Impressive!
+            <IconCheck className="size-16" /> You own every tier in the catalog. Impressive!
           </p>
         ) : (
           <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -740,9 +740,9 @@ function AccessoriesSection() {
                     <div className="flex items-center justify-between gap-2">
                       <span className="min-w-0 truncate text-sm font-medium">{tier.name}</span>
                       {checked ? (
-                        <Check size={14} className="shrink-0 text-primary" />
+                        <IconCheck className="size-14 shrink-0 text-primary" />
                       ) : (
-                        <Plus size={14} className="shrink-0 text-muted-foreground" />
+                        <IconPlus className="size-14 shrink-0 text-muted-foreground" />
                       )}
                     </div>
                     <p className="mt-1 truncate text-[11px] text-muted-foreground">
@@ -841,7 +841,7 @@ function PetsSection() {
       {/* Leveling calculator */}
       <Panel>
         <div className="flex items-center gap-3">
-          <Calculator className="size-5 text-primary" />
+          <IconCalculator className="size-5 text-primary" />
           <h2 className="text-xl font-semibold">Pet leveling calculator</h2>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-4">
@@ -917,10 +917,7 @@ function PetsSection() {
           <h2 className="text-xl font-semibold">All pets</h2>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
-              <Search
-                size={14}
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              />
+              <IconSearch className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-14" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}

@@ -1,28 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
-  Sparkles,
-  TrendingUp,
-  ShieldCheck,
-  Zap,
-  Flame,
-  Boxes,
-  Swords,
-  Pickaxe,
-  Wheat,
-  FlaskConical,
-  Target,
-  ChevronRight,
-  Filter,
-  CheckCircle2,
-  AlertCircle,
-  Copy,
-  Check,
-  ArrowRight,
-  Shield,
-  Heart,
-  Crown,
-} from "lucide-react";
+  IconSparkles,
+  IconTrendingUp,
+  IconShieldCheck,
+  IconZap,
+  IconFlame,
+  IconBoxes,
+  IconSwords,
+  IconPickaxe,
+  IconWheat,
+  IconFlaskConical,
+  IconTarget,
+  IconChevronRight,
+  IconFilter,
+  IconCheckCircle2,
+  IconAlertCircle,
+  IconCopy,
+  IconCheck,
+  IconArrowRight,
+  IconShield,
+  IconHeart,
+  IconCrown,
+} from "@/assets/icons";
 
 import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
 import { PageHero, Panel, ProgressBar, StatRow } from "@/components/layout/app-shell";
@@ -430,11 +430,11 @@ function AdvisorRoute() {
                       >
                         {copiedId === action.id ? (
                           <>
-                            <Check className="size-3 text-emerald-400" /> Copied
+                            <IconCheck className="size-3 text-emerald-400" /> Copied
                           </>
                         ) : (
                           <>
-                            <Copy className="size-3" /> {action.inGameCommand}
+                            <IconCopy className="size-3" /> {action.inGameCommand}
                           </>
                         )}
                       </button>

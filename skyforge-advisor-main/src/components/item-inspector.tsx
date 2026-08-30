@@ -3,7 +3,7 @@
 // for any inventory/auction item.
 
 import { useMemo } from "react";
-import { Sparkles } from "lucide-react";
+import { IconSparkles } from "@/assets/icons";
 
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { RarityTag } from "@/components/layout/app-shell";
@@ -144,7 +144,7 @@ function ValuationPanel({ item }: { item: InspectableItem }) {
     <div className="mt-5 rounded-xl border border-primary/25 bg-primary/5 p-4">
       <div className="flex items-center justify-between gap-3">
         <p className="flex items-center gap-2 text-sm font-semibold">
-          <Sparkles className="size-4 text-primary" /> Estimated value
+          <IconSparkles className="size-4 text-primary" /> Estimated value
         </p>
         <div className="flex items-center gap-2">
           <span

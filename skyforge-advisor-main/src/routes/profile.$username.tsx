@@ -5,17 +5,17 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  Share2,
-  Shield,
-  Sparkles,
-  Trophy,
-  Sword,
-  Check,
-  ChevronRight,
-  User,
-  Clock,
-  Layers,
-} from "lucide-react";
+  IconShare2,
+  IconShield,
+  IconSparkles,
+  IconTrophy,
+  IconSword,
+  IconCheck,
+  IconChevronRight,
+  IconUser,
+  IconClock,
+  IconLayers,
+} from "@/assets/icons";
 import { fetchPlayer } from "@/lib/hypixel.functions";
 import { Panel, ProgressBar } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
@@ -101,7 +101,7 @@ function PublicProfileRoute() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-16 text-center space-y-6">
         <div className="mx-auto flex size-20 items-center justify-center rounded-3xl border border-red-500/20 bg-red-500/10 text-red-400">
-          <User className="size-10" />
+          <IconUser className="size-10" />
         </div>
         <div>
           <h1 className="text-3xl font-black text-white">Player Not Found</h1>
@@ -197,7 +197,7 @@ function PublicProfileRoute() {
                 </span>
                 {data.lastSave && (
                   <span className="flex items-center gap-1">
-                    <Clock className="size-3.5" />
+                    <IconClock className="size-3.5" />
                     Last Saved: {new Date(data.lastSave).toLocaleDateString()}
                   </span>
                 )}
@@ -213,12 +213,12 @@ function PublicProfileRoute() {
             >
               {copied ? (
                 <>
-                  <Check className="size-4 text-emerald-400" />
+                  <IconCheck className="size-4 text-emerald-400" />
                   <span>Link Copied!</span>
                 </>
               ) : (
                 <>
-                  <Share2 className="size-4" />
+                  <IconShare2 className="size-4" />
                   <span>Share Profile</span>
                 </>
               )}
@@ -228,7 +228,7 @@ function PublicProfileRoute() {
               className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-bold text-white hover:bg-white/10 transition-all"
             >
               <span>Advisor Dashboard</span>
-              <ChevronRight className="size-4 text-muted-foreground" />
+              <IconChevronRight className="size-4 text-muted-foreground" />
             </Link>
           </div>
         </div>
@@ -309,7 +309,8 @@ function PublicProfileRoute() {
           <div className="grid gap-6 md:grid-cols-2">
             <Panel className="bg-slate-950/80 border-cyan-500/20">
               <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                <Shield className="size-4 text-cyan-400" /> Equipped Armor Set ({armorItems.length}
+                <IconShield className="size-4 text-cyan-400" /> Equipped Armor Set (
+                {armorItems.length}
                 /4)
               </h3>
               <div className="grid grid-cols-4 gap-3">
@@ -333,7 +334,7 @@ function PublicProfileRoute() {
 
             <Panel className="bg-slate-950/80 border-purple-500/20">
               <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                <Sparkles className="size-4 text-purple-400" /> Equipped Equipment (
+                <IconSparkles className="size-4 text-purple-400" /> Equipped Equipment (
                 {equipmentItems.length}/4)
               </h3>
               <div className="grid grid-cols-4 gap-3">
@@ -359,8 +360,8 @@ function PublicProfileRoute() {
           {/* Active Inventory Grid */}
           <Panel className="bg-slate-950/80 border-white/10">
             <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-              <Layers className="size-4 text-primary" /> Active Inventory ({inventoryItems.length}{" "}
-              items)
+              <IconLayers className="size-4 text-primary" /> Active Inventory (
+              {inventoryItems.length} items)
             </h3>
             <div className="grid grid-cols-9 gap-2 rounded-2xl border border-white/10 bg-black/60 p-3">
               {Array.from({ length: 36 }).map((_, slot) => {
@@ -469,7 +470,7 @@ function PublicProfileRoute() {
             {/* Dungeons Panel */}
             <Panel className="bg-slate-950/80 border-purple-500/20">
               <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                <Trophy className="size-4 text-purple-400" /> Catacombs Telemetry
+                <IconTrophy className="size-4 text-purple-400" /> Catacombs Telemetry
               </h3>
               <div className="space-y-3 font-mono text-xs">
                 <div className="flex justify-between border-b border-white/5 pb-2">
@@ -496,7 +497,7 @@ function PublicProfileRoute() {
             {/* Slayers Panel */}
             <Panel className="bg-slate-950/80 border-red-500/20">
               <h3 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                <Sword className="size-4 text-red-400" /> Slayer Bosses
+                <IconSword className="size-4 text-red-400" /> Slayer Bosses
               </h3>
               <div className="space-y-3 font-mono text-xs">
                 {data.slayerOverview?.bosses.map((boss) => (

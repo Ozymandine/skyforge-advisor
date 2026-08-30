@@ -1,31 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
-  Sparkles,
-  Wheat,
-  Pickaxe,
-  Swords,
-  Fish,
-  FlaskConical,
-  Flame,
-  ShieldCheck,
-  Zap,
-  TrendingUp,
-  Award,
-  ChevronRight,
-  Boxes,
-  Skull,
-  Crosshair,
-  Crown,
-  Key,
-  Compass,
-  Hourglass,
-  Moon,
-  Search,
-  Heart,
-  Shield,
-  Trophy,
-} from "lucide-react";
+  IconSparkles,
+  IconWheat,
+  IconPickaxe,
+  IconSwords,
+  IconFish,
+  IconFlaskConical,
+  IconFlame,
+  IconShieldCheck,
+  IconZap,
+  IconTrendingUp,
+  IconAward,
+  IconChevronRight,
+  IconBoxes,
+  IconSkull,
+  IconCrosshair,
+  IconCrown,
+  IconKeyRound,
+  IconCompass,
+  IconHourglass,
+  IconMoon,
+  IconSearch,
+  IconHeart,
+  IconShield,
+  IconTrophy,
+} from "@/assets/icons";
 
 import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
 import { Chip, PageHero, Panel, ProgressBar, StatRow } from "@/components/layout/app-shell";
@@ -274,16 +274,16 @@ function SkillsRoute() {
           <div className="rounded-2xl border border-white/10 bg-[#0E121B]/80 backdrop-blur-xl p-2 shadow-xl">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
               {[
-                { id: "overview", label: "Skills Constellation", icon: Sparkles },
-                { id: "bestiary", label: "Bestiary & Mobs", icon: Crosshair },
-                { id: "dungeons", label: "Catacombs & Dungeons", icon: Skull },
-                { id: "kuudra", label: "Crimson & Kuudra", icon: Flame },
-                { id: "rift", label: "The Rift Dimension", icon: Moon },
-                { id: "farming", label: "Farming & Garden", icon: Wheat },
-                { id: "mining", label: "Mining & HOTM", icon: Pickaxe },
-                { id: "combat", label: "Combat & Magic Find", icon: Swords },
-                { id: "fishing", label: "Crimson Trophy Fish", icon: Fish },
-                { id: "experiments", label: "Slayers & Experiments", icon: FlaskConical },
+                { id: "overview", label: "Skills Constellation", icon: IconSparkles },
+                { id: "bestiary", label: "Bestiary & Mobs", icon: IconCrosshair },
+                { id: "dungeons", label: "Catacombs & Dungeons", icon: IconSkull },
+                { id: "kuudra", label: "Crimson & Kuudra", icon: IconFlame },
+                { id: "rift", label: "The Rift Dimension", icon: IconMoon },
+                { id: "farming", label: "Farming & Garden", icon: IconWheat },
+                { id: "mining", label: "Mining & HOTM", icon: IconPickaxe },
+                { id: "combat", label: "Combat & Magic Find", icon: IconSwords },
+                { id: "fishing", label: "Crimson Trophy Fish", icon: IconFish },
+                { id: "experiments", label: "Slayers & Experiments", icon: IconFlaskConical },
               ].map((tab) => {
                 const Icon = tab.icon;
                 const active = activeTab === tab.id;
@@ -390,7 +390,7 @@ function SkillsRoute() {
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Total Mob Kills
                     </span>
-                    <Crosshair className="size-4 text-primary" />
+                    <IconCrosshair className="size-4 text-primary" />
                   </div>
                   <p className="mt-2 text-2xl font-bold font-mono text-white">
                     {bestiaryData.totalKills.toLocaleString()}
@@ -405,7 +405,7 @@ function SkillsRoute() {
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Bestiary Milestone
                     </span>
-                    <Trophy className="size-4 text-amber-400" />
+                    <IconTrophy className="size-4 text-amber-400" />
                   </div>
                   <p className="mt-2 text-2xl font-bold font-mono text-amber-300">
                     Milestone {bestiaryData.milestone}
@@ -424,7 +424,7 @@ function SkillsRoute() {
                     <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
                       Permanent Stat Perks
                     </span>
-                    <ShieldCheck className="size-4 text-emerald-400" />
+                    <IconShieldCheck className="size-4 text-emerald-400" />
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1.5 font-mono text-xs font-bold">
                     <span className="rounded bg-emerald-500/10 px-2 py-0.5 text-emerald-300">
@@ -450,7 +450,7 @@ function SkillsRoute() {
                     <span className="text-xs font-semibold text-purple-300 uppercase tracking-wider">
                       Combat XP Bonus
                     </span>
-                    <Sparkles className="size-4 text-purple-400" />
+                    <IconSparkles className="size-4 text-purple-400" />
                   </div>
                   <p className="mt-2 text-2xl font-bold font-mono text-purple-200">
                     +{(bestiaryData.milestone * 1_000_000).toLocaleString()}
@@ -489,7 +489,7 @@ function SkillsRoute() {
                 {/* Search Bar & Progress Filter */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="relative w-full max-w-sm">
-                    <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+                    <IconSearch className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
                     <input
                       type="text"
                       placeholder="Search mobs (e.g. Zealot, Ghost, Scatha)..."
@@ -1080,7 +1080,7 @@ function SkillsRoute() {
                     <span className="text-xs font-semibold text-cyan-300 uppercase tracking-wider">
                       Heart of the Mountain
                     </span>
-                    <Pickaxe className="size-4 text-cyan-400" />
+                    <IconPickaxe className="size-4 text-cyan-400" />
                   </div>
                   <p className="mt-2 text-2xl font-bold font-mono text-cyan-200">
                     Tier {data.hotm?.tier ?? 10}{" "}
@@ -1097,7 +1097,7 @@ function SkillsRoute() {
                     <span className="text-xs font-semibold text-emerald-300 uppercase tracking-wider">
                       ᚢ Mithril Powder
                     </span>
-                    <Sparkles className="size-4 text-emerald-400" />
+                    <IconSparkles className="size-4 text-emerald-400" />
                   </div>
                   <p className="mt-2 text-2xl font-bold font-mono text-emerald-300">
                     {(data.hotm?.powders?.mithril ?? 2_500_000).toLocaleString()}
@@ -1112,7 +1112,7 @@ function SkillsRoute() {
                     <span className="text-xs font-semibold text-pink-300 uppercase tracking-wider">
                       ᚣ Gemstone Powder
                     </span>
-                    <Sparkles className="size-4 text-pink-400" />
+                    <IconSparkles className="size-4 text-pink-400" />
                   </div>
                   <p className="mt-2 text-2xl font-bold font-mono text-pink-300">
                     {(data.hotm?.powders?.gemstone ?? 5_200_000).toLocaleString()}
@@ -1127,7 +1127,7 @@ function SkillsRoute() {
                     <span className="text-xs font-semibold text-blue-300 uppercase tracking-wider">
                       ᚤ Glacite Powder
                     </span>
-                    <Sparkles className="size-4 text-blue-400" />
+                    <IconSparkles className="size-4 text-blue-400" />
                   </div>
                   <p className="mt-2 text-2xl font-bold font-mono text-blue-300">
                     {(data.hotm?.powders?.glacite ?? 1_800_000).toLocaleString()}
@@ -1192,7 +1192,7 @@ function SkillsRoute() {
                   <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
                     <div>
                       <h3 className="text-base font-bold text-white flex items-center gap-2">
-                        <Pickaxe className="size-4 text-cyan-400" /> Heart of the Mountain Tree
+                        <IconPickaxe className="size-4 text-cyan-400" /> Heart of the Mountain Tree
                         (Tiers 1–10)
                       </h3>
                       <p className="text-xs text-muted-foreground">

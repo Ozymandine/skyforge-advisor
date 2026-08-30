@@ -1,7 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { CircleCheck, Lock, Bot, Swords, Skull, Sprout, ArrowRight } from "lucide-react";
+import {
+  IconCircleCheck,
+  IconLock,
+  IconBot,
+  IconSwords,
+  IconSkull,
+  IconWheat,
+  IconArrowRight,
+} from "@/assets/icons";
 
 import { ConnectPrompt, ErrorState } from "@/components/data-states";
 import { CountUp, ProgressRing, SkeletonPage, Stagger } from "@/components/motion";
@@ -378,9 +386,9 @@ function Dashboard() {
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-medium text-white/90">{c.label}</p>
                       {c.verified ? (
-                        <CircleCheck className="size-4 text-primary" />
+                        <IconCircleCheck className="size-4 text-primary" />
                       ) : (
-                        <Lock className="size-4 text-muted-foreground" />
+                        <IconLock className="size-4 text-muted-foreground" />
                       )}
                     </div>
                     <div className="mt-4 flex items-end justify-between">
