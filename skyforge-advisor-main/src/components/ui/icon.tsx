@@ -23,6 +23,7 @@ export function Icon({
   color = "default",
   strokeWidth = "default",
   "aria-label": ariaLabel,
+  viewBox = "0 0 24 24",
   ...props
 }: IconProps) {
   const sizeClasses = {
@@ -49,12 +50,18 @@ export function Icon({
 
   return (
     <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox={viewBox}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden={!ariaLabel}
       role={ariaLabel ? "img" : undefined}
       aria-label={ariaLabel}
       className={cn(
         "inline-block flex-shrink-0",
-        "stroke-current fill-none",
         sizeClasses[size],
         colorClasses[color],
         strokeClasses[strokeWidth],
