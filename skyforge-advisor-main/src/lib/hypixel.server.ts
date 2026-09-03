@@ -19,6 +19,7 @@ import {
   type WikiRequirement,
 } from "./skyblock";
 import { validatePlayerData, type PlayerDataValidated } from "./schemas";
+import { getValidOperatorKeys } from "./env";
 import { calculateBestiary } from "./bestiary";
 import { calculateSlayerOverview } from "./slayer";
 // Recipes sourced from the NotEnoughUpdates repo (the Hypixel items endpoint
@@ -65,10 +66,8 @@ const keyCooldowns = new Map<string, number>(); // key -> ms timestamp when retr
 let keyCursor = 0;
 
 export function getOperatorKeys(): string[] {
-  return (process.env["HYPIXEL_API_KEY"] ?? "")
-    .split(",")
-    .map((k) => k.trim())
-    .filter(Boolean);
+  // Validated + cached via env.ts: malformed entries are dropped at boot.
+  return getValidOperatorKeys();
 }
 
 function nextOperatorKey(): string | null {
@@ -98,16 +97,37 @@ export function profileApiHealth(): "ok" | "degraded" | "no-key" {
 
 const profileCache = new Map<string, { at: number; data: unknown }>();
 const PROFILE_CACHE_TTL = 90_000;
+const PROFILE_CACHE_MAX = 500;
 const uuidCache = new Map<string, { uuid: string; name: string }>();
+const UUID_CACHE_MAX = 2000;
+
+function pruneCache<K, V>(cache: Map<K, V>, max: number): void {
+  if (cache.size <= max) return;
+  // Evict oldest-inserted entries first (Maps preserve insertion order).
+  for (const key of cache.keys()) {
+    cache.delete(key);
+    if (cache.size <= max) break;
+  }
+}
 
 // ============================================================================
 // GENERIC FETCH
 // ============================================================================
 
-async function getJson<T>(url: string, apiKey?: string): Promise<T | null> {
+export type FetchFailure =
+  | { kind: "auth" | "rate-limit" | "transient"; status: number }
+  | { kind: "network" | "parse"; status: 0 };
+
+/** Unwrap a fetch result to nullable data. Distinguishes empty vs error at call sites. */
+function unwrap<T>(result: { data: T } | { failure: FetchFailure }): T | null {
+  return "data" in result ? result.data : null;
+}
+
+async function getJson<T>(url: string, apiKey?: string): Promise<{ data: T } | { failure: FetchFailure }> {
   try {
     const res = await fetch(url, {
       headers: apiKey ? { "API-Key": apiKey } : {},
+      signal: AbortSignal.timeout(10_000),
     });
 
     const text = await res.text();
@@ -118,7 +138,7 @@ async function getJson<T>(url: string, apiKey?: string): Promise<T | null> {
       body = JSON.parse(text);
     } catch {
       console.error(`Unexpected response from Hypixel (${res.status})`);
-      return null;
+      return { failure: { kind: "parse", status: 0 } };
     }
 
     const payload = body as {
@@ -127,14 +147,21 @@ async function getJson<T>(url: string, apiKey?: string): Promise<T | null> {
     };
 
     if (!res.ok || payload.success === false) {
-      console.warn(`Hypixel request failed (${res.status}): ${payload.cause ?? "Unknown"}`);
-      return null;
+      const cause = payload.cause ?? "Unknown";
+      console.warn(`Hypixel request failed (${res.status}): ${cause}`);
+      if (res.status === 403 || /invalid.*key|key/i.test(cause)) {
+        return { failure: { kind: "auth", status: res.status } };
+      }
+      if (res.status === 429) {
+        return { failure: { kind: "rate-limit", status: res.status } };
+      }
+      return { failure: { kind: "transient", status: res.status } };
     }
 
-    return body as T;
+    return { data: body as T };
   } catch (err) {
     console.error(`Network fetch failed for ${url}:`, err);
-    return null;
+    return { failure: { kind: "network", status: 0 } };
   }
 }
 
@@ -144,7 +171,8 @@ async function getJson<T>(url: string, apiKey?: string): Promise<T | null> {
  */
 async function getKeyedJson<T>(url: string, userKey?: string): Promise<T | null> {
   if (userKey) {
-    return getJson<T>(url, userKey);
+    const result = await getJson<T>(url, userKey);
+    return "data" in result ? result.data : null;
   }
   const tried = new Set<string>();
   for (;;) {
@@ -152,9 +180,12 @@ async function getKeyedJson<T>(url: string, userKey?: string): Promise<T | null>
     if (!key || tried.has(key)) return null;
     tried.add(key);
     const result = await getJson<T>(url, key);
-    if (result !== null) return result;
-    // Likely an auth/quota failure on this key — cool it down and try the next.
-    markKeyFailed(key);
+    if ("data" in result) return result.data;
+    // Only cool down on auth/quota failures. Transient 5xx and network blips
+    // must NOT penalize the key, otherwise one hiccup empties the pool.
+    if (result.failure.kind === "auth" || result.failure.kind === "rate-limit") {
+      markKeyFailed(key);
+    }
   }
 }
 
@@ -171,6 +202,7 @@ export type GuildInfo = {
 };
 
 export async function getGuild(uuid: string): Promise<GuildInfo | null> {
+  const safe = encodeURIComponent(uuid.trim());
   const data = await getKeyedJson<{
     guild?: {
       name?: string;
@@ -179,7 +211,7 @@ export async function getGuild(uuid: string): Promise<GuildInfo | null> {
       exp?: number;
       level?: number;
     };
-  }>(`${API}/guild?player=${uuid}`);
+  }>(`${API}/guild?player=${safe}`);
   const guild = data?.guild;
   if (!guild?.name) return null;
   return {
@@ -200,7 +232,7 @@ export type PlayerStatus = {
 export async function getStatus(uuid: string): Promise<PlayerStatus | null> {
   const data = await getKeyedJson<{
     session?: { online?: boolean; gameType?: string; mode?: string };
-  }>(`${API}/status?uuid=${uuid}`);
+  }>(`${API}/status?uuid=${encodeURIComponent(uuid.trim())}`);
   const session = data?.session;
   if (!session) return null;
   return {
@@ -211,7 +243,9 @@ export async function getStatus(uuid: string): Promise<PlayerStatus | null> {
 }
 
 export async function getFriendsCount(uuid: string): Promise<number | null> {
-  const data = await getKeyedJson<{ records?: unknown[] }>(`${API}/friends?uuid=${uuid}`);
+  const data = await getKeyedJson<{ records?: unknown[] }>(
+    `${API}/friends?uuid=${encodeURIComponent(uuid.trim())}`,
+  );
   return Array.isArray(data?.records) ? data!.records!.length : null;
 }
 
@@ -228,7 +262,7 @@ export async function getBankTransactions(uuid: string): Promise<BankTransaction
       timestamp?: string | number;
       action?: string;
     }>;
-  }>(`${API}/skyblock/bank?uuid=${uuid}`);
+  }>(`${API}/skyblock/bank?uuid=${encodeURIComponent(uuid.trim())}`);
   if (!data) return null;
   return {
     balance: typeof data.balance === "number" ? data.balance : null,
@@ -252,8 +286,11 @@ export async function getElection(): Promise<{
   if (electionCache && Date.now() - electionCache.at < 30 * 60_000) {
     return electionCache.data as never;
   }
-  const data = await getJson<Record<string, unknown>>(`${API}/resources/skyblock/election`);
-  if (!data) return null;
+  const data = unwrap(
+    await getJson<Record<string, unknown>>(`${API}/resources/skyblock/election`),
+  );
+  // Stale-while-revalidate: keep the last good value on transient failure.
+  if (!data) return (electionCache?.data as never) ?? null;
   const result = {
     ...(data["mayor"]
       ? {
@@ -286,9 +323,13 @@ export async function getNews(): Promise<
   if (newsCache && Date.now() - newsCache.at < 60 * 60_000) {
     return newsCache.data as never;
   }
-  const data = await getJson<{ items?: Array<Record<string, unknown>> }>(
-    `${API}/resources/skyblock/news`,
+  const data = unwrap(
+    await getJson<{ items?: Array<Record<string, unknown>> }>(
+      `${API}/resources/skyblock/news`,
+    ),
   );
+  // Keep stale good value instead of flashing empty on failure.
+  if (!data) return (newsCache?.data as never) ?? [];
   const items = (data?.["items"] ?? []).flatMap((item) => {
     const rec = item as Record<string, unknown>;
     const out: Array<{ title?: string; text?: string; date?: string; link?: string }> = [{}];
@@ -311,9 +352,12 @@ export async function getFireSale(): Promise<
   if (fireSaleCache && Date.now() - fireSaleCache.at < 30 * 60_000) {
     return fireSaleCache.data as never;
   }
-  const data = await getJson<{ sales?: Array<Record<string, unknown>> }>(
-    `${API}/resources/skyblock/fire_sale`,
+  const data = unwrap(
+    await getJson<{ sales?: Array<Record<string, unknown>> }>(
+      `${API}/resources/skyblock/fire_sale`,
+    ),
   );
+  if (!data) return (fireSaleCache?.data as never) ?? [];
   const sales = (data?.["sales"] ?? []).flatMap((sale) => {
     const rec = sale as Record<string, unknown>;
     const out: Array<{ item_id?: string; start?: number; end?: number }> = [{}];
@@ -337,10 +381,12 @@ export async function getOfficialSkillTables(): Promise<Record<
   if (officialSkillsCache && Date.now() - officialSkillsCache.at < 24 * 60 * 60_000) {
     return officialSkillsCache.data as never;
   }
-  const data = await getJson<{
-    skills?: Record<string, { maxLevel?: number; levels?: number[] }>;
-  }>(`${API}/resources/skyblock/skills`);
-  if (!data?.skills) return null;
+  const data = unwrap(
+    await getJson<{
+      skills?: Record<string, { maxLevel?: number; levels?: number[] }>;
+    }>(`${API}/resources/skyblock/skills`),
+  );
+  if (!data?.skills) return (officialSkillsCache?.data as never) ?? null;
   officialSkillsCache = { at: Date.now(), data: data.skills };
   return data.skills;
 }
@@ -354,10 +400,12 @@ export async function getOfficialCollectionTiers(): Promise<Record<
   if (officialCollectionsCache && Date.now() - officialCollectionsCache.at < 24 * 60 * 60_000) {
     return officialCollectionsCache.data as never;
   }
-  const data = await getJson<{
-    collections?: Record<string, { tiers?: number[] }>;
-  }>(`${API}/resources/skyblock/collections`);
-  if (!data?.collections) return null;
+  const data = unwrap(
+    await getJson<{
+      collections?: Record<string, { tiers?: number[] }>;
+    }>(`${API}/resources/skyblock/collections`),
+  );
+  if (!data?.collections) return (officialCollectionsCache?.data as never) ?? null;
   officialCollectionsCache = { at: Date.now(), data: data.collections };
   return data.collections;
 }
@@ -379,12 +427,14 @@ export async function resolveUuid(
       };
     }
 
-    // UUIDs never change — cache forever.
-    const cached = uuidCache.get(username.trim().toLowerCase());
+    // UUIDs rarely change — cache with a bound (was unbounded "forever").
+    const key = username.trim().toLowerCase();
+    const cached = uuidCache.get(key);
     if (cached) return cached;
 
     const res = await fetch(
       `https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(username.trim())}`,
+      { signal: AbortSignal.timeout(8000) },
     );
 
     if (res.ok) {
@@ -398,13 +448,15 @@ export async function resolveUuid(
           uuid: data.id,
           name: data.name,
         };
-        uuidCache.set(username.trim().toLowerCase(), resolved);
+        uuidCache.set(key, resolved);
+        pruneCache(uuidCache, UUID_CACHE_MAX);
         return resolved;
       }
     }
 
     const fallback = await fetch(
       `https://playerdb.co/api/player/minecraft/${encodeURIComponent(username.trim())}`,
+      { signal: AbortSignal.timeout(8000) },
     );
 
     if (fallback.ok) {
@@ -425,6 +477,7 @@ export async function resolveUuid(
           name: data.data?.player?.username ?? username,
         };
         uuidCache.set(username.trim().toLowerCase(), resolved);
+        pruneCache(uuidCache, UUID_CACHE_MAX);
         return resolved;
       }
     }
@@ -686,10 +739,11 @@ export async function getItems(): Promise<WikiItem[]> {
       return itemsCache.items;
     }
 
-    const data = await getJson<ItemsResponse>(`${API}/resources/skyblock/items`);
+    const data = unwrap(await getJson<ItemsResponse>(`${API}/resources/skyblock/items`));
 
     if (!data || !Array.isArray(data.items)) {
-      return [];
+      // Keep stale good value instead of flashing empty wiki on failure.
+      return itemsCache?.items ?? [];
     }
 
     const items: WikiItem[] = data.items.map((item) => {
@@ -799,6 +853,10 @@ async function nameLookup(): Promise<Map<string, string>> {
 // BAZAAR
 // ============================================================================
 
+let bazaarCache: { at: number; data: { lastUpdated: number; products: BazaarProduct[] } } | null =
+  null;
+const BAZAAR_CACHE_TTL = 60_000;
+
 type BazaarResponse = {
   lastUpdated: number;
 
@@ -823,17 +881,27 @@ type BazaarResponse = {
 export async function getBazaar(): Promise<{
   lastUpdated: number;
   products: BazaarProduct[];
+  stale?: boolean;
 }> {
+  // Short server cache: every client poll must NOT become a Hypixel fetch.
+  const now = Date.now();
+  if (bazaarCache && now - bazaarCache.at < BAZAAR_CACHE_TTL) {
+    return bazaarCache.data;
+  }
   try {
-    const [data, names] = await Promise.all([
+    const [result, names] = await Promise.all([
       getJson<BazaarResponse>(`${API}/skyblock/bazaar`),
       nameLookup(),
     ]);
+    const data = unwrap(result);
 
     if (!data || !data.products) {
+      // Distinguish failure (stale) from truly empty — never fake lastUpdated.
+      if (bazaarCache) return { ...bazaarCache.data, stale: true };
       return {
-        lastUpdated: Date.now(),
+        lastUpdated: 0,
         products: [],
+        stale: true,
       };
     }
 
@@ -893,16 +961,20 @@ export async function getBazaar(): Promise<{
 
     products.sort((a, b) => b.profitPerHour - a.profitPerHour);
 
-    return {
+    const fresh = {
       lastUpdated: data.lastUpdated || Date.now(),
       products,
     };
+    bazaarCache = { at: Date.now(), data: fresh };
+    return fresh;
   } catch (err) {
     console.error("Error in getBazaar:", err);
 
+    if (bazaarCache) return { ...bazaarCache.data, stale: true };
     return {
-      lastUpdated: Date.now(),
+      lastUpdated: 0,
       products: [],
+      stale: true,
     };
   }
 }
@@ -957,6 +1029,7 @@ const auctionItemCache = new Map<
 >();
 
 const AUCTION_ITEM_CACHE_TTL_MS = 15 * 60_000;
+const AUCTION_ITEM_CACHE_MAX = 5000;
 
 const AUCTION_ICON_LIMIT = 1000;
 const AUCTION_ITEM_DECODE_CONCURRENCY = 8;
@@ -1072,6 +1145,7 @@ function pruneAuctionItemCache(now: number) {
       auctionItemCache.delete(uuid);
     }
   }
+  pruneCache(auctionItemCache, AUCTION_ITEM_CACHE_MAX);
 }
 
 async function auctionItemIdentity(
@@ -1175,23 +1249,35 @@ export async function getAuctions(pages = 6): Promise<{
   };
 
   try {
-    const first = await getJson<AuctionsResponse>(`${API}/skyblock/auctions?page=0`);
+    const first = unwrap(await getJson<AuctionsResponse>(`${API}/skyblock/auctions?page=0`));
 
     if (!first || !Array.isArray(first.auctions)) {
+      // Serve stale scan instead of flashing empty on failure.
+      const stale = auctionScanCache.get(pages);
+      if (stale) return stale.data;
       return fallback;
     }
 
     const wanted = Math.min(Math.max(1, pages), first.totalPages || 1);
 
-    const rest = await Promise.all(
-      Array.from(
-        {
-          length: Math.max(0, wanted - 1),
-        },
-        (_, i) =>
-          getJson<AuctionsResponse>(`${API}/skyblock/auctions?page=${i + 1}`).catch(() => null),
-      ),
-    );
+    // Bounded concurrency: 4 at a time with timeouts, so one slow page
+    // can't block the whole scan.
+    const rest: Array<AuctionsResponse | null> = [];
+    const queue = Array.from({ length: Math.max(0, wanted - 1) }, (_, i) => i + 1);
+    const workers = Array.from({ length: Math.min(4, queue.length) }, async () => {
+      while (queue.length) {
+        const page = queue.shift()!;
+        try {
+          const r = unwrap(
+            await getJson<AuctionsResponse>(`${API}/skyblock/auctions?page=${page}`),
+          );
+          rest.push(r && Array.isArray(r.auctions) ? r : null);
+        } catch {
+          rest.push(null);
+        }
+      }
+    });
+    await Promise.all(workers);
 
     const all = [
       first,
@@ -1374,13 +1460,14 @@ function calculateAuctionStats(auctions: AuctionEntry[]): Map<string, WikiAuctio
 }
 
 export async function getWikiItems(): Promise<WikiItem[]> {
-  const [items, bazaarResponse, auctionResponse] = await Promise.all([
+  const [items, bazaarResult, auctionResponse] = await Promise.all([
     getItems(),
 
     getJson<BazaarResponse>(`${API}/skyblock/bazaar`),
 
     getAuctions(6),
   ]);
+  const bazaarResponse = unwrap(bazaarResult);
 
   const bazaarMap = new Map<string, WikiMarketData["bazaar"]>();
 
@@ -1856,13 +1943,17 @@ export async function getPlayerData(
     }
 
     const data = await getKeyedJson<ProfilesResponse>(
-      `${API}/skyblock/profiles?uuid=${uuid}`,
+      `${API}/skyblock/profiles?uuid=${encodeURIComponent(uuid)}`,
       apiKey,
     );
 
     if (data === null) {
+      // Null conflates network/429/500 with auth — don't mislead BYOK users.
+      // getKeyedJson already logs the cause; surface a generic retryable error.
       throw new HypixelError(
-        "Hypixel API authorization failed. The server API key is invalid, expired, or missing. Check developer.hypixel.net.",
+        userKeyProvided
+          ? "Hypixel API request failed. Check your key at developer.hypixel.net, then retry."
+          : "Hypixel API is temporarily unavailable. Retry in a minute.",
       );
     }
 
@@ -2484,7 +2575,7 @@ export async function getPlayerData(
         rankPlusColor?: string | null;
         monthlyRankColor?: string | null;
       };
-    }>(`${API}/player?uuid=${uuid}`, apiKey)
+    }>(`${API}/player?uuid=${encodeURIComponent(uuid)}`, apiKey)
       .then((r) => r?.player)
       .catch(() => null);
 
@@ -2566,6 +2657,7 @@ export async function getPlayerData(
 
     if (validated && !userKeyProvided) {
       profileCache.set(cacheKey, { at: Date.now(), data: validated });
+      pruneCache(profileCache, PROFILE_CACHE_MAX);
     }
 
     return validated;

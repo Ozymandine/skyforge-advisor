@@ -11,13 +11,98 @@ import { z } from "zod";
 // Server function input
 // ---------------------------------------------------------------------------
 
+export const usernameSchema = z
+  .string()
+  .trim()
+  .min(3, "A Minecraft username is required")
+  .max(16, "Minecraft usernames are at most 16 characters")
+  .regex(/^[A-Za-z0-9_]+$/, "Usernames may only contain letters, numbers and _");
+
+const uuidKeySchema = z
+  .string()
+  .trim()
+  .regex(
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+    "API key must be a Hypixel UUID",
+  )
+  .optional();
+
+const profileIdSchema = z
+  .string()
+  .trim()
+  .regex(/^[0-9a-f]{32}$/i, "Invalid profile id")
+  .optional();
+
 export const fetchPlayerInputSchema = z.object({
-  apiKey: z.string().trim().min(1).optional(),
-  username: z.string().trim().min(1, "A Minecraft username is required").max(64),
-  profileId: z.string().trim().optional(),
+  apiKey: uuidKeySchema,
+  username: usernameSchema,
+  profileId: profileIdSchema,
 });
 
 export type FetchPlayerInput = z.infer<typeof fetchPlayerInputSchema>;
+
+// ---------------------------------------------------------------------------
+// Shared request boundaries (server functions + Nitro APIs)
+// ---------------------------------------------------------------------------
+
+/** Mojang UUID (dashed or undashed) or 3–16 char username resolved server-side. */
+export const uuidOrNameSchema = z
+  .string()
+  .trim()
+  .min(3)
+  .max(40)
+  .regex(/^[A-Za-z0-9_-]+$/, "Invalid player identifier");
+
+export const itemIdSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(64)
+  .regex(/^[A-Z0-9_:+-]+$/i, "Invalid item id");
+
+export const logFlipInputSchema = z.object({
+  id: z.string().trim().min(1).max(128),
+  itemId: itemIdSchema,
+  price: z.number().finite().positive().max(1e12),
+  expected: z.number().finite().positive().max(1e12),
+  kind: z.enum(["bazaar", "ah"]),
+});
+
+export const alertRuleSchema = z.object({
+  id: z.string().trim().min(1).max(128),
+  itemId: itemIdSchema,
+  itemName: z.string().trim().min(1).max(128),
+  direction: z.enum(["below", "above"]),
+  threshold: z.number().finite().positive().max(1e12),
+});
+
+export const alertRulesInputSchema = z.array(alertRuleSchema).max(100);
+
+export const priceHistoryInputSchema = z.object({
+  ids: z.array(itemIdSchema).max(200),
+  rangeHours: z.number().finite().min(1).max(24 * 14).optional(),
+});
+
+export const externalPriceHistoryInputSchema = z.object({
+  itemId: itemIdSchema,
+  days: z.number().int().min(1).max(90).optional(),
+});
+
+export const webhookInputSchema = z
+  .string()
+  .trim()
+  .max(500)
+  .refine(
+    (v) => v === "" || /^https:\/\/(discord|discordapp)\.com\/api\/webhooks\//.test(v),
+    "Must be a Discord webhook URL",
+  );
+
+export const leaderboardIdSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(64)
+  .regex(/^[a-z0-9_-]+$/i, "Invalid leaderboard id");
 
 // ---------------------------------------------------------------------------
 // Normalized domain models (mirror the types in skyblock.ts)

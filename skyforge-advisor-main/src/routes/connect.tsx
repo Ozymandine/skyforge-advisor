@@ -1,8 +1,8 @@
 // src/routes/connect.tsx
 // BYOK connect flow: username first, then a one-click link to Hypixel's
 // developer portal (auto-generates a key for logged-in accounts) and an
-// inline paste field with live validation. The key is stored only in the
-// user's browser.
+// inline paste field with live validation. The key is kept in this browser's
+// session storage and sent only to our own server proxy for Hypixel calls.
 
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/connect")({
       {
         name: "description",
         content:
-          "Connect your Hypixel profile: enter your username and paste a free API key. Your key never leaves your browser.",
+          "Connect your Hypixel profile: enter your username and optionally paste your own API key (BYOK). Your key stays in this browser's session and is sent only to our server to call Hypixel.",
       },
     ],
   }),
