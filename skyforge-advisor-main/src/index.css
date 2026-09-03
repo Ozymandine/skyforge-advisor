@@ -131,7 +131,8 @@
   width: max-content;
   animation: tickerScroll 45s linear infinite;
 }
-.ticker-track:hover {
+.ticker-track:hover,
+.ticker-track:focus-within {
   animation-play-state: paused;
 }
 
@@ -182,6 +183,36 @@
 /* ==========================================================================
    FORGE DESIGN SYSTEM — Minecraft-native premium utilities
    ========================================================================== */
+
+/* Editorial eyebrow label (DESIGN.md label-sm): Cinzel, uppercase, tracked. */
+.eyebrow {
+  font-family: var(--font-display, "Cinzel", Georgia, serif);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-gold-foil-dim, #9b7e3e);
+}
+
+/* Base card surface — Panel relies on this for bg + border. */
+.panel-card {
+  background-color: var(--color-card, #121216);
+  border: 1px solid var(--color-border, rgba(197, 160, 89, 0.08));
+}
+
+/* Frosted glass helpers */
+.glass {
+  background-color: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.glass-soft {
+  background-color: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
 
 /* Pixel display font for headings/labels */
 .font-pixel {
@@ -248,6 +279,13 @@
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+@supports not (background-clip: text) {
+  .forge-gradient-text {
+    color: var(--color-gold-foil-bright, #dcc48a);
+    background: none;
+  }
 }
 
 .forge-gradient-bar {

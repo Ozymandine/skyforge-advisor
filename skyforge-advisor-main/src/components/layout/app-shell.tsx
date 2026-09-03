@@ -33,7 +33,7 @@ import {
   IconBot,
   IconX,
 } from "@/assets/icons";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type HTMLAttributes, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import headerVideo from "@/assets/skyblock-header.mp4";
@@ -89,6 +89,8 @@ const nav = [
   {
     group: "Tools",
     items: [
+      { to: "/advisor", label: "Advisor", icon: IconBot },
+      { to: "/simulator", label: "Damage Sim", icon: IconSwords },
       { to: "/leaderboards", label: "Leaderboards", icon: IconTrophy },
       { to: "/calendar", label: "Calendar", icon: IconCalendar },
       { to: "/analytics", label: "Analytics", icon: IconLineChart },
@@ -161,7 +163,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
   return (
     <aside
       className={cn(
-        "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-white/10 bg-[#0B0E14] lg:flex transition-all duration-300 ease-in-out",
+        "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-white/10 bg-[#0B0E14] md:flex transition-all duration-300 ease-in-out",
         collapsed ? "w-[68px]" : "w-[204px]",
       )}
     >
@@ -218,7 +220,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                         "bg-white/[0.12] text-white border-l-2 border-emerald-400 font-semibold shadow-sm ring-1 ring-white/10 hover:translate-x-0",
                     }}
                   >
-                    <item.icon className="size-4.5 shrink-0 text-white/55 group-hover:text-white group-hover:transition-none transition-colors duration-150" />
+                    <item.icon className="size-4 shrink-0 text-white/55 group-hover:text-white group-hover:transition-none transition-colors duration-150" />
                     {!collapsed && <span className="truncate">{item.label}</span>}
                   </Link>
                 </li>
@@ -243,7 +245,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                   uuid={player.data.uuid}
                   name={player.data.username || account.username}
                   size={26}
-                  className="size-6.5 shrink-0 rounded-lg"
+                  className="size-6 shrink-0 rounded-lg"
                 />
                 {!collapsed && (
                   <div className="min-w-0 flex-1">
@@ -372,12 +374,14 @@ function TickerContent() {
 
   if (entries.length === 0) return null;
 
-  // Duplicate the track so the marquee loops seamlessly.
+  // Duplicate the track so the marquee loops seamlessly. The second half is
+  // hidden from assistive tech so screen readers hear each entry once.
   const loop = [...entries, ...entries];
 
   return (
     <div className="relative overflow-x-hidden overflow-y-hidden border-b border-white/10 bg-black/30 backdrop-blur-md">
-      <div className="ticker-track py-1.5">
+      <span className="sr-only">Live market ticker: top bazaar and auction flips.</span>
+      <div className="ticker-track py-1.5" aria-hidden="true">
         {loop.map((entry, i) => (
           <span
             key={`${entry.key}-${i}`}
@@ -388,7 +392,7 @@ function TickerContent() {
             <span
               className={cn(
                 "font-mono font-semibold",
-                entry.up ? "text-emerald-400" : "text-danger",
+                entry.up ? "text-emerald-400" : "text-oxblood-bright",
               )}
             >
               {entry.value}
@@ -462,9 +466,12 @@ function Header({
           onClick={onOpenSearch}
           className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-muted-foreground transition-none hover:border-white/20 hover:bg-white/10 active:opacity-80 sm:max-w-xl"
         >
-          <IconSearch className="size-4 shrink-0" />
+          <IconSearch className="size-4 shrink-0" aria-hidden="true" />
           <span className="truncate">Search or type a command...</span>
-          <kbd className="ml-auto hidden rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:block">
+          <kbd
+            aria-hidden="true"
+            className="ml-auto hidden rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:block"
+          >
             ⌘K
           </kbd>
         </button>
@@ -485,7 +492,10 @@ function Header({
               />
               <div className="hidden sm:flex items-center gap-1.5">
                 <RankBadge rankData={player.data.hypixelPlayer} size="sm" />
-                <span className="truncate text-xs font-bold text-foreground max-w-[100px]">
+                <span
+                  title={player.data.username}
+                  className="truncate text-xs font-bold text-foreground max-w-[100px]"
+                >
                   {player.data.username}
                 </span>
               </div>
@@ -503,15 +513,16 @@ function Header({
           <button
             onClick={onOpenNav}
             aria-label="Open navigation"
-            className="rounded-lg p-2 text-muted-foreground transition-none hover:bg-white/10 hover:text-foreground active:opacity-75 lg:hidden"
+            className="rounded-lg p-2 text-muted-foreground transition-none hover:bg-white/10 hover:text-foreground active:opacity-75 md:hidden"
           >
-            <IconMenu className="size-4" />
+            <IconMenu className="size-4" aria-hidden="true" />
           </button>
 
           {/* Refresh Button */}
           <button
             onClick={() => player.refetch()}
             aria-label="Refresh data"
+            aria-busy={player.isFetching}
             className="rounded-lg p-2 text-muted-foreground transition-none hover:bg-white/10 hover:text-foreground active:opacity-75"
           >
             <IconRefreshCw className={cn("size-4", player.isFetching && "animate-spin")} />
@@ -519,10 +530,17 @@ function Header({
 
           {/* Notifications Dropdown */}
           <DropdownMenu>
-            <DropdownMenuTrigger className="relative rounded-lg p-2 text-muted-foreground transition-none hover:bg-white/10 hover:text-foreground active:opacity-75 outline-none">
+            <DropdownMenuTrigger
+              aria-label={`Notifications${feed.unreadCount > 0 ? `, ${feed.unreadCount} unread` : ""}`}
+              aria-haspopup="menu"
+              className="relative rounded-lg p-2 text-muted-foreground transition-none hover:bg-white/10 hover:text-foreground active:opacity-75 outline-none"
+            >
               <IconBell className="size-4" />
               {feed.unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-emerald-400 text-[9px] font-bold text-black ring-2 ring-background">
+                <span
+                  aria-hidden="true"
+                  className="absolute -top-0.5 -right-0.5 flex size-4 min-w-4 items-center justify-center rounded-full bg-emerald-400 px-0.5 text-[10px] font-bold text-black ring-2 ring-background"
+                >
                   {feed.unreadCount > 9 ? "9+" : feed.unreadCount}
                 </span>
               )}
@@ -583,7 +601,7 @@ function Header({
           {/* Theme Toggle Button */}
           <button
             onClick={cycleTheme}
-            aria-label="Toggle Theme"
+            aria-label={`Change theme (current: ${theme})`}
             className="rounded-lg p-2 text-muted-foreground transition-none hover:bg-white/10 hover:text-foreground active:opacity-75"
             title={`Theme: ${theme} (click to change)`}
           >
@@ -601,6 +619,46 @@ function Header({
         </div>
       </div>
     </header>
+  );
+}
+
+/** Video background that degrades to a static poster on reduced-motion,
+ * data-saver, or slow connections. */
+function BackgroundVideo() {
+  const [playVideo, setPlayVideo] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    const saver = conn?.saveData === true;
+    const slow = conn?.effectiveType === "slow-2g" || conn?.effectiveType === "2g";
+    setPlayVideo(!reduced && !saver && !slow);
+  }, []);
+
+  if (!playVideo) {
+    return (
+      <img
+        src={headerPoster}
+        alt=""
+        className="size-full object-cover opacity-60"
+      />
+    );
+  }
+
+  return (
+    <video
+      autoPlay
+      loop
+      muted
+      playsInline
+      preload="metadata"
+      poster={headerPoster}
+      suppressHydrationWarning
+      className="size-full object-cover gpu-layer opacity-60"
+    >
+      <source src={headerVideo} type="video/mp4" />
+    </video>
   );
 }
 
@@ -652,6 +710,21 @@ export function AppShell({ children }: { children: ReactNode }) {
     setNavOpen(false);
   }, [pathname]);
 
+  // Drawer a11y: Esc closes, background scroll locks while open.
+  useEffect(() => {
+    if (!navOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setNavOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [navOpen]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "k" && (e.metaKey || e.ctrlKey)) {
@@ -665,20 +738,14 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="relative min-h-screen">
-      {/* Live Video Background: Dedicated GPU layer with crisp solid vignette */}
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden select-none">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="none"
-          poster={headerPoster}
-          suppressHydrationWarning
-          className="size-full object-cover gpu-layer opacity-60"
-        >
-          <source src={headerVideo} type="video/mp4" />
-        </video>
+      {/* Live Video Background: Dedicated GPU layer with crisp solid vignette.
+          Skipped entirely on reduced-motion / data-saver / 2G so metered
+          mobile connections only ever load the lightweight poster. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden select-none"
+      >
+        <BackgroundVideo />
         <div className="absolute inset-0 bg-[#0c1017]/85" />
       </div>
 
@@ -691,70 +758,82 @@ export function AppShell({ children }: { children: ReactNode }) {
             onOpenNav={() => setNavOpen(true)}
             onCycleThemeRef={cycleThemeRef}
           />
-          <main key={pathname} className="animate-page-in px-4 pb-24 pt-6 sm:px-8 md:pb-16">
+          <main key={pathname} className="animate-page-in px-4 pb-8 pt-6 sm:px-8 md:pb-12">
             {children}
           </main>
 
-          {/* Footer: provenance + live API health */}
-          <footer className="border-t border-white/10 px-4 py-5 sm:px-8 pb-20 md:pb-5">
+          {/* Footer: provenance + live API health (footer carries the mobile
+              bottom-bar clearance so main doesn't double-compensate). */}
+          <footer className="border-t border-white/10 px-4 py-5 sm:px-8 pb-24 md:pb-5">
             <FooterContent />
           </footer>
         </div>
       </div>
 
       {/* Mobile Floating Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-[#0B0E14]/90 p-2 backdrop-blur-xl md:hidden">
+      <nav
+        aria-label="Primary"
+        className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-[#0B0E14]/90 p-2 backdrop-blur-xl md:hidden"
+      >
         <div className="flex items-center justify-around">
           <Link
             to="/dashboard"
-            className="flex flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
+            className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
             activeProps={{ className: "text-emerald-400 font-bold" }}
           >
-            <IconLayoutDashboard className="size-4" />
+            <IconLayoutDashboard className="size-4" aria-hidden="true" />
             <span className="text-[10px]">Dashboard</span>
           </Link>
           <Link
-            to="/advisor"
-            className="flex flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
-            activeProps={{ className: "text-sky-400 font-bold" }}
+            to="/bazaar"
+            className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
+            activeProps={{ className: "text-emerald-400 font-bold" }}
           >
-            <IconBot className="size-4" />
-            <span className="text-[10px]">Advisor</span>
-          </Link>
-          <Link
-            to="/simulator"
-            className="flex flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
-            activeProps={{ className: "text-amber-400 font-bold" }}
-          >
-            <IconSwords className="size-4" />
-            <span className="text-[10px]">Damage</span>
+            <IconTrendingUp className="size-4" aria-hidden="true" />
+            <span className="text-[10px]">Bazaar</span>
           </Link>
           <Link
             to="/flips"
-            className="flex flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
+            className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
             activeProps={{ className: "text-emerald-400 font-bold" }}
           >
-            <IconTarget className="size-4" />
+            <IconTarget className="size-4" aria-hidden="true" />
             <span className="text-[10px]">Flips</span>
+          </Link>
+          <Link
+            to="/advisor"
+            className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
+            activeProps={{ className: "text-sky-400 font-bold" }}
+          >
+            <IconBot className="size-4" aria-hidden="true" />
+            <span className="text-[10px]">Advisor</span>
           </Link>
           <button
             onClick={() => setNavOpen(true)}
-            className="flex flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
+            aria-label="Open full menu"
+            aria-haspopup="dialog"
+            className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl p-1.5 text-white/60 transition-none hover:text-white"
           >
-            <IconMenu className="size-4" />
+            <IconMenu className="size-4" aria-hidden="true" />
             <span className="text-[10px]">Menu</span>
           </button>
         </div>
-      </div>
+      </nav>
 
       {/* Mobile Navigation Drawer */}
       {navOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50 md:hidden">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setNavOpen(false)}
+            aria-hidden="true"
           />
-          <nav className="absolute left-0 top-0 h-full w-[280px] overflow-y-auto border-r border-white/10 bg-[#0E121B]/95 p-5 backdrop-blur-2xl">
+          <nav
+            role="dialog"
+            aria-modal="true"
+            aria-label="Site navigation"
+            className="absolute left-0 top-0 h-full w-[280px] overflow-y-auto border-r border-white/10 bg-[#0E121B]/95 p-5 backdrop-blur-2xl"
+          >
             <div className="flex items-center justify-between">
               <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text font-black text-xl tracking-[0.18em] text-transparent select-none">
                 SKYFORGE
@@ -762,6 +841,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <button
                 onClick={() => setNavOpen(false)}
                 aria-label="Close navigation"
+                autoFocus
                 className="rounded-lg p-2 text-muted-foreground hover:bg-white/10 hover:text-foreground"
               >
                 <IconX className="size-4" />
@@ -956,7 +1036,7 @@ function FooterContent() {
     profileApi === "ok" ? "Operational" : profileApi === "degraded" ? "Degraded" : "No shared key";
 
   return (
-    <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 text-[11px] text-muted-foreground">
+    <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
       <p>
         Data:{" "}
         <a
@@ -993,10 +1073,10 @@ function FooterContent() {
           />
           {healthLabel}
         </span>
-        <Link to="/about" className="hover:text-foreground">
+        <Link to="/about" className="underline-offset-2 hover:text-foreground hover:underline">
           About & data
         </Link>
-        <Link to="/connect" className="hover:text-foreground">
+        <Link to="/connect" className="underline-offset-2 hover:text-foreground hover:underline">
           Connect
         </Link>
       </div>
@@ -1019,7 +1099,7 @@ export function PageHero({
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
         <p className="eyebrow">{eyebrow}</p>
-        <h1 className="font-pixel mt-2 text-4xl font-semibold tracking-wide sm:text-5xl">
+        <h1 className="font-pixel mt-2 break-words text-3xl font-semibold tracking-wide sm:text-5xl">
           {title}
         </h1>
         <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{description}</p>
@@ -1029,9 +1109,17 @@ export function PageHero({
   );
 }
 
-export function Panel({ className, children }: { className?: string; children: ReactNode }) {
+export function Panel({
+  className,
+  children,
+  ...rest
+}: {
+  className?: string;
+  children: ReactNode;
+} & HTMLAttributes<HTMLElement>) {
   return (
     <section
+      {...rest}
       className={cn(
         "panel-card rounded-3xl p-6 shadow-xl transition-all duration-75 ease-out hover:border-emerald-500/35 hover:shadow-2xl hover:shadow-emerald-500/[0.06]",
         className,
@@ -1044,7 +1132,7 @@ export function Panel({ className, children }: { className?: string; children: R
 
 export function StatTile({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div className="group relative px-6 py-5 transition-all duration-75 ease-out hover:bg-white/[0.04] cursor-pointer">
+    <div className="group relative px-6 py-5 transition-colors duration-75 ease-out hover:bg-white/[0.04]">
       <p className="eyebrow group-hover:text-emerald-400/90 transition-colors duration-75">
         {label}
       </p>
@@ -1060,7 +1148,7 @@ export function StatTile({ label, value, sub }: { label: string; value: string; 
 
 export function StatRow({ stats }: { stats: { label: string; value: string; sub: string }[] }) {
   return (
-    <div className="grid grid-cols-1 divide-y divide-white/10 rounded-3xl border border-white/10 bg-slate-950/75 backdrop-blur-xl shadow-2xl sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x lg:divide-white/10 overflow-hidden">
+    <div className="grid grid-cols-1 divide-y divide-white/10 rounded-3xl border border-white/10 bg-slate-950/75 backdrop-blur-xl shadow-2xl sm:grid-cols-2 sm:divide-y-0 sm:divide-x lg:grid-cols-4 lg:divide-x lg:divide-white/10 overflow-hidden">
       {stats.map((s) => (
         <StatTile key={s.label} {...s} />
       ))}
@@ -1075,7 +1163,8 @@ export function ProgressBar({
   pct: number;
   tone?: "emerald" | "gold" | "danger";
 }) {
-  const toneClass = tone === "gold" ? "bg-gold" : tone === "danger" ? "bg-danger" : "bg-emerald";
+  const toneClass =
+    tone === "gold" ? "bg-gold-foil" : tone === "danger" ? "bg-oxblood-bright" : "bg-emerald-500";
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10 backdrop-blur-sm">
       <div
@@ -1087,10 +1176,10 @@ export function ProgressBar({
 }
 
 const rarityClass: Record<string, string> = {
-  MYTHIC: "text-mythic border-mythic/40 bg-mythic/10 backdrop-blur-sm",
-  LEGENDARY: "text-legendary border-legendary/40 bg-legendary/10 backdrop-blur-sm",
-  EPIC: "text-epic border-epic/40 bg-epic/10 backdrop-blur-sm",
-  RARE: "text-rare border-rare/40 bg-rare/10 backdrop-blur-sm",
+  MYTHIC: "text-r-mythic border-r-mythic/40 bg-r-mythic/10 backdrop-blur-sm",
+  LEGENDARY: "text-r-legendary border-r-legendary/40 bg-r-legendary/10 backdrop-blur-sm",
+  EPIC: "text-r-epic border-r-epic/40 bg-r-epic/10 backdrop-blur-sm",
+  RARE: "text-r-rare border-r-rare/40 bg-r-rare/10 backdrop-blur-sm",
 };
 
 export function RarityTag({ rarity }: { rarity: string }) {
@@ -1118,8 +1207,9 @@ export function Chip({
   return (
     <button
       onClick={onClick}
+      aria-pressed={active}
       className={cn(
-        "rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-md transition-all duration-75 ease-out hover:scale-[1.04] hover:bg-white/10 hover:text-foreground active:scale-95",
+        "rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-md transition-all duration-75 ease-out hover:scale-[1.04] hover:bg-white/10 hover:text-foreground active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-foil",
         active && "border-primary/40 bg-primary/20 text-primary font-semibold shadow-sm",
       )}
     >

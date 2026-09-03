@@ -215,13 +215,19 @@ function AuctionHouse() {
         <Panel>
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex min-w-56 flex-1 items-center gap-2 rounded-xl border border-input bg-secondary/40 px-3 py-2 transition-all duration-75 hover:border-ring/40">
-              <IconSearch className="size-4 text-muted-foreground" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search listings..."
-                className="w-full bg-transparent text-sm outline-none"
-              />
+                <IconSearch aria-hidden="true" className="size-4 text-muted-foreground" />
+                <label htmlFor="ah-search" className="sr-only">
+                  Search auction listings
+                </label>
+                <input
+                  id="ah-search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search listings..."
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="w-full bg-transparent text-base outline-none sm:text-sm"
+                />
             </div>
             <select
               value={sort}

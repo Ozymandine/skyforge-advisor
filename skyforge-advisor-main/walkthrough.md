@@ -1,13 +1,13 @@
 # 100% Account-Personalized Progression Advisor
 
-All changes have been engineered, verified across 110 unit tests, built in production, and pushed to GitHub.
+All changes have been engineered, verified across unit tests, built in production, and pushed to GitHub.
 
 ---
 
 ## 1. What Was Transformed
 
 ### [1] Deep Account Telemetry & Health Audit (0–100 Score)
-* **File:** [`src/lib/advisor-engine.ts`](file:///c:/Users/kbrow/Downloads/skyforge-advisor-main/skyforge-advisor-main/src/lib/advisor-engine.ts)
+* **File:** `src/lib/advisor-engine.ts`
 * **What it audits dynamically for your specific account:**
   1. **⚡ Magical Power Deficit:** Computes exact MP from your accessory bag & inventory, compares against your stage benchmark (e.g. Early: 300, Mid: 550, Late: 850), and calculates your exact missing damage multiplier.
   2. **🧚 Fairy Souls Deficit:** Counts your collected souls vs 242 and calculates exact permanent Max HP and Defense lost.

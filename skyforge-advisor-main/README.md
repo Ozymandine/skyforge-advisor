@@ -74,7 +74,7 @@ queues notifications.
 - Regenerate `public/sitemap.xml` after item-data updates:
   `node scripts/generate-sitemap.mjs --base https://your-domain`
 
-## Environment
+## Flip track record
 
 Flip suggestions from the Bazaar/AH pages are logged and later re-priced, which
 powers the "flip suggestion track record" (win rate + actual vs predicted
@@ -83,10 +83,15 @@ margin) shown on both market pages.
 ## Environment
 
 - `HYPIXEL_API_KEY` — shared operator key pool for profile data (comma-separated
-  for rotation; users' own keys are always preferred). Market pages never need
+  UUID keys for rotation; users' own keys are always preferred). Market pages never need
   a key.
 - `CF_ACCOUNT_ID` / `CF_KV_NAMESPACE` / `CF_KV_TOKEN` — Cloudflare KV storage
   for market history (see above).
+- `SUPABASE_URL` / `SUPABASE_ANON_KEY` (+ `VITE_` variants) — per-user alerts
+  and webhooks. See `supabase/migrations/0001_user_store.sql`.
+- `PUBLIC_API_ORIGINS` — comma-separated origins allowed CORS on `/api/*`.
+  Empty = same-origin only.
+- Copy `.env.example` to `.env` for local dev (never commit `.env`).
 
 ## Conventions
 
