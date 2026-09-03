@@ -64,18 +64,25 @@ function getCategoryLink(id: string): { to: string; search?: Record<string, stri
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — SkyBlock Assistant" },
+      { title: "Dashboard — SkyForge" },
       {
         name: "description",
         content:
           "Command center overview of your SkyBlock profile: completion, highlights and live sync status.",
       },
-      { property: "og:title", content: "Dashboard — SkyBlock Assistant" },
+      { property: "og:title", content: "Dashboard — SkyForge" },
       {
         property: "og:description",
         content: "Account completion, active profile summary and key highlights.",
       },
+      { property: "og:url", content: "https://skyforge-advisor.vercel.app/dashboard" },
+      {
+        property: "og:image",
+        content: "https://skyforge-advisor.vercel.app/og-image.png",
+      },
+      { name: "robots", content: "noindex, nofollow" },
     ],
+    links: [{ rel: "canonical", href: "https://skyforge-advisor.vercel.app/dashboard" }],
   }),
   component: Dashboard,
 });

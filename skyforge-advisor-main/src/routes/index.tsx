@@ -45,8 +45,26 @@ export const Route = createFileRoute("/")({
           "Live Hypixel SkyBlock profile stats, market flip suggestions with a published accuracy score, a full item wiki, crafting cost trees and net worth tracking. No login.",
       },
       { property: "og:title", content: "SkyForge — Live SkyBlock stats, flips & progression" },
-      { property: "og:image", content: "/og-image.png" },
+      {
+        property: "og:description",
+        content:
+          "Live Hypixel SkyBlock profile stats, market flips with a published accuracy score, item wiki and net worth tracking.",
+      },
+      { property: "og:url", content: "https://skyforge-advisor.vercel.app/" },
+      {
+        property: "og:image",
+        content: "https://skyforge-advisor.vercel.app/og-image.png",
+      },
+      {
+        name: "twitter:title",
+        content: "SkyForge — Live SkyBlock stats, flips & progression",
+      },
+      {
+        name: "twitter:image",
+        content: "https://skyforge-advisor.vercel.app/og-image.png",
+      },
     ],
+    links: [{ rel: "canonical", href: "https://skyforge-advisor.vercel.app/" }],
   }),
   component: Landing,
 });
@@ -362,19 +380,19 @@ function Landing() {
         </div>
 
         {hasAccuracy && (
-          <Link
-            to="/flips"
-            className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 px-5 py-4 transition-all duration-75 hover:scale-[1.01]"
-          >
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 px-5 py-4">
             <p className="flex items-center gap-2 text-sm font-semibold">
               <TargetIcon className="size-4 text-emerald-300" />
-              Our flip picks: {accuracy!.winRate?.toFixed(0)}% win rate over {accuracy!.resolved}{" "}
+              Our flip picks: {accuracy!.winRate?.toFixed(1)}% win rate over {accuracy!.resolved}{" "}
               scored suggestions
             </p>
-            <span className="flex items-center gap-1 text-xs text-emerald-300">
+            <Link
+              to="/flips"
+              className="flex items-center gap-1 rounded-full px-2 py-1 text-xs text-emerald-300 outline-none transition-colors hover:text-emerald-200 focus-visible:ring-2 focus-visible:ring-emerald-300"
+            >
               See the full scorecard <IconArrowRight className="size-3.5" />
-            </span>
-          </Link>
+            </Link>
+          </div>
         )}
       </section>
 

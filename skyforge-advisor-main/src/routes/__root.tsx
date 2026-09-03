@@ -74,18 +74,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SkyBlock Assistant — Personal Hypixel SkyBlock Analytics" },
+      { title: "SkyForge — Personal Hypixel SkyBlock Analytics" },
       {
         name: "description",
         content:
           "Track skills, collections, net worth, bazaar flips and auctions for your Hypixel SkyBlock profile.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "SkyForge" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:title", content: "SkyBlock Assistant — Personal Hypixel SkyBlock Analytics" },
+      { property: "og:title", content: "SkyForge — Personal Hypixel SkyBlock Analytics" },
       {
         name: "twitter:title",
-        content: "SkyBlock Assistant — Personal Hypixel SkyBlock Analytics",
+        content: "SkyForge — Personal Hypixel SkyBlock Analytics",
       },
       {
         property: "og:description",
@@ -97,8 +98,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Track skills, collections, net worth, bazaar flips and auctions for your Hypixel SkyBlock profile.",
       },
-      { property: "og:image", content: "/og-image.png" },
-      { name: "twitter:image", content: "/og-image.png" },
+      {
+        property: "og:image",
+        content: "https://skyforge-advisor.vercel.app/og-image.png",
+      },
+      {
+        name: "twitter:image",
+        content: "https://skyforge-advisor.vercel.app/og-image.png",
+      },
+      { name: "theme-color", content: "#0B0B0E" },
     ],
     links: [
       {

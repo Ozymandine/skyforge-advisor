@@ -55,19 +55,33 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/flips")({
   head: () => ({
     meta: [
-      { title: "Market Flips & Arbitrage Matrix — SkyForge Advisor" },
+      { title: "Market Flips & Arbitrage Matrix — SkyForge" },
       {
         name: "description",
         content:
           "Real-time Bazaar spread flips, Auction House undercuts, cross-market AH <-> BZ arbitrage, pet leveling margins, minion ROI, and Sirius bid ceilings.",
       },
-      { property: "og:title", content: "Market Flips & Arbitrage Matrix — SkyForge Advisor" },
+      { property: "og:title", content: "Market Flips & Arbitrage Matrix — SkyForge" },
       {
         property: "og:description",
         content:
           "Complete flip finder with cross-market arbitrage, pet leveling margins, and anti-manipulation spoof detectors.",
       },
+      { property: "og:url", content: "https://skyforge-advisor.vercel.app/flips" },
+      {
+        property: "og:image",
+        content: "https://skyforge-advisor.vercel.app/og-image.png",
+      },
+      {
+        name: "twitter:title",
+        content: "Market Flips & Arbitrage Matrix — SkyForge",
+      },
+      {
+        name: "twitter:image",
+        content: "https://skyforge-advisor.vercel.app/og-image.png",
+      },
     ],
+    links: [{ rel: "canonical", href: "https://skyforge-advisor.vercel.app/flips" }],
   }),
   component: FlipsRoute,
 });
