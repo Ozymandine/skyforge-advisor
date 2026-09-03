@@ -88,7 +88,8 @@ function Settings() {
       <Panel>
         <h2 className="text-xl font-semibold">Hypixel connection</h2>
         <p className="mt-2 text-xs text-muted-foreground">
-          Your key is stored only in this browser and used solely to call the Hypixel API. Generate
+          Your key stays in this browser's session and is sent only to our server to call
+          the Hypixel API. Generate
           one in a single click at{" "}
           <a
             href={DEVELOPER_DASHBOARD_URL}

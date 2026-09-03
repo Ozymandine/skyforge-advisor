@@ -71,10 +71,9 @@ function AboutPage() {
           — it's free and tied to your Minecraft account.
         </p>
         <p>
-          Your key is stored{" "}
-          <span className="font-medium text-foreground">only in your browser</span> (localStorage)
-          and is used solely to call the Hypixel API. It is never sent to any third-party service.
-          Clearing your browser data removes it completely.
+          Your key is kept in this browser's session storage (cleared when the tab closes)
+          and is sent only to our own server, which proxies Hypixel API calls. It is never sent
+          to any third-party service. Closing the tab or clearing site data removes it completely.
         </p>
         <p>
           If you don't add a key, profile pages may use a shared server-side key with strict

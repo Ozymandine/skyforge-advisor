@@ -18,9 +18,10 @@ import { usePlayer } from "@/hooks/use-account";
 import {
   fetchAuctions,
   fetchBazaar,
-  fetchDiscordWebhook,
-  saveDiscordWebhook,
+  fetchMyWebhookStatus,
+  saveMyWebhook,
 } from "@/lib/hypixel.functions";
+import { getClientId } from "@/lib/client-id";
 import { evaluateAlerts, usePriceAlerts } from "@/hooks/use-price-alerts";
 import { useWatchlist } from "@/hooks/use-watchlist";
 import {
@@ -92,24 +93,23 @@ function Notifications() {
   // ---------------------------------------------------------------------------
 
   const webhookQuery = useQuery({
-    queryKey: ["discord-webhook"],
-    queryFn: () => fetchDiscordWebhook(),
+    queryKey: ["discord-webhook", "v2"],
+    queryFn: () => fetchMyWebhookStatus({ data: { ownerId: getClientId() } }),
     staleTime: 60_000,
   });
   const [webhookDraft, setWebhookDraft] = useState("");
   const [webhookSaved, setWebhookSaved] = useState(false);
-  const webhookHydrated = useRef(false);
-
-  useEffect(() => {
-    if (webhookQuery.data && !webhookHydrated.current) {
-      webhookHydrated.current = true;
-      setWebhookDraft(webhookQuery.data);
-    }
-  }, [webhookQuery.data]);
+  // Never prefill the secret URL back into the input — the server only
+  // returns { configured, hint } now. Blank = keep existing.
+  const webhookConfigured = webhookQuery.data?.configured ?? false;
+  const webhookHint = webhookQuery.data?.hint ?? null;
 
   const saveWebhook = async () => {
-    const result = await saveDiscordWebhook({ data: webhookDraft.trim() });
+    const result = await saveMyWebhook({
+      data: { ownerId: getClientId(), url: webhookDraft.trim() },
+    });
     if (result?.ok) {
+      setWebhookDraft("");
       setWebhookSaved(true);
       setTimeout(() => setWebhookSaved(false), 3000);
       void webhookQuery.refetch();
@@ -117,7 +117,7 @@ function Notifications() {
   };
 
   const removeWebhook = async () => {
-    await saveDiscordWebhook({ data: "" });
+    await saveMyWebhook({ data: { ownerId: getClientId(), url: "" } });
     setWebhookDraft("");
     void webhookQuery.refetch();
   };
@@ -422,8 +422,18 @@ function Notifications() {
             <p className="mt-1 text-sm text-muted-foreground">
               Get price alerts pushed to a Discord channel — even when this site is closed. Create a
               webhook in your server (Channel settings → Integrations → Webhooks) and paste the URL.
-              Note: the webhook URL is stored server-side so alerts can fire while you're away.
+              Note: the webhook URL is stored server-side so alerts can fire while you're away. For
+              your security the saved URL is never shown back — paste a new one to replace it.
             </p>
+            {webhookConfigured && (
+              <p
+                className="mt-2 text-xs text-emerald-400"
+                role="status"
+                aria-live="polite"
+              >
+                Webhook configured{webhookHint ? ` (${webhookHint})` : ""} — leave blank to keep it.
+              </p>
+            )}
             <div className="mt-4 flex flex-wrap gap-2">
               <input
                 value={webhookDraft}
@@ -438,7 +448,7 @@ function Notifications() {
               >
                 {webhookSaved ? "Saved!" : "Save webhook"}
               </button>
-              {webhookDraft && (
+              {webhookConfigured && !webhookDraft && (
                 <button
                   onClick={() => void removeWebhook()}
                   className="rounded-xl border border-border bg-secondary/40 px-4 py-2 text-sm text-muted-foreground transition-all duration-75 ease-out hover:scale-[1.02] hover:text-foreground"

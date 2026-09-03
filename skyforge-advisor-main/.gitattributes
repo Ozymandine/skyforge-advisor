@@ -1,0 +1,6 @@
+# Normalize line endings to LF so `npm run lint` (prettier) passes on Windows.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
+*.mp4 binary

@@ -1,9 +1,21 @@
 import { createServerFn } from "@tanstack/react-start";
-import { fetchPlayerInputSchema } from "./schemas";
+import {
+  alertRulesInputSchema,
+  externalPriceHistoryInputSchema,
+  fetchPlayerInputSchema,
+  itemIdSchema,
+  logFlipInputSchema,
+  ownerIdInputSchema,
+  priceHistoryInputSchema,
+  uuidOrNameSchema,
+  webhookInputSchema,
+} from "./schemas";
 import { z as zod } from "zod";
 import type { AlertRule } from "./market-history.server";
 
-const uuidSchema = zod.object({ uuid: zod.string().trim().min(16).max(40) });
+const uuidSchema = zod.object({
+  uuid: uuidOrNameSchema,
+});
 
 export const fetchBazaar = createServerFn({ method: "GET" }).handler(async () => {
   const { getBazaar } = await import("./hypixel.server");
@@ -50,17 +62,11 @@ export const fetchAuctions = createServerFn({ method: "GET" }).handler(async () 
 });
 
 export const fetchPriceHistory = createServerFn({ method: "POST" })
-  .validator(
-    (input: unknown) =>
-      input as {
-        ids: string[];
-        rangeHours?: number;
-      },
-  )
+  .validator((input: unknown) => priceHistoryInputSchema.parse(input ?? { ids: [] }))
   .handler(async ({ data }) => {
     const { getMarketHistory } = await import("./market-history.server");
     const rangeMs = (data?.rangeHours ?? 24) * 60 * 60 * 1000;
-    return getMarketHistory(Array.isArray(data?.ids) ? data.ids : [], rangeMs);
+    return getMarketHistory(data.ids, rangeMs);
   });
 
 export const fetchTrackedIds = createServerFn({ method: "GET" }).handler(async () => {
@@ -120,44 +126,24 @@ export const fetchFlipAccuracy = createServerFn({ method: "GET" }).handler(async
 });
 
 export const logFlip = createServerFn({ method: "POST" })
-  .validator(
-    (input: unknown) =>
-      input as {
-        id: string;
-        itemId: string;
-        price: number;
-        expected: number;
-        kind: "bazaar" | "ah";
-      },
-  )
+  .validator((input: unknown) => logFlipInputSchema.parse(input ?? {}))
   .handler(async ({ data }) => {
     const { logFlipSuggestion } = await import("./market-history.server");
-    if (
-      data &&
-      typeof data.id === "string" &&
-      typeof data.itemId === "string" &&
-      Number.isFinite(data.price) &&
-      Number.isFinite(data.expected)
-    ) {
-      logFlipSuggestion({
-        id: data.id,
-        itemId: data.itemId,
-        price: Number(data.price),
-        expected: Number(data.expected),
-        kind: data.kind === "ah" ? "ah" : "bazaar",
-      });
-    }
+    logFlipSuggestion({
+      id: data.id,
+      itemId: data.itemId,
+      price: data.price,
+      expected: data.expected,
+      kind: data.kind,
+    });
     return { ok: true };
   });
 
 export const saveAlertRules = createServerFn({ method: "POST" })
-  .validator((input: unknown) => input as unknown[])
+  .validator((input: unknown) => alertRulesInputSchema.parse(input ?? []))
   .handler(async ({ data }) => {
     const { saveAlertRules: save } = await import("./market-history.server");
-    const rules = (Array.isArray(data) ? data : []).filter(
-      (r): r is AlertRule => !!r && typeof r === "object",
-    );
-    save(rules);
+    save(data as AlertRule[]);
     return { ok: true };
   });
 
@@ -167,16 +153,60 @@ export const fetchServerNotifications = createServerFn({ method: "GET" }).handle
 });
 
 export const saveDiscordWebhook = createServerFn({ method: "POST" })
-  .validator((input: unknown) => String(input ?? ""))
+  .validator((input: unknown) =>
+    webhookInputSchema.parse(typeof input === "string" ? input : String(input ?? "")),
+  )
   .handler(async ({ data }) => {
     const { saveDiscordWebhook: save } = await import("./market-history.server");
-    return save(String(data));
+    return save(data);
   });
 
 export const fetchDiscordWebhook = createServerFn({ method: "GET" }).handler(async () => {
-  const { getDiscordWebhook: get } = await import("./market-history.server");
+  const { getDiscordWebhookMasked: get } = await import("./market-history.server");
   return get();
 });
+
+// --- Per-user store (Supabase when configured, fallback otherwise) -----------
+
+const myAlertsInput = zod.object({
+  ownerId: ownerIdInputSchema,
+});
+
+export const fetchMyAlertRules = createServerFn({ method: "POST" })
+  .validator((input: unknown) => myAlertsInput.parse(input ?? {}))
+  .handler(async ({ data }) => {
+    const { getUserAlertRules } = await import("./user-store.server");
+    return getUserAlertRules(data.ownerId);
+  });
+
+export const saveMyAlertRules = createServerFn({ method: "POST" })
+  .validator((input: unknown) =>
+    zod
+      .object({ ownerId: ownerIdInputSchema, rules: alertRulesInputSchema })
+      .parse(input ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const { saveUserAlertRules } = await import("./user-store.server");
+    return saveUserAlertRules(data.ownerId, data.rules);
+  });
+
+export const fetchMyWebhookStatus = createServerFn({ method: "POST" })
+  .validator((input: unknown) => myAlertsInput.parse(input ?? {}))
+  .handler(async ({ data }) => {
+    const { getUserWebhookStatus } = await import("./user-store.server");
+    return getUserWebhookStatus(data.ownerId);
+  });
+
+export const saveMyWebhook = createServerFn({ method: "POST" })
+  .validator((input: unknown) =>
+    zod
+      .object({ ownerId: ownerIdInputSchema, url: webhookInputSchema })
+      .parse(input ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const { saveUserWebhook } = await import("./user-store.server");
+    return saveUserWebhook(data.ownerId, data.url);
+  });
 
 // --- Second-tier player endpoints -------------------------------------------
 
@@ -228,10 +258,9 @@ export const fetchFireSale = createServerFn({ method: "GET" }).handler(async () 
 // --- Third-party enrichment: Coflnet long-range price history ----------------
 
 export const fetchExternalPriceHistory = createServerFn({ method: "POST" })
-  .validator((input: unknown) => input as { itemId: string; days?: number })
+  .validator((input: unknown) => externalPriceHistoryInputSchema.parse(input ?? {}))
   .handler(async ({ data }) => {
-    if (!data?.itemId) return { points: [], source: "none" as const };
-    const days = Math.min(Math.max(data.days ?? 30, 1), 90);
+    const days = data.days ?? 30;
     try {
       const res = await fetch(
         `https://api.coflnet.com/skyblock/price/${encodeURIComponent(data.itemId)}/history/compact`,
@@ -274,10 +303,12 @@ export const fetchItemIndex = createServerFn({ method: "GET" }).handler(async ()
 });
 
 export const fetchItemDetail = createServerFn({ method: "GET" })
-  .validator((input: unknown) => String(input ?? "").trim())
+  .validator((input: unknown) =>
+    itemIdSchema.parse(typeof input === "string" ? input : String(input ?? "")),
+  )
   .handler(async ({ data }) => {
     const { getItemEncyclopedia } = await import("./hypixel.server");
-    return getItemEncyclopedia(String(data));
+    return getItemEncyclopedia(data);
   });
 export const fetchPlayer = createServerFn({ method: "POST" })
   .validator((input: unknown) => {

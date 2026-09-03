@@ -209,7 +209,7 @@ function pruneSeries(points: MarketPoint[]): MarketPoint[] {
 
 /** Register (or replace) a Discord webhook for alert pushes. Empty removes. */
 export function saveDiscordWebhook(url: string): { ok: boolean } {
-  const trimmed = url.trim();
+  const trimmed = url.trim().slice(0, 500);
   const db = load();
   if (!trimmed) {
     db.webhooks = [];
@@ -226,6 +226,17 @@ export function saveDiscordWebhook(url: string): { ok: boolean } {
 
 export function getDiscordWebhook(): string | null {
   return load().webhooks[0]?.url ?? null;
+}
+
+/**
+ * Masked webhook status for clients. Never exposes the secret URL —
+ * callers learn only whether one is configured plus a non-sensitive hint.
+ */
+export function getDiscordWebhookMasked(): { configured: boolean; hint: string | null } {
+  const url = load().webhooks[0]?.url ?? null;
+  if (!url) return { configured: false, hint: null };
+  const tail = url.split("/").slice(-2).join("/");
+  return { configured: true, hint: tail ? `…/${tail.slice(-12)}` : null };
 }
 
 async function postToDiscord(webhook: string, notification: ServerNotification): Promise<boolean> {
@@ -365,7 +376,29 @@ function buildPriceMap(db: MarketStore): Map<string, number> {
 
 export function saveAlertRules(rules: AlertRule[]): void {
   const db = load();
-  db.alertRules = Array.isArray(rules) ? rules.slice(0, 100) : [];
+  // Defense-in-depth: server functions already zod-validate, but sanitize here
+  // too so no caller can poison the shared store with unbounded junk.
+  const clean = (Array.isArray(rules) ? rules : [])
+    .filter(
+      (r): r is AlertRule =>
+        !!r &&
+        typeof r === "object" &&
+        typeof r.id === "string" &&
+        typeof r.itemId === "string" &&
+        typeof r.itemName === "string" &&
+        (r.direction === "below" || r.direction === "above") &&
+        Number.isFinite(r.threshold),
+    )
+    .map((r) => ({
+      id: r.id.trim().slice(0, 128),
+      itemId: r.itemId.trim().slice(0, 64),
+      itemName: r.itemName.trim().slice(0, 128),
+      direction: r.direction,
+      threshold: Math.min(Math.max(r.threshold, 0), 1e12),
+    }))
+    .filter((r) => r.id && r.itemId && r.threshold > 0)
+    .slice(0, 100);
+  db.alertRules = clean;
   // Re-arm rules whose definition changed.
   const ids = new Set(db.alertRules.map((r) => r.id));
   for (const id of Object.keys(db.armed)) {
@@ -485,8 +518,25 @@ export function logFlipSuggestion(entry: {
   expected: number;
   kind: "bazaar" | "ah";
 }): void {
+  // Sanitize: shared accuracy log must not accept unbounded attacker input.
+  if (
+    typeof entry.id !== "string" ||
+    typeof entry.itemId !== "string" ||
+    !Number.isFinite(entry.price) ||
+    !Number.isFinite(entry.expected)
+  ) {
+    return;
+  }
+  const clean = {
+    id: entry.id.trim().slice(0, 128),
+    itemId: entry.itemId.trim().slice(0, 64),
+    price: Math.min(Math.max(entry.price, 0), 1e12),
+    expected: Math.min(Math.max(entry.expected, 0), 1e12),
+    kind: entry.kind === "ah" ? ("ah" as const) : ("bazaar" as const),
+  };
+  if (!clean.id || !clean.itemId || clean.price <= 0 || clean.expected <= 0) return;
   const db = load();
-  db.flipLog = [...db.flipLog.filter((f) => f.id !== entry.id), { ...entry, ts: Date.now() }].slice(
+  db.flipLog = [...db.flipLog.filter((f) => f.id !== clean.id), { ...clean, ts: Date.now() }].slice(
     -MAX_FLIP_LOG,
   );
   schedulePersist();
