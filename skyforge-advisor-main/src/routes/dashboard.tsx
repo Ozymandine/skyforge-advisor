@@ -64,18 +64,25 @@ function getCategoryLink(id: string): { to: string; search?: Record<string, stri
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard — SkyBlock Assistant" },
+      { title: "Dashboard — SkyForge" },
       {
         name: "description",
         content:
           "Command center overview of your SkyBlock profile: completion, highlights and live sync status.",
       },
-      { property: "og:title", content: "Dashboard — SkyBlock Assistant" },
+      { property: "og:title", content: "Dashboard — SkyForge" },
       {
         property: "og:description",
         content: "Account completion, active profile summary and key highlights.",
       },
+      { property: "og:url", content: "https://skyforge-advisor.vercel.app/dashboard" },
+      {
+        property: "og:image",
+        content: "https://skyforge-advisor.vercel.app/og-image.png",
+      },
+      { name: "robots", content: "noindex, nofollow" },
     ],
+    links: [{ rel: "canonical", href: "https://skyforge-advisor.vercel.app/dashboard" }],
   }),
   component: Dashboard,
 });
@@ -189,7 +196,14 @@ function Dashboard() {
   if (!connected) return <ConnectPrompt what="your SkyBlock dashboard" />;
   if (isLoading) return <SkeletonPage />;
   if (error) return <ErrorState error={error} />;
-  if (!data) return null;
+  if (!data)
+    return (
+      <Panel>
+        <p role="status" className="py-10 text-center text-sm text-muted-foreground">
+          Profile data isn't available right now — try reconnecting or refreshing.
+        </p>
+      </Panel>
+    );
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
@@ -200,7 +214,7 @@ function Dashboard() {
       />
 
       <Stagger className="space-y-8">
-        <Panel className="animate-pulse-glow relative overflow-hidden">
+        <Panel className="relative overflow-hidden">
           <div className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-emerald-500/10 blur-3xl" />
           <div className="flex flex-col items-center gap-8 py-6 text-center lg:flex-row lg:justify-between lg:text-left">
             <div className="flex flex-col items-center gap-5 sm:flex-row sm:text-left">
@@ -211,7 +225,11 @@ function Dashboard() {
                 width={96}
                 height={96}
                 loading="eager"
-                className="size-24 shrink-0 rounded-2xl border border-white/15 bg-black/40 shadow-xl [image-rendering:pixelated] animate-float-slow"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+                className="size-24 shrink-0 rounded-2xl border border-white/15 bg-black/40 shadow-xl [image-rendering:pixelated]"
               />
               <div>
                 <p className="eyebrow uppercase tracking-wider text-xs text-muted-foreground">
@@ -219,7 +237,9 @@ function Dashboard() {
                 </p>
                 <div className="flex flex-wrap items-center gap-3">
                   <RankBadge rankData={data.hypixelPlayer} size="lg" />
-                  <h1 className="mt-1 text-5xl font-bold tracking-tight">{data.username}</h1>
+                  <h1 className="mt-1 break-words text-4xl font-bold tracking-tight sm:text-5xl">
+                    {data.username}
+                  </h1>
                   <span className="mt-1 flex items-center gap-1 rounded-xl border border-sky-400/40 bg-sky-500/15 px-3 py-1 font-mono text-sm font-black text-sky-300 shadow-md">
                     LVL {sbLevel.level}
                   </span>
@@ -268,11 +288,16 @@ function Dashboard() {
               size={132}
               label={
                 <CountUp
-                  value={Math.round(data.skillAverage * 10) / 10}
-                  format={(n) => n.toFixed(1)}
+                  value={
+                    dashboardCoverage.length
+                      ? dashboardCoverage.reduce((sum, c) => sum + c.pct, 0) /
+                        dashboardCoverage.length
+                      : 0
+                  }
+                  format={(n) => `${Math.round(n)}%`}
                 />
               }
-              sublabel="skill average"
+              sublabel={`coverage · skill avg ${(Math.round(data.skillAverage * 10) / 10).toFixed(1)}`}
             />
           </div>
         </Panel>
@@ -342,7 +367,10 @@ function Dashboard() {
                       pct={Math.min(100, Math.round((cat.currentXp / cat.maxEstimatedXp) * 100))}
                     />
                   </div>
-                  <p className="mt-2 truncate text-[10px] text-white/50 group-hover:text-white/70 transition-colors duration-75">
+                  <p
+                    title={cat.details}
+                    className="mt-2 truncate text-[11px] text-white/50 group-hover:text-white/70 transition-colors duration-75"
+                  >
                     {cat.details}
                   </p>
                 </Link>
@@ -362,8 +390,8 @@ function Dashboard() {
               </p>
             </div>
             <div className="glass-soft relative rounded-2xl px-6 py-5">
-              <span className="absolute -top-1.5 right-4 flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-300">
-                <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" /> Live
+              <span className="mb-2 inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+                <span aria-hidden="true" className="size-1.5 animate-pulse rounded-full bg-emerald-400" /> Live
               </span>
               <p className="eyebrow">Live net worth</p>
               <p className="mt-2 text-4xl font-semibold">
@@ -398,7 +426,7 @@ function Dashboard() {
                     <div className="mt-4">
                       <ProgressBar pct={c.pct} />
                     </div>
-                    <p className="mt-3 truncate text-xs text-muted-foreground">{c.note}</p>
+                    <p title={c.note} className="mt-3 truncate text-xs text-muted-foreground">{c.note}</p>
                   </Link>
                 ))}
               </Stagger>

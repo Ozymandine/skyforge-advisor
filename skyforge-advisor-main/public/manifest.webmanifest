@@ -4,13 +4,19 @@
   "description": "Live Hypixel SkyBlock dashboard: bazaar flips, auction analysis, profile analytics.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0E121B",
-  "theme_color": "#34d399",
+  "background_color": "#0B0B0E",
+  "theme_color": "#C5A059",
   "icons": [
     {
       "src": "/favicon.ico",
       "sizes": "48x48",
       "type": "image/x-icon"
+    },
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }

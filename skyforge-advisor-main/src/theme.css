@@ -302,30 +302,27 @@
     min-height: 100vh;
   }
 
-  /* Selection colors */
+  /* Selection colors — solid gold so selected text stays legible. */
   ::selection {
-    background-color: var(--color-gold-foil-glow);
-    color: var(--color-parchment);
+    background-color: var(--color-gold-foil);
+    color: var(--color-obsidian);
   }
 
   ::-moz-selection {
-    background-color: var(--color-gold-foil-glow);
-    color: var(--color-parchment);
+    background-color: var(--color-gold-foil);
+    color: var(--color-obsidian);
   }
 
-  /* Focus visible */
+  /* Focus visible — real outline (WCAG 2.4.7). */
   *:focus-visible {
-    outline: none;
-    ring: 2px;
-    ring-color: var(--color-ring);
-    ring-offset: 2px;
-    ring-offset-color: var(--color-background);
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
   }
 
-  /* Scrollbar */
+  /* Scrollbar — 12px for touch usability. */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 12px;
+    height: 12px;
   }
   ::-webkit-scrollbar-track {
     background: var(--color-obsidian);

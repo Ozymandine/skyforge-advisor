@@ -84,21 +84,25 @@ export function useNotificationFeed() {
 
     // Pull server-side notifications (alerts fired while the app was closed).
     let cancelled = false;
-    void fetchServerNotifications().then((serverItems) => {
-      if (cancelled || !Array.isArray(serverItems) || serverItems.length === 0) return;
-      const known = new Set(items.map((i) => i.id));
-      const fresh = serverItems
-        .filter((n) => !known.has(n.id))
-        .map((n) => ({
-          id: n.id,
-          title: n.title,
-          body: n.body,
-          time: n.time,
-          kind: n.kind,
-          unread: n.unread,
-        }));
-      if (fresh.length > 0) pushFeed(fresh);
-    });
+    void fetchServerNotifications()
+      .then((serverItems) => {
+        if (cancelled || !Array.isArray(serverItems) || serverItems.length === 0) return;
+        const known = new Set(items.map((i) => i.id));
+        const fresh = serverItems
+          .filter((n) => !known.has(n.id))
+          .map((n) => ({
+            id: n.id,
+            title: n.title,
+            body: n.body,
+            time: n.time,
+            kind: n.kind,
+            unread: n.unread,
+          }));
+        if (fresh.length > 0) pushFeed(fresh);
+      })
+      .catch(() => {
+        // offline / server unavailable — local feed still works
+      });
 
     return () => {
       cancelled = true;

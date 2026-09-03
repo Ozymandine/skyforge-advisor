@@ -21,12 +21,18 @@ function NotFoundComponent() {
         <p className="mt-2 text-sm text-muted-foreground">
           The page you're looking for doesn't exist or has been moved.
         </p>
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Go home
+          </Link>
+          <Link
+            to="/wiki"
+            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+          >
+            Browse the wiki
           </Link>
         </div>
       </div>
@@ -74,18 +80,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SkyBlock Assistant — Personal Hypixel SkyBlock Analytics" },
+      { title: "SkyForge — Personal Hypixel SkyBlock Analytics" },
       {
         name: "description",
         content:
           "Track skills, collections, net worth, bazaar flips and auctions for your Hypixel SkyBlock profile.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "SkyForge" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:title", content: "SkyBlock Assistant — Personal Hypixel SkyBlock Analytics" },
+      { property: "og:title", content: "SkyForge — Personal Hypixel SkyBlock Analytics" },
       {
         name: "twitter:title",
-        content: "SkyBlock Assistant — Personal Hypixel SkyBlock Analytics",
+        content: "SkyForge — Personal Hypixel SkyBlock Analytics",
       },
       {
         property: "og:description",
@@ -97,8 +104,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Track skills, collections, net worth, bazaar flips and auctions for your Hypixel SkyBlock profile.",
       },
-      { property: "og:image", content: "/og-image.png" },
-      { name: "twitter:image", content: "/og-image.png" },
+      {
+        property: "og:image",
+        content: "https://skyforge-advisor.vercel.app/og-image.png",
+      },
+      {
+        name: "twitter:image",
+        content: "https://skyforge-advisor.vercel.app/og-image.png",
+      },
+      { name: "theme-color", content: "#0B0B0E" },
     ],
     links: [
       {
@@ -111,7 +125,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://mc-heads.net" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Pixelify+Sans:wght@400;500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Pixelify+Sans:wght@400;500;600;700&family=Cinzel:wght@500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap",
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "manifest", href: "/manifest.webmanifest", crossOrigin: "use-credentials" },
@@ -156,6 +170,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      {/* No-JS fallback: scroll-reveal content starts hidden in CSS. */}
+      <noscript>
+        <style>{".reveal{opacity:1!important;transform:none!important}"}</style>
+      </noscript>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <AppShell>
         <Outlet />

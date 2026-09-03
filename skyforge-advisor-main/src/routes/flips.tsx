@@ -55,19 +55,33 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/flips")({
   head: () => ({
     meta: [
-      { title: "Market Flips & Arbitrage Matrix — SkyForge Advisor" },
+      { title: "Market Flips & Arbitrage Matrix — SkyForge" },
       {
         name: "description",
         content:
           "Real-time Bazaar spread flips, Auction House undercuts, cross-market AH <-> BZ arbitrage, pet leveling margins, minion ROI, and Sirius bid ceilings.",
       },
-      { property: "og:title", content: "Market Flips & Arbitrage Matrix — SkyForge Advisor" },
+      { property: "og:title", content: "Market Flips & Arbitrage Matrix — SkyForge" },
       {
         property: "og:description",
         content:
           "Complete flip finder with cross-market arbitrage, pet leveling margins, and anti-manipulation spoof detectors.",
       },
+      { property: "og:url", content: "https://skyforge-advisor.vercel.app/flips" },
+      {
+        property: "og:image",
+        content: "https://skyforge-advisor.vercel.app/og-image.png",
+      },
+      {
+        name: "twitter:title",
+        content: "Market Flips & Arbitrage Matrix — SkyForge",
+      },
+      {
+        name: "twitter:image",
+        content: "https://skyforge-advisor.vercel.app/og-image.png",
+      },
     ],
+    links: [{ rel: "canonical", href: "https://skyforge-advisor.vercel.app/flips" }],
   }),
   component: FlipsRoute,
 });
@@ -84,6 +98,17 @@ type TabType =
 
 type BudgetTier = "all" | "low" | "mid" | "high" | "whale";
 
+function EmptyTab({ label }: { label: string }) {
+  return (
+    <p
+      role="status"
+      className="rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-center text-sm text-muted-foreground"
+    >
+      No {label} match the current filters — try a wider budget tier or lower margin threshold.
+    </p>
+  );
+}
+
 function FlipsRoute() {
   const [activeTab, setActiveTab] = useState<TabType>("bazaar");
   const [budgetTier, setBudgetTier] = useState<BudgetTier>("all");
@@ -97,13 +122,40 @@ function FlipsRoute() {
   const [sniperThreshold, setSniperThreshold] = useState<number>(3_000_000);
 
   const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    if (soundEnabled) {
-      playSnipeChime(0.5);
+    const done = () => {
+      setCopiedId(id);
+      if (soundEnabled) {
+        playSnipeChime(0.5);
+      }
+      window.setTimeout(() => {
+        setCopiedId((current) => (current === id ? null : current));
+      }, 2000);
+    };
+    // Clipboard API needs a secure context + permission; fall back to a
+    // temporary textarea so HTTP and denied-permission cases still copy.
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => legacyCopy(text, done));
+    } else {
+      legacyCopy(text, done);
     }
-    setTimeout(() => setCopiedId(null), 2000);
   };
+
+  function legacyCopy(text: string, done: () => void) {
+    try {
+      const area = document.createElement("textarea");
+      area.value = text;
+      area.setAttribute("readonly", "");
+      area.style.position = "fixed";
+      area.style.opacity = "0";
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand("copy");
+      document.body.removeChild(area);
+    } catch {
+      // ignore — user can copy manually
+    }
+    done();
+  }
 
   // Queries
   const bazaarQuery = useQuery({
@@ -268,7 +320,7 @@ function FlipsRoute() {
 
       {/* Navigation Sub-Tabs */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
-        <div className="flex flex-wrap gap-2">
+        <div role="tablist" aria-label="Flip categories" className="flex flex-wrap gap-2">
           {[
             {
               id: "bazaar",
@@ -304,6 +356,8 @@ function FlipsRoute() {
             return (
               <button
                 key={tab.id}
+                role="tab"
+                aria-selected={active}
                 onClick={() => setActiveTab(tab.id as TabType)}
                 className={cn(
                   "flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition-all",
@@ -312,10 +366,10 @@ function FlipsRoute() {
                     : "border border-white/5 bg-white/[0.02] text-white/60 hover:bg-white/[0.05] hover:text-white",
                 )}
               >
-                <IconTrendingUp className="size-3.5 text-sky-400" />
+                <Icon className="size-3.5 text-sky-400" aria-hidden="true" />
                 <span>{tab.label}</span>
                 {tab.count !== null && (
-                  <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] font-mono font-bold text-white/80">
+                  <span className="rounded-full bg-white/10 px-1.5 py-0.5 font-mono text-[11px] font-bold text-white/80">
                     {tab.count}
                   </span>
                 )}
@@ -326,25 +380,31 @@ function FlipsRoute() {
 
         {/* Budget Preset Filter Controls */}
         {(activeTab === "bazaar" || activeTab === "auctions") && (
-          <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-black/40 p-1">
+          <div
+            role="group"
+            aria-label="Budget filter"
+            className="flex flex-wrap items-center gap-1.5 rounded-xl border border-white/10 bg-black/40 p-1"
+          >
             {[
-              { id: "all", label: "All" },
-              { id: "low", label: "🟢 <1M" },
-              { id: "mid", label: "🟡 1M–25M" },
-              { id: "high", label: "🟣 25M–100M" },
-              { id: "whale", label: "🐋 >100M" },
+              { id: "all", label: "All", short: "All" },
+              { id: "low", label: "Under 1M coins", short: "🟢 <1M" },
+              { id: "mid", label: "1M to 25M coins", short: "🟡 1M–25M" },
+              { id: "high", label: "25M to 100M coins", short: "🟣 25M–100M" },
+              { id: "whale", label: "Over 100M coins", short: "🐋 >100M" },
             ].map((b) => (
               <button
                 key={b.id}
+                aria-pressed={budgetTier === b.id}
+                aria-label={b.label}
                 onClick={() => setBudgetTier(b.id as BudgetTier)}
                 className={cn(
-                  "rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all",
+                  "rounded-lg px-2.5 py-1 text-xs font-semibold transition-all",
                   budgetTier === b.id
                     ? "bg-white/20 text-white font-bold"
                     : "text-white/50 hover:text-white",
                 )}
               >
-                {b.label}
+                <span aria-hidden="true">{b.short}</span>
               </button>
             ))}
           </div>
@@ -353,6 +413,8 @@ function FlipsRoute() {
         {/* Live Audio Sniper Radar Toggle */}
         <div className="flex items-center gap-2">
           <button
+            aria-pressed={soundEnabled}
+            aria-label={`Audio radar ${soundEnabled ? "on" : "off"}. Play a Minecraft chime when copying or finding top flips.`}
             onClick={() => {
               const next = !soundEnabled;
               setSoundEnabled(next);
@@ -467,6 +529,7 @@ function FlipsRoute() {
               );
             })}
           </div>
+          {bazaarFlips.length === 0 && <EmptyTab label="bazaar flips" />}
         </div>
       )}
 
@@ -555,6 +618,7 @@ function FlipsRoute() {
               );
             })}
           </div>
+          {auctionFlips.length === 0 && <EmptyTab label="auction undercuts" />}
         </div>
       )}
 
@@ -577,7 +641,7 @@ function FlipsRoute() {
                       <div>
                         <h3 className="text-base font-bold text-white">{flip.name}</h3>
                         <p className="text-xs text-white/40">
-                          Craft via Bazaar $\to$ Sell on {flip.targetMarket.toUpperCase()}
+                          Craft via Bazaar → Sell on {flip.targetMarket.toUpperCase()}
                         </p>
                       </div>
                     </div>
@@ -647,6 +711,7 @@ function FlipsRoute() {
               );
             })}
           </div>
+          {craftFlips.length === 0 && <EmptyTab label="craft margins" />}
         </div>
       )}
 
@@ -719,6 +784,7 @@ function FlipsRoute() {
                 );
               })}
             </div>
+            {crossArbitrage.length === 0 && <EmptyTab label="arbitrage gaps" />}
           </Panel>
         </div>
       )}
@@ -745,7 +811,7 @@ function FlipsRoute() {
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-white">{pet.petName}</h3>
                     <span className="rounded-lg border border-purple-500/40 bg-purple-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-purple-300">
-                      Lv 1 $\to$ {pet.maxLevel}
+                      Lv 1 → {pet.maxLevel}
                     </span>
                   </div>
 
@@ -776,6 +842,7 @@ function FlipsRoute() {
                 </div>
               ))}
             </div>
+            {petFlips.length === 0 && <EmptyTab label="pet leveling deals" />}
           </Panel>
         </div>
       )}
@@ -833,6 +900,7 @@ function FlipsRoute() {
                 </div>
               ))}
             </div>
+            {minionSetups.length === 0 && <EmptyTab label="minion setups" />}
           </Panel>
         </div>
       )}

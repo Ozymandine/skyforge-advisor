@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const baseArg = process.argv.find((_, i, a) => a[i - 1] === "--base");
-const BASE = (baseArg ?? "https://example.com").replace(/\/$/, "");
+const BASE = (baseArg ?? "https://skyforge-advisor.vercel.app").replace(/\/$/, "");
 
 const staticPages = [
   "/",

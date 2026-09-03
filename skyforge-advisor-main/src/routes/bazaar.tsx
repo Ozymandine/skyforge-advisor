@@ -21,17 +21,31 @@ import { getPriceHistory, recordBazaarSnapshot, type PricePoint } from "@/lib/pr
 export const Route = createFileRoute("/bazaar")({
   head: () => ({
     meta: [
-      { title: "Bazaar — SkyBlock Assistant" },
+      { title: "Bazaar — SkyForge" },
       {
         name: "description",
         content: "Live Bazaar liquidity, margin and order-flip analysis from Hypixel.",
       },
-      { property: "og:title", content: "Bazaar — SkyBlock Assistant" },
+      { property: "og:title", content: "Bazaar — SkyForge" },
       {
         property: "og:description",
         content: "Live market pricing, order tracking and high-margin flip opportunities.",
       },
+      { property: "og:url", content: "https://skyforge-advisor.vercel.app/bazaar" },
+      {
+        property: "og:image",
+        content: "https://skyforge-advisor.vercel.app/og-image.png",
+      },
+      {
+        name: "twitter:title",
+        content: "Bazaar — SkyForge",
+      },
+      {
+        name: "twitter:image",
+        content: "https://skyforge-advisor.vercel.app/og-image.png",
+      },
     ],
+    links: [{ rel: "canonical", href: "https://skyforge-advisor.vercel.app/bazaar" }],
   }),
   component: Bazaar,
 });
@@ -59,7 +73,7 @@ const filters = [
   "Big ticket",
 ];
 
-const PAGE_SIZE = 60;
+const PAGE_SIZE = 24;
 
 function Bazaar() {
   const [query, setQuery] = useState("");
@@ -95,6 +109,12 @@ function Bazaar() {
   useEffect(() => {
     if (!data?.products?.length) return;
     const hourBucket = Math.floor(Date.now() / (60 * 60 * 1000));
+    // Prune buckets older than the previous hour so the set can't grow
+    // forever across long sessions.
+    for (const id of loggedRef.current) {
+      const bucket = Number(id.split("-").pop());
+      if (Number.isFinite(bucket) && bucket < hourBucket - 1) loggedRef.current.delete(id);
+    }
     const top = [...data.products].sort((a, b) => b.profitPerHour - a.profitPerHour).slice(0, 10);
     for (const p of top) {
       const id = `bz-${p.id}-${hourBucket}`;
@@ -134,6 +154,12 @@ function Bazaar() {
   const totalMatches = items.length;
   const shown = items.slice(0, visible);
 
+  // Reset to first page on new search/filter/sort (otherwise stale `visible`
+  // keeps a long list mounted and new results appear mid-scroll).
+  useEffect(() => {
+    setVisible(PAGE_SIZE);
+  }, [deferredQuery, filter, sort]);
+
   const stats = data
     ? [
         {
@@ -172,8 +198,12 @@ function Bazaar() {
 
       <Panel>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <span className="rounded-full border border-primary/40 bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary">
-            ● LIVE
+          <span
+            role="status"
+            aria-label="Live market data"
+            className="rounded-full border border-primary/40 bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary"
+          >
+            <span aria-hidden="true">●</span> LIVE
           </span>
           <button
             onClick={() => refetch()}
@@ -192,21 +222,37 @@ function Bazaar() {
       </Panel>
 
       {isLoading && <LoadState>Loading live Bazaar prices…</LoadState>}
-      {error && <ErrorState error={error} />}
+      {error && !data && <ErrorState error={error} />}
 
       {data && (
-        <Panel>
+        <Panel aria-busy={isFetching}>
+          {error && (
+            <p role="status" className="mb-3 text-xs text-amber-300">
+              Showing last good data — refresh failed, retrying.
+            </p>
+          )}
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex min-w-56 flex-1 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 backdrop-blur-md">
-              <IconSearch className="size-4 text-muted-foreground" />
+              <IconSearch aria-hidden="true" className="size-4 text-muted-foreground" />
+              <label htmlFor="bazaar-search" className="sr-only">
+                Search bazaar products
+              </label>
               <input
+                id="bazaar-search"
+                role="searchbox"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search 1,900+ products..."
-                className="w-full bg-transparent text-sm outline-none"
+                autoComplete="off"
+                spellCheck={false}
+                className="w-full bg-transparent text-base outline-none sm:text-sm"
               />
             </div>
+            <label htmlFor="bazaar-sort" className="sr-only">
+              Sort products
+            </label>
             <select
+              id="bazaar-sort"
               value={sort}
               onChange={(e) => setSort(e.target.value as keyof typeof sorts)}
               className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none cursor-pointer backdrop-blur-md"
@@ -243,7 +289,18 @@ function Bazaar() {
             </div>
           )}
           {totalMatches === 0 && (
-            <p className="mt-6 text-sm text-muted-foreground">No products match that filter.</p>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <p className="text-sm text-muted-foreground">No products match that filter.</p>
+              <button
+                onClick={() => {
+                  setQuery("");
+                  setFilter("All markets");
+                }}
+                className="rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium text-muted-foreground hover:bg-white/10 hover:text-foreground"
+              >
+                Clear filters
+              </button>
+            </div>
           )}
         </Panel>
       )}
@@ -278,8 +335,8 @@ function BazaarCard({ product, hot = false }: { product: BazaarProduct; hot?: bo
   return (
     <div className="relative">
       {hot && (
-        <span className="font-pixel absolute -top-2.5 left-4 z-10 flex items-center gap-1 border-2 border-amber-400/60 bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-200 backdrop-blur-md animate-pulse">
-          🔥 Hot flip
+        <span className="font-pixel absolute -top-2.5 left-4 z-10 flex items-center gap-1 border-2 border-amber-400/60 bg-amber-400/20 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amber-200 backdrop-blur-md">
+          <span aria-hidden="true">🔥</span> Hot flip
         </span>
       )}
       <ForgeCard rarity={marginRarity} className="p-5">
@@ -289,13 +346,16 @@ function BazaarCard({ product, hot = false }: { product: BazaarProduct; hot?: bo
             <div className="min-w-0">
               <button
                 onClick={() => watchlist.toggle(i.id)}
+                aria-pressed={watchlist.has(i.id)}
+                aria-label={`${watchlist.has(i.id) ? "Remove" : "Add"} ${i.name} ${watchlist.has(i.id) ? "from" : "to"} watchlist`}
                 title={watchlist.has(i.id) ? "Remove from watchlist" : "Add to watchlist"}
                 className="group flex min-w-0 cursor-pointer text-left"
               >
                 <IconStar
+                  aria-hidden="true"
                   className={`mt-1 mr-1.5 size-3.5 shrink-0 transition-all duration-75 ${
                     watchlist.has(i.id)
-                      ? "fill-gold text-gold"
+                      ? "fill-gold-foil text-gold-foil"
                       : "text-muted-foreground opacity-40 group-hover:opacity-100"
                   }`}
                 />
@@ -314,13 +374,19 @@ function BazaarCard({ product, hot = false }: { product: BazaarProduct; hot?: bo
             <span className="font-pixel text-3xl font-bold leading-none text-emerald-300">
               +{i.margin.toFixed(1)}%
             </span>
-            <span className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               margin / flip
             </span>
-            <Sparkline points={history} />
+            <span
+              role="img"
+              aria-label={`${i.name} price trend: ${trendPct !== null ? `${trendPct >= 0 ? "up" : "down"} ${Math.abs(trendPct).toFixed(1)} percent` : "building history"}`}
+            >
+              <Sparkline points={history} />
+            </span>
             {trendPct !== null && (
               <p
-                className={`text-[10px] font-semibold ${trendPct >= 0 ? "text-emerald-400" : "text-red-400"}`}
+                aria-hidden="true"
+                className={`text-[11px] font-semibold ${trendPct >= 0 ? "text-emerald-400" : "text-red-400"}`}
               >
                 {trendPct >= 0 ? "▲" : "▼"} {Math.abs(trendPct).toFixed(1)}%
               </p>
@@ -366,7 +432,9 @@ function BazaarCard({ product, hot = false }: { product: BazaarProduct; hot?: bo
 
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="mt-3 flex w-full items-center justify-between rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+          aria-expanded={expanded}
+          aria-controls={`history-${i.id}`}
+          className="mt-3 flex w-full items-center justify-between rounded-lg px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
         >
           <span>
             Weekly volume {formatNumber(i.buyMovingWeek)} bought · {formatNumber(i.sellMovingWeek)}{" "}
@@ -375,13 +443,17 @@ function BazaarCard({ product, hot = false }: { product: BazaarProduct; hot?: bo
           <span className="flex items-center gap-1">
             {history.length >= 2 ? `${history.length} price points` : "Building history…"}
             <IconChevronDown
+              aria-hidden="true"
               className={`size-3.5 transition-transform ${expanded ? "rotate-180" : ""}`}
             />
           </span>
         </button>
 
         {expanded && (
-          <div className="mt-2 h-44 w-full rounded-xl border border-white/10 bg-black/40 p-2">
+          <div
+            id={`history-${i.id}`}
+            className="mt-2 h-44 w-full rounded-xl border border-white/10 bg-black/40 p-2"
+          >
             <Suspense
               fallback={
                 <div className="flex h-full items-center justify-center text-xs text-muted-foreground">

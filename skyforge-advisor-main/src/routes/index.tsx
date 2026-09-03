@@ -45,8 +45,26 @@ export const Route = createFileRoute("/")({
           "Live Hypixel SkyBlock profile stats, market flip suggestions with a published accuracy score, a full item wiki, crafting cost trees and net worth tracking. No login.",
       },
       { property: "og:title", content: "SkyForge — Live SkyBlock stats, flips & progression" },
-      { property: "og:image", content: "/og-image.png" },
+      {
+        property: "og:description",
+        content:
+          "Live Hypixel SkyBlock profile stats, market flips with a published accuracy score, item wiki and net worth tracking.",
+      },
+      { property: "og:url", content: "https://skyforge-advisor.vercel.app/" },
+      {
+        property: "og:image",
+        content: "https://skyforge-advisor.vercel.app/og-image.png",
+      },
+      {
+        name: "twitter:title",
+        content: "SkyForge — Live SkyBlock stats, flips & progression",
+      },
+      {
+        name: "twitter:image",
+        content: "https://skyforge-advisor.vercel.app/og-image.png",
+      },
     ],
+    links: [{ rel: "canonical", href: "https://skyforge-advisor.vercel.app/" }],
   }),
   component: Landing,
 });
@@ -175,11 +193,17 @@ function Landing() {
     <div className="mx-auto max-w-7xl space-y-14 pb-8">
       {/* Hero */}
       <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-950/75 px-6 py-16 text-center backdrop-blur-xl sm:px-12">
-        <div className="pointer-events-none absolute -right-32 -top-32 size-96 rounded-full bg-emerald-500/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 -left-32 size-96 rounded-full bg-cyan-500/10 blur-3xl" />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-32 -top-32 size-52 rounded-full bg-emerald-500/10 blur-3xl sm:size-96"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-32 -left-32 size-52 rounded-full bg-cyan-500/10 blur-3xl sm:size-96"
+        />
 
         <p className="eyebrow">Free · No login · Open methodology</p>
-        <h1 className="mx-auto mt-4 max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-6xl">
+        <h1 className="mx-auto mt-4 max-w-3xl break-words text-4xl font-black leading-tight tracking-tight sm:text-6xl">
           Live SkyBlock stats,{" "}
           <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
             flips & progression
@@ -196,12 +220,22 @@ function Landing() {
           className="mx-auto mt-8 flex max-w-lg flex-wrap items-center justify-center gap-2"
         >
           <div className="relative flex-1 min-w-[240px]">
-            <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <IconSearch
+              aria-hidden="true"
+              className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
+            />
+            <label htmlFor="hero-username" className="sr-only">
+              Minecraft username
+            </label>
             <input
+              id="hero-username"
               value={searchIgn}
               onChange={(e) => setSearchIgn(e.target.value)}
               placeholder="Enter Minecraft username..."
-              className="w-full rounded-2xl border border-white/10 bg-white/5 py-3.5 pl-11 pr-4 text-sm font-medium outline-none transition-all focus:border-primary/50 focus:bg-white/[0.08]"
+              autoComplete="username"
+              autoCapitalize="off"
+              spellCheck={false}
+              className="w-full rounded-2xl border border-white/10 bg-white/5 py-3.5 pl-11 pr-4 text-base outline-none transition-all focus:border-primary focus:bg-white/[0.08] sm:text-sm"
             />
           </div>
           <button
@@ -215,7 +249,7 @@ function Landing() {
         {/* Quick picks */}
         <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5 text-xs text-muted-foreground">
           <span>Popular profiles:</span>
-          {["Deathstreeks", "Refraction", "Technoblade", "56ms"].map((name) => (
+          {["Deathstreeks", "Refraction", "Hellcastle", "56ms"].map((name) => (
             <Link
               key={name}
               to="/profile/$username"
@@ -325,7 +359,7 @@ function Landing() {
             </p>
           </div>
           <Link
-            to="/bazaar"
+            to="/flips"
             className="flex items-center gap-1.5 text-sm text-primary hover:underline"
           >
             Open the flip board <IconArrowRight className="size-3.5" />
@@ -336,7 +370,8 @@ function Landing() {
           {topFlips.map((p) => (
             <Link
               key={p.id}
-              to="/bazaar"
+              to="/flips"
+              aria-label={`${p.name}: +${formatNumber(p.profitPerHour)} coins per hour. Open the flip board.`}
               className="glass-soft group rounded-2xl p-4 transition-all duration-75 ease-out hover:scale-[1.02] hover:border-primary/40"
             >
               <div className="flex items-center gap-3">
@@ -356,25 +391,27 @@ function Landing() {
             [0, 1, 2].map((i) => (
               <div
                 key={i}
+                role="status"
+                aria-label="Loading live flip data"
                 className="h-32 animate-pulse rounded-2xl border border-white/10 bg-black/20"
               />
             ))}
         </div>
 
         {hasAccuracy && (
-          <Link
-            to="/flips"
-            className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 px-5 py-4 transition-all duration-75 hover:scale-[1.01]"
-          >
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 px-5 py-4">
             <p className="flex items-center gap-2 text-sm font-semibold">
               <TargetIcon className="size-4 text-emerald-300" />
-              Our flip picks: {accuracy!.winRate?.toFixed(0)}% win rate over {accuracy!.resolved}{" "}
+              Our flip picks: {accuracy!.winRate?.toFixed(1)}% win rate over {accuracy!.resolved}{" "}
               scored suggestions
             </p>
-            <span className="flex items-center gap-1 text-xs text-emerald-300">
+            <Link
+              to="/flips"
+              className="flex items-center gap-1 rounded-full px-2 py-1 text-xs text-emerald-300 outline-none transition-colors hover:text-emerald-200 focus-visible:ring-2 focus-visible:ring-emerald-300"
+            >
               See the full scorecard <IconArrowRight className="size-3.5" />
-            </span>
-          </Link>
+            </Link>
+          </div>
         )}
       </section>
 
@@ -391,15 +428,15 @@ function Landing() {
               <div className="flex items-center justify-between">
                 <feature.icon className="size-5 text-primary" />
                 {feature.badge && (
-                  <span className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-300">
+                  <span className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 font-mono text-[11px] font-bold text-emerald-300">
                     {feature.badge}
                   </span>
                 )}
               </div>
               <p className="mt-3 font-semibold text-white">{feature.title}</p>
               <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{feature.body}</p>
-              <span className="mt-3 flex items-center gap-1 text-xs text-primary opacity-0 transition-opacity group-hover:opacity-100">
-                Open <IconArrowRight className="size-3" />
+              <span className="mt-3 flex items-center gap-1 text-xs text-primary opacity-100 transition-opacity lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
+                Open <IconArrowRight className="size-3" aria-hidden="true" />
               </span>
             </Link>
           ))}
@@ -413,8 +450,9 @@ function Landing() {
             Powered by the official Hypixel API + the NEU community dataset
           </p>
           <p className="mx-auto mt-2 max-w-xl text-xs text-muted-foreground">
-            Your API key stays in your browser and is only used to call Hypixel. Unknown values are
-            shown as "not available" — never invented. Flip results are published unedited.
+            Your API key stays in this browser's session and is sent only to our server to call
+            Hypixel. Unknown values are shown as "not available" — never invented. Flip results
+            are published unedited.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs text-primary">
             <Link to="/about" className="hover:underline">
