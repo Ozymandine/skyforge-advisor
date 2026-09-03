@@ -18,9 +18,10 @@ import { usePlayer } from "@/hooks/use-account";
 import {
   fetchAuctions,
   fetchBazaar,
-  fetchDiscordWebhook,
-  saveDiscordWebhook,
+  fetchMyWebhookStatus,
+  saveMyWebhook,
 } from "@/lib/hypixel.functions";
+import { getClientId } from "@/lib/client-id";
 import { evaluateAlerts, usePriceAlerts } from "@/hooks/use-price-alerts";
 import { useWatchlist } from "@/hooks/use-watchlist";
 import {
@@ -92,8 +93,8 @@ function Notifications() {
   // ---------------------------------------------------------------------------
 
   const webhookQuery = useQuery({
-    queryKey: ["discord-webhook"],
-    queryFn: () => fetchDiscordWebhook(),
+    queryKey: ["discord-webhook", "v2"],
+    queryFn: () => fetchMyWebhookStatus({ data: { ownerId: getClientId() } }),
     staleTime: 60_000,
   });
   const [webhookDraft, setWebhookDraft] = useState("");
@@ -104,8 +105,11 @@ function Notifications() {
   const webhookHint = webhookQuery.data?.hint ?? null;
 
   const saveWebhook = async () => {
-    const result = await saveDiscordWebhook({ data: webhookDraft.trim() });
+    const result = await saveMyWebhook({
+      data: { ownerId: getClientId(), url: webhookDraft.trim() },
+    });
     if (result?.ok) {
+      setWebhookDraft("");
       setWebhookSaved(true);
       setTimeout(() => setWebhookSaved(false), 3000);
       void webhookQuery.refetch();
@@ -113,7 +117,7 @@ function Notifications() {
   };
 
   const removeWebhook = async () => {
-    await saveDiscordWebhook({ data: "" });
+    await saveMyWebhook({ data: { ownerId: getClientId(), url: "" } });
     setWebhookDraft("");
     void webhookQuery.refetch();
   };

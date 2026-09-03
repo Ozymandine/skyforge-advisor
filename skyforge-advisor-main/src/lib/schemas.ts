@@ -104,6 +104,8 @@ export const leaderboardIdSchema = z
   .max(64)
   .regex(/^[a-z0-9_-]+$/i, "Invalid leaderboard id");
 
+export const ownerIdInputSchema = z.string().trim().uuid("Invalid owner id");
+
 // ---------------------------------------------------------------------------
 // Normalized domain models (mirror the types in skyblock.ts)
 // ---------------------------------------------------------------------------

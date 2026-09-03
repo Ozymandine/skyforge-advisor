@@ -5,6 +5,7 @@ import {
   fetchPlayerInputSchema,
   itemIdSchema,
   logFlipInputSchema,
+  ownerIdInputSchema,
   priceHistoryInputSchema,
   uuidOrNameSchema,
   webhookInputSchema,
@@ -164,6 +165,48 @@ export const fetchDiscordWebhook = createServerFn({ method: "GET" }).handler(asy
   const { getDiscordWebhookMasked: get } = await import("./market-history.server");
   return get();
 });
+
+// --- Per-user store (Supabase when configured, fallback otherwise) -----------
+
+const myAlertsInput = zod.object({
+  ownerId: ownerIdInputSchema,
+});
+
+export const fetchMyAlertRules = createServerFn({ method: "POST" })
+  .validator((input: unknown) => myAlertsInput.parse(input ?? {}))
+  .handler(async ({ data }) => {
+    const { getUserAlertRules } = await import("./user-store.server");
+    return getUserAlertRules(data.ownerId);
+  });
+
+export const saveMyAlertRules = createServerFn({ method: "POST" })
+  .validator((input: unknown) =>
+    zod
+      .object({ ownerId: ownerIdInputSchema, rules: alertRulesInputSchema })
+      .parse(input ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const { saveUserAlertRules } = await import("./user-store.server");
+    return saveUserAlertRules(data.ownerId, data.rules);
+  });
+
+export const fetchMyWebhookStatus = createServerFn({ method: "POST" })
+  .validator((input: unknown) => myAlertsInput.parse(input ?? {}))
+  .handler(async ({ data }) => {
+    const { getUserWebhookStatus } = await import("./user-store.server");
+    return getUserWebhookStatus(data.ownerId);
+  });
+
+export const saveMyWebhook = createServerFn({ method: "POST" })
+  .validator((input: unknown) =>
+    zod
+      .object({ ownerId: ownerIdInputSchema, url: webhookInputSchema })
+      .parse(input ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const { saveUserWebhook } = await import("./user-store.server");
+    return saveUserWebhook(data.ownerId, data.url);
+  });
 
 // --- Second-tier player endpoints -------------------------------------------
 
