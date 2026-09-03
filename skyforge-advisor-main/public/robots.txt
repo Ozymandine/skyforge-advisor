@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://skyforge-advisor.vercel.app/sitemap.xml
