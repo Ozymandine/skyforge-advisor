@@ -59,7 +59,7 @@ const filters = [
   "Big ticket",
 ];
 
-const PAGE_SIZE = 60;
+const PAGE_SIZE = 24;
 
 function Bazaar() {
   const [query, setQuery] = useState("");
@@ -95,6 +95,12 @@ function Bazaar() {
   useEffect(() => {
     if (!data?.products?.length) return;
     const hourBucket = Math.floor(Date.now() / (60 * 60 * 1000));
+    // Prune buckets older than the previous hour so the set can't grow
+    // forever across long sessions.
+    for (const id of loggedRef.current) {
+      const bucket = Number(id.split("-").pop());
+      if (Number.isFinite(bucket) && bucket < hourBucket - 1) loggedRef.current.delete(id);
+    }
     const top = [...data.products].sort((a, b) => b.profitPerHour - a.profitPerHour).slice(0, 10);
     for (const p of top) {
       const id = `bz-${p.id}-${hourBucket}`;
@@ -133,6 +139,12 @@ function Bazaar() {
   // Reset pagination whenever the result set changes shape.
   const totalMatches = items.length;
   const shown = items.slice(0, visible);
+
+  // Reset to first page on new search/filter/sort (otherwise stale `visible`
+  // keeps a long list mounted and new results appear mid-scroll).
+  useEffect(() => {
+    setVisible(PAGE_SIZE);
+  }, [deferredQuery, filter, sort]);
 
   const stats = data
     ? [

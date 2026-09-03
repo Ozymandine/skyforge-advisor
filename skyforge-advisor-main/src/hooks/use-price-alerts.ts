@@ -3,8 +3,9 @@
 // A rule fires when the item's buy price crosses the threshold in the chosen
 // direction. Fired rules re-arm only when the price crosses back.
 
-import { useCallback, useEffect, useState } from "react";
-import { saveAlertRules } from "@/lib/hypixel.functions";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { fetchMyAlertRules, saveMyAlertRules } from "@/lib/hypixel.functions";
+import { getClientId } from "@/lib/client-id";
 
 export type PriceAlert = {
   id: string;
@@ -30,16 +31,45 @@ function read(): PriceAlert[] {
 
 export function usePriceAlerts() {
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
+  const hydrated = useRef(false);
 
   useEffect(() => {
-    setAlerts(read());
+    const local = read();
+    setAlerts(local);
+    // Pull this browser's server-side rules (per-user in Supabase when
+    // configured). Union with local so nothing is lost on first sync.
+    void fetchMyAlertRules({ data: { ownerId: getClientId() } })
+      .then((server) => {
+        if (!hydrated.current && Array.isArray(server) && server.length) {
+          hydrated.current = true;
+          const seen = new Set(local.map((a) => a.id));
+          const merged = [...local, ...server.filter((s) => !seen.has(s.id))];
+          setAlerts(merged);
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+          } catch {
+            // ignore
+          }
+        }
+      })
+      .catch(() => {
+        // offline / unconfigured — local rules still work
+      });
   }, []);
 
-  // Mirror rules to the server so alerts keep firing while the app is closed
-  // (the market history sampler evaluates them on every live fetch).
+  // Mirror rules to this user's server-side slot so alerts keep firing while
+  // the app is closed. Sends even when empty so delete-all propagates
+  // (the old code skipped empty and left stale server rules behind).
   useEffect(() => {
-    if (alerts.length === 0) return;
-    void saveAlertRules({ data: alerts });
+    if (!hydrated.current && alerts.length === 0) return;
+    const t = setTimeout(() => {
+      void saveMyAlertRules({
+        data: { ownerId: getClientId(), rules: alerts },
+      }).catch(() => {
+        // ignore — local rules remain authoritative
+      });
+    }, 800);
+    return () => clearTimeout(t);
   }, [alerts]);
 
   const persist = useCallback((next: PriceAlert[]) => {

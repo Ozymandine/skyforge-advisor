@@ -76,10 +76,20 @@ export const fetchTrackedIds = createServerFn({ method: "GET" }).handler(async (
 
 /**
  * Cron endpoint helper: records a market history sample server-side.
- * Throttled internally to one sample per 5 minutes, so this is safe to ping
- * as often as desired (e.g. every minute from an uptime monitor).
+ * Throttled to one sample per ~4 minutes at this layer (plus the store's own
+ * 5-minute throttle), so pinging every minute from an uptime monitor burns no
+ * extra Hypixel quota — repeat pings return { throttled: true } without
+ * fetching.
  */
+let lastSampleMarketAt = 0;
+const SAMPLE_MARKET_MIN_GAP = 4 * 60_000;
+
 export const sampleMarket = createServerFn({ method: "GET" }).handler(async () => {
+  const now = Date.now();
+  if (now - lastSampleMarketAt < SAMPLE_MARKET_MIN_GAP) {
+    return { sampled: false, throttled: true as const, at: now };
+  }
+  lastSampleMarketAt = now;
   const { getBazaar, getAuctions } = await import("./hypixel.server");
   const market = await import("./market-history.server");
 
