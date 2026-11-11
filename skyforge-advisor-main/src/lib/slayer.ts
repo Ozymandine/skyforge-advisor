@@ -6,6 +6,7 @@ export type SlayerBossInfo = {
   id: string;
   name: string;
   level: number;
+  claimedLevel?: number | undefined;
   maxLevel: number;
   currentXp: number;
   neededXp: number;
@@ -188,6 +189,10 @@ export function calculateSlayerOverview(
     const xp = Number(raw?.xp ?? 0);
     const isVamp = key === "vampire";
     const { level, maxLevel, neededXp } = computeSlayerLevel(xp, isVamp);
+    const claimedLevels = Object.entries(raw?.claimed_levels ?? {}).flatMap(([key, claimed]) => {
+      const match = /^level_([1-9])$/.exec(key);
+      return claimed === true && match ? [Number(match[1])] : [];
+    });
 
     totalXp += xp;
 
@@ -230,6 +235,7 @@ export function calculateSlayerOverview(
       id: key,
       name: BOSS_DISPLAY_NAMES[key] ?? key,
       level,
+      ...(claimedLevels.length ? { claimedLevel: Math.max(...claimedLevels) } : {}),
       maxLevel,
       currentXp: xp,
       neededXp,

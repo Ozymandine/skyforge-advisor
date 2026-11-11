@@ -276,6 +276,7 @@ export const playerDataSchema = z.object({
     .object({
       skillKeys: z.array(z.string()),
       containerIds: z.array(z.string()),
+      accessoryStorage: z.boolean().optional(),
       fairySouls: z.boolean(),
       purse: z.boolean(),
       dungeonCompletions: z.boolean(),
@@ -362,6 +363,7 @@ export const playerDataSchema = z.object({
           id: z.string(),
           name: z.string(),
           level: z.number(),
+          claimedLevel: z.number().int().min(1).max(9).optional(),
           maxLevel: z.number(),
           currentXp: z.number(),
           neededXp: z.number(),

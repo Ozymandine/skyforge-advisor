@@ -1809,7 +1809,8 @@ async function parseContainer(
   try {
     const root = await decodeNbt(base64);
 
-    const list = nbtArray(root["i"]);
+    const list = root["i"];
+    if (!Array.isArray(list)) throw new Error("Inventory item list is missing");
 
     const items: InventoryItem[] = [];
 
@@ -2086,8 +2087,12 @@ export async function getPlayerData(
       }
     >;
 
-    for (const [key, value] of Object.entries(backpacks)) {
-      containerDefs.push([value?.data, `backpack-${key}`, `Backpack ${Number(key) + 1}`]);
+    const backpackSlots = new Set([
+      ...Object.keys(backpacks),
+      ...Object.keys(inv["backpack_icons"] ?? {}),
+    ]);
+    for (const key of backpackSlots) {
+      containerDefs.push([backpacks[key]?.data, `backpack-${key}`, `Backpack ${Number(key) + 1}`]);
     }
 
     const decodedContainers = (
@@ -2095,6 +2100,16 @@ export async function getPlayerData(
         containerDefs.map(([encoded, id, label]) => parseContainer(encoded, id, label)),
       )
     ).filter((container): container is InventoryContainer => !!container);
+    const readableContainers = new Set(
+      decodedContainers.filter((container) => !container.locked).map((container) => container.id),
+    );
+    const accessoryStorage = [
+      "inventory",
+      "ender-chest",
+      "accessory-bag",
+      "vault",
+      ...Array.from(backpackSlots, (key) => `backpack-${key}`),
+    ].every((id) => readableContainers.has(id));
 
     const containers = decodedContainers.filter(
       (container) => container.items.length > 0 || container.locked,
@@ -2648,7 +2663,8 @@ export async function getPlayerData(
         skillKeys: Object.keys(experience)
           .filter((key) => key.startsWith("SKILL_") && Number.isFinite(experience[key]))
           .map((key) => key.slice(6)),
-        containerIds: decodedContainers.map((container) => container.id),
+        containerIds: [...readableContainers],
+        accessoryStorage,
         fairySouls: typeof fairySoul?.total_collected === "number",
         purse: typeof currencies?.coin_purse === "number",
         dungeonCompletions: Boolean(catacombs?.tier_completions),

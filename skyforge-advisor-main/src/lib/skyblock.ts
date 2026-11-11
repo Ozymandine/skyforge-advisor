@@ -419,6 +419,7 @@ export type LifetimeStats = {
 export type ProfileAvailability = {
   skillKeys: string[];
   containerIds: string[];
+  accessoryStorage?: boolean | undefined;
   fairySouls: boolean;
   purse: boolean;
   dungeonCompletions: boolean;

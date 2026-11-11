@@ -55,6 +55,13 @@ one Hypixel snapshot and shares the cached scan across supported Wiki items
 within each server instance. Prices are withheld when the feed fails, the
 snapshot is over five minutes old, or fewer than three listings qualify.
 
+Advisor can use the Red Claw Artifact quote for a Classic profile that has
+claimed Wolf Slayer 5 and has a Rare Red Claw Ring without a reforge in its
+Accessory Bag. It checks the reported purse and readable inventory, Accessory Bag, Ender
+Chest, Personal Vault, and any reported backpacks before suggesting the
+purchase. The advice is withheld if a Red Claw Artifact is already visible in
+storage, the asking price exceeds the purse, or a required input is unavailable.
+
 ## Market history store
 
 `src/lib/market-history.server.ts` records bazaar prices + lowest BINs on every

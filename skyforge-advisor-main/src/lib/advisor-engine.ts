@@ -362,6 +362,7 @@ export type TailoredAction = {
   benefit: string;
   cost?: string;
   link?: "/skills" | "/inventory";
+  marketItemId?: string;
 };
 
 export function generateTailoredActionPlan(player?: AdvisorPlayerInput | null): TailoredAction[] {
