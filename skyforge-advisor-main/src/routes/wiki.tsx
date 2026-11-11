@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useMatch, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, useDeferredValue } from "react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -52,7 +52,7 @@ export const Route = createFileRoute("/wiki")({
     ],
   }),
 
-  component: Wiki,
+  component: WikiRoute,
 });
 
 /* ============================================================================
@@ -77,6 +77,11 @@ type SearchableItem = ClassifiedItem | (typeof VIRTUAL_PAGES)[number];
  * ========================================================================== */
 
 const PAGE_SIZE = 120;
+
+function WikiRoute() {
+  const itemRoute = useMatch({ from: "/wiki/$itemId", shouldThrow: false });
+  return itemRoute ? <Outlet /> : <Wiki />;
+}
 
 function Wiki() {
   const search = Route.useSearch();

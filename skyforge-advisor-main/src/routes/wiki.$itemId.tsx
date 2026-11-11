@@ -24,7 +24,7 @@ export const Route = createFileRoute("/wiki/$itemId")({
       ? `${item.name} — SkyForge Encyclopedia`
       : `${titleCase(params.itemId.replace(/_/g, " "))} — SkyForge Encyclopedia`;
     const desc = item
-      ? `${item.name} (${item.rarity} ${item.category}) SkyBlock stats, crafting recipe, live bazaar rates, and lowest BIN auction prices.`
+      ? `${item.name} (${item.rarity} ${item.category}) SkyBlock stats, crafting recipe, and Bazaar quotes.`
       : `SkyBlock item details, stats, recipes, and market history for ${params.itemId}.`;
     const iconUrl = `${SITE_URL}/items/${encodeURIComponent(params.itemId)}.png`;
 
@@ -79,11 +79,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function ItemEncyclopediaPage() {
   const { itemId } = Route.useParams();
+  const initialDetail = Route.useLoaderData();
 
   const detailQuery = useQuery({
     queryKey: ["item-detail", itemId],
     queryFn: () => fetchItemDetail({ data: itemId }),
     staleTime: 60_000,
+    ...(initialDetail ? { initialData: initialDetail } : {}),
   });
 
   const item = detailQuery.data?.item ?? null;
@@ -105,7 +107,7 @@ function ItemEncyclopediaPage() {
     return <LoadState>Loading item encyclopedia…</LoadState>;
   }
 
-  if (detailQuery.error) {
+  if (detailQuery.error && !item) {
     return <ErrorState error={detailQuery.error} />;
   }
 
