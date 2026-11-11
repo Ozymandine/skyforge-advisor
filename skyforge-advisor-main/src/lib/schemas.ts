@@ -18,26 +18,18 @@ export const usernameSchema = z
   .max(16, "Minecraft usernames are at most 16 characters")
   .regex(/^[A-Za-z0-9_]+$/, "Usernames may only contain letters, numbers and _");
 
-const uuidKeySchema = z
-  .string()
-  .trim()
-  .regex(
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-    "API key must be a Hypixel UUID",
-  )
-  .optional();
-
 const profileIdSchema = z
   .string()
   .trim()
   .regex(/^[0-9a-f]{32}$/i, "Invalid profile id")
   .optional();
 
-export const fetchPlayerInputSchema = z.object({
-  apiKey: uuidKeySchema,
-  username: usernameSchema,
-  profileId: profileIdSchema,
-});
+export const fetchPlayerInputSchema = z
+  .object({
+    username: usernameSchema,
+    profileId: profileIdSchema,
+  })
+  .strict();
 
 export type FetchPlayerInput = z.infer<typeof fetchPlayerInputSchema>;
 
@@ -80,7 +72,12 @@ export const alertRulesInputSchema = z.array(alertRuleSchema).max(100);
 
 export const priceHistoryInputSchema = z.object({
   ids: z.array(itemIdSchema).max(200),
-  rangeHours: z.number().finite().min(1).max(24 * 14).optional(),
+  rangeHours: z
+    .number()
+    .finite()
+    .min(1)
+    .max(24 * 14)
+    .optional(),
 });
 
 export const externalPriceHistoryInputSchema = z.object({

@@ -191,9 +191,7 @@ export const fetchMyAlertRules = createServerFn({ method: "POST" })
 
 export const saveMyAlertRules = createServerFn({ method: "POST" })
   .validator((input: unknown) =>
-    zod
-      .object({ ownerId: ownerIdInputSchema, rules: alertRulesInputSchema })
-      .parse(input ?? {}),
+    zod.object({ ownerId: ownerIdInputSchema, rules: alertRulesInputSchema }).parse(input ?? {}),
   )
   .handler(async ({ data }) => {
     const { saveUserAlertRules } = await import("./user-store.server");
@@ -209,9 +207,7 @@ export const fetchMyWebhookStatus = createServerFn({ method: "POST" })
 
 export const saveMyWebhook = createServerFn({ method: "POST" })
   .validator((input: unknown) =>
-    zod
-      .object({ ownerId: ownerIdInputSchema, url: webhookInputSchema })
-      .parse(input ?? {}),
+    zod.object({ ownerId: ownerIdInputSchema, url: webhookInputSchema }).parse(input ?? {}),
   )
   .handler(async ({ data }) => {
     const { saveUserWebhook } = await import("./user-store.server");
@@ -321,21 +317,10 @@ export const fetchItemDetail = createServerFn({ method: "GET" })
     return getItemEncyclopedia(data);
   });
 export const fetchPlayer = createServerFn({ method: "POST" })
-  .validator((input: unknown) => {
-    // Runtime-validated with Zod; throws a clear error on bad input.
-    const parsed = fetchPlayerInputSchema.parse(input ?? {});
-
-    // The user's own key (BYOK) is preferred. When absent, the server's
-    // shared operator key pool serves the request — username-only access.
-    return {
-      apiKey: parsed.apiKey?.trim() || "",
-      username: parsed.username.trim(),
-      profileId: parsed.profileId?.trim() || undefined,
-    };
-  })
+  .validator((input: unknown) => fetchPlayerInputSchema.parse(input ?? {}))
   .handler(async ({ data }) => {
     const { getPlayerData } = await import("./hypixel.server");
-    return getPlayerData(data.apiKey, data.username, data.profileId);
+    return getPlayerData(data.username, data.profileId);
   });
 
 export const fetchApiHealth = createServerFn({ method: "GET" }).handler(async () => {

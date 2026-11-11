@@ -19,7 +19,7 @@ import {
   type WikiRequirement,
 } from "./skyblock";
 import { validatePlayerData, type PlayerDataValidated } from "./schemas";
-import { getValidOperatorKeys } from "./env";
+import { getHypixelApplicationKey } from "./env";
 import { calculateBestiary } from "./bestiary";
 import { calculateSlayerOverview } from "./slayer";
 // Recipes sourced from the NotEnoughUpdates repo (the Hypixel items endpoint
@@ -53,42 +53,11 @@ const API = "https://api.hypixel.net/v2";
 
 export class HypixelError extends Error {}
 
-// ============================================================================
-// OPERATOR KEY POOL
-//
-// Profile endpoints need an API key. Users can supply their own (BYOK); when
-// they don't, we fall back to the operator's shared pool. Accepts a
-// comma-separated list so a regenerated/expired key never takes the site
-// down — dead keys are skipped automatically and retried after a cooldown.
-// ============================================================================
+let credentialCooldownUntil = 0;
 
-const keyCooldowns = new Map<string, number>(); // key -> ms timestamp when retry is allowed
-let keyCursor = 0;
-
-export function getOperatorKeys(): string[] {
-  // Validated + cached via env.ts: malformed entries are dropped at boot.
-  return getValidOperatorKeys();
-}
-
-function nextOperatorKey(): string | null {
-  const now = Date.now();
-  const keys = getOperatorKeys().filter((k) => (keyCooldowns.get(k) ?? 0) < now);
-  if (!keys.length) return null;
-  const key = keys[keyCursor % keys.length]!;
-  keyCursor++;
-  return key;
-}
-
-function markKeyFailed(key: string): void {
-  // Cool the key down for 10 minutes before trying it again.
-  keyCooldowns.set(key, Date.now() + 10 * 60_000);
-}
-
-/** Coarse health of the shared profile pool, for the footer indicator. */
 export function profileApiHealth(): "ok" | "degraded" | "no-key" {
-  const keys = getOperatorKeys();
-  if (!keys.length) return "no-key";
-  return keys.some((k) => (keyCooldowns.get(k) ?? 0) < Date.now()) ? "ok" : "degraded";
+  if (!getHypixelApplicationKey()) return "no-key";
+  return Date.now() < credentialCooldownUntil ? "degraded" : "ok";
 }
 
 // ============================================================================
@@ -123,7 +92,10 @@ function unwrap<T>(result: { data: T } | { failure: FetchFailure }): T | null {
   return "data" in result ? result.data : null;
 }
 
-async function getJson<T>(url: string, apiKey?: string): Promise<{ data: T } | { failure: FetchFailure }> {
+async function getJson<T>(
+  url: string,
+  apiKey?: string,
+): Promise<{ data: T } | { failure: FetchFailure }> {
   try {
     const res = await fetch(url, {
       headers: apiKey ? { "API-Key": apiKey } : {},
@@ -165,28 +137,14 @@ async function getJson<T>(url: string, apiKey?: string): Promise<{ data: T } | {
   }
 }
 
-/**
- * Fetch a keyed endpoint using the user's key when provided, otherwise the
- * operator pool with automatic failover between keys.
- */
-async function getKeyedJson<T>(url: string, userKey?: string): Promise<T | null> {
-  if (userKey) {
-    const result = await getJson<T>(url, userKey);
-    return "data" in result ? result.data : null;
-  }
-  const tried = new Set<string>();
-  for (;;) {
-    const key = nextOperatorKey();
-    if (!key || tried.has(key)) return null;
-    tried.add(key);
-    const result = await getJson<T>(url, key);
-    if ("data" in result) return result.data;
-    // Only cool down on auth/quota failures. Transient 5xx and network blips
-    // must NOT penalize the key, otherwise one hiccup empties the pool.
-    if (result.failure.kind === "auth" || result.failure.kind === "rate-limit") {
-      markKeyFailed(key);
-    }
-  }
+async function getKeyedJson<T>(url: string): Promise<T | null> {
+  const key = getHypixelApplicationKey();
+  if (!key || Date.now() < credentialCooldownUntil) return null;
+  const result = await getJson<T>(url, key);
+  if ("data" in result) return result.data;
+  if (result.failure.kind === "auth") credentialCooldownUntil = Date.now() + 10 * 60_000;
+  if (result.failure.kind === "rate-limit") credentialCooldownUntil = Date.now() + 60_000;
+  return null;
 }
 
 // ============================================================================
@@ -286,9 +244,7 @@ export async function getElection(): Promise<{
   if (electionCache && Date.now() - electionCache.at < 30 * 60_000) {
     return electionCache.data as never;
   }
-  const data = unwrap(
-    await getJson<Record<string, unknown>>(`${API}/resources/skyblock/election`),
-  );
+  const data = unwrap(await getJson<Record<string, unknown>>(`${API}/resources/skyblock/election`));
   // Stale-while-revalidate: keep the last good value on transient failure.
   if (!data) return (electionCache?.data as never) ?? null;
   const result = {
@@ -324,9 +280,7 @@ export async function getNews(): Promise<
     return newsCache.data as never;
   }
   const data = unwrap(
-    await getJson<{ items?: Array<Record<string, unknown>> }>(
-      `${API}/resources/skyblock/news`,
-    ),
+    await getJson<{ items?: Array<Record<string, unknown>> }>(`${API}/resources/skyblock/news`),
   );
   // Keep stale good value instead of flashing empty on failure.
   if (!data) return (newsCache?.data as never) ?? [];
@@ -1916,14 +1870,18 @@ type ProfilesResponse = {
 };
 
 export async function getPlayerData(
-  apiKey: string,
   username: string,
   profileId?: string,
 ): Promise<PlayerDataValidated | null> {
-  const userKeyProvided = Boolean(apiKey?.trim());
   try {
     if (!username) {
       return null;
+    }
+
+    if (!getHypixelApplicationKey()) {
+      throw new HypixelError(
+        "Profile lookup is unavailable. SkyForge’s Hypixel connection has not been configured.",
+      );
     }
 
     const resolved = await resolveUuid(username);
@@ -1938,22 +1896,17 @@ export async function getPlayerData(
     // can serve many visitors and repeat views are instant.
     const cacheKey = `${uuid}:${profileId ?? ""}`;
     const cached = profileCache.get(cacheKey);
-    if (!userKeyProvided && cached && Date.now() - cached.at < PROFILE_CACHE_TTL) {
+    if (cached && Date.now() - cached.at < PROFILE_CACHE_TTL) {
       return cached.data as PlayerDataValidated;
     }
 
     const data = await getKeyedJson<ProfilesResponse>(
       `${API}/skyblock/profiles?uuid=${encodeURIComponent(uuid)}`,
-      apiKey,
     );
 
     if (data === null) {
-      // Null conflates network/429/500 with auth — don't mislead BYOK users.
-      // getKeyedJson already logs the cause; surface a generic retryable error.
       throw new HypixelError(
-        userKeyProvided
-          ? "Hypixel API request failed. Check your key at developer.hypixel.net, then retry."
-          : "Hypixel API is temporarily unavailable. Retry in a minute.",
+        "Hypixel profile lookup is temporarily unavailable. Try again shortly.",
       );
     }
 
@@ -2575,7 +2528,7 @@ export async function getPlayerData(
         rankPlusColor?: string | null;
         monthlyRankColor?: string | null;
       };
-    }>(`${API}/player?uuid=${encodeURIComponent(uuid)}`, apiKey)
+    }>(`${API}/player?uuid=${encodeURIComponent(uuid)}`)
       .then((r) => r?.player)
       .catch(() => null);
 
@@ -2655,7 +2608,7 @@ export async function getPlayerData(
     // Runtime-validate the normalized payload before it crosses the wire.
     const validated = validatePlayerData(payload);
 
-    if (validated && !userKeyProvided) {
+    if (validated) {
       profileCache.set(cacheKey, { at: Date.now(), data: validated });
       pruneCache(profileCache, PROFILE_CACHE_MAX);
     }

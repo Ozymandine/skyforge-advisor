@@ -16,7 +16,7 @@ import {
   IconExternalLink,
   IconUserCheck,
 } from "@/assets/icons";
-import { usePlayer, useAccount } from "@/hooks/use-account";
+import { usePlayer } from "@/hooks/use-account";
 import { PageHero, Panel } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { fetchPlayer } from "@/lib/hypixel.functions";
@@ -54,7 +54,6 @@ export const Route = createFileRoute("/leaderboards")({
 
 function LeaderboardsRoute() {
   const player = usePlayer();
-  const account = useAccount();
 
   const [activeGroup, setActiveGroup] = useState<LeaderboardCategoryGroup>("mining");
   const [selectedSubId, setSelectedSubId] = useState<string>("diamond");
@@ -90,12 +89,11 @@ function LeaderboardsRoute() {
 
   // Live query for dynamically searching an arbitrary player's position
   const searchedPlayerQuery = useQuery({
-    queryKey: ["leaderboard-search-player", searchedUsername.toLowerCase(), account.apiKey],
+    queryKey: ["leaderboard-search-player", searchedUsername.toLowerCase()],
     queryFn: () =>
       fetchPlayer({
         data: {
           username: searchedUsername.trim(),
-          apiKey: account.apiKey || undefined,
         },
       }),
     enabled: searchedUsername.trim().length >= 2,

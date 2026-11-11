@@ -74,14 +74,14 @@ function ComparePage() {
     enabled: !!submitted && account.connected,
     staleTime: 60_000,
     retry: false,
-    queryFn: () => fetchPlayer({ data: { apiKey: account.apiKey, username: submitted!.a } }),
+    queryFn: () => fetchPlayer({ data: { username: submitted!.a } }),
   });
   const queryB = useQuery({
     queryKey: ["player-compare-b", submitted?.b],
     enabled: !!submitted && account.connected,
     staleTime: 60_000,
     retry: false,
-    queryFn: () => fetchPlayer({ data: { apiKey: account.apiKey, username: submitted!.b } }),
+    queryFn: () => fetchPlayer({ data: { username: submitted!.b } }),
   });
 
   // The wire type adds `| undefined` to optional props (exactOptionalPropertyTypes);
@@ -118,11 +118,7 @@ function ComparePage() {
       {!account.connected && (
         <Panel>
           <p className="text-sm text-muted-foreground">
-            Connect an API key in{" "}
-            <a href="/settings" className="text-primary hover:underline">
-              Settings
-            </a>{" "}
-            to compare profiles.
+            Connect your Minecraft profile to compare it with another player.
           </p>
         </Panel>
       )}

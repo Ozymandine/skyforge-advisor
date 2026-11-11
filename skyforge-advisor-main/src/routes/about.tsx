@@ -5,7 +5,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { PageHero, Panel } from "@/components/layout/app-shell";
-import { DEVELOPER_DASHBOARD_URL } from "@/lib/constants";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -14,7 +13,7 @@ export const Route = createFileRoute("/about")({
       {
         name: "description",
         content:
-          "SkyForge is a real-time SkyBlock advisor and tracker. Direct from the Hypixel API, zero estimation where real numbers exist, BYOK privacy.",
+          "SkyForge is a real-time SkyBlock advisor and tracker. SkyBlock data from the Hypixel API with clearly labeled estimates.",
       },
     ],
   }),
@@ -56,28 +55,10 @@ function AboutPage() {
         </p>
       </Section>
 
-      <Section title="Your API key">
+      <Section title="Profile lookup">
         <p>
-          To load your profile, SkyForge uses a Hypixel API key. You generate it yourself in one
-          click at{" "}
-          <a
-            href={DEVELOPER_DASHBOARD_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline font-medium"
-          >
-            developer.hypixel.net/dashboard
-          </a>{" "}
-          — it's free and tied to your Minecraft account.
-        </p>
-        <p>
-          Your key is kept in this browser's session storage (cleared when the tab closes)
-          and is sent only to our own server, which proxies Hypixel API calls. It is never sent
-          to any third-party service. Closing the tab or clearing site data removes it completely.
-        </p>
-        <p>
-          If you don't add a key, profile pages may use a shared server-side key with strict
-          caching. Market pages (Bazaar, Auction House, Wiki, Crafting) never need a key at all.
+          SkyForge resolves your Minecraft username to a player ID and uses its server-side Hypixel
+          application credential to read public SkyBlock profile data.
         </p>
       </Section>
 
@@ -114,9 +95,9 @@ function AboutPage() {
 
       <Section title="Privacy">
         <p>
-          No accounts, no tracking pixels, no analytics scripts. Your username, API key, watchlist
-          and goals live in your browser; server-side stores hold only anonymous market samples and
-          alert rules. Delete everything at any time via Settings → Disconnect.
+          No accounts, no tracking pixels, no analytics scripts. Your username, watchlist and goals
+          live in your browser; server-side stores hold only anonymous market samples and alert
+          rules. Delete everything at any time via Settings → Disconnect.
         </p>
       </Section>
 

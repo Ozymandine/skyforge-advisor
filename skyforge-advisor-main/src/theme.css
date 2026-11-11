@@ -15,11 +15,11 @@
   --radius-full: 9999px;
 
   /* ── Colors: Obsidian Foundation ── */
-  --color-obsidian: #0B0B0E;
-  --color-obsidian-elevated: #121216;
-  --color-obsidian-strong: #1A1A1F;
-  --color-parchment: #F5F0E8;
-  --color-parchment-muted: #E8E0D4;
+  --color-obsidian: #191a17;
+  --color-obsidian-elevated: #222420;
+  --color-obsidian-strong: #2e302b;
+  --color-parchment: #f3f1eb;
+  --color-parchment-muted: #bdbfb4;
   --color-parchment-dark: #2D2A24;
 
   /* ── Colors: Gold Foil (Primary) ── */
@@ -58,7 +58,7 @@
   --color-card-foreground: var(--color-parchment);
   --color-popover: var(--color-obsidian-strong);
   --color-popover-foreground: var(--color-parchment);
-  --color-primary: var(--color-gold-foil);
+  --color-primary: var(--scene-accent);
   --color-primary-foreground: var(--color-obsidian);
   --color-secondary: var(--color-obsidian-strong);
   --color-secondary-foreground: var(--color-parchment-muted);
@@ -68,9 +68,9 @@
   --color-accent-foreground: var(--color-parchment);
   --color-destructive: var(--color-oxblood-bright);
   --color-destructive-foreground: var(--color-parchment);
-  --color-border: rgba(197, 160, 89, 0.08);
-  --color-input: rgba(197, 160, 89, 0.12);
-  --color-ring: var(--color-gold-foil);
+  --color-border: rgb(190 193 173 / 0.17);
+  --color-input: rgb(190 193 173 / 0.25);
+  --color-ring: var(--scene-accent);
   --color-surface: var(--color-obsidian-elevated);
   --color-surface-strong: var(--color-obsidian-strong);
 
@@ -92,9 +92,9 @@
   --color-sidebar-ring: var(--color-gold-foil);
 
   /* ── Typography ── */
-  --font-display: "Cinzel", "Georgia", serif;
-  --font-heading: "Fraunces", "Georgia", serif;
-  --font-body: "Newsreader", "Georgia", serif;
+  --font-display: "DM Sans", system-ui, sans-serif;
+  --font-heading: "DM Sans", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   /* Display / Hero */

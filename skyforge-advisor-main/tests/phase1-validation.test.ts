@@ -12,33 +12,25 @@ import {
 
 describe("phase-1 input boundaries", () => {
   it("rejects overlong/invalid usernames", () => {
-    expect(() =>
-      fetchPlayerInputSchema.parse({ username: "a".repeat(17) }),
-    ).toThrow();
-    expect(() =>
-      fetchPlayerInputSchema.parse({ username: "bad;name" }),
-    ).toThrow();
-    expect(
-      fetchPlayerInputSchema.parse({ username: "Deathstreeks" }).username,
-    ).toBe("Deathstreeks");
+    expect(() => fetchPlayerInputSchema.parse({ username: "a".repeat(17) })).toThrow();
+    expect(() => fetchPlayerInputSchema.parse({ username: "bad;name" })).toThrow();
+    expect(fetchPlayerInputSchema.parse({ username: "Deathstreeks" }).username).toBe(
+      "Deathstreeks",
+    );
   });
 
-  it("requires UUID-shaped API keys", () => {
+  it("accepts username-only profile requests and rejects client API keys", () => {
+    expect(fetchPlayerInputSchema.parse({ username: " Steve " })).toEqual({ username: "Steve" });
     expect(() =>
-      fetchPlayerInputSchema.parse({ username: "Steve", apiKey: "not-a-key" }),
-    ).toThrow();
-    expect(
       fetchPlayerInputSchema.parse({
         username: "Steve",
         apiKey: "123e4567-e89b-12d3-a456-426614174000",
-      }).apiKey,
-    ).toBe("123e4567-e89b-12d3-a456-426614174000");
+      }),
+    ).toThrow();
   });
 
   it("caps price-history ids and logFlip values", () => {
-    expect(() =>
-      priceHistoryInputSchema.parse({ ids: Array(201).fill("STONE") }),
-    ).toThrow();
+    expect(() => priceHistoryInputSchema.parse({ ids: Array(201).fill("STONE") })).toThrow();
     expect(() =>
       logFlipInputSchema.parse({
         id: "x",
@@ -52,13 +44,9 @@ describe("phase-1 input boundaries", () => {
 
   it("only allows Discord webhook URLs or empty", () => {
     expect(webhookInputSchema.parse("")).toBe("");
-    expect(() =>
-      webhookInputSchema.parse("https://evil.com/hook"),
-    ).toThrow();
+    expect(() => webhookInputSchema.parse("https://evil.com/hook")).toThrow();
     expect(
-      webhookInputSchema.parse("https://discord.com/api/webhooks/123/abc").startsWith(
-        "https://",
-      ),
+      webhookInputSchema.parse("https://discord.com/api/webhooks/123/abc").startsWith("https://"),
     ).toBe(true);
   });
 
@@ -69,8 +57,7 @@ describe("phase-1 input boundaries", () => {
       ]),
     ).toThrow();
     expect(
-      externalPriceHistoryInputSchema.parse({ itemId: "ENCHANTED_DIAMOND", days: 30 })
-        .itemId,
+      externalPriceHistoryInputSchema.parse({ itemId: "ENCHANTED_DIAMOND", days: 30 }).itemId,
     ).toBe("ENCHANTED_DIAMOND");
   });
 

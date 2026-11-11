@@ -136,25 +136,87 @@
   animation-play-state: paused;
 }
 
-/* Light theme — hide the dark gameplay video background */
-.light video {
-  display: none !important;
-}
-.light body {
-  background: oklch(0.96 0.008 240) !important;
+/* The scene stays softly blurred even when the panels are opaque. */
+:root {
+  --scene-accent: #dedbd1;
+  --scene-shade: rgb(20 22 18 / 0.72);
+  --scene-panel-opacity: 77%;
+  --scene-hero-start: #373933;
+  --scene-hero-end: #262823;
 }
 
-/* Solid theme variant — opaque panels, no backdrop blur */
+:root[data-skyforge-accent="sage"] {
+  --scene-accent: #b6c5a2;
+  --scene-hero-start: #363f32;
+  --scene-hero-end: #272e25;
+}
+
+:root[data-skyforge-accent="sand"] {
+  --scene-accent: #d9c4a3;
+  --scene-hero-start: #433b31;
+  --scene-hero-end: #2f2b25;
+}
+
+:root.light {
+  --color-obsidian: #eeece6;
+  --scene-shade: rgb(237 234 225 / 0.55);
+}
+
+.skyforge-scene {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--color-background);
+}
+
+.skyforge-scene-image {
+  position: absolute;
+  inset: -12px;
+  background-position: center;
+  background-size: cover;
+  filter: blur(8px);
+}
+
+.skyforge-scene::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--scene-shade);
+}
+
+:root[data-skyforge-scenery="off"] .skyforge-scene-image {
+  display: none;
+}
+
+.skyforge-chrome {
+  background-color: rgb(24 26 23 / 0.96);
+}
+
+.skyforge-hero {
+  color: #fff;
+  border: 1px solid rgb(217 216 202 / 0.19);
+  background:
+    radial-gradient(ellipse at 85% 0%, rgb(229 226 213 / 0.08), transparent 55%),
+    linear-gradient(115deg, var(--scene-hero-start), var(--scene-hero-end));
+}
+
+.skyforge-hero-accent {
+  color: var(--scene-accent);
+}
+
+.theme-solid .panel-card,
+.theme-solid .glass,
+.theme-solid .glass-soft,
 .theme-solid .backdrop-blur-xl,
 .theme-solid .backdrop-blur-md,
 .theme-solid .backdrop-blur-2xl {
-  backdrop-filter: none !important;
+  backdrop-filter: none;
 }
-.theme-solid video {
-  display: none !important;
-}
-.theme-solid body {
-  background: #0b0e14 !important;
+
+.theme-solid .panel-card {
+  --scene-panel-opacity: 100%;
 }
 
 /* Respect reduced motion */
@@ -186,18 +248,19 @@
 
 /* Editorial eyebrow label (DESIGN.md label-sm): Cinzel, uppercase, tracked. */
 .eyebrow {
-  font-family: var(--font-display, "Cinzel", Georgia, serif);
+  font-family: var(--font-display);
   font-size: 0.625rem;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-gold-foil-dim, #9b7e3e);
+  color: var(--scene-accent);
 }
 
 /* Base card surface — Panel relies on this for bg + border. */
 .panel-card {
-  background-color: var(--color-card, #121216);
-  border: 1px solid var(--color-border, rgba(197, 160, 89, 0.08));
+  background-color: color-mix(in srgb, var(--color-card) var(--scene-panel-opacity), transparent);
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(16px);
 }
 
 /* Frosted glass helpers */
@@ -331,4 +394,14 @@
     transform: none;
     transition: none;
   }
+}
+.profile-stat {
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-card) var(--scene-panel-opacity), transparent);
+  backdrop-filter: blur(12px);
+}
+
+.theme-solid .profile-stat {
+  background: var(--color-card);
+  backdrop-filter: none;
 }

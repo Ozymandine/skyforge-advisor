@@ -12,7 +12,6 @@ import {
   IconCoins,
   IconHammer,
   IconKeyRound,
-  IconSparkles,
   IconTrendingUp,
   IconUser,
   IconSwords,
@@ -32,7 +31,6 @@ import {
   fetchFlipAccuracy,
   fetchNews,
 } from "@/lib/hypixel.functions";
-import { DEVELOPER_DASHBOARD_URL } from "@/lib/constants";
 import { formatNumber } from "@/lib/skyblock";
 
 export const Route = createFileRoute("/")({
@@ -190,36 +188,20 @@ function Landing() {
   const hasAccuracy = accuracy && accuracy.resolved > 0;
 
   return (
-    <div className="mx-auto max-w-7xl space-y-14 pb-8">
+    <div className="mx-auto max-w-7xl space-y-8 pb-8">
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-950/75 px-6 py-16 text-center backdrop-blur-xl sm:px-12">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-32 -top-32 size-52 rounded-full bg-emerald-500/10 blur-3xl sm:size-96"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-32 -left-32 size-52 rounded-full bg-cyan-500/10 blur-3xl sm:size-96"
-        />
-
-        <p className="eyebrow">Free · No login · Open methodology</p>
-        <h1 className="mx-auto mt-4 max-w-3xl break-words text-4xl font-black leading-tight tracking-tight sm:text-6xl">
-          Live SkyBlock stats,{" "}
-          <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
-            flips & progression
-          </span>
+      <section className="skyforge-hero overflow-hidden rounded-3xl px-6 py-10 sm:px-10 sm:py-12">
+        <h1 className="max-w-3xl break-words text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
+          Live SkyBlock stats, <span className="skyforge-hero-accent">flips & progression</span>
         </h1>
-        <p className="mx-auto mt-5 max-w-2xl text-sm text-muted-foreground sm:text-base">
+        <p className="mt-4 max-w-xl text-sm text-neutral-300 sm:text-base">
           Profile analytics, market flip suggestions with a published accuracy score, a full item
           wiki and crafting cost trees — powered by the official Hypixel API and the NEU dataset.
         </p>
 
         {/* 1-Click Search Input */}
-        <form
-          onSubmit={handleSearch}
-          className="mx-auto mt-8 flex max-w-lg flex-wrap items-center justify-center gap-2"
-        >
-          <div className="relative flex-1 min-w-[240px]">
+        <form onSubmit={handleSearch} className="mt-6 flex max-w-xl flex-wrap items-center gap-2">
+          <div className="relative min-w-0 flex-[1_1_14rem]">
             <IconSearch
               aria-hidden="true"
               className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
@@ -235,19 +217,19 @@ function Landing() {
               autoComplete="username"
               autoCapitalize="off"
               spellCheck={false}
-              className="w-full rounded-2xl border border-white/10 bg-white/5 py-3.5 pl-11 pr-4 text-base outline-none transition-all focus:border-primary focus:bg-white/[0.08] sm:text-sm"
+              className="w-full rounded-2xl border border-white/25 bg-black/25 py-3.5 pl-11 pr-4 text-base text-white outline-none placeholder:text-stone-300 focus:border-stone-300 sm:text-sm"
             />
           </div>
           <button
             type="submit"
-            className="flex items-center gap-2 rounded-2xl border border-primary/40 bg-primary/20 px-6 py-3.5 text-sm font-semibold text-primary transition-all duration-75 ease-out hover:scale-[1.02] hover:bg-primary/30 active:scale-95"
+            className="rounded-2xl bg-stone-100 px-5 py-3.5 text-sm font-bold text-stone-900 hover:bg-white"
           >
-            <IconSparkles className="size-4" /> Explore Profile
+            Explore Profile
           </button>
         </form>
 
         {/* Quick picks */}
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5 text-xs text-muted-foreground">
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-neutral-300">
           <span>Popular profiles:</span>
           {["Deathstreeks", "Refraction", "Hellcastle", "56ms"].map((name) => (
             <Link
@@ -258,24 +240,6 @@ function Landing() {
             >
               {name}
             </Link>
-          ))}
-        </div>
-
-        <div className="mt-10 grid gap-3 sm:grid-cols-3">
-          {[
-            ["1", "Type Any Username", "Resolves instantly via Mojang — no key or sign in"],
-            ["2", "Live Server Decoder", "Decodes inventory, skills, net worth, gear & pets"],
-            [
-              "3",
-              "Actionable Guidance",
-              "Autonomous advisor suggests your next highest-ROI upgrades",
-            ],
-          ].map(([step, title, body]) => (
-            <div key={step} className="glass-soft rounded-2xl p-4 text-left">
-              <p className="font-mono text-xs font-bold text-primary">STEP {step}</p>
-              <p className="mt-1.5 text-sm font-semibold">{title}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{body}</p>
-            </div>
           ))}
         </div>
       </section>
@@ -450,9 +414,8 @@ function Landing() {
             Powered by the official Hypixel API + the NEU community dataset
           </p>
           <p className="mx-auto mt-2 max-w-xl text-xs text-muted-foreground">
-            Your API key stays in this browser's session and is sent only to our server to call
-            Hypixel. Unknown values are shown as "not available" — never invented. Flip results
-            are published unedited.
+            Profile lookups use your Minecraft username. Unknown values are shown as "not available"
+            — never invented. Flip results are published unedited.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs text-primary">
             <Link to="/about" className="hover:underline">

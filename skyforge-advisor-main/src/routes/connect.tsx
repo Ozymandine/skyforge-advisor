@@ -1,16 +1,10 @@
-// src/routes/connect.tsx
-// BYOK connect flow: username first, then a one-click link to Hypixel's
-// developer portal (auto-generates a key for logged-in accounts) and an
-// inline paste field with live validation. The key is kept in this browser's
-// session storage and sent only to our own server proxy for Hypixel calls.
-
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { IconExternalLink, IconKeyRound, IconCheckCircle2, IconAlertCircle } from "@/assets/icons";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { useState, type FormEvent } from "react";
 
 import { PageHero, Panel } from "@/components/layout/app-shell";
-import { useAccount, usePlayer } from "@/hooks/use-account";
-import { DEVELOPER_DASHBOARD_URL } from "@/lib/constants";
+import { playerQueryOptions, useAccount } from "@/hooks/use-account";
+import { usernameSchema } from "@/lib/schemas";
 
 export const Route = createFileRoute("/connect")({
   head: () => ({
@@ -18,180 +12,113 @@ export const Route = createFileRoute("/connect")({
       { title: "Connect — SkyForge" },
       {
         name: "description",
-        content:
-          "Connect your Hypixel profile: enter your username and optionally paste your own API key (BYOK). Your key stays in this browser's session and is sent only to our server to call Hypixel.",
+        content: "Connect your SkyBlock profile with your Minecraft username.",
       },
     ],
   }),
   component: Connect,
 });
 
-const GET_KEY_URL = DEVELOPER_DASHBOARD_URL;
-
 function Connect() {
   const account = useAccount();
-  const player = usePlayer();
   const navigate = useNavigate();
-
-  const [username, setUsername] = useState(account.username);
-  const [apiKey, setApiKey] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const [draft, setDraft] = useState<string>();
+  const [error, setError] = useState<string>();
   const [connecting, setConnecting] = useState(false);
 
-  const connect = () => {
-    setError(null);
-    if (!username.trim()) {
-      setError("Enter your Minecraft username first.");
+  async function connect(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (connecting) return;
+    const name = usernameSchema.safeParse(draft ?? account.username);
+    if (!name.success) {
+      setError(name.error.issues[0]?.message ?? "Enter a Minecraft username.");
       return;
     }
     setConnecting(true);
-    // Save account state: if apiKey is blank, the server operator key pool is used.
-    account.save({
-      username: username.trim(),
-      apiKey: apiKey.trim(),
-      profileId: "",
-    });
-    setTimeout(() => {
+    setError(undefined);
+    try {
+      const player = await queryClient.fetchQuery(playerQueryOptions(name.data));
+      if (!player) {
+        setError("SkyForge couldn't read that SkyBlock profile. Try again.");
+        return;
+      }
+      account.save({ username: name.data, profileId: "" });
+      await navigate({ to: "/dashboard" });
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not load your SkyBlock profile.");
+    } finally {
       setConnecting(false);
-      void navigate({ to: "/dashboard" });
-    }, 300);
-  };
-
-  const keyValidShape = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-    apiKey.trim(),
-  );
+    }
+  }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <PageHero
-        eyebrow="Get started"
+        eyebrow="SkyBlock"
         title="Connect your profile"
-        description="Enter your Minecraft username to instantly load your live SkyBlock profile, net worth, skills, and gear."
+        description="Enter your Minecraft Java username to load your SkyBlock stats, gear, and progression."
       />
 
       <Panel>
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-semibold text-foreground">
-              Minecraft Username
-            </label>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Resolved instantly via Mojang's public API — zero password or login required.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <input
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") connect();
-                }}
-                placeholder="e.g. Technoblade, Deathstreeks..."
-                className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-base outline-none transition-colors focus:border-primary/50"
-              />
-              <button
-                onClick={connect}
-                disabled={connecting}
-                className="rounded-xl border border-primary/40 bg-primary/20 px-6 py-3 text-sm font-semibold text-primary transition-all duration-75 ease-out hover:scale-[1.02] hover:bg-primary/30 active:scale-95 disabled:opacity-50"
-              >
-                {connecting ? "Connecting…" : "View Profile"}
-              </button>
-            </div>
+        <form onSubmit={(event) => void connect(event)} className="space-y-4">
+          <label htmlFor="connect-username" className="block text-sm font-semibold">
+            Minecraft username
+          </label>
+          <div className="flex flex-wrap gap-3">
+            <input
+              id="connect-username"
+              value={draft ?? account.username}
+              onChange={(event) => {
+                setDraft(event.target.value);
+                setError(undefined);
+              }}
+              placeholder="e.g. Deathstreeks"
+              autoComplete="username"
+              autoCapitalize="off"
+              spellCheck={false}
+              maxLength={16}
+              disabled={connecting}
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? "connect-error" : undefined}
+              className="min-w-0 flex-[1_1_14rem] rounded-xl border border-input bg-secondary/60 px-4 py-3 text-base outline-none focus:border-primary"
+            />
+            <button
+              type="submit"
+              disabled={connecting}
+              className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground hover:brightness-110 disabled:opacity-60"
+            >
+              {connecting ? "Loading profile…" : "Connect profile"}
+            </button>
           </div>
-
-          {/* Advanced BYOK accordion */}
-          <details className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
-            <summary className="cursor-pointer text-xs font-medium text-muted-foreground hover:text-foreground">
-              Advanced: Use a custom Hypixel API key (Optional)
-            </summary>
-            <div className="mt-4 space-y-3 pt-2">
-              <p className="text-xs text-muted-foreground">
-                By default, requests are routed through the server's shared key pool. If you have
-                your own registered application key from{" "}
-                <a
-                  href={GET_KEY_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary underline hover:opacity-80"
-                >
-                  developer.hypixel.net
-                </a>
-                , you can paste it here.
-              </p>
-              <input
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                type="password"
-                placeholder="Paste optional private key"
-                className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 px-4 py-2 font-mono text-xs outline-none transition-colors focus:border-primary/50"
-              />
-              {apiKey.trim() && (
-                <p
-                  className={`flex items-center gap-1.5 text-xs ${
-                    keyValidShape ? "text-emerald-400" : "text-amber-400"
-                  }`}
-                >
-                  {keyValidShape ? (
-                    <>
-                      <IconCheckCircle2 className="size-3.5" /> Valid key shape
-                    </>
-                  ) : (
-                    <>
-                      <IconAlertCircle className="size-3.5" /> Keys are UUID-shaped — check
-                      formatting
-                    </>
-                  )}
-                </p>
-              )}
-            </div>
-          </details>
-        </div>
-
-        {error && (
-          <p className="mt-6 flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
-            <IconAlertCircle className="size-4" /> {error}
-          </p>
-        )}
-
-        {player.error && account.connected && (
-          <p className="mt-6 flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-2.5 text-xs text-amber-300">
-            <IconAlertCircle className="size-4 shrink-0" />
-            Last attempt failed: {(player.error as Error).message} — double-check the key or
-            generate a new one.
-          </p>
-        )}
-
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          <button
-            onClick={connect}
-            disabled={connecting}
-            className="rounded-xl border border-primary/40 bg-primary/15 px-6 py-2.5 text-sm font-semibold text-primary transition-all duration-75 ease-out hover:scale-[1.02] hover:bg-primary/25 active:scale-95 disabled:opacity-50"
-          >
-            {connecting ? "Connecting…" : "Connect & view my dashboard"}
-          </button>
-
-          <p className="text-[11px] text-muted-foreground">
-            Your key is stored in this browser's localStorage and used only to call the Hypixel API.{" "}
-            <a href="/about" className="underline underline-offset-2 hover:text-foreground">
+          {error && (
+            <p id="connect-error" role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          <p className="text-sm text-muted-foreground">
+            Your selection is saved in this browser.{" "}
+            <Link to="/about" className="underline underline-offset-2">
               How we handle data
-            </a>
+            </Link>
           </p>
-        </div>
+        </form>
       </Panel>
 
       {account.connected && (
-        <Panel className="border-emerald-500/30 bg-emerald-500/5">
-          <p className="flex items-center gap-2 text-sm font-medium text-emerald-300">
-            <IconCheckCircle2 className="size-4" /> Connected as {account.username}
-          </p>
+        <Panel className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm">Saved profile: {account.username}</p>
           <button
+            type="button"
+            disabled={connecting}
             onClick={() => {
               account.clear();
-              setApiKey("");
-              setUsername("");
+              setDraft("");
+              setError(undefined);
             }}
-            className="mt-3 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
           >
-            Disconnect and clear stored data
+            Disconnect
           </button>
         </Panel>
       )}

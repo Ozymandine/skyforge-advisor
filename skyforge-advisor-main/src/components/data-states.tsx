@@ -13,21 +13,16 @@ export function ConnectPrompt({ what }: { what: string }) {
       >
         <IconKeyRound className="size-5" />
       </div>
-      <h2 className="mt-4 text-xl font-semibold">Connect your Hypixel account</h2>
+      <h2 className="mt-4 text-xl font-semibold">Connect your SkyBlock profile</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-        Two steps: your username and a free API key (one click to generate). Takes about 30 seconds
-        and unlocks {what}.
+        Enter your Minecraft username to open {what}.
       </p>
       <Link
         to="/connect"
-        aria-describedby="connect-prompt-detail"
         className="mt-5 inline-flex rounded-xl border border-primary/40 bg-primary/15 px-4 py-2 text-sm font-medium text-primary"
       >
         Connect now
       </Link>
-      <p id="connect-prompt-detail" className="sr-only">
-        Opens the connect page where you enter your Minecraft username and API key.
-      </p>
     </Panel>
   );
 }

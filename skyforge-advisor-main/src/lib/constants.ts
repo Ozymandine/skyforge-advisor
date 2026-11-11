@@ -17,12 +17,6 @@ export const MAX_COLLECTION_CATEGORIES = 6;
 /** Number of storage containers typically decoded from a profile. */
 export const TYPICAL_CONTAINER_COUNT = 10;
 
-/** Hypixel API key length (UUID format). */
-export const API_KEY_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** Where users create/manage their Hypixel API key. */
-export const DEVELOPER_DASHBOARD_URL = "https://developer.hypixel.net/dashboard";
-
 /** Public origin of this site — used for absolute og:image URLs. */
 export const SITE_URL = "https://skyforge-advisor.vercel.app";
 

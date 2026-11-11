@@ -1,19 +1,12 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
-  IconArrowRight,
   IconBell,
   IconBookOpen,
-  IconBoxes,
-  IconCalendar,
   IconChevronDown,
   IconCheck,
-  IconCoins,
-  IconCompass,
-  IconGauge,
   IconHammer,
   IconKeyRound,
   IconLayoutDashboard,
-  IconLineChart,
   IconMenu,
   IconMoon,
   IconPanelLeftClose,
@@ -21,13 +14,8 @@ import {
   IconRefreshCw,
   IconSearch,
   IconSettings,
-  IconSkull,
-  IconSprout,
-  IconSparkles,
   IconSun,
-  IconSwords,
   IconTarget,
-  IconTrophy,
   IconTrendingUp,
   IconUser,
   IconBot,
@@ -36,7 +24,6 @@ import {
 import { useEffect, useMemo, useRef, useState, type HTMLAttributes, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import headerVideo from "@/assets/skyblock-header.mp4";
 import headerPoster from "@/assets/skyblock-header.jpg";
 import { usePlayer, useAccount } from "@/hooks/use-account";
 import {
@@ -46,7 +33,14 @@ import {
   fetchApiHealth,
 } from "@/lib/hypixel.functions";
 import { markAllRead, useNotificationFeed } from "@/hooks/use-notification-feed";
-import { applyTheme, getTheme, onThemeChange, setTheme as setThemeStored } from "@/lib/theme";
+import {
+  applySceneTheme,
+  applyTheme,
+  getSceneTheme,
+  getTheme,
+  onThemeChange,
+  setTheme as setThemeStored,
+} from "@/lib/theme";
 import { getPref, onPrefsChange } from "@/lib/prefs";
 import { formatNumber, type BazaarProduct } from "@/lib/skyblock";
 import { RankBadge } from "@/components/ui/rank-badge";
@@ -69,42 +63,54 @@ import {
 const nav = [
   {
     group: "Overview",
-    items: [{ to: "/dashboard", label: "Dashboard", icon: IconLayoutDashboard }],
+    items: [{ to: "/dashboard", label: "Dashboard", sprite: "compass" }],
   },
   {
     group: "Progression",
     items: [
-      { to: "/skills", label: "Skills", icon: IconSparkles },
-      { to: "/collections", label: "Collections", icon: IconCompass },
-      { to: "/inventory", label: "Inventory", icon: IconBoxes },
+      { to: "/skills", label: "Skills", sprite: "experience_bottle" },
+      { to: "/collections", label: "Collections", sprite: "bookshelf" },
+      { to: "/inventory", label: "Inventory", sprite: "chest" },
     ],
   },
   {
     group: "Economy",
     items: [
-      { to: "/bazaar", label: "Bazaar", icon: IconTrendingUp },
-      { to: "/auction-house", label: "Auction House", icon: IconHammer },
+      { to: "/bazaar", label: "Bazaar", sprite: "gold_ingot" },
+      { to: "/auction-house", label: "Auction House", sprite: "anvil" },
     ],
   },
   {
     group: "Tools",
     items: [
-      { to: "/advisor", label: "Advisor", icon: IconBot },
-      { to: "/simulator", label: "Damage Sim", icon: IconSwords },
-      { to: "/leaderboards", label: "Leaderboards", icon: IconTrophy },
-      { to: "/calendar", label: "Calendar", icon: IconCalendar },
-      { to: "/analytics", label: "Analytics", icon: IconLineChart },
-      { to: "/wiki", label: "Wiki", icon: IconBookOpen },
+      { to: "/advisor", label: "Advisor", sprite: "ender_eye" },
+      { to: "/simulator", label: "Damage Sim", sprite: "iron_sword" },
+      { to: "/leaderboards", label: "Leaderboards", sprite: "diamond" },
+      { to: "/calendar", label: "Calendar", sprite: "clock" },
+      { to: "/analytics", label: "Analytics", sprite: "emerald" },
+      { to: "/wiki", label: "Wiki", sprite: "book" },
     ],
   },
   {
     group: "Profile",
     items: [
-      { to: "/notifications", label: "Notifications", icon: IconBell },
-      { to: "/settings", label: "Settings", icon: IconSettings },
+      { to: "/notifications", label: "Notifications", sprite: "bell" },
+      { to: "/settings", label: "Settings", sprite: "redstone" },
     ],
   },
 ] as const;
+
+function NavSprite({ sprite }: { sprite: string }) {
+  return (
+    <img
+      src={`/vanilla/${sprite}.png`}
+      alt=""
+      width={18}
+      height={18}
+      className="size-[18px] shrink-0 object-contain [image-rendering:pixelated]"
+    />
+  );
+}
 
 function PlayerHeadAvatar({
   uuid,
@@ -163,18 +169,18 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
   return (
     <aside
       className={cn(
-        "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-white/10 bg-[#0B0E14] md:flex transition-all duration-300 ease-in-out",
+        "sticky top-0 z-30 hidden h-screen shrink-0 flex-col border-r border-border skyforge-chrome md:flex transition-all duration-300 ease-in-out",
         collapsed ? "w-[68px]" : "w-[204px]",
       )}
     >
       {/* Centered Wordmark */}
       <div className="flex flex-col items-center justify-center px-3 pt-5 pb-2.5 transition-all duration-300">
         {!collapsed ? (
-          <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-[23px] tracking-[0.18em] text-transparent select-none drop-shadow-[0_4px_22px_rgba(52,211,153,0.5)]">
+          <span className="font-pixel inline-block text-primary font-black text-[23px] tracking-[0.18em] select-none">
             SKYFORGE
           </span>
         ) : (
-          <span className="font-pixel inline-block bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text font-black text-lg tracking-wider text-transparent select-none drop-shadow-[0_2px_14px_rgba(52,211,153,0.5)]">
+          <span className="font-pixel inline-block text-primary font-black text-lg tracking-wider select-none">
             SF
           </span>
         )}
@@ -217,10 +223,10 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     )}
                     activeProps={{
                       className:
-                        "bg-white/[0.12] text-white border-l-2 border-emerald-400 font-semibold shadow-sm ring-1 ring-white/10 hover:translate-x-0",
+                        "bg-primary/15 text-primary border-l-2 border-primary font-semibold hover:translate-x-0",
                     }}
                   >
-                    <item.icon className="size-4 shrink-0 text-white/55 group-hover:text-white group-hover:transition-none transition-colors duration-150" />
+                    <NavSprite sprite={item.sprite} />
                     {!collapsed && <span className="truncate">{item.label}</span>}
                   </Link>
                 </li>
@@ -428,6 +434,7 @@ function Header({
   useEffect(() => {
     setTheme(getTheme());
     applyTheme(getTheme());
+    applySceneTheme(getSceneTheme());
     return onThemeChange(setTheme);
   }, []);
 
@@ -460,7 +467,7 @@ function Header({
     );
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0B0E14]">
+    <header className="sticky top-0 z-40 border-b border-border skyforge-chrome">
       <div className="flex items-center gap-4 px-4 py-3 sm:px-6">
         <button
           onClick={onOpenSearch}
@@ -622,46 +629,6 @@ function Header({
   );
 }
 
-/** Video background that degrades to a static poster on reduced-motion,
- * data-saver, or slow connections. */
-function BackgroundVideo() {
-  const [playVideo, setPlayVideo] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
-    const saver = conn?.saveData === true;
-    const slow = conn?.effectiveType === "slow-2g" || conn?.effectiveType === "2g";
-    setPlayVideo(!reduced && !saver && !slow);
-  }, []);
-
-  if (!playVideo) {
-    return (
-      <img
-        src={headerPoster}
-        alt=""
-        className="size-full object-cover opacity-60"
-      />
-    );
-  }
-
-  return (
-    <video
-      autoPlay
-      loop
-      muted
-      playsInline
-      preload="metadata"
-      poster={headerPoster}
-      suppressHydrationWarning
-      className="size-full object-cover gpu-layer opacity-60"
-    >
-      <source src={headerVideo} type="video/mp4" />
-    </video>
-  );
-}
-
 export function AppShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [open, setOpen] = useState(false);
@@ -737,16 +704,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <div className="relative min-h-screen">
-      {/* Live Video Background: Dedicated GPU layer with crisp solid vignette.
-          Skipped entirely on reduced-motion / data-saver / 2G so metered
-          mobile connections only ever load the lightweight poster. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden select-none"
-      >
-        <BackgroundVideo />
-        <div className="absolute inset-0 bg-[#0c1017]/85" />
+    <div className="relative isolate min-h-screen">
+      <div aria-hidden="true" className="skyforge-scene">
+        <div
+          className="skyforge-scene-image"
+          style={{ backgroundImage: 'url("' + headerPoster + '")' }}
+        />
       </div>
 
       <div className="flex">
@@ -835,7 +798,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="absolute left-0 top-0 h-full w-[280px] overflow-y-auto border-r border-white/10 bg-[#0E121B]/95 p-5 backdrop-blur-2xl"
           >
             <div className="flex items-center justify-between">
-              <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text font-black text-xl tracking-[0.18em] text-transparent select-none">
+              <span className="text-primary font-black text-xl tracking-[0.18em] select-none">
                 SKYFORGE
               </span>
               <button
@@ -859,7 +822,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                           onClick={() => setNavOpen(false)}
                           className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-white/70 transition-none hover:bg-white/[0.14] hover:text-white active:bg-white/[0.22]"
                         >
-                          <item.icon className="size-4 shrink-0 text-white/60" />
+                          <NavSprite sprite={item.sprite} />
                           <span>{item.label}</span>
                         </Link>
                       </li>
@@ -939,7 +902,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   }}
                   className="flex items-center gap-2"
                 >
-                  <item.icon className="size-4 text-emerald-400" />
+                  <NavSprite sprite={item.sprite} />
                   <span>{item.label}</span>
                 </CommandItem>
               )),
@@ -963,7 +926,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </CommandItem>
             )}
             <CommandItem
-              value="connect profile api key"
+              value="connect minecraft username"
               onSelect={() => {
                 setOpen(false);
                 setSearch("");
@@ -971,7 +934,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               }}
               className="flex gap-2"
             >
-              <IconKeyRound className="size-4" /> Connect a profile (API key)
+              <IconKeyRound className="size-4" /> Connect a profile
             </CommandItem>
             <CommandItem
               value="refresh profile"
@@ -1010,7 +973,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               {section.items.map((item) => (
                 <CommandItem key={item.to} value={item.label} asChild>
                   <Link to={item.to} onClick={() => setOpen(false)} className="flex gap-2">
-                    <item.icon className="size-4" />
+                    <NavSprite sprite={item.sprite} />
                     {item.label}
                   </Link>
                 </CommandItem>
@@ -1031,9 +994,17 @@ function FooterContent() {
     staleTime: 60_000,
   });
 
-  const profileApi = health.data?.profileApi ?? "ok";
+  const profileApi = health.data?.profileApi;
   const healthLabel =
-    profileApi === "ok" ? "Operational" : profileApi === "degraded" ? "Degraded" : "No shared key";
+    profileApi === "ok"
+      ? "Configured"
+      : profileApi === "degraded"
+        ? "Degraded"
+        : profileApi === "no-key"
+          ? "Unavailable"
+          : health.isError
+            ? "Status unknown"
+            : "Checking…";
 
   return (
     <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
@@ -1099,7 +1070,7 @@ export function PageHero({
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
         <p className="eyebrow">{eyebrow}</p>
-        <h1 className="font-pixel mt-2 break-words text-3xl font-semibold tracking-wide sm:text-5xl">
+        <h1 className="mt-2 break-words text-3xl font-extrabold tracking-tight sm:text-4xl">
           {title}
         </h1>
         <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{description}</p>
@@ -1118,13 +1089,7 @@ export function Panel({
   children: ReactNode;
 } & HTMLAttributes<HTMLElement>) {
   return (
-    <section
-      {...rest}
-      className={cn(
-        "panel-card rounded-3xl p-6 shadow-xl transition-all duration-75 ease-out hover:border-emerald-500/35 hover:shadow-2xl hover:shadow-emerald-500/[0.06]",
-        className,
-      )}
-    >
+    <section {...rest} className={cn("panel-card rounded-3xl p-6", className)}>
       {children}
     </section>
   );

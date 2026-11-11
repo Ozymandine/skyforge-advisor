@@ -1,12 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 import { PageHero, Panel } from "@/components/layout/app-shell";
 import { Switch } from "@/components/ui/switch";
 import { getPref, onPrefsChange, setPref } from "@/lib/prefs";
-import { getTheme, setTheme as setThemeStored } from "@/lib/theme";
+import {
+  accentOptions,
+  getSceneTheme,
+  getTheme,
+  setSceneTheme,
+  setTheme as setThemeStored,
+} from "@/lib/theme";
 import { usePlayer, useAccount } from "@/hooks/use-account";
-import { DEVELOPER_DASHBOARD_URL } from "@/lib/constants";
 import { formatFull } from "@/lib/skyblock";
 
 export const Route = createFileRoute("/settings")({
@@ -15,12 +20,12 @@ export const Route = createFileRoute("/settings")({
       { title: "Settings — SkyBlock Assistant" },
       {
         name: "description",
-        content: "Connect your Hypixel API key, pick a profile and tune the interface.",
+        content: "Choose your SkyBlock profile and tune the interface.",
       },
       { property: "og:title", content: "Settings — SkyBlock Assistant" },
       {
         property: "og:description",
-        content: "Manage your Hypixel API key, theme and sync preferences.",
+        content: "Manage your SkyBlock profile, theme and sync preferences.",
       },
     ],
   }),
@@ -50,18 +55,20 @@ function Row({
 function Settings() {
   const account = useAccount();
   const player = usePlayer();
-  const [key, setKey] = useState("");
-  const [name, setName] = useState("");
   const [textureFallback, setTextureFallback] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [ticker, setTicker] = useState(false);
   const [theme, setTheme] = useState("dark");
+  const [scene, setScene] = useState(getSceneTheme);
+
+  useEffect(() => setScene(getSceneTheme()), []);
+
+  function updateScene(next: typeof scene) {
+    setScene(next);
+    setSceneTheme(next);
+  }
 
   useEffect(() => {
-    if (account.hydrated) {
-      setKey(account.apiKey);
-      setName(account.username);
-    }
     setTextureFallback(getPref("textureFallback", true));
     setReducedMotion(getPref("reducedMotion", false));
     setTicker(getPref("ticker", false));
@@ -71,7 +78,7 @@ function Settings() {
       setReducedMotion(getPref("reducedMotion", false));
       setTicker(getPref("ticker", false));
     });
-  }, [account.hydrated, account.apiKey, account.username]);
+  }, []);
   // Apply reduced motion globally when toggled.
   useEffect(() => {
     document.documentElement.classList.toggle("force-reduced-motion", reducedMotion);
@@ -82,63 +89,31 @@ function Settings() {
       <PageHero
         eyebrow="Profile"
         title="Settings"
-        description="Connect the Hypixel API, choose your SkyBlock profile and tune the interface."
+        description="Manage your SkyBlock profile and appearance."
       />
 
       <Panel>
         <h2 className="text-xl font-semibold">Hypixel connection</h2>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Your key stays in this browser's session and is sent only to our server to call
-          the Hypixel API. Generate
-          one in a single click at{" "}
-          <a
-            href={DEVELOPER_DASHBOARD_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline font-medium"
-          >
-            developer.hypixel.net/dashboard
-          </a>
-          .
-        </p>
-        <Row title="Minecraft username" description="The account whose profiles will be loaded.">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Steve"
-            className="w-64 rounded-xl border border-input bg-secondary/40 px-4 py-2 text-sm outline-none"
-          />
-        </Row>
         <Row
-          title="Hypixel API key"
-          description="Used for live profile, skills and inventory data."
+          title="Minecraft username"
+          description={account.username || "Choose a profile by username."}
         >
-          <input
-            value={key}
-            onChange={(e) => setKey(e.target.value)}
-            type="password"
-            placeholder="00000000-0000-0000-0000-000000000000"
-            className="w-64 rounded-xl border border-input bg-secondary/40 px-4 py-2 font-mono text-sm outline-none"
-          />
-        </Row>
-        <Row title="Save connection" description="Validates the key by loading your profile.">
           <div className="flex gap-2">
-            <button
-              onClick={() => account.save({ apiKey: key, username: name, profileId: "" })}
-              className="rounded-xl border border-primary/40 bg-primary/15 px-4 py-2 text-sm font-medium text-primary"
+            <Link
+              to="/connect"
+              className="rounded-xl bg-primary/15 px-4 py-2 text-sm font-medium text-primary"
             >
-              Connect
-            </button>
-            <button
-              onClick={() => {
-                account.clear();
-                setKey("");
-                setName("");
-              }}
-              className="rounded-xl border border-border bg-secondary/40 px-4 py-2 text-sm"
-            >
-              Disconnect
-            </button>
+              {account.connected ? "Change profile" : "Connect profile"}
+            </Link>
+            {account.connected && (
+              <button
+                type="button"
+                onClick={account.clear}
+                className="rounded-xl border border-border px-4 py-2 text-sm"
+              >
+                Disconnect
+              </button>
+            )}
           </div>
         </Row>
         <Row
@@ -202,7 +177,7 @@ function Settings() {
 
       <Panel>
         <h2 className="text-xl font-semibold">Appearance</h2>
-        <Row title="Theme" description="Dark glass is the default and only tuned theme.">
+        <Row title="Theme" description="Choose a glass, solid, or lighter backdrop.">
           <select
             value={theme}
             onChange={(e) => {
@@ -216,6 +191,44 @@ function Settings() {
             <option value="light">Light</option>
             <option value="system">System</option>
           </select>
+        </Row>
+        <Row title="Accent" description="Choose the color for highlights and the home banner.">
+          <select
+            aria-label="Accent"
+            value={scene.accent}
+            onChange={(e) =>
+              updateScene({ ...scene, accent: e.target.value as typeof scene.accent })
+            }
+            className="rounded-xl border border-input bg-secondary px-4 py-2 text-sm"
+          >
+            {accentOptions.map((accent) => (
+              <option key={accent} value={accent}>
+                {accent}
+              </option>
+            ))}
+          </select>
+        </Row>
+        <Row title="Panel opacity" description="Control how much scenery shows through the glass.">
+          <div className="flex items-center gap-3">
+            <input
+              aria-label="Panel opacity"
+              type="range"
+              min={65}
+              max={95}
+              value={scene.opacity}
+              disabled={theme === "solid"}
+              onChange={(e) => updateScene({ ...scene, opacity: Number(e.target.value) })}
+              className="accent-primary"
+            />
+            <span className="text-sm tabular-nums">{theme === "solid" ? 100 : scene.opacity}%</span>
+          </div>
+        </Row>
+        <Row title="Scenic background" description="Show the blurred SkyBlock landscape.">
+          <Switch
+            aria-label="Scenic background"
+            checked={scene.scenery}
+            onCheckedChange={(scenery) => updateScene({ ...scene, scenery })}
+          />
         </Row>
         <Row
           title="Economy ticker"

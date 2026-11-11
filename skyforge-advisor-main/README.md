@@ -82,9 +82,10 @@ margin) shown on both market pages.
 
 ## Environment
 
-- `HYPIXEL_API_KEY` — shared operator key pool for profile data (comma-separated
-  UUID keys for rotation; users' own keys are always preferred). Market pages never need
-  a key.
+- `HYPIXEL_API_KEY` — the server-only key for the registered SkyForge application.
+  Set it in `.env.local` for Vite development or in your hosting environment and
+  redeploy. Visitors connect with their Minecraft Java username. Market pages
+  can run without this credential.
 - `CF_ACCOUNT_ID` / `CF_KV_NAMESPACE` / `CF_KV_TOKEN` — Cloudflare KV storage
   for market history (see above).
 - `SUPABASE_URL` / `SUPABASE_ANON_KEY` (+ `VITE_` variants) — per-user alerts
