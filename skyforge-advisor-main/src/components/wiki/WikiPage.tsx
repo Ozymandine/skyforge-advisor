@@ -35,6 +35,7 @@ import { WikiItemIcon } from "./WikiItemIcon";
 import { cn } from "@/lib/utils";
 
 import { fetchItemDetail } from "@/lib/hypixel.functions";
+import { WikiAuctionQuote } from "./WikiAuctionQuote";
 import { titleCase } from "@/lib/skyblock";
 
 export interface WikiItem {
@@ -982,11 +983,7 @@ function WikiItemDetailCard({ item, onClose }: { item: WikiItem; onClose: () => 
   const sellVolume = quote?.sellMovingWeek ?? 0;
   const weeklyVolume = buyVolume + sellVolume;
   const maxVolume = Math.max(buyVolume, sellVolume, 1);
-  const averageBin = item.auctionHouse?.averageBin ?? null;
   const npcSell = typeof item.npcSell === "number" && item.npcSell > 0 ? item.npcSell : null;
-
-  const hasMarket =
-    bazaarBuy != null || bazaarSell != null || item.auctionHouse != null || npcSell != null;
 
   return (
     <div
@@ -1091,8 +1088,7 @@ function WikiItemDetailCard({ item, onClose }: { item: WikiItem; onClose: () => 
                 ? "Loading market quotes…"
                 : quote
                   ? "Indicative Bazaar quotes per unit."
-                  : "Bazaar quote unavailable."}{" "}
-              Comparable Auction House pricing is unavailable.
+                  : "Bazaar quote unavailable."}
               {detailQuery.data?.item?.bazaarUpdatedAt && (
                 <span className="block">
                   Hypixel quote timestamp:{" "}
@@ -1135,20 +1131,7 @@ function WikiItemDetailCard({ item, onClose }: { item: WikiItem; onClose: () => 
               </div>
             )}
 
-            {averageBin != null && (
-              <p className="mt-2 text-[11px] text-muted-foreground/60">
-                Average BIN:{" "}
-                <span className="font-mono font-semibold text-foreground/80">
-                  {formatCompact(averageBin)}
-                </span>
-              </p>
-            )}
-
-            {!hasMarket && (
-              <p className="rounded-lg border border-dashed border-white/10 bg-black/20 p-3 text-xs text-muted-foreground/60">
-                Not traded on the Bazaar or Auction House.
-              </p>
-            )}
+            <WikiAuctionQuote itemId={item.id} />
           </DetailSection>
 
           {/* Stats */}

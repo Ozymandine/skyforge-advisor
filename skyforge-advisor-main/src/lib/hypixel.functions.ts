@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { setResponseHeader } from "@tanstack/react-start/server";
 import {
   alertRulesInputSchema,
   externalPriceHistoryInputSchema,
@@ -12,6 +13,7 @@ import {
 } from "./schemas";
 import { z as zod } from "zod";
 import type { AlertRule } from "./market-history.server";
+import { WIKI_AUCTION_PAGES } from "./wiki-auction";
 
 const uuidSchema = zod.object({
   uuid: uuidOrNameSchema,
@@ -40,7 +42,7 @@ export const fetchAuctions = createServerFn({ method: "GET" }).handler(async () 
   const { getAuctions } = await import("./hypixel.server");
   // Scan far more pages so the auction house covers the live market, not just
   // the first few pages of listings.
-  const data = await getAuctions(24);
+  const data = await getAuctions(WIKI_AUCTION_PAGES);
   // Limit the listing sample payload to the soonest-ending rows.
   const entries = [...data.entries].sort((a, b) => a.endsInMs - b.endsInMs).slice(0, 720);
 
@@ -321,6 +323,15 @@ export const fetchItemDetail = createServerFn({ method: "GET" })
     const { getItemEncyclopedia } = await import("./hypixel.server");
     return getItemEncyclopedia(data);
   });
+
+export const fetchWikiAuctionQuote = createServerFn({ method: "GET" })
+  .validator((input: unknown) => itemIdSchema.parse(input))
+  .handler(async ({ data }) => {
+    setResponseHeader("Cache-Control", "no-store");
+    const { getWikiAuctionQuote } = await import("./hypixel.server");
+    return getWikiAuctionQuote(data);
+  });
+
 export const fetchPlayer = createServerFn({ method: "POST" })
   .validator((input: unknown) => fetchPlayerInputSchema.parse(input ?? {}))
   .handler(async ({ data }) => {

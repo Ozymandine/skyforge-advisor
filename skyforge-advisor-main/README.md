@@ -42,6 +42,19 @@ node scripts/sync-wiki-icons.mjs
 Re-run it whenever you want fresh game data; then run the audit script to see
 coverage.
 
+## Wiki Auction House quotes
+
+The Wiki quotes single, unmodified Jungle Amulets (Uncommon) and Red Claw
+Artifacts (Epic). It matches the canonical item ID and stack count in the
+listing's decoded NBT, requires base rarity, and excludes unknown item metadata
+and modifiers. Each quote requires at least three active, unique BIN listings.
+
+The Wiki shows the lowest asking price observed, listing count, Hypixel
+snapshot timestamp, and matching pages scanned. It scans up to 24 pages from
+one Hypixel snapshot and shares the cached scan across supported Wiki items
+within each server instance. Prices are withheld when the feed fails, the
+snapshot is over five minutes old, or fewer than three listings qualify.
+
 ## Market history store
 
 `src/lib/market-history.server.ts` records bazaar prices + lowest BINs on every

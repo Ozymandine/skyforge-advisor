@@ -4,6 +4,7 @@ import { useMemo } from "react";
 
 import { ErrorState, LoadState } from "@/components/data-states";
 import { WikiItemIcon } from "@/components/wiki/WikiItemIcon";
+import { WikiAuctionQuote } from "@/components/wiki/WikiAuctionQuote";
 import CoflnetPriceChart from "@/components/wiki/CoflnetPriceChart";
 import { cn } from "@/lib/utils";
 import { titleCase } from "@/lib/skyblock";
@@ -309,9 +310,7 @@ function ItemEncyclopediaPage() {
           {!item.bazaar && (
             <p className="mt-3 text-sm text-muted-foreground">Bazaar quote unavailable.</p>
           )}
-          <p className="mt-2 text-sm text-muted-foreground">
-            Comparable Auction House pricing is unavailable.
-          </p>
+          <WikiAuctionQuote itemId={item.id} />
         </Section>
 
         {/* Used to craft */}
