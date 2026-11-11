@@ -303,9 +303,7 @@ function Notifications() {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHero
-        eyebrow="Profile"
         title="Notifications"
-        description="Market flips, skill milestones and goal completions from your live account."
         actions={
           <div className="flex flex-wrap gap-2">
             <button
@@ -426,11 +424,7 @@ function Notifications() {
               your security the saved URL is never shown back — paste a new one to replace it.
             </p>
             {webhookConfigured && (
-              <p
-                className="mt-2 text-xs text-emerald-400"
-                role="status"
-                aria-live="polite"
-              >
+              <p className="mt-2 text-xs text-emerald-400" role="status" aria-live="polite">
                 Webhook configured{webhookHint ? ` (${webhookHint})` : ""} — leave blank to keep it.
               </p>
             )}

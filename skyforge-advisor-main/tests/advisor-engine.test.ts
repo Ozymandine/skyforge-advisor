@@ -2,6 +2,7 @@
 // Unit test suite for Personalized Profile Telemetry & Progression Advisor.
 
 import { describe, expect, it } from "vitest";
+import { computeDungeonLevel } from "../src/lib/skyblock";
 import {
   performProfileAudit,
   generateTailoredActionPlan,
@@ -16,8 +17,28 @@ describe("Personalized Profile Audit", () => {
       profiles: [],
       activeProfileId: "mock-profile",
       skills: [
-        { name: "Combat", key: "COMBAT", level: 25, cap: 60, totalXp: 500_000, currentXp: 20_000, neededXp: 100_000, pct: 20, maxed: false },
-        { name: "Mining", key: "MINING", level: 30, cap: 60, totalXp: 1_200_000, currentXp: 50_000, neededXp: 150_000, pct: 33, maxed: false },
+        {
+          name: "Combat",
+          key: "COMBAT",
+          level: 25,
+          cap: 60,
+          totalXp: 500_000,
+          currentXp: 20_000,
+          neededXp: 100_000,
+          pct: 20,
+          maxed: false,
+        },
+        {
+          name: "Mining",
+          key: "MINING",
+          level: 30,
+          cap: 60,
+          totalXp: 1_200_000,
+          currentXp: 50_000,
+          neededXp: 150_000,
+          pct: 33,
+          maxed: false,
+        },
       ],
       skillAverage: 27.5,
       totalSkillXp: 1_700_000,
@@ -51,41 +72,53 @@ describe("Personalized Profile Audit", () => {
   });
 });
 
-describe("Tailored Action Plan", () => {
-  it("generates specific actions tailored to missing stats and gates", () => {
+describe("Advisor next steps", () => {
+  it("does not turn missing or defaulted profile data into advice", () => {
+    expect(generateTailoredActionPlan(undefined)).toEqual([]);
+    expect(
+      generateTailoredActionPlan({
+        fairySouls: 0,
+        skills: [{ name: "Combat", key: "COMBAT", level: 0, currentXp: 0, neededXp: 50 }],
+        dungeons: { catacombsLevel: 10, floors: [{ name: "Floor 4", completions: 1 }] },
+        availability: {
+          skillKeys: [],
+          containerIds: [],
+          fairySouls: false,
+          purse: false,
+          dungeonCompletions: false,
+        },
+      }),
+    ).toEqual([]);
+  });
+
+  it("uses recorded floor completions and measured skill progress", () => {
     const actions = generateTailoredActionPlan({
-      username: "Player123",
-      uuid: "mock-uuid",
-      profiles: [],
-      activeProfileId: "mock-profile",
-      skills: [],
-      skillAverage: 20,
-      totalSkillXp: 500_000,
-      purse: 8_000_000,
-      bank: 1_000_000,
-      containers: [],
-      collections: [],
-      fairySouls: 120,
-      lastSave: Date.now(),
-      slayers: [{ name: "Voidgloom Seraph", tier: 3, kills: 10, xp: 3_000 }],
+      fairySouls: 8,
+      skills: [
+        { name: "Combat", key: "COMBAT", level: 10, currentXp: 400, neededXp: 500 },
+        { name: "Farming", key: "FARMING", level: 3, currentXp: 20, neededXp: 150 },
+      ],
       dungeons: {
-        catacombsLevel: 12,
-        catacombsXp: 20_000,
-        secretsFound: 200,
-        classes: [],
-        floors: [],
+        catacombsLevel: 10,
+        floors: [
+          { name: "Floor 2", completions: 3 },
+          { name: "Floor 4", completions: 0 },
+          { name: "Floor 3", completions: 1 },
+        ],
       },
     });
 
-    expect(actions.length).toBeGreaterThanOrEqual(4);
+    expect(actions.map((action) => action.title)).toEqual([
+      "Run Floor 3 again",
+      "Reach Combat 11",
+      "Check uncollected Fairy Souls",
+    ]);
+    expect(actions[1]?.detail).toContain("100 XP");
+  });
 
-    const soulsAction = actions.find((a) => a.id === "action_souls");
-    expect(soulsAction).toBeDefined();
-    expect(soulsAction?.currentStatText).toContain("120 / 242");
-
-    const emanAction = actions.find((a) => a.id === "action_eman5");
-    expect(emanAction).toBeDefined();
-    expect(emanAction?.exactRewardText).toContain("Juju Shortbow");
+  it("does not recommend clearing an unverified floor from a sparse record", () => {
+    const actions = generateTailoredActionPlan({ dungeons: { catacombsLevel: 10, floors: [] } });
+    expect(actions).toEqual([]);
   });
 });
 
@@ -107,10 +140,38 @@ describe("Detected Gear & Next Upgrade", () => {
           label: "Armor",
           slots: 4,
           items: [
-            { slot: 3, name: "Unstable Dragon Helmet", id: "UNSTABLE_HELMET", rarity: "LEGENDARY", count: 1, lore: [] },
-            { slot: 2, name: "Unstable Dragon Chestplate", id: "UNSTABLE_CHEST", rarity: "LEGENDARY", count: 1, lore: [] },
-            { slot: 1, name: "Unstable Dragon Leggings", id: "UNSTABLE_LEGS", rarity: "LEGENDARY", count: 1, lore: [] },
-            { slot: 0, name: "Unstable Dragon Boots", id: "UNSTABLE_BOOTS", rarity: "LEGENDARY", count: 1, lore: [] },
+            {
+              slot: 3,
+              name: "Unstable Dragon Helmet",
+              id: "UNSTABLE_HELMET",
+              rarity: "LEGENDARY",
+              count: 1,
+              lore: [],
+            },
+            {
+              slot: 2,
+              name: "Unstable Dragon Chestplate",
+              id: "UNSTABLE_CHEST",
+              rarity: "LEGENDARY",
+              count: 1,
+              lore: [],
+            },
+            {
+              slot: 1,
+              name: "Unstable Dragon Leggings",
+              id: "UNSTABLE_LEGS",
+              rarity: "LEGENDARY",
+              count: 1,
+              lore: [],
+            },
+            {
+              slot: 0,
+              name: "Unstable Dragon Boots",
+              id: "UNSTABLE_BOOTS",
+              rarity: "LEGENDARY",
+              count: 1,
+              lore: [],
+            },
           ],
         },
         {
@@ -118,7 +179,14 @@ describe("Detected Gear & Next Upgrade", () => {
           label: "Inventory",
           slots: 36,
           items: [
-            { slot: 0, name: "Aspect of the Dragons", id: "AOTD", rarity: "LEGENDARY", count: 1, lore: [] },
+            {
+              slot: 0,
+              name: "Aspect of the Dragons",
+              id: "AOTD",
+              rarity: "LEGENDARY",
+              count: 1,
+              lore: [],
+            },
           ],
         },
       ],
@@ -130,5 +198,15 @@ describe("Detected Gear & Next Upgrade", () => {
     expect(gear.detectedHelmet).toContain("Unstable");
     expect(gear.detectedWeapon).toContain("Aspect of the Dragons");
     expect(gear.recommendedNextUpgrade.weaponTarget).toContain("Juju Shortbow");
+  });
+});
+
+describe("Dungeon XP", () => {
+  it("uses dungeon thresholds rather than Combat skill thresholds", () => {
+    expect(computeDungeonLevel(49)).toBe(0);
+    expect(computeDungeonLevel(50)).toBe(1);
+    expect(computeDungeonLevel(124)).toBe(1);
+    expect(computeDungeonLevel(125)).toBe(2);
+    expect(computeDungeonLevel(569_809_640)).toBe(50);
   });
 });

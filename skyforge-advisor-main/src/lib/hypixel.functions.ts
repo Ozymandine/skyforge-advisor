@@ -23,14 +23,15 @@ export const fetchBazaar = createServerFn({ method: "GET" }).handler(async () =>
 
   // Contribute a sample to the persistent market history store.
   const { recordMarketSample } = await import("./market-history.server");
-  recordMarketSample({
-    products: data.products.map((p) => ({
-      id: p.id,
-      buyPrice: p.buyPrice,
-      sellPrice: p.sellPrice,
-      buyMovingWeek: p.buyMovingWeek,
-    })),
-  });
+  if (!data.stale && data.lastUpdated > 0)
+    recordMarketSample({
+      products: data.products.map((p) => ({
+        id: p.id,
+        buyPrice: p.buyPrice,
+        sellPrice: p.sellPrice,
+        buyMovingWeek: p.buyMovingWeek,
+      })),
+    });
 
   return data;
 });
@@ -40,10 +41,8 @@ export const fetchAuctions = createServerFn({ method: "GET" }).handler(async () 
   // Scan far more pages so the auction house covers the live market, not just
   // the first few pages of listings.
   const data = await getAuctions(24);
-  // Trim payload: only the most interesting listings travel to the client.
-  const entries = [...data.entries]
-    .sort((a, b) => b.profit - a.profit || b.price - a.price)
-    .slice(0, 720);
+  // Limit the listing sample payload to the soonest-ending rows.
+  const entries = [...data.entries].sort((a, b) => a.endsInMs - b.endsInMs).slice(0, 720);
 
   // Record lowest-BIN observations into the market history store.
   const { recordBinSample } = await import("./market-history.server");
@@ -56,7 +55,8 @@ export const fetchAuctions = createServerFn({ method: "GET" }).handler(async () 
       }
     }
   }
-  recordBinSample([...bins].map(([id, lowestBin]) => ({ id, lowestBin })));
+  if (!data.stale && data.lastUpdated > 0)
+    recordBinSample([...bins].map(([id, lowestBin]) => ({ id, lowestBin })));
 
   return { ...data, entries };
 });
@@ -254,6 +254,11 @@ export const fetchElection = createServerFn({ method: "GET" }).handler(async () 
 export const fetchNews = createServerFn({ method: "GET" }).handler(async () => {
   const { getNews } = await import("./hypixel.server");
   return getNews();
+});
+
+export const fetchFireSaleSnapshot = createServerFn({ method: "GET" }).handler(async () => {
+  const { getFireSaleSnapshot } = await import("./hypixel.server");
+  return getFireSaleSnapshot();
 });
 
 export const fetchFireSale = createServerFn({ method: "GET" }).handler(async () => {

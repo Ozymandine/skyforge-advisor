@@ -232,11 +232,7 @@ function CraftingPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <PageHero
-        eyebrow="Tools"
-        title="Crafting Calculator"
-        description="Craft it or buy it? Every ingredient priced against live Bazaar, Auction House and NPC data."
-      />
+      <PageHero title="Crafting Calculator" />
 
       {itemsQuery.isLoading && <LoadState>Loading item registry…</LoadState>}
       {itemsQuery.error && <ErrorState error={itemsQuery.error as Error} />}

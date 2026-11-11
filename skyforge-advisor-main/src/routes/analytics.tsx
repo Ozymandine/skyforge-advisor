@@ -108,11 +108,7 @@ function Analytics() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <PageHero
-        eyebrow="Tools"
-        title="Analytics"
-        description="Live trend summaries, profile performance and progress metrics from your connected account."
-      />
+      <PageHero title="Player analytics" />
 
       {/* Compare Profiles Quick Access Card */}
       {connected && isLoading && <LoadState>Loading analytics data…</LoadState>}

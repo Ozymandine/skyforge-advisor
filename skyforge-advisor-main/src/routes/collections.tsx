@@ -155,11 +155,7 @@ function Collections() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <PageHero
-        eyebrow="Progression"
-        title="Collections"
-        description="Every collection category, tier unlock and completion percentage in one place."
-      />
+      <PageHero title="Collections" />
 
       {!connected && <ConnectPrompt what="your live collections" />}
       {connected && isLoading && <LoadState>Loading collections from Hypixel…</LoadState>}

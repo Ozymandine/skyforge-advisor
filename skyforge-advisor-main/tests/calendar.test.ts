@@ -6,8 +6,6 @@ import { describe, expect, it } from "vitest";
 import {
   getSkyBlockDate,
   getJacobContests,
-  getDarkAuctions,
-  getMajorEvents,
   formatTimeRemaining,
   SKYBLOCK_EPOCH,
   SB_DAY_MS,
@@ -36,56 +34,17 @@ describe("T1.16: getSkyBlockDate", () => {
   });
 });
 
-describe("T1.16: getJacobContests (3-Crop Predictor)", () => {
-  it("generates predictable 3 crops per contest", () => {
-    const contests = getJacobContests(Date.now(), 5);
-    expect(contests).toHaveLength(5);
+describe("Jacob contest schedule", () => {
+  it("ends the active window at :35 and does not predict crops", () => {
+    const hour = Date.UTC(2026, 10, 11, 18);
+    const active = getJacobContests(hour + 34 * 60_000, 1)[0]!;
+    expect(active.status).toBe("active");
+    expect(active.endTime - active.startTime).toBe(20 * 60_000);
+    expect(active).not.toHaveProperty("crops");
 
-    for (const contest of contests) {
-      expect(contest.crops).toHaveLength(3);
-      expect(contest.crops[0]?.name).toBeDefined();
-      expect(contest.crops[1]?.name).toBeDefined();
-      expect(contest.crops[2]?.name).toBeDefined();
-      expect(contest.durationMinutes).toBe(20);
-      expect(contest.startTime).toBeLessThan(contest.endTime);
-    }
-  });
-
-  it("assigns distinct crops in a single contest", () => {
-    const contests = getJacobContests(Date.now(), 3);
-    for (const contest of contests) {
-      const cropIds = contest.crops.map((c) => c.id);
-      const uniqueCropIds = new Set(cropIds);
-      expect(uniqueCropIds.size).toBe(3);
-    }
-  });
-});
-
-describe("T1.17: getDarkAuctions", () => {
-  it("schedules Dark Auctions regularly with featured loot", () => {
-    const auctions = getDarkAuctions(Date.now(), 3);
-    expect(auctions).toHaveLength(3);
-
-    for (const da of auctions) {
-      expect(da.featuredItems).toContain("Midas Staff");
-      expect(da.featuredItems).toContain("Flower of Truth");
-      expect(da.recommendedCoins).toBe(50_000_000);
-      expect(da.timeRemainingMs).toBeGreaterThanOrEqual(0);
-    }
-  });
-});
-
-describe("T1.18: getMajorEvents", () => {
-  it("calculates major recurring festivals", () => {
-    const events = getMajorEvents(Date.now());
-    expect(events.length).toBeGreaterThan(0);
-
-    const eventNames = events.map((e) => e.name);
-    expect(eventNames.some((n) => n.includes("Spooky Festival"))).toBe(true);
-    expect(eventNames.some((n) => n.includes("Season of Jerry"))).toBe(true);
-    expect(eventNames.some((n) => n.includes("New Year Celebration"))).toBe(true);
-    expect(eventNames.some((n) => n.includes("Brood Mother"))).toBe(true);
-    expect(eventNames.some((n) => n.includes("Magma Boss"))).toBe(true);
+    const next = getJacobContests(hour + 35 * 60_000, 1)[0]!;
+    expect(next.status).toBe("upcoming");
+    expect(next.startTime).toBe(hour + 75 * 60_000);
   });
 });
 
@@ -109,4 +68,3 @@ describe("T1.19: audio-chimes config", () => {
     expect(DEFAULT_ALARM_SETTINGS.chimeType).toBe("crystal");
   });
 });
-

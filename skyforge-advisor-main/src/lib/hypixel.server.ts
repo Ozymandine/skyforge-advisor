@@ -2,6 +2,7 @@
 
 import { decodeNbt, type NbtValue } from "./nbt.server";
 import {
+  computeDungeonLevel,
   computePetLevel,
   computeSkill,
   SKILL_META,
@@ -298,30 +299,48 @@ export async function getNews(): Promise<
   return items;
 }
 
-let fireSaleCache: { at: number; data: unknown } | null = null;
+type FireSale = { item_id: string; start: number; end: number };
 
-export async function getFireSale(): Promise<
-  Array<{ item_id?: string; start?: number; end?: number }>
-> {
+let fireSaleCache: { at: number; data: FireSale[] } | null = null;
+
+export async function getFireSaleSnapshot(): Promise<{
+  sales: FireSale[];
+  status: "fresh" | "stale" | "unavailable";
+}> {
   if (fireSaleCache && Date.now() - fireSaleCache.at < 30 * 60_000) {
-    return fireSaleCache.data as never;
+    return { sales: fireSaleCache.data, status: "fresh" };
   }
-  const data = unwrap(
+  const result = unwrap(
     await getJson<{ sales?: Array<Record<string, unknown>> }>(
-      `${API}/resources/skyblock/fire_sale`,
+      API + "/resources/skyblock/fire_sale",
     ),
   );
-  if (!data) return (fireSaleCache?.data as never) ?? [];
-  const sales = (data?.["sales"] ?? []).flatMap((sale) => {
-    const rec = sale as Record<string, unknown>;
-    const out: Array<{ item_id?: string; start?: number; end?: number }> = [{}];
-    if (typeof rec["item_id"] === "string") out[0]!.item_id = rec["item_id"];
-    if (typeof rec["start"] === "number") out[0]!.start = rec["start"];
-    if (typeof rec["end"] === "number") out[0]!.end = rec["end"];
-    return out[0]!.item_id ? [out[0]!] : [];
+  if (!Array.isArray(result?.sales)) {
+    return fireSaleCache
+      ? { sales: fireSaleCache.data, status: "stale" }
+      : { sales: [], status: "unavailable" };
+  }
+  const sales = result.sales.flatMap((sale) => {
+    if (!sale) return [];
+    const { item_id, start, end } = sale;
+    return typeof item_id === "string" &&
+      item_id.length > 0 &&
+      typeof start === "number" &&
+      typeof end === "number" &&
+      Number.isFinite(start) &&
+      Number.isFinite(end) &&
+      start > 0 &&
+      end > start &&
+      end <= 8.64e15
+      ? [{ item_id, start, end }]
+      : [];
   });
   fireSaleCache = { at: Date.now(), data: sales };
-  return sales;
+  return { sales, status: "fresh" };
+}
+
+export async function getFireSale(): Promise<FireSale[]> {
+  return (await getFireSaleSnapshot()).sales;
 }
 
 // --- Official XP/tier tables (accuracy upgrade over hardcoded tables) -------
@@ -494,6 +513,7 @@ export type WikiMarketData = {
     sellOrders: number;
   };
 
+  bazaarUpdatedAt?: number;
   auctionHouse?: {
     lowestBin: number | null;
     averageBin: number | null;
@@ -832,6 +852,28 @@ type BazaarResponse = {
   >;
 };
 
+// Share the raw feed between the market board and item detail pages.
+let bazaarFeed: { fetchedAt: number; data: BazaarResponse } | undefined;
+let bazaarRequest: Promise<BazaarResponse | null> | undefined;
+
+function getBazaarFeed(): Promise<BazaarResponse | null> {
+  if (bazaarFeed && Date.now() - bazaarFeed.fetchedAt < BAZAAR_CACHE_TTL) {
+    return Promise.resolve(bazaarFeed.data);
+  }
+  bazaarRequest ??= getJson<BazaarResponse>(API + "/skyblock/bazaar")
+    .then((result) => {
+      const data = unwrap(result);
+      if (!data?.products || !Number.isFinite(data.lastUpdated) || data.lastUpdated <= 0)
+        return null;
+      bazaarFeed = { fetchedAt: Date.now(), data };
+      return data;
+    })
+    .finally(() => {
+      bazaarRequest = undefined;
+    });
+  return bazaarRequest;
+}
+
 export async function getBazaar(): Promise<{
   lastUpdated: number;
   products: BazaarProduct[];
@@ -843,12 +885,7 @@ export async function getBazaar(): Promise<{
     return bazaarCache.data;
   }
   try {
-    const [result, names] = await Promise.all([
-      getJson<BazaarResponse>(`${API}/skyblock/bazaar`),
-      nameLookup(),
-    ]);
-    const data = unwrap(result);
-
+    const [data, names] = await Promise.all([getBazaarFeed(), nameLookup()]);
     if (!data || !data.products) {
       // Distinguish failure (stale) from truly empty — never fake lastUpdated.
       if (bazaarCache) return { ...bazaarCache.data, stale: true };
@@ -877,10 +914,6 @@ export async function getBazaar(): Promise<{
       const gross = q.buyPrice - q.sellPrice;
 
       const spread = gross - q.buyPrice * 0.0125;
-
-      if (spread <= 0) {
-        continue;
-      }
 
       const flipsPerHour = Math.min(q.buyMovingWeek, q.sellMovingWeek) / 168;
 
@@ -916,7 +949,7 @@ export async function getBazaar(): Promise<{
     products.sort((a, b) => b.profitPerHour - a.profitPerHour);
 
     const fresh = {
-      lastUpdated: data.lastUpdated || Date.now(),
+      lastUpdated: data.lastUpdated ?? 0,
       products,
     };
     bazaarCache = { at: Date.now(), data: fresh };
@@ -1180,6 +1213,8 @@ export async function getAuctions(pages = 6): Promise<{
   lastUpdated: number;
   totalAuctions: number;
   totalPages: number;
+  pagesScanned: number;
+  stale?: boolean;
   binCount: number;
   auctionCount: number;
   uniqueItems: number;
@@ -1192,9 +1227,11 @@ export async function getAuctions(pages = 6): Promise<{
   }
 
   const fallback = {
-    lastUpdated: Date.now(),
+    lastUpdated: 0,
     totalAuctions: 0,
     totalPages: 0,
+    pagesScanned: 0,
+    stale: true,
     binCount: 0,
     auctionCount: 0,
     uniqueItems: 0,
@@ -1208,7 +1245,7 @@ export async function getAuctions(pages = 6): Promise<{
     if (!first || !Array.isArray(first.auctions)) {
       // Serve stale scan instead of flashing empty on failure.
       const stale = auctionScanCache.get(pages);
-      if (stale) return stale.data;
+      if (stale) return { ...stale.data, stale: true };
       return fallback;
     }
 
@@ -1236,11 +1273,22 @@ export async function getAuctions(pages = 6): Promise<{
     const all = [
       first,
       ...rest.filter(
-        (value): value is AuctionsResponse => value !== null && Array.isArray(value.auctions),
+        (value): value is AuctionsResponse =>
+          value !== null &&
+          Array.isArray(value.auctions) &&
+          value.lastUpdated === first.lastUpdated,
       ),
     ];
 
-    const raw = all.flatMap((page) => page.auctions);
+    const now = Date.now();
+    const raw = [
+      ...new Map(
+        all
+          .flatMap((page) => page.auctions)
+          .filter((auction) => auction.end > now)
+          .map((auction) => [auction.uuid, auction]),
+      ).values(),
+    ];
 
     const lowestBin = new Map<string, number>();
 
@@ -1263,8 +1311,6 @@ export async function getAuctions(pages = 6): Promise<{
         lowestBin.set(key, auction.starting_bid);
       }
     }
-
-    const now = Date.now();
 
     pruneAuctionItemCache(now);
 
@@ -1303,7 +1349,8 @@ export async function getAuctions(pages = 6): Promise<{
 
           lowestBin: lb,
 
-          profit: lb !== null ? lb - price : 0,
+          profit: auction.bin && lb !== null ? lb - price : 0,
+          endsAt: auction.end,
 
           endsInMs: auction.end - now,
 
@@ -1316,16 +1363,17 @@ export async function getAuctions(pages = 6): Promise<{
 
     const entries = await hydrateAuctionEntries(
       candidates
-        .sort((a, b) => b.entry.profit - a.entry.profit || b.entry.price - a.entry.price)
+        .sort((a, b) => a.entry.endsInMs - b.entry.endsInMs || a.uuid.localeCompare(b.uuid))
         .slice(0, AUCTION_ICON_LIMIT),
     );
 
     const result = {
-      lastUpdated: first.lastUpdated || now,
+      lastUpdated: first.lastUpdated ?? 0,
 
       totalAuctions: first.totalAuctions || raw.length,
 
       totalPages: first.totalPages || 1,
+      pagesScanned: all.length,
 
       binCount,
 
@@ -1347,7 +1395,8 @@ export async function getAuctions(pages = 6): Promise<{
   } catch (err) {
     console.error("Error in getAuctions:", err);
 
-    return fallback;
+    const stale = auctionScanCache.get(pages);
+    return stale ? { ...stale.data, stale: true } : fallback;
   }
 }
 
@@ -1355,73 +1404,8 @@ export async function getAuctions(pages = 6): Promise<{
 // WIKI MARKET DATA
 // ============================================================================
 
-type WikiAuctionStats = {
-  lowestBin: number | null;
-  averageBin: number | null;
-  medianBin: number | null;
-  listings: number;
-};
-
-function calculateAuctionStats(auctions: AuctionEntry[]): Map<string, WikiAuctionStats> {
-  const grouped = new Map<string, number[]>();
-
-  for (const auction of auctions) {
-    if (!auction.bin) {
-      continue;
-    }
-
-    if (!auction.id) {
-      continue;
-    }
-
-    const prices = grouped.get(auction.id) ?? [];
-
-    prices.push(auction.price);
-
-    grouped.set(auction.id, prices);
-  }
-
-  const result = new Map<string, WikiAuctionStats>();
-
-  for (const [id, prices] of grouped) {
-    if (!prices.length) {
-      continue;
-    }
-
-    prices.sort((a, b) => a - b);
-
-    const total = prices.reduce((sum, value) => sum + value, 0);
-
-    const middle = Math.floor(prices.length / 2);
-
-    const median =
-      prices.length % 2 === 0
-        ? ((prices[middle - 1] ?? 0) + (prices[middle] ?? 0)) / 2
-        : (prices[middle] ?? 0);
-
-    result.set(id, {
-      lowestBin: prices[0] ?? null,
-
-      averageBin: prices.length ? total / prices.length : null,
-
-      medianBin: median,
-
-      listings: prices.length,
-    });
-  }
-
-  return result;
-}
-
 export async function getWikiItems(): Promise<WikiItem[]> {
-  const [items, bazaarResult, auctionResponse] = await Promise.all([
-    getItems(),
-
-    getJson<BazaarResponse>(`${API}/skyblock/bazaar`),
-
-    getAuctions(6),
-  ]);
-  const bazaarResponse = unwrap(bazaarResult);
+  const [items, bazaarResponse] = await Promise.all([getItems(), getBazaarFeed()]);
 
   const bazaarMap = new Map<string, WikiMarketData["bazaar"]>();
 
@@ -1429,7 +1413,13 @@ export async function getWikiItems(): Promise<WikiItem[]> {
     for (const [id, entry] of Object.entries(bazaarResponse.products)) {
       const q = entry.quick_status;
 
-      if (!q) {
+      if (
+        !q ||
+        !Number.isFinite(q.buyPrice) ||
+        !Number.isFinite(q.sellPrice) ||
+        q.buyPrice <= 0 ||
+        q.sellPrice <= 0
+      ) {
         continue;
       }
 
@@ -1446,12 +1436,8 @@ export async function getWikiItems(): Promise<WikiItem[]> {
     }
   }
 
-  const auctionMap = calculateAuctionStats(auctionResponse.entries);
-
   return items.map((item) => {
     const bazaar = bazaarMap.get(item.id);
-
-    const auctionHouse = auctionMap.get(item.id);
 
     const demand = bazaar
       ? Math.min(
@@ -1465,17 +1451,7 @@ export async function getWikiItems(): Promise<WikiItem[]> {
     return {
       ...item,
 
-      ...(bazaar
-        ? {
-            bazaar,
-          }
-        : {}),
-
-      ...(auctionHouse
-        ? {
-            auctionHouse,
-          }
-        : {}),
+      ...(bazaar && bazaarResponse ? { bazaar, bazaarUpdatedAt: bazaarResponse.lastUpdated } : {}),
 
       // Hypixel's public item API does not provide
       // a true historical price series. Keep this
@@ -1997,13 +1973,14 @@ export async function getPlayerData(
       containerDefs.push([value?.data, `backpack-${key}`, `Backpack ${Number(key) + 1}`]);
     }
 
-    const containers = (
+    const decodedContainers = (
       await Promise.all(
         containerDefs.map(([encoded, id, label]) => parseContainer(encoded, id, label)),
       )
-    ).filter(
-      (container): container is InventoryContainer =>
-        !!container && (container.items.length > 0 || !!container.locked),
+    ).filter((container): container is InventoryContainer => !!container);
+
+    const containers = decodedContainers.filter(
+      (container) => container.items.length > 0 || container.locked,
     );
 
     const collectionRaw = (member["collection"] ?? {}) as Record<string, number>;
@@ -2099,14 +2076,14 @@ export async function getPlayerData(
     const dungeonClasses = Object.entries(dungeonsRoot?.player_classes ?? {}).map(
       ([key, data]) => ({
         name: titleCase(key),
-        level: computeSkill("COMBAT", Number(data?.experience ?? 0)).level,
+        level: computeDungeonLevel(Number(data?.experience ?? 0)),
         selected: dungeonsRoot?.selected_dungeon_class === key,
       }),
     );
 
     const dungeons = catacombs
       ? {
-          catacombsLevel: computeSkill("COMBAT", Number(catacombs.experience ?? 0)).level,
+          catacombsLevel: computeDungeonLevel(Number(catacombs.experience ?? 0)),
           catacombsXp: Number(catacombs.experience ?? 0),
           secretsFound: Number(dungeonsRoot?.secrets ?? 0),
           floors: floorEntries(catacombs.tier_completions, catacombs.best_score, "Floor "),
@@ -2117,8 +2094,7 @@ export async function getPlayerData(
                   masterCatacombs.best_score,
                   "M",
                 ),
-                masterModeLevel: computeSkill("COMBAT", Number(masterCatacombs.experience ?? 0))
-                  .level,
+                masterModeLevel: computeDungeonLevel(Number(masterCatacombs.experience ?? 0)),
                 masterModeXp: Number(masterCatacombs.experience ?? 0),
               }
             : {}),
@@ -2551,6 +2527,15 @@ export async function getPlayerData(
       profiles: summaries,
 
       activeProfileId: chosen.profile_id,
+      availability: {
+        skillKeys: Object.keys(experience)
+          .filter((key) => key.startsWith("SKILL_") && Number.isFinite(experience[key]))
+          .map((key) => key.slice(6)),
+        containerIds: decodedContainers.map((container) => container.id),
+        fairySouls: typeof fairySoul?.total_collected === "number",
+        purse: typeof currencies?.coin_purse === "number",
+        dungeonCompletions: Boolean(catacombs?.tier_completions),
+      },
 
       skills,
 

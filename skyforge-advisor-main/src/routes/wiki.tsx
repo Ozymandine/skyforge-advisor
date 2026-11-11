@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { ErrorState, LoadState } from "@/components/data-states";
 
-import { WikiPage, type WikiSelectedPrice } from "@/components/wiki/WikiPage";
+import { WikiPage } from "@/components/wiki/WikiPage";
 
 import {
   CATEGORIES,
@@ -16,7 +16,7 @@ import {
   type WikiCategory,
 } from "@/components/wiki/wiki-data";
 
-import { fetchBazaar, fetchItemIndex } from "@/lib/hypixel.functions";
+import { fetchItemIndex } from "@/lib/hypixel.functions";
 
 /** Shareable wiki state lives in the URL: /wiki?q=aspect&item=ASPECT_OF_THE_END */
 function validateSearch(search: Record<string, unknown>): {
@@ -76,7 +76,7 @@ type SearchableItem = ClassifiedItem | (typeof VIRTUAL_PAGES)[number];
  * PAGE CONTROLLER
  * ========================================================================== */
 
-const PAGE_SIZE = 5000;
+const PAGE_SIZE = 120;
 
 function Wiki() {
   const search = Route.useSearch();
@@ -125,20 +125,6 @@ function Wiki() {
     queryFn: fetchItemIndex,
     staleTime: 30 * 60_000,
   });
-
-  const bazaarQuery = useQuery({
-    queryKey: ["bazaar"],
-    queryFn: fetchBazaar,
-    staleTime: 60_000,
-  });
-
-  /* --------------------------------------------------------------------------
-   * BAZAAR PRICES
-   * ------------------------------------------------------------------------ */
-
-  const prices = useMemo(() => {
-    return new Map((bazaarQuery.data?.products ?? []).map((product) => [product.id, product]));
-  }, [bazaarQuery.data]);
 
   /* --------------------------------------------------------------------------
    * CLASSIFICATION
@@ -281,27 +267,6 @@ function Wiki() {
    * SELECTED PRICE
    * ------------------------------------------------------------------------ */
 
-  const selectedPrice = useMemo<WikiSelectedPrice | undefined>(() => {
-    if (!selected || "virtual" in selected) {
-      return undefined;
-    }
-
-    const product = prices.get(selected.id);
-
-    if (!product) {
-      return undefined;
-    }
-
-    return {
-      buyPrice: product.buyPrice,
-      sellPrice: product.sellPrice,
-      buyVolume: product.buyVolume,
-      sellVolume: product.sellVolume,
-      buyMovingWeek: product.buyMovingWeek,
-      sellMovingWeek: product.sellMovingWeek,
-    };
-  }, [prices, selected]);
-
   const selectedItemProp = selected && !("virtual" in selected) ? selected : undefined;
 
   const footer =
@@ -348,7 +313,6 @@ function Wiki() {
       selectedId={selected?.id ?? null}
       onSelect={handleSelect}
       {...(selectedItemProp ? { selectedItem: selectedItemProp } : {})}
-      {...(selectedPrice !== undefined ? { selectedPrice } : {})}
       {...(footer ? { footer } : {})}
       onItemClick={(item) => handleSelect(item.id)}
     />

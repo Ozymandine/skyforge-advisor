@@ -272,6 +272,15 @@ export const communityUpgradeSchema = z.object({
 });
 
 export const playerDataSchema = z.object({
+  availability: z
+    .object({
+      skillKeys: z.array(z.string()),
+      containerIds: z.array(z.string()),
+      fairySouls: z.boolean(),
+      purse: z.boolean(),
+      dungeonCompletions: z.boolean(),
+    })
+    .optional(),
   username: z.string(),
   uuid: z.string(),
   profiles: z.array(profileSummarySchema),

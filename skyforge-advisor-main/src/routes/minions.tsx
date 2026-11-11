@@ -128,9 +128,7 @@ export function MinionsRoute() {
   return (
     <div className="space-y-6 pb-12">
       <PageHero
-        eyebrow="MINION AUTOMATION"
         title="Minion Economy & Craft Roadmap"
-        description="Real-time minion output calculator, live Bazaar/NPC profitability leaderboard, fuel ROI optimizer, and cheapest slot craft roadmap."
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Chip

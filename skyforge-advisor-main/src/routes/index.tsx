@@ -24,13 +24,7 @@ import {
 
 import { Panel } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
-import {
-  fetchBazaar,
-  fetchElection,
-  fetchFireSale,
-  fetchFlipAccuracy,
-  fetchNews,
-} from "@/lib/hypixel.functions";
+import { fetchBazaar, fetchElection, fetchFireSale, fetchNews } from "@/lib/hypixel.functions";
 import { formatNumber } from "@/lib/skyblock";
 
 export const Route = createFileRoute("/")({
@@ -40,13 +34,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Live Hypixel SkyBlock profile stats, market flip suggestions with a published accuracy score, a full item wiki, crafting cost trees and net worth tracking. No login.",
+          "Live Hypixel SkyBlock profile stats, Bazaar order quotes, a full item wiki, crafting cost trees and net worth tracking. No login.",
       },
       { property: "og:title", content: "SkyForge — Live SkyBlock stats, flips & progression" },
       {
         property: "og:description",
         content:
-          "Live Hypixel SkyBlock profile stats, market flips with a published accuracy score, item wiki and net worth tracking.",
+          "Live Hypixel SkyBlock profile stats, Bazaar order quotes, item wiki and net worth tracking.",
       },
       { property: "og:url", content: "https://skyforge-advisor.vercel.app/" },
       {
@@ -152,11 +146,6 @@ function Landing() {
     staleTime: 60_000,
     refetchInterval: 120_000,
   });
-  const accuracyQuery = useQuery({
-    queryKey: ["flip-accuracy"],
-    queryFn: () => fetchFlipAccuracy(),
-    staleTime: 60_000,
-  });
 
   // Site-wide Hypixel context: mayor, news, fire sale (long-cached).
   const electionQuery = useQuery({
@@ -181,11 +170,9 @@ function Landing() {
 
   const topFlips = (bazaarQuery.data?.products ?? [])
     .slice()
-    .sort((a, b) => b.profitPerHour - a.profitPerHour)
+    .filter((item) => item.spread > 0)
+    .sort((a, b) => b.buyMovingWeek - a.buyMovingWeek)
     .slice(0, 3);
-
-  const accuracy = accuracyQuery.data;
-  const hasAccuracy = accuracy && accuracy.resolved > 0;
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-8">
@@ -195,8 +182,8 @@ function Landing() {
           Live SkyBlock stats, <span className="skyforge-hero-accent">flips & progression</span>
         </h1>
         <p className="mt-4 max-w-xl text-sm text-neutral-300 sm:text-base">
-          Profile analytics, market flip suggestions with a published accuracy score, a full item
-          wiki and crafting cost trees — powered by the official Hypixel API and the NEU dataset.
+          Profile analytics, Bazaar order quotes, a full item wiki and crafting cost trees — powered
+          by the official Hypixel API and the NEU dataset.
         </p>
 
         {/* 1-Click Search Input */}
@@ -316,10 +303,10 @@ function Landing() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-              <IconTrendingUp className="size-5 text-primary" /> Live flips, right now
+              <IconTrendingUp className="size-5 text-primary" /> Bazaar order spreads
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Real Bazaar data — this is what the flip board looks like at this exact moment.
+              Estimated net spread per unit if both orders fill.
             </p>
           </div>
           <Link
@@ -335,7 +322,7 @@ function Landing() {
             <Link
               key={p.id}
               to="/flips"
-              aria-label={`${p.name}: +${formatNumber(p.profitPerHour)} coins per hour. Open the flip board.`}
+              aria-label={`${p.name}: +${formatNumber(p.spread)} coins estimated net spread per unit. Open the flip board.`}
               className="glass-soft group rounded-2xl p-4 transition-all duration-75 ease-out hover:scale-[1.02] hover:border-primary/40"
             >
               <div className="flex items-center gap-3">
@@ -343,40 +330,22 @@ function Landing() {
                 <span className="min-w-0 flex-1 truncate text-sm font-semibold">{p.name}</span>
               </div>
               <p className="mt-3 font-mono text-2xl font-black text-emerald-300">
-                +{formatNumber(p.profitPerHour)}
-                <span className="ml-1 text-xs font-semibold text-muted-foreground">/hr</span>
+                +{formatNumber(p.spread)}
+                <span className="ml-1 text-xs font-semibold text-muted-foreground"> per unit</span>
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Margin {p.margin.toFixed(1)}% · {formatNumber(p.buyMovingWeek)} bought/wk
               </p>
             </Link>
           ))}
-          {topFlips.length === 0 &&
-            [0, 1, 2].map((i) => (
-              <div
-                key={i}
-                role="status"
-                aria-label="Loading live flip data"
-                className="h-32 animate-pulse rounded-2xl border border-white/10 bg-black/20"
-              />
-            ))}
-        </div>
-
-        {hasAccuracy && (
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 px-5 py-4">
-            <p className="flex items-center gap-2 text-sm font-semibold">
-              <TargetIcon className="size-4 text-emerald-300" />
-              Our flip picks: {accuracy!.winRate?.toFixed(1)}% win rate over {accuracy!.resolved}{" "}
-              scored suggestions
+          {topFlips.length === 0 && (
+            <p role="status" className="text-sm text-muted-foreground">
+              {bazaarQuery.isPending
+                ? "Loading Bazaar quotes…"
+                : "No current Bazaar spreads are available."}
             </p>
-            <Link
-              to="/flips"
-              className="flex items-center gap-1 rounded-full px-2 py-1 text-xs text-emerald-300 outline-none transition-colors hover:text-emerald-200 focus-visible:ring-2 focus-visible:ring-emerald-300"
-            >
-              See the full scorecard <IconArrowRight className="size-3.5" />
-            </Link>
-          </div>
-        )}
+          )}
+        </div>
       </section>
 
       {/* Feature grid */}

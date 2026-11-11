@@ -153,65 +153,43 @@ function LeaderboardsRoute() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <PageHero
-        eyebrow="Global Competition"
-        title="SkyBlock Leaderboards"
-        description="Real-time Top 100 rankings and exact numbers powered by Elite SkyBlock across all Collections, Skills, Dungeons, Slayers, and Economy."
-      />
+      <PageHero title="SkyBlock Leaderboards" />
 
-      {/* Group Navigation Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scroll-slim border-b border-white/10">
-        {LEADERBOARD_GROUPS.map((group) => {
-          const active = activeGroup === group.id;
-          return (
-            <button
-              key={group.id}
-              onClick={() => {
-                playClickSound();
-                setActiveGroup(group.id);
-                const firstSub = LEADERBOARD_SUBCATEGORIES.find((s) => s.group === group.id);
-                if (firstSub) setSelectedSubId(firstSub.id);
-              }}
-              className={cn(
-                "flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold whitespace-nowrap transition-all duration-150 cursor-pointer will-change-transform",
-                "hover:transition-none hover:-translate-y-0.5",
-                active
-                  ? "border border-emerald-500/40 bg-emerald-500/15 text-emerald-300 shadow-lg shadow-emerald-500/10"
-                  : "border border-white/5 bg-white/[0.03] text-white/70 hover:bg-white/[0.08] hover:text-white hover:border-white/15",
-              )}
-            >
-              <ItemIcon id={group.icon} name={group.name} className="size-4 object-contain" />
-              <span>{group.name}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Subcategory Collection Pills */}
-      <div className="flex flex-wrap items-center gap-2">
-        {groupSubcategories.map((sub) => {
-          const active = activeSubcategory.id === sub.id;
-          return (
-            <button
-              key={sub.id}
-              onClick={() => {
-                playClickSound();
-                setSelectedSubId(sub.id);
-              }}
-              className={cn(
-                "group relative flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all duration-150 cursor-pointer will-change-transform",
-                "hover:transition-none hover:-translate-y-0.5",
-                active
-                  ? "border border-amber-400/40 bg-amber-400/15 text-amber-300 shadow-md shadow-amber-500/10 font-bold"
-                  : "border border-white/5 bg-white/[0.03] text-white/60 hover:bg-white/[0.08] hover:text-white",
-              )}
-            >
-              <ItemIcon id={sub.iconId} name={sub.name} className="size-4 object-contain" />
-              <span>{sub.name}</span>
-            </button>
-          );
-        })}
-      </div>
+      <Panel className="flex flex-wrap items-end gap-4">
+        <label className="flex flex-col gap-1 text-sm">
+          Category
+          <select
+            className="input-default"
+            value={activeGroup}
+            onChange={(event) => {
+              const group = event.target.value as LeaderboardCategoryGroup;
+              setActiveGroup(group);
+              const firstSub = LEADERBOARD_SUBCATEGORIES.find((entry) => entry.group === group);
+              if (firstSub) setSelectedSubId(firstSub.id);
+            }}
+          >
+            {LEADERBOARD_GROUPS.map((group) => (
+              <option key={group.id} value={group.id}>
+                {group.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          Ranking
+          <select
+            className="input-default"
+            value={activeSubcategory.id}
+            onChange={(event) => setSelectedSubId(event.target.value)}
+          >
+            {groupSubcategories.map((entry) => (
+              <option key={entry.id} value={entry.id}>
+                {entry.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </Panel>
 
       {/* Clean Player Standing Banner (No search clutter) */}
       <Panel className="bg-gradient-to-r from-emerald-950/30 via-slate-950/60 to-black/70 border-emerald-500/30">

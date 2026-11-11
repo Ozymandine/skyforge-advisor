@@ -218,6 +218,7 @@ export type AuctionEntry = {
   lowestBin: number | null;
   profit: number;
   endsInMs: number;
+  endsAt?: number;
   bids: number;
   category: string;
 };
@@ -298,6 +299,28 @@ export type PetInfo = {
   skin?: string;
   candyUsed?: number;
 };
+
+// XP required per dungeon level, from the NEU leveling dataset. Level 50 is
+// the cap used by SkyForge's dungeon views.
+const DUNGEON_LEVEL_XP = [
+  50, 75, 110, 160, 230, 330, 470, 670, 950, 1340, 1890, 2665, 3760, 5260, 7380, 10300, 14400,
+  20000, 27600, 38000, 52500, 71500, 97000, 132000, 180000, 243000, 328000, 445000, 600000, 800000,
+  1065000, 1410000, 1900000, 2500000, 3300000, 4300000, 5600000, 7200000, 9200000, 12000000,
+  15000000, 19000000, 24000000, 30000000, 38000000, 48000000, 60000000, 75000000, 93000000,
+  116250000,
+] as const;
+
+export function computeDungeonLevel(totalXp: number): number {
+  if (!Number.isFinite(totalXp)) return 0;
+  let remaining = totalXp;
+  let level = 0;
+  for (const needed of DUNGEON_LEVEL_XP) {
+    if (remaining < needed) break;
+    remaining -= needed;
+    level++;
+  }
+  return level;
+}
 
 export type DungeonFloor = {
   name: string;
@@ -393,7 +416,16 @@ export type LifetimeStats = {
   deaths?: number;
 };
 
+export type ProfileAvailability = {
+  skillKeys: string[];
+  containerIds: string[];
+  fairySouls: boolean;
+  purse: boolean;
+  dungeonCompletions: boolean;
+};
+
 export type PlayerData = {
+  availability?: ProfileAvailability | undefined;
   username: string;
   uuid: string;
   profiles: ProfileSummary[];

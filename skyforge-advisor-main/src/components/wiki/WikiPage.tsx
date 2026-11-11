@@ -63,6 +63,7 @@ export interface WikiItem {
     buyMovingWeek: number;
     sellMovingWeek: number;
   };
+  bazaarUpdatedAt?: number;
   auctionHouse?: {
     lowestBin: number | null;
     averageBin: number | null;
@@ -113,18 +114,7 @@ interface WikiPageProps {
   selectedId?: string | null;
   onSelect?: (id: string | null) => void;
   selectedItem?: WikiItem;
-  selectedPrice?: WikiSelectedPrice;
   footer?: React.ReactNode;
-}
-
-/** Live market snapshot for the currently selected item. */
-export interface WikiSelectedPrice {
-  buyPrice?: number;
-  sellPrice?: number;
-  buyVolume?: number;
-  sellVolume?: number;
-  buyMovingWeek?: number;
-  sellMovingWeek?: number;
 }
 
 const DEFAULT_CATEGORIES = [
@@ -353,7 +343,6 @@ export function WikiPage({
   itemCount,
   selectedId,
   selectedItem,
-  selectedPrice,
   footer,
   onSelect,
 }: WikiPageProps) {
@@ -807,7 +796,6 @@ export function WikiPage({
               <WikiItemDetailCard
                 key={selectedItem.id}
                 item={selectedItem}
-                price={selectedPrice}
                 onClose={() => onSelect?.(null)}
               />
             </aside>
@@ -927,15 +915,7 @@ function PriceTile({
   );
 }
 
-function WikiItemDetailCard({
-  item,
-  price,
-  onClose,
-}: {
-  item: WikiItem;
-  price: WikiSelectedPrice | undefined;
-  onClose: () => void;
-}) {
+function WikiItemDetailCard({ item, onClose }: { item: WikiItem; onClose: () => void }) {
   const meta = rarityMeta(item.rarity);
   const glow = RARITY_GLOW[normalizeRarity(item.rarity)] ?? "from-primary/20";
   const allStats = Object.entries(item.stats ?? {}).filter(([, value]) => Number.isFinite(value));
@@ -967,7 +947,7 @@ function WikiItemDetailCard({
   const detailQuery = useQuery({
     queryKey: ["item-detail", item.id],
     queryFn: () => fetchItemDetail({ data: item.id }),
-    staleTime: 30 * 60_000,
+    staleTime: 60_000,
   });
 
   const extra = detailQuery.data?.extra ?? null;
@@ -995,22 +975,15 @@ function WikiItemDetailCard({
     });
   }, [extra]);
 
-  const bazaarBuy = price?.buyPrice ?? item.bazaar?.buyPrice ?? null;
-  const bazaarSell = price?.sellPrice ?? item.bazaar?.sellPrice ?? null;
-  const buyVolume = price?.buyVolume ?? item.bazaar?.buyVolume ?? 0;
-  const sellVolume = price?.sellVolume ?? item.bazaar?.sellVolume ?? 0;
+  const quote = detailQuery.data?.item?.bazaar;
+  const bazaarBuy = quote?.buyPrice ?? null;
+  const bazaarSell = quote?.sellPrice ?? null;
+  const buyVolume = quote?.buyMovingWeek ?? 0;
+  const sellVolume = quote?.sellMovingWeek ?? 0;
   const weeklyVolume = buyVolume + sellVolume;
   const maxVolume = Math.max(buyVolume, sellVolume, 1);
-  const spread = bazaarBuy != null && bazaarSell != null ? bazaarBuy - bazaarSell : null;
-  const marginPct = spread != null && bazaarBuy ? (spread / bazaarBuy) * 100 : null;
-  const lowestBin = item.auctionHouse?.lowestBin ?? null;
   const averageBin = item.auctionHouse?.averageBin ?? null;
   const npcSell = typeof item.npcSell === "number" && item.npcSell > 0 ? item.npcSell : null;
-
-  const bestPrice =
-    [bazaarBuy, lowestBin, npcSell]
-      .filter((value): value is number => value != null && value > 0)
-      .sort((a, b) => b - a)[0] ?? null;
 
   const hasMarket =
     bazaarBuy != null || bazaarSell != null || item.auctionHouse != null || npcSell != null;
@@ -1093,103 +1066,51 @@ function WikiItemDetailCard({
           </div>
         </header>
 
-        {/* Quick-glance strip */}
-        <div className="grid shrink-0 grid-cols-4 divide-x divide-white/10 border-b border-white/10 bg-black/25">
-          {[
-            {
-              label: "Top price",
-              value: formatCompact(bestPrice),
-              icon: IconCoins,
-              tone: "text-amber-300",
-            },
-            {
-              label: "Orders/wk",
-              value: weeklyVolume > 0 ? formatCompact(weeklyVolume) : "—",
-              icon: IconTrendingUp,
-              tone: "text-sky-300",
-            },
-            {
-              label: "Listings",
-              value: item.auctionHouse ? String(item.auctionHouse.listings) : "—",
-              icon: IconTag,
-              tone: "text-purple-300",
-            },
-            {
-              label: "Museum",
-              value: item.museumValue != null ? formatCompact(item.museumValue) : "—",
-              icon: IconGem,
-              tone: "text-pink-300",
-            },
-          ].map((tile) => (
-            <div key={tile.label} className="px-2 py-2.5 text-center">
-              <tile.icon className={cn("size-4 mx-auto", tile.tone)} aria-hidden="true" />
-              <p className="mt-1 font-mono text-sm font-bold leading-none text-white">
-                {tile.value}
-              </p>
-              <p className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-                {tile.label}
-              </p>
-            </div>
-          ))}
-        </div>
-
         {/* Body */}
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-4">
           {/* Market */}
           <DetailSection icon={IconCoins} title="Market">
             <div className="grid grid-cols-2 gap-2">
               <PriceTile
-                label="Bazaar buy"
+                label="Sell offer quote"
                 value={bazaarBuy}
                 icon={IconShoppingCart}
                 tone={PRICE_TONES.buy}
               />
               <PriceTile
-                label="Bazaar sell"
+                label="Buy order quote"
                 value={bazaarSell}
                 icon={IconStore}
                 tone={PRICE_TONES.sell}
               />
-              <PriceTile
-                label="Lowest BIN"
-                value={lowestBin}
-                icon={IconTag}
-                tone={PRICE_TONES.bin}
-              />
               <PriceTile label="NPC sell" value={npcSell} icon={IconCoins} tone={PRICE_TONES.npc} />
             </div>
 
-            {bazaarBuy != null && bazaarSell != null && (
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <div className="rounded-lg border border-white/10 bg-black/25 px-2.5 py-1.5">
-                  <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-                    Buy→sell spread
-                  </p>
-                  <p className="mt-0.5 font-mono text-sm font-bold text-orange-300">
-                    {formatCompact(spread)}
-                  </p>
-                </div>
-
-                <div className="rounded-lg border border-white/10 bg-black/25 px-2.5 py-1.5">
-                  <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-                    Flip margin
-                  </p>
-                  <p
-                    className={cn(
-                      "mt-0.5 font-mono text-sm font-bold",
-                      (marginPct ?? 0) >= 0 ? "text-emerald-300" : "text-red-300",
-                    )}
-                  >
-                    {marginPct != null ? `${marginPct.toFixed(1)}%` : "—"}
-                  </p>
-                </div>
-              </div>
-            )}
+            <p className="mt-2 text-xs text-muted-foreground">
+              {detailQuery.isPending
+                ? "Loading market quotes…"
+                : quote
+                  ? "Indicative Bazaar quotes per unit."
+                  : "Bazaar quote unavailable."}{" "}
+              Comparable Auction House pricing is unavailable.
+              {detailQuery.data?.item?.bazaarUpdatedAt && (
+                <span className="block">
+                  Hypixel quote timestamp:{" "}
+                  <time dateTime={new Date(detailQuery.data.item.bazaarUpdatedAt).toISOString()}>
+                    {new Date(detailQuery.data.item.bazaarUpdatedAt)
+                      .toISOString()
+                      .slice(0, 16)
+                      .replace("T", " ")}{" "}
+                    UTC
+                  </time>
+                </span>
+              )}
+            </p>
 
             {weeklyVolume > 0 && (
               <div className="mt-2 space-y-1.5 rounded-lg border border-white/10 bg-black/25 p-2.5">
                 <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-                  Weekly orders
+                  Weekly volume
                 </p>
 
                 {[

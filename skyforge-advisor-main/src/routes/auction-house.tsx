@@ -1,452 +1,260 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { IconFilter, IconRefreshCw, IconSearch, IconSlidersHorizontal } from "@/assets/icons";
-import { Suspense, lazy, useEffect, useMemo, useRef, useState, useDeferredValue } from "react";
-
+import { useDeferredValue, useMemo, useState } from "react";
 import { ErrorState, LoadState } from "@/components/data-states";
-import {
-  Chip,
-  PageHero,
-  Panel,
-  ProgressBar,
-  RarityTag,
-  StatRow,
-} from "@/components/layout/app-shell";
+import { PageHero, Panel, RarityTag } from "@/components/layout/app-shell";
+import { MarketControls, MarketFreshness, marketControl } from "@/components/market-controls";
 import { ItemIcon } from "@/components/ui/item-icon";
-import { ItemInspector, type InspectableItem } from "@/components/item-inspector";
-import { FlipTrackRecord } from "@/components/flip-track-record";
-import { useServerHistory } from "@/hooks/use-market-history";
-import { fetchAuctions, logFlip } from "@/lib/hypixel.functions";
+import { fetchAuctions } from "@/lib/hypixel.functions";
 import { formatDuration, formatNumber, type AuctionEntry } from "@/lib/skyblock";
-import { Sparkline } from "@/components/ui/sparkline";
-
-const HistorySparkline = lazy(() => import("@/components/bin-history-sparkline"));
 
 export const Route = createFileRoute("/auction-house")({
-  head: () => ({
-    meta: [
-      { title: "Auction House — SkyBlock Assistant" },
-      {
-        name: "description",
-        content: "Live auction listings, lowest BIN comparisons and flip margins from Hypixel.",
-      },
-      { property: "og:title", content: "Auction House — SkyBlock Assistant" },
-      {
-        property: "og:description",
-        content: "Every active listing scanned for undercuts and flip profit.",
-      },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Auction House — SkyForge" }] }),
   component: AuctionHouse,
 });
 
-const filters = ["All listings", "BIN only", "Bids only", "Underpriced", "Ending soon"];
-
-const PAGE_SIZE = 60;
-
+const pageSize = 48;
 const sorts = {
-  "Flip profit": (a: AuctionEntry, b: AuctionEntry) => b.profit - a.profit,
-  "Highest price": (a: AuctionEntry, b: AuctionEntry) => b.price - a.price,
-  "Lowest price": (a: AuctionEntry, b: AuctionEntry) => a.price - b.price,
   "Ending soonest": (a: AuctionEntry, b: AuctionEntry) => a.endsInMs - b.endsInMs,
+  "Lowest price": (a: AuctionEntry, b: AuctionEntry) => a.price - b.price,
+  "Highest price": (a: AuctionEntry, b: AuctionEntry) => b.price - a.price,
 } as const;
 
 function AuctionHouse() {
   const [query, setQuery] = useState("");
-  const deferredQuery = useDeferredValue(query);
-  const [filter, setFilter] = useState("All listings");
-  const [sort, setSort] = useState<keyof typeof sorts>("Flip profit");
-  const [inspecting, setInspecting] = useState<InspectableItem | null>(null);
-  const [visible, setVisible] = useState(PAGE_SIZE);
-
-  // Flip finder configuration
-  const [minProfit, setMinProfit] = useState("");
+  const [sort, setSort] = useState<keyof typeof sorts>("Ending soonest");
+  const [kind, setKind] = useState("All listings");
   const [maxPrice, setMaxPrice] = useState("");
-  const [minMargin, setMinMargin] = useState("");
-  const [category, setCategory] = useState("All");
-  const [showFlipConfig, setShowFlipConfig] = useState(false);
-
+  const [category, setCategory] = useState("");
+  const [visible, setVisible] = useState(pageSize);
+  const [copyStatus, setCopyStatus] = useState<{ id: string; copied: boolean } | null>(null);
+  const search = useDeferredValue(query.trim().toLowerCase());
   const { data, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: ["auctions"],
     queryFn: () => fetchAuctions(),
     staleTime: 60_000,
     refetchInterval: 180_000,
   });
-
-  const categories = useMemo(() => {
-    if (!data) return ["All"];
-    return ["All", ...new Set(data.entries.map((a) => a.category).filter(Boolean))];
-  }, [data]);
-
-  const listings = useMemo(() => {
-    if (!data) return [];
-    const q = deferredQuery.toLowerCase();
-    const minProfitNum = Number(minProfit.replace(/[^0-9.]/g, "")) || 0;
-    const maxPriceNum = Number(maxPrice.replace(/[^0-9.]/g, "")) || Infinity;
-    const minMarginNum = Number(minMargin.replace(/[^0-9.]/g, "")) || 0;
-    return data.entries
-      .filter((a) => a.name.toLowerCase().includes(q))
-      .filter((a) => {
-        if (filter === "BIN only") return Boolean(a.bin);
-        if (filter === "Bids only") return !a.bin;
-        if (filter === "Underpriced") return a.profit > 0;
-        if (filter === "Ending soon") return a.endsInMs < 3600_000;
-        return true;
-      })
-      .filter((a) => {
-        if (category !== "All" && a.category !== category) return false;
-        if (a.price > maxPriceNum) return false;
-        if (minProfitNum > 0 && a.profit < minProfitNum) return false;
-        if (minMarginNum > 0 && a.lowestBin && a.lowestBin > 0) {
-          const margin = ((a.lowestBin - a.price) / a.price) * 100;
-          if (margin < minMarginNum) return false;
-        } else if (minMarginNum > 0) {
-          return false;
-        }
-        return true;
-      })
-      .sort(sorts[sort]);
-  }, [data, deferredQuery, filter, sort, minProfit, maxPrice, minMargin, category]);
-
-  // Flip finder summary over the filtered set.
-  const flipSummary = useMemo(() => {
-    const flips = listings.filter((a) => a.profit > 0 && a.bin);
-    const bestMargin = flips.reduce((best, a) => {
-      if (!a.lowestBin || a.price <= 0) return best;
-      const margin = ((a.lowestBin - a.price) / a.price) * 100;
-      return Math.max(best, margin);
-    }, 0);
-    const totalProfit = flips.reduce((sum, a) => sum + a.profit, 0);
-    return { count: flips.length, bestMargin, totalProfit };
-  }, [listings]);
-
-  const totalMatches = listings.length;
-  const shown = listings.slice(0, visible);
-
-  // Log the top flip suggestions (hourly bucket) for accuracy scoring later.
-  const loggedRef = useRef<Set<string>>(new Set());
-  useEffect(() => {
-    if (!data?.entries?.length) return;
-    const hourBucket = Math.floor(Date.now() / (60 * 60 * 1000));
-    const top = [...data.entries]
-      .filter((a) => a.bin && a.profit > 0 && !!a.id)
-      .sort((a, b) => b.profit - a.profit)
-      .slice(0, 10);
-    for (const a of top) {
-      const id = `ah-${a.uuid}-${hourBucket}`;
-      if (loggedRef.current.has(id)) continue;
-      loggedRef.current.add(id);
-      void logFlip({
-        data: {
-          id,
-          itemId: a.id!,
-          price: a.price,
-          expected: (a.lowestBin ?? a.price) * 0.9875,
-          kind: "ah",
-        },
-      });
-    }
-  }, [data]);
-
-  // BIN history for the visible listings (batched, server-recorded).
-  const sparkIds = useMemo(
-    () => Array.from(new Set(shown.map((a) => a.id).filter((v): v is string => !!v))),
-    [shown],
+  const categories = useMemo(
+    () => [...new Set((data?.entries ?? []).map((entry) => entry.category))].sort(),
+    [data],
   );
-  const sparkHistory = useServerHistory(sparkIds, 24, true);
-
-  const stats = data
-    ? [
-        {
-          label: "Active auctions",
-          value: formatNumber(data.totalAuctions),
-          sub: `${data.totalPages} API pages`,
-        },
-        {
-          label: "BIN / bid listings",
-          value: `${formatNumber(data.binCount)} / ${formatNumber(data.auctionCount)}`,
-          sub: `${formatNumber(data.uniqueItems)} unique items scanned`,
-        },
-        { label: "Average BIN", value: formatNumber(data.averageBin), sub: "Scanned BIN listings" },
-        {
-          label: "Last updated",
-          value: new Date(data.lastUpdated).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          sub: "Hypixel timestamp",
-        },
-      ]
-    : [];
-
+  const rows = useMemo(
+    () =>
+      (data?.entries ?? [])
+        .filter(
+          (entry) =>
+            (kind === "All listings" || entry.bin === (kind === "BIN only")) &&
+            (!category || entry.category === category) &&
+            (!maxPrice || entry.price <= Number(maxPrice)) &&
+            (entry.name.toLowerCase().includes(search) || entry.id?.toLowerCase().includes(search)),
+        )
+        .sort(sorts[sort]),
+    [data, kind, category, maxPrice, search, sort],
+  );
+  const stale =
+    data?.stale ||
+    Boolean(error) ||
+    Boolean(data?.lastUpdated && Date.now() - data.lastUpdated > 5 * 60_000);
+  const now = Date.now();
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHero
-        eyebrow="Economy"
         title="Auction House"
-        description="Live listings scanned from the Hypixel auction API with lowest-BIN comparisons."
-      />
-
-      <Panel>
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <span className="rounded-full border border-primary/40 bg-primary/15 px-3 py-1.5 text-xs font-medium text-primary">
-            ● LIVE
-          </span>
+        actions={
           <button
-            onClick={() => refetch()}
-            className="flex items-center gap-2 rounded-full border border-border bg-secondary/50 px-4 py-1.5 text-xs font-medium transition-all duration-75 ease-out hover:scale-[1.03] hover:border-ring/40 active:scale-95"
+            type="button"
+            className={marketControl}
+            disabled={isFetching}
+            onClick={() => void refetch()}
           >
-            <IconRefreshCw className={`size-3.5 ${isFetching ? "animate-spin" : ""}`} /> Refresh
+            {isFetching ? "Refreshing…" : "Refresh"}
           </button>
-        </div>
-        {data && (
-          <div className="mt-6">
-            <StatRow stats={stats} />
-          </div>
-        )}
-
-        <FlipTrackRecord />
-      </Panel>
-
-      {isLoading && <LoadState>Scanning active auctions…</LoadState>}
-      {error && <ErrorState error={error} />}
-
-      {data && (
-        <Panel>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex min-w-56 flex-1 items-center gap-2 rounded-xl border border-input bg-secondary/40 px-3 py-2 transition-all duration-75 hover:border-ring/40">
-                <IconSearch aria-hidden="true" className="size-4 text-muted-foreground" />
-                <label htmlFor="ah-search" className="sr-only">
-                  Search auction listings
-                </label>
-                <input
-                  id="ah-search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search listings..."
-                  autoComplete="off"
-                  spellCheck={false}
-                  className="w-full bg-transparent text-base outline-none sm:text-sm"
-                />
-            </div>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as keyof typeof sorts)}
-              className="rounded-xl border border-input bg-secondary/40 px-3 py-2 text-sm outline-none transition-all duration-75 hover:border-ring/40 cursor-pointer"
-            >
-              {Object.keys(sorts).map((s) => (
-                <option key={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {filters.map((f) => (
-              <Chip key={f} active={filter === f} onClick={() => setFilter(f)}>
-                {f}
-              </Chip>
-            ))}
-            <Chip active={showFlipConfig} onClick={() => setShowFlipConfig((v) => !v)}>
-              <span className="flex items-center gap-1.5">
-                <IconSlidersHorizontal className="size-3" /> Flip finder
-              </span>
-            </Chip>
-          </div>
-
-          {showFlipConfig && (
-            <div className="mt-4 rounded-2xl border border-primary/25 bg-primary/5 p-4">
-              <p className="flex items-center gap-2 text-sm font-semibold">
-                <IconFilter className="size-4 text-primary" /> Flip finder
-                <span className="text-xs font-normal text-muted-foreground">
-                  {flipSummary.count} qualifying flips · best margin{" "}
-                  {flipSummary.bestMargin.toFixed(0)}% · {formatNumber(flipSummary.totalProfit)}{" "}
-                  total profit on screen
-                </span>
-              </p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-4">
-                <label className="text-xs text-muted-foreground">
-                  Min profit (coins)
-                  <input
-                    value={minProfit}
-                    onChange={(e) => setMinProfit(e.target.value)}
-                    placeholder="e.g. 500k"
-                    className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60"
-                  />
-                </label>
-                <label className="text-xs text-muted-foreground">
-                  Max price (coins)
-                  <input
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value)}
-                    placeholder="e.g. 20m"
-                    className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60"
-                  />
-                </label>
-                <label className="text-xs text-muted-foreground">
-                  Min margin (%)
-                  <input
-                    value={minMargin}
-                    onChange={(e) => setMinMargin(e.target.value)}
-                    placeholder="e.g. 25"
-                    className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60"
-                  />
-                </label>
-                <label className="text-xs text-muted-foreground">
-                  Category
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60"
-                  >
-                    {categories.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              {(minProfit || maxPrice || minMargin || category !== "All") && (
-                <button
-                  onClick={() => {
-                    setMinProfit("");
-                    setMaxPrice("");
-                    setMinMargin("");
-                    setCategory("All");
-                  }}
-                  className="mt-3 text-xs text-primary hover:underline"
-                >
-                  Reset flip filters
-                </button>
-              )}
-            </div>
-          )}
-
-          <div className="mt-6 grid gap-3 lg:grid-cols-2">
-            {shown.map((a, index) => {
-              const value =
-                a.lowestBin && a.lowestBin > 0
-                  ? Math.max(0, Math.min(100, Math.round((1 - a.price / a.lowestBin) * 100 + 50)))
-                  : 50;
-              const hot = sort === "Flip profit" && a.profit > 0 && index < 3;
-              const spark = a.id ? sparkHistory.series.get(a.id) : undefined;
-              return (
-                <button
-                  key={a.uuid}
-                  onClick={() =>
-                    setInspecting({
-                      name: a.name,
-                      ...(a.id ? { id: a.id } : {}),
-                      rarity: a.rarity,
-                      price: a.price,
-                      lowestBin: a.lowestBin,
-                      profit: a.profit,
-                    })
-                  }
-                  className={`relative w-full cursor-pointer rounded-2xl border bg-black/40 px-5 py-4 text-left backdrop-blur-md transition-all duration-75 ease-out hover:scale-[1.01] ${
-                    hot
-                      ? "border-amber-400/50 shadow-[0_0_24px_rgba(251,191,36,0.18)] hover:border-amber-400/70"
-                      : "border-amber-400/15 hover:border-amber-400/40"
-                  }`}
-                >
-                  {hot && (
-                    <span className="font-pixel absolute -top-2.5 left-4 z-10 rounded-full border-2 border-amber-400/60 bg-amber-400/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-200 backdrop-blur-md animate-pulse">
-                      🔥 Hot flip
-                    </span>
-                  )}
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <ItemIcon
-                        id={a.id ?? a.name}
-                        name={a.name}
-                        {...(a.texture ? { texturePath: a.texture } : {})}
-                        className="size-8"
-                      />
-                      <div className="min-w-0">
-                        <p className="truncate text-base font-semibold">{a.name}</p>
-                        <div className="mt-1.5 flex items-center gap-2">
-                          <RarityTag rarity={a.rarity} />
-                          <span className="rounded-md border border-amber-400/30 bg-amber-400/10 px-1.5 py-0.5 text-[10px] font-semibold tracking-widest text-amber-300">
-                            {a.bin ? "BIN" : `AUCTION · ${a.bids} bids`}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 flex-col items-end">
-                      <span className="font-pixel text-2xl font-bold leading-none text-amber-300">
-                        {formatNumber(a.price)}
-                      </span>
-                      <span className="mt-1 text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        {a.bin ? "buy now" : "current bid"}
-                      </span>
-                      {spark && spark.length >= 2 && (
-                        <Suspense fallback={null}>
-                          <HistorySparkline itemId={a.id!} />
-                        </Suspense>
-                      )}
-                      {a.profit > 0 && (
-                        <p className="text-right text-sm font-semibold text-emerald-400">
-                          +{formatNumber(a.profit)} flip
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <dl className="mt-4 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-                    {[
-                      ["Lowest BIN", a.lowestBin ? formatNumber(a.lowestBin) : "—"],
-                      [
-                        "Flip profit",
-                        a.profit > 0 ? `+${formatNumber(a.profit)}` : formatNumber(a.profit),
-                      ],
-                      ["Ends in", formatDuration(a.endsInMs)],
-                      [
-                        a.bin ? "Buy now" : "Top bid",
-                        !a.bin && a.topBid
-                          ? formatNumber(a.topBid)
-                          : a.bin
-                            ? formatNumber(a.price)
-                            : "—",
-                      ],
-                    ].map(([k, v]) => (
-                      <div key={k}>
-                        <dt className="text-muted-foreground">{k}</dt>
-                        <dd className="mt-0.5 font-mono font-medium">{v}</dd>
-                      </div>
-                    ))}
-                  </dl>
-
-                  <div className="mt-4 flex items-center gap-3 text-[11px] text-muted-foreground">
-                    <span className="w-16 shrink-0">Value</span>
-                    <div className="flex-1">
-                      <ProgressBar pct={value} />
-                    </div>
-                    <span className="w-8 text-right">{value}</span>
-                  </div>
-                  <p className="mt-3 truncate font-mono text-[10px] text-muted-foreground">
-                    {a.category} · {a.uuid}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
-          {totalMatches > shown.length && (
-            <div className="mt-6 flex justify-center">
-              <button
-                onClick={() => setVisible((v) => v + PAGE_SIZE)}
-                className="rounded-full border border-primary/40 bg-primary/15 px-6 py-2 text-sm font-medium text-primary transition-all duration-75 ease-out hover:scale-[1.03] hover:bg-primary/25 active:scale-95"
+        }
+      />
+      <Panel className="space-y-4">
+        <MarketControls
+          query={query}
+          onQuery={(value) => {
+            setQuery(value);
+            setVisible(pageSize);
+          }}
+          sort={sort}
+          onSort={(value) => {
+            setSort(value as keyof typeof sorts);
+            setVisible(pageSize);
+          }}
+          sorts={Object.keys(sorts)}
+        >
+          <select
+            className={marketControl}
+            aria-label="Listing type"
+            value={kind}
+            onChange={(event) => {
+              setKind(event.target.value);
+              setVisible(pageSize);
+            }}
+          >
+            <option>All listings</option>
+            <option>BIN only</option>
+            <option>Bids only</option>
+          </select>
+        </MarketControls>
+        <details className="rounded-xl border border-border p-3 text-sm">
+          <summary className="cursor-pointer">
+            Filters{category || maxPrice ? " · Active" : ""}
+          </summary>
+          <div className="mt-3 flex flex-wrap items-end gap-3">
+            <label className="flex flex-col gap-1">
+              Category
+              <select
+                className={marketControl}
+                value={category}
+                onChange={(event) => {
+                  setCategory(event.target.value);
+                  setVisible(pageSize);
+                }}
               >
-                Load more ({formatNumber(totalMatches - shown.length)} remaining)
+                <option value="">All categories</option>
+                {categories.map((name) => (
+                  <option key={name}>{name}</option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              Maximum price (coins)
+              <input
+                type="number"
+                min="0"
+                step="1"
+                className={marketControl}
+                value={maxPrice}
+                onChange={(event) => {
+                  setMaxPrice(event.target.value);
+                  setVisible(pageSize);
+                }}
+              />
+            </label>
+            {(category || maxPrice) && (
+              <button
+                type="button"
+                className={marketControl}
+                onClick={() => {
+                  setCategory("");
+                  setMaxPrice("");
+                  setVisible(pageSize);
+                }}
+              >
+                Clear filters
               </button>
+            )}
+          </div>
+        </details>
+        {isLoading && <LoadState>Loading auction listings…</LoadState>}
+        {error && !data && <ErrorState error={error} />}
+        {data && !data.lastUpdated && (
+          <p role="status" className="text-sm text-muted-foreground">
+            Auction listings are unavailable. Try refreshing.
+          </p>
+        )}
+        {data && data.lastUpdated > 0 && (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+              <p>
+                Listing sample · {data.pagesScanned} of {data.totalPages} pages scanned
+              </p>
+              <MarketFreshness updated={data.lastUpdated} stale={stale} />
             </div>
-          )}
-          {totalMatches === 0 && (
-            <p className="mt-6 text-sm text-muted-foreground">No listings match that filter.</p>
-          )}
-        </Panel>
-      )}
-
-      <ItemInspector item={inspecting} onClose={() => setInspecting(null)} />
+            {!rows.length && (
+              <p role="status" className="py-4 text-sm text-muted-foreground">
+                No listings in this sample match your filters.
+              </p>
+            )}
+            <ul className="grid gap-3 md:grid-cols-2">
+              {rows.slice(0, visible).map((entry) => (
+                <li
+                  key={entry.uuid}
+                  className="min-w-0 rounded-2xl border border-border bg-background/35 p-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <ItemIcon
+                      id={entry.id ?? entry.name}
+                      name={entry.name}
+                      {...(entry.texture ? { texturePath: entry.texture } : {})}
+                      className="size-7 shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <h2 className="break-words text-sm font-semibold">{entry.name}</h2>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <RarityTag rarity={entry.rarity} />
+                        {!entry.bin && <span>{entry.bids} bids</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <dl className="mt-3 grid grid-cols-2 gap-3 text-sm tabular-nums">
+                    <div>
+                      <dt className="text-xs text-muted-foreground">
+                        {entry.bin ? "Buy it now" : entry.topBid ? "Current bid" : "Starting bid"}
+                      </dt>
+                      <dd className="mt-1 font-medium">
+                        {formatNumber(entry.bin ? entry.price : (entry.topBid ?? entry.price))}{" "}
+                        coins
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Time remaining</dt>
+                      <dd className="mt-1">
+                        {(entry.endsAt ?? now + entry.endsInMs) > now
+                          ? formatDuration((entry.endsAt ?? now + entry.endsInMs) - now)
+                          : "Ended"}
+                      </dd>
+                    </div>
+                  </dl>
+                  <div className="mt-3 flex flex-wrap gap-3 text-xs">
+                    <button
+                      type="button"
+                      className="text-primary hover:underline"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText("/viewauction " + entry.uuid);
+                          setCopyStatus({ id: entry.uuid, copied: true });
+                        } catch {
+                          setCopyStatus({ id: entry.uuid, copied: false });
+                        }
+                      }}
+                    >
+                      Copy auction command
+                    </button>
+                    {entry.id && (
+                      <Link
+                        to="/wiki/$itemId"
+                        params={{ itemId: entry.id }}
+                        className="text-primary hover:underline"
+                      >
+                        Item wiki
+                      </Link>
+                    )}
+                  </div>
+                  {copyStatus?.id === entry.uuid && (
+                    <p role="status" className="mt-2 break-all text-xs text-muted-foreground">
+                      {copyStatus.copied ? "Command copied." : "/viewauction " + entry.uuid}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {rows.length > visible && (
+              <button
+                type="button"
+                className={marketControl}
+                onClick={() => setVisible(visible + pageSize)}
+              >
+                Show more listings
+              </button>
+            )}
+          </>
+        )}
+      </Panel>
     </div>
   );
 }

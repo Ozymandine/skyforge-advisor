@@ -83,7 +83,7 @@ function ItemEncyclopediaPage() {
   const detailQuery = useQuery({
     queryKey: ["item-detail", itemId],
     queryFn: () => fetchItemDetail({ data: itemId }),
-    staleTime: 30 * 60_000,
+    staleTime: 60_000,
   });
 
   const item = detailQuery.data?.item ?? null;
@@ -273,7 +273,7 @@ function ItemEncyclopediaPage() {
         ) : null}
 
         {/* Market */}
-        <Section title="Live Market">
+        <Section title="Market quotes">
           <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
             <div className="flex justify-between gap-2">
               <dt className="text-white/50">NPC sell</dt>
@@ -282,11 +282,11 @@ function ItemEncyclopediaPage() {
             {item.bazaar ? (
               <>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-white/50">Bazaar buy</dt>
+                  <dt className="text-white/50">Sell offer quote</dt>
                   <dd className="font-semibold">{fmt(item.bazaar.buyPrice)}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-white/50">Bazaar sell</dt>
+                  <dt className="text-white/50">Buy order quote</dt>
                   <dd className="font-semibold">{fmt(item.bazaar.sellPrice)}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
@@ -295,26 +295,21 @@ function ItemEncyclopediaPage() {
                 </div>
               </>
             ) : null}
-            {item.auctionHouse ? (
-              <>
-                <div className="flex justify-between gap-2">
-                  <dt className="text-white/50">Lowest BIN</dt>
-                  <dd className="font-semibold">{fmt(item.auctionHouse.lowestBin)}</dd>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <dt className="text-white/50">Median BIN</dt>
-                  <dd className="font-semibold">{fmt(item.auctionHouse.medianBin)}</dd>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <dt className="text-white/50">AH listings</dt>
-                  <dd className="font-semibold">{item.auctionHouse.listings}</dd>
-                </div>
-              </>
-            ) : null}
           </dl>
-          {!item.bazaar && !item.auctionHouse ? (
-            <p className="text-sm text-white/40">Not traded on the Bazaar or Auction House.</p>
-          ) : null}
+          {item.bazaarUpdatedAt && (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Hypixel quote timestamp:{" "}
+              <time dateTime={new Date(item.bazaarUpdatedAt).toISOString()}>
+                {new Date(item.bazaarUpdatedAt).toISOString().slice(0, 16).replace("T", " ")} UTC
+              </time>
+            </p>
+          )}
+          {!item.bazaar && (
+            <p className="mt-3 text-sm text-muted-foreground">Bazaar quote unavailable.</p>
+          )}
+          <p className="mt-2 text-sm text-muted-foreground">
+            Comparable Auction House pricing is unavailable.
+          </p>
         </Section>
 
         {/* Used to craft */}

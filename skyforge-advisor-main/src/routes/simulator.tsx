@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { usePlayer } from "@/hooks/use-account";
-import { Panel } from "@/components/layout/app-shell";
+import { PageHero, Panel } from "@/components/layout/app-shell";
 import {
   calculateSimulation,
   getDefaultLoadout,
@@ -40,16 +40,11 @@ export function SimulatorPage() {
 
   const result = useMemo(() => calculateSimulation(loadout), [loadout]);
 
+  const combat = player.data?.skills.find(
+    (skill) => skill.key === "COMBAT" && player.data?.availability?.skillKeys.includes(skill.key),
+  );
   const loadFromProfile = () => {
-    if (!player.data) return;
-    const cata = player.data.dungeons?.catacombsLevel ?? 30;
-    const combat = 45;
-    setLoadout((prev: SimulatorLoadout) => ({
-      ...prev,
-      combatLevel: combat,
-      catacombsLevel: cata,
-      magicalPower: 750,
-    }));
+    if (combat) setLoadout((previous) => ({ ...previous, combatLevel: combat.level }));
   };
 
   const resetDefaults = () => {
@@ -58,44 +53,37 @@ export function SimulatorPage() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Header Banner */}
-      <div className="flex flex-col justify-between gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-center">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-black shadow-lg">
-              <IconSwords className="size-5" />
-            </div>
-            <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
-              Damage & Gear Simulator
-            </h1>
-          </div>
-          <p className="mt-1.5 text-xs text-white/60 sm:text-sm">
-            Hypixel combat sandbox — live damage calculation, Catacombs scaling, mob defenses, and
-            cost-to-DPS optimizer.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          {player.data && (
+      <PageHero
+        title="Damage Simulator"
+        actions={
+          <div className="flex flex-wrap gap-2">
+            {combat && (
+              <button
+                type="button"
+                className="rounded-xl border border-border px-3 py-2 text-sm"
+                onClick={loadFromProfile}
+              >
+                Use profile Combat level
+              </button>
+            )}
             <button
-              onClick={loadFromProfile}
-              className="flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3.5 py-2 text-xs font-bold text-emerald-300 transition-none hover:bg-emerald-500/25 active:bg-emerald-500/30"
+              type="button"
+              className="rounded-xl border border-border px-3 py-2 text-sm"
+              onClick={resetDefaults}
             >
-              <IconSparkles className="size-3.5" /> Sync Profile
+              Reset example
             </button>
-          )}
-          <button
-            onClick={resetDefaults}
-            className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2 text-xs font-bold text-white/70 transition-none hover:bg-white/10 hover:text-white"
-          >
-            <IconRotateCcw className="size-3.5" /> Reset
-          </button>
-        </div>
-      </div>
+          </div>
+        }
+      />
+      <p className="text-sm text-muted-foreground">
+        Starts with an example loadout. Results are approximate and do not model every ability,
+        modifier, or boss phase.
+      </p>
 
       {/* Real-time KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Single Hit Damage */}
+        {/* Estimated hit damage */}
         <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/10 to-transparent p-5">
           <div className="flex items-center justify-between text-amber-400">
             <span className="text-xs font-bold uppercase tracking-wider">Single Hit Damage</span>
@@ -112,28 +100,12 @@ export function SimulatorPage() {
           </div>
         </div>
 
-        {/* Sustained DPS */}
-        <div className="rounded-2xl border border-red-500/30 bg-gradient-to-b from-red-500/10 to-transparent p-5">
-          <div className="flex items-center justify-between text-red-400">
-            <span className="text-xs font-bold uppercase tracking-wider">Sustained DPS</span>
-            <IconZap className="size-4" />
-          </div>
-          <p className="mt-2 font-mono text-3xl font-black text-white">
-            {formatNumber(result.dps)}
-            <span className="text-sm text-white/40"> /s</span>
-          </p>
-          <div className="mt-1 flex items-center justify-between text-xs text-white/60">
-            <span>Time to Kill Boss:</span>
-            <span className="font-mono font-bold text-emerald-400">
-              {result.mobKillTimeSeconds}s
-            </span>
-          </div>
-        </div>
-
         {/* Effective Health (EHP) */}
         <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-b from-emerald-500/10 to-transparent p-5">
           <div className="flex items-center justify-between text-emerald-400">
-            <span className="text-xs font-bold uppercase tracking-wider">Effective HP (EHP)</span>
+            <span className="text-xs font-bold uppercase tracking-wider">
+              Estimated effective HP
+            </span>
             <IconShield className="size-4" />
           </div>
           <p className="mt-2 font-mono text-3xl font-black text-white">
@@ -143,23 +115,6 @@ export function SimulatorPage() {
             <span>HP / Defense:</span>
             <span className="font-mono text-white/80">
               {formatNumber(result.totalHealth)} / {formatNumber(result.totalDefense)}
-            </span>
-          </div>
-        </div>
-
-        {/* Ability Damage */}
-        <div className="rounded-2xl border border-cyan-500/30 bg-gradient-to-b from-cyan-500/10 to-transparent p-5">
-          <div className="flex items-center justify-between text-cyan-400">
-            <span className="text-xs font-bold uppercase tracking-wider">Mage Ability DPS</span>
-            <IconSparkles className="size-4" />
-          </div>
-          <p className="mt-2 font-mono text-3xl font-black text-white">
-            {formatNumber(result.abilityDamage)}
-          </p>
-          <div className="mt-1 flex items-center justify-between text-xs text-white/60">
-            <span>Intelligence:</span>
-            <span className="font-mono font-bold text-cyan-300">
-              {formatNumber(result.totalIntelligence)} ✎
             </span>
           </div>
         </div>
@@ -454,50 +409,6 @@ export function SimulatorPage() {
 
         {/* Right Column: Upgrade ROI & DPS Recommendations */}
         <div className="space-y-6">
-          <Panel className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-white/10 pb-3">
-              <IconTrendingUp className="size-4 text-emerald-400" />
-              <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-                Highest ROI Upgrades
-              </h2>
-            </div>
-            <p className="text-xs text-white/60">
-              Ranked by damage increase per coin spent on your current build.
-            </p>
-
-            <div className="space-y-3">
-              {result.upgradeSuggestions.map(
-                (sug: (typeof result.upgradeSuggestions)[number], idx: number) => (
-                  <div
-                    key={sug.title}
-                    className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-2 transition-none hover:border-emerald-500/40 hover:bg-white/[0.06]"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="flex size-5 items-center justify-center rounded-full bg-emerald-500/20 text-[10px] font-bold text-emerald-300">
-                          #{idx + 1}
-                        </span>
-                        <h3 className="text-xs font-bold text-white">{sug.title}</h3>
-                      </div>
-                      <span className="rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-300">
-                        +{sug.dpsGainPct}% DPS
-                      </span>
-                    </div>
-
-                    <p className="text-[11px] text-white/60 leading-relaxed">{sug.description}</p>
-
-                    <div className="flex items-center justify-between border-t border-white/10 pt-2 text-[11px]">
-                      <span className="text-white/40">Est. Investment:</span>
-                      <span className="font-mono font-bold text-white">
-                        ~{formatNumber(sug.estimatedCostCoins)} coins
-                      </span>
-                    </div>
-                  </div>
-                ),
-              )}
-            </div>
-          </Panel>
-
           {/* Stat Totals Summary */}
           <Panel className="space-y-3">
             <div className="flex items-center gap-2 border-b border-white/10 pb-2">

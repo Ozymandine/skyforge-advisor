@@ -3,7 +3,6 @@ import {
   IconBell,
   IconBookOpen,
   IconChevronDown,
-  IconCheck,
   IconHammer,
   IconKeyRound,
   IconLayoutDashboard,
@@ -43,7 +42,6 @@ import {
 } from "@/lib/theme";
 import { getPref, onPrefsChange } from "@/lib/prefs";
 import { formatNumber, type BazaarProduct } from "@/lib/skyblock";
-import { RankBadge } from "@/components/ui/rank-badge";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -159,13 +157,6 @@ function PlayerHeadAvatar({
 }
 
 function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
-  const account = useAccount();
-  const player = usePlayer();
-  const profiles = player.data?.profiles ?? [];
-  const activeProfile = profiles.find(
-    (p) => p.profileId === (account.profileId || player.data?.activeProfileId),
-  );
-
   return (
     <aside
       className={cn(
@@ -174,7 +165,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       )}
     >
       {/* Centered Wordmark */}
-      <div className="flex flex-col items-center justify-center px-3 pt-5 pb-2.5 transition-all duration-300">
+      <div className="flex flex-col items-center justify-center px-3 pt-3 pb-2 transition-all duration-300">
         {!collapsed ? (
           <span className="font-pixel inline-block text-primary font-black text-[23px] tracking-[0.18em] select-none">
             SKYFORGE
@@ -201,7 +192,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
         </button>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-2.5 pt-2 pb-3 space-y-3">
+      <nav className="flex-1 overflow-y-auto px-2.5 pt-1 pb-2 space-y-2">
         {nav.map((section) => (
           <div key={section.group} className="space-y-0.5">
             {!collapsed && (
@@ -235,99 +226,6 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
           </div>
         ))}
       </nav>
-
-      {/* Bottom Profile Selector Card */}
-      <div className="border-t border-white/10 p-2.5">
-        {player.data ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger className="w-full text-left outline-none">
-              <div
-                className={cn(
-                  "flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] p-1.5 transition-all duration-150 hover:transition-none hover:bg-white/[0.09] hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10 active:scale-[0.98] cursor-pointer will-change-transform",
-                  collapsed && "justify-center p-1.5",
-                )}
-              >
-                <PlayerHeadAvatar
-                  uuid={player.data.uuid}
-                  name={player.data.username || account.username}
-                  size={26}
-                  className="size-6 shrink-0 rounded-lg"
-                />
-                {!collapsed && (
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <RankBadge rankData={player.data.hypixelPlayer} size="sm" />
-                      <p className="truncate text-xs font-bold text-foreground">
-                        {player.data.username}
-                      </p>
-                    </div>
-                    <p className="flex items-center gap-1 text-[9.5px] text-muted-foreground font-mono">
-                      <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="truncate">
-                        {activeProfile ? activeProfile.cuteName : "Profile"}
-                      </span>
-                    </p>
-                  </div>
-                )}
-                {!collapsed && (
-                  <IconChevronDown className="size-3 text-muted-foreground shrink-0 ml-auto" />
-                )}
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="start"
-              side={collapsed ? "right" : "top"}
-              className="mb-2 w-64 border-white/10 bg-[#0E121B]/95 backdrop-blur-2xl p-2 shadow-2xl"
-            >
-              <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                Select Active Profile
-              </div>
-              {profiles.map((p) => (
-                <DropdownMenuItem
-                  key={p.profileId}
-                  onSelect={() => account.save({ profileId: p.profileId })}
-                  className="flex items-center justify-between py-2 px-2.5 rounded-lg cursor-pointer hover:bg-white/10"
-                >
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-foreground">{p.cuteName}</p>
-                    <p className="text-[10px] text-muted-foreground capitalize">
-                      {p.gameMode || "Standard"} profile · {p.members} member
-                      {p.members > 1 ? "s" : ""}
-                    </p>
-                  </div>
-                  {activeProfile?.profileId === p.profileId && (
-                    <IconCheck className="size-4 text-emerald-400 shrink-0" />
-                  )}
-                </DropdownMenuItem>
-              ))}
-              <div className="my-1 border-t border-white/10" />
-              <DropdownMenuItem
-                asChild
-                className="cursor-pointer py-2 px-2.5 rounded-lg hover:bg-white/10"
-              >
-                <Link
-                  to="/connect"
-                  className="flex items-center gap-2 text-xs text-muted-foreground hover:text-white"
-                >
-                  <IconKeyRound className="size-3.5 text-primary" /> Switch / Reconnect Account
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <Link
-            to="/connect"
-            title="Connect Account"
-            className={cn(
-              "flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] p-2 text-xs font-semibold text-white/80 transition-all hover:bg-white/[0.08] hover:border-emerald-500/40 hover:text-white",
-              collapsed && "justify-center p-2",
-            )}
-          >
-            <IconKeyRound className="size-4 shrink-0 text-emerald-400" />
-            {!collapsed && <span className="truncate text-xs">Connect Account</span>}
-          </Link>
-        )}
-      </div>
     </aside>
   );
 }
@@ -364,16 +262,16 @@ function TickerContent() {
     ...(bazaar.data?.products ?? []).slice(0, 8).map((p) => ({
       key: `bz-${p.id}`,
       label: p.name,
-      value: `+${formatNumber(p.profitPerHour)}/hr`,
+      value: `${formatNumber(p.buyPrice)} buy quote`,
       up: true,
     })),
     ...(auctions.data?.entries ?? [])
-      .filter((a) => a.profit > 0)
+      .filter((a) => a.bin)
       .slice(0, 8)
       .map((a) => ({
         key: `ah-${a.uuid}`,
         label: a.name,
-        value: `+${formatNumber(a.profit)} flip`,
+        value: `${formatNumber(a.price)} BIN`,
         up: true,
       })),
   ];
@@ -386,7 +284,7 @@ function TickerContent() {
 
   return (
     <div className="relative overflow-x-hidden overflow-y-hidden border-b border-white/10 bg-black/30 backdrop-blur-md">
-      <span className="sr-only">Live market ticker: top bazaar and auction flips.</span>
+      <span className="sr-only">Market ticker: Bazaar buy quotes and BIN listings.</span>
       <div className="ticker-track py-1.5" aria-hidden="true">
         {loop.map((entry, i) => (
           <span
@@ -473,8 +371,7 @@ function Header({
           onClick={onOpenSearch}
           className="flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-muted-foreground transition-none hover:border-white/20 hover:bg-white/10 active:opacity-80 sm:max-w-xl"
         >
-          <IconSearch className="size-4 shrink-0" aria-hidden="true" />
-          <span className="truncate">Search or type a command...</span>
+          <span className="truncate">Search</span>
           <kbd
             aria-hidden="true"
             className="ml-auto hidden rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:block"
@@ -486,33 +383,47 @@ function Header({
         <div className="ml-auto flex items-center gap-2.5">
           {/* Top-Right Profile Link (Connected) OR Connect Button (Not Connected) */}
           {player.data ? (
-            <Link
-              to="/profile/$username"
-              params={{ username: player.data.username }}
-              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-1.5 transition-all duration-150 hover:bg-white/[0.1] hover:border-white/20 active:scale-[0.99] cursor-pointer"
-            >
-              <PlayerHeadAvatar
-                uuid={player.data.uuid}
-                name={player.data.username || account.username}
-                size={24}
-                className="size-6 rounded-lg"
-              />
-              <div className="hidden sm:flex items-center gap-1.5">
-                <RankBadge rankData={player.data.hypixelPlayer} size="sm" />
-                <span
-                  title={player.data.username}
-                  className="truncate text-xs font-bold text-foreground max-w-[100px]"
-                >
-                  {player.data.username}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label="Profile options"
+                className="flex items-center gap-2 rounded-xl border border-border px-2.5 py-1.5"
+              >
+                <PlayerHeadAvatar
+                  uuid={player.data.uuid}
+                  name={player.data.username}
+                  size={24}
+                  className="size-6 rounded-lg"
+                />
+                <span className="hidden max-w-28 truncate text-xs font-medium sm:inline">
+                  {activeProfile?.cuteName ?? player.data.username}
                 </span>
-              </div>
-            </Link>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {profiles.map((entry) => (
+                  <DropdownMenuItem
+                    key={entry.profileId}
+                    onSelect={() => account.save({ profileId: entry.profileId })}
+                  >
+                    {entry.cuteName}
+                    {activeProfile?.profileId === entry.profileId ? " (active)" : ""}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuItem asChild>
+                  <Link to="/profile/$username" params={{ username: player.data.username }}>
+                    View public profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/connect">Switch account</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Link
               to="/connect"
-              className="flex items-center gap-1.5 rounded-xl border border-primary/40 bg-primary/20 px-3.5 py-2 text-xs font-bold text-primary transition-all duration-150 hover:bg-primary/30 hover:scale-[1.02] active:scale-95 shadow-lg shadow-primary/10"
+              className="rounded-xl border border-border px-3 py-2 text-xs font-medium"
             >
-              <IconKeyRound className="size-3.5" /> Connect
+              Connect
             </Link>
           )}
 
@@ -859,7 +770,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <IconTrendingUp className="size-4 text-emerald-400" />
                   <span className="min-w-0 flex-1 truncate">{p.name}</span>
                   <span className="shrink-0 font-mono text-[10px] text-emerald-400">
-                    +{formatNumber(p.profitPerHour)}/hr
+                    {formatNumber(p.buyPrice)} buy quote
                   </span>
                 </CommandItem>
               ))}
@@ -1056,24 +967,21 @@ function FooterContent() {
 }
 
 export function PageHero({
-  eyebrow,
   title,
   description,
   actions,
 }: {
-  eyebrow: string;
   title: string;
-  description: string;
+  description?: string;
   actions?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <p className="eyebrow">{eyebrow}</p>
-        <h1 className="mt-2 break-words text-3xl font-extrabold tracking-tight sm:text-4xl">
-          {title}
-        </h1>
-        <p className="mt-3 max-w-2xl text-sm text-muted-foreground">{description}</p>
+        <h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
+        {description && (
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{description}</p>
+        )}
       </div>
       {actions}
     </div>

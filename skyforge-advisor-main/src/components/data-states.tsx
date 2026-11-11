@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { IconKeyRound, IconLoader2 } from "@/assets/icons";
+import { IconLoader2 } from "@/assets/icons";
 import type { ReactNode } from "react";
 
 import { Panel } from "@/components/layout/app-shell";
@@ -11,7 +11,13 @@ export function ConnectPrompt({ what }: { what: string }) {
         aria-hidden="true"
         className="mx-auto flex size-11 items-center justify-center rounded-2xl bg-primary/15 text-primary ring-1 ring-primary/30"
       >
-        <IconKeyRound className="size-5" />
+        <img
+          src="/vanilla/compass.png"
+          alt=""
+          width={20}
+          height={20}
+          className="[image-rendering:pixelated]"
+        />
       </div>
       <h2 className="mt-4 text-xl font-semibold">Connect your SkyBlock profile</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">

@@ -252,11 +252,7 @@ function Goals() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <PageHero
-        eyebrow="Tools"
-        title="Goals"
-        description="Set your own targets and keep the daily and weekly routine on track."
-      />
+      <PageHero title="Goals" />
 
       {!connected && <ConnectPrompt what="your goal tracker" />}
       {connected && isLoading && <LoadState>Loading your profile…</LoadState>}

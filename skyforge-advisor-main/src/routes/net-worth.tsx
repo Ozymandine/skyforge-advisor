@@ -221,9 +221,7 @@ function NetWorth() {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHero
-        eyebrow="Economy"
         title="Net Worth"
-        description="A full valuation of everything the profile holds, priced against live market data."
         actions={
           connected && data ? (
             <button
@@ -246,13 +244,13 @@ function NetWorth() {
           <StatRow
             stats={[
               {
-                label: "Total net worth",
+                label: "Known value",
                 value: formatFull(total),
-                sub: "Purse + bank",
+                sub: "Only available balances and priced items",
               },
               {
                 label: "Purse",
-                value: formatFull(data.purse),
+                value: data.availability?.purse === false ? "Unavailable" : formatFull(data.purse),
                 sub: "Coins currently on hand",
               },
               {
@@ -262,8 +260,10 @@ function NetWorth() {
               },
               {
                 label: "Items value",
-                value: formatFull(itemsValue),
-                sub: `${containerItems} items at bazaar prices`,
+                value: containerItems ? formatFull(itemsValue) : "Unavailable",
+                sub: containerItems
+                  ? `${containerItems} visible items`
+                  : "No inventory valuation available",
               },
             ]}
           />

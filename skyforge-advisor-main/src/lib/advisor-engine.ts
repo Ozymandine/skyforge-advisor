@@ -3,7 +3,13 @@
 // Ingests live player telemetry (skills, slayers, gear, containers, purse, bank, fairy souls,
 // dungeons, garden, hotm) and computes tailored, math-driven recommendations.
 
-import { formatFull, formatNumber, type PlayerData, type InventoryItem } from "./skyblock";
+import {
+  formatFull,
+  formatNumber,
+  type PlayerData,
+  type InventoryItem,
+  type ProfileAvailability,
+} from "./skyblock";
 import { MP_BY_RARITY, type AccessoryRarity } from "./accessory-data";
 import { calculateSkyBlockLevel } from "./skyblock-level";
 
@@ -70,6 +76,7 @@ export type ProfileAudit = {
 };
 
 export type AdvisorPlayerInput = {
+  availability?: ProfileAvailability | undefined;
   username?: string | undefined;
   uuid?: string | undefined;
   purse?: number | undefined;
@@ -271,7 +278,7 @@ export function performProfileAudit(player?: AdvisorPlayerInput | null | undefin
   const completedFloors = floors.filter((f) => f.completions > 0);
   const highestFloor =
     completedFloors.length > 0 ? completedFloors[completedFloors.length - 1]!.name : "None";
-  const nextFloor = floors.find((f) => f.completions === 0)?.name ?? "Master Mode Floor 7";
+  const nextFloor = floors.find((f) => f.completions === 0)?.name ?? "No verified next floor";
   const dungeonScore = Math.min(100, Math.round((cataLvl / 50) * 100));
   const dungeonStatusText =
     cataLvl === 0
@@ -351,150 +358,90 @@ export function performProfileAudit(player?: AdvisorPlayerInput | null | undefin
 export type TailoredAction = {
   id: string;
   title: string;
-  category: "Accessories" | "Skills" | "Slayers" | "Dungeons" | "Minions" | "Farming" | "Economy";
-  priority: "🔥 URGENT (Highest ROI)" | "💎 HIGH VALUE" | "🎯 SOLID PROGRESSION";
-  currentStatText: string;
-  targetGoalText: string;
-  exactRewardText: string;
-  estimatedCost: string;
-  actionGuidance: string;
-  inGameCommand?: string;
+  detail: string;
+  benefit: string;
+  cost?: string;
+  link?: "/skills" | "/inventory";
 };
 
-export function generateTailoredActionPlan(
-  player?: AdvisorPlayerInput | null | undefined,
-): TailoredAction[] {
-  const audit = performProfileAudit(player);
+export function generateTailoredActionPlan(player?: AdvisorPlayerInput | null): TailoredAction[] {
+  if (!player) return [];
   const actions: TailoredAction[] = [];
-  const purse = player?.purse ?? 0;
+  const availability = player.availability;
 
-  // 1. Missing Fairy Souls (Urgent if missing > 10)
-  if (audit.soulAudit.missing > 0) {
+  // Repeat only a floor the profile has actually cleared. Skill XP and net
+  // worth cannot establish an unlocked floor, and sparse records omit floors.
+  const completedFloor =
+    availability?.dungeonCompletions === false
+      ? undefined
+      : player.dungeons?.floors
+          ?.filter((floor) => /^Floor [1-7]$/.test(floor.name) && floor.completions > 0)
+          .sort((a, b) => Number(b.name.at(-1)) - Number(a.name.at(-1)))[0];
+  if (completedFloor) {
     actions.push({
-      id: "action_souls",
-      title: `Claim ${audit.soulAudit.missing} Missing Fairy Souls`,
-      category: "Skills",
-      priority: audit.soulAudit.missing >= 20 ? "🔥 URGENT (Highest ROI)" : "💎 HIGH VALUE",
-      currentStatText: `Current: ${audit.soulAudit.collected} / 242 Souls`,
-      targetGoalText: `Collect remaining ${Math.min(30, audit.soulAudit.missing)} souls in Hub & Crimson Isle`,
-      exactRewardText: `+${audit.soulAudit.lostHp} Max HP, +${Math.round(audit.soulAudit.missing * 0.5)} Defense`,
-      estimatedCost: "0 coins (Free permanent stats)",
-      actionGuidance:
-        "Fairy souls give massive permanent survival stats that scale with dungeon percentages and armor modifiers.",
-      inGameCommand: "/warp hub",
+      id: "repeat-dungeon-floor",
+      title: "Run " + completedFloor.name + " again",
+      detail:
+        "This profile has " +
+        formatFull(completedFloor.completions) +
+        " recorded " +
+        (completedFloor.completions === 1 ? "clear" : "clears") +
+        " on this floor. Check Mort for current entry requirements.",
+      benefit: "Earn Catacombs XP without assuming the next floor is unlocked.",
+      link: "/skills",
     });
   }
 
-  // 2. Magical Power Deficit
-  if (audit.mpAudit.deficit > 0) {
+  const nextSkill = (player.skills ?? [])
+    .filter(
+      (skill) =>
+        skill.name &&
+        skill.key &&
+        !["SOCIAL", "RUNECRAFTING"].includes(skill.key) &&
+        (!availability || availability.skillKeys.includes(skill.key)) &&
+        !skill.maxed &&
+        typeof skill.level === "number" &&
+        typeof skill.neededXp === "number" &&
+        Number.isFinite(skill.neededXp) &&
+        typeof skill.currentXp === "number" &&
+        Number.isFinite(skill.currentXp) &&
+        skill.neededXp > skill.currentXp,
+    )
+    .map((skill) => ({ ...skill, remaining: skill.neededXp! - skill.currentXp! }))
+    .sort((a, b) => a.remaining - b.remaining || a.name!.localeCompare(b.name!))[0];
+  if (nextSkill) {
     actions.push({
-      id: "action_mp",
-      title: `Upgrade Magical Power (+${Math.min(50, audit.mpAudit.deficit)} MP Gap)`,
-      category: "Accessories",
-      priority: "🔥 URGENT (Highest ROI)",
-      currentStatText: `Current: ${audit.mpAudit.currentMp} MP (Stage Target: ${audit.mpAudit.targetMp} MP)`,
-      targetGoalText: "Purchase cheap unowned Talismans (<500k coins each on Auction House)",
-      exactRewardText: `+${Math.min(50, audit.mpAudit.deficit) * 1.8} Strength / Crit Damage from Power Stone`,
-      estimatedCost: `~${formatNumber(Math.min(50, audit.mpAudit.deficit) * 45_000)} coins`,
-      actionGuidance:
-        "Magical Power directly multiplies all Power Stone stats (Silky, Hurtful, Fortuitous, Scorching). Visit Maxwell in the Hub.",
-      inGameCommand: "/ah",
+      id: "next-skill-level",
+      title: "Reach " + nextSkill.name + " " + (nextSkill.level! + 1),
+      detail:
+        formatFull(nextSkill.remaining) +
+        " XP to the next level, based on the skill XP in this profile.",
+      benefit: "The smallest remaining XP gap among the skills SkyForge can read.",
+      link: "/skills",
     });
   }
 
-  // 3. Juju Shortbow / Enderman Slayer 5 Gate
-  if (audit.slayerAudit.emanLvl < 5) {
+  if (
+    availability?.fairySouls !== false &&
+    typeof player.fairySouls === "number" &&
+    Number.isFinite(player.fairySouls) &&
+    player.fairySouls >= 0 &&
+    player.fairySouls < 20
+  ) {
     actions.push({
-      id: "action_eman5",
-      title: "Reach Enderman Slayer Level 5 (Unlock Juju Shortbow)",
-      category: "Slayers",
-      priority: "🔥 URGENT (Highest ROI)",
-      currentStatText: `Current: Enderman Slayer Level ${audit.slayerAudit.emanLvl}`,
-      targetGoalText: "Reach Enderman Slayer 5 (5,000 Slayer XP)",
-      exactRewardText: "Unlocks Juju Shortbow requirement (Triples Dungeon room clear speed)",
-      estimatedCost: "~2.5M - 4.5M coins in carry / slayer quests",
-      actionGuidance:
-        "Juju Shortbow is the mandatory progression weapon for Catacombs Floor 5 through Floor 7.",
-      inGameCommand: "/warp hub",
-    });
-  }
-
-  // 4. Lowest Skill Leveling Push
-  if (audit.skillAudit.lowestSkillLevel < 40) {
-    actions.push({
-      id: "action_lowest_skill",
-      title: `Level Up ${audit.skillAudit.lowestSkillName} (Level ${audit.skillAudit.lowestSkillLevel} $\to$ ${audit.skillAudit.lowestSkillLevel + 5})`,
-      category: "Skills",
-      priority: "💎 HIGH VALUE",
-      currentStatText: `Current: Level ${audit.skillAudit.lowestSkillLevel} (${formatNumber(audit.skillAudit.lowestSkillXpToNext)} XP to next level)`,
-      targetGoalText: `Push ${audit.skillAudit.lowestSkillName} by +5 levels to raise Skill Average (${audit.skillAudit.skillAverage.toFixed(1)})`,
-      exactRewardText: `+0.62 Skill Average, +${audit.skillAudit.lowestSkillName === "Combat" ? "Crit Chance & Damage" : audit.skillAudit.lowestSkillName === "Mining" ? "Defense & Mining Fortune" : "Health & Intelligence"}`,
-      estimatedCost:
-        audit.skillAudit.lowestSkillName === "Alchemy"
-          ? "~4M coins (Brewing Sugar Cane)"
-          : "Low (Time-based)",
-      actionGuidance: `Your lowest skill is holding back your SkyBlock Level. Raising low skill tiers takes minimal XP compared to high levels.`,
-    });
-  }
-
-  // 5. Next Dungeon Floor Clearance
-  if (audit.dungeonAudit.catacombsLevel < 24) {
-    actions.push({
-      id: "action_dungeon_floor",
-      title: `Clear ${audit.dungeonAudit.nextFloorTarget} in Catacombs`,
-      category: "Dungeons",
-      priority: "💎 HIGH VALUE",
-      currentStatText: `Current: Catacombs Level ${audit.dungeonAudit.catacombsLevel} (Highest: ${audit.dungeonAudit.highestFloorCompleted})`,
-      targetGoalText: `Obtain 1 completion on ${audit.dungeonAudit.nextFloorTarget}`,
-      exactRewardText: "Unlocks next armor requirement tier + higher Catacombs XP multipliers",
-      estimatedCost: "Dungeon entry cost / chest coins",
-      actionGuidance:
-        "Every floor completed unlocks higher floor requirements, master mode prerequisites, and better floor chest drops.",
-      inGameCommand: "/warp dungeon_hub",
-    });
-  }
-
-  // 6. Minion Slot Unlock
-  if (audit.minionAudit.currentSlots < 25) {
-    actions.push({
-      id: "action_minion_slots",
-      title: `Unlock Minion Slot ${audit.minionAudit.currentSlots + 1} (${audit.minionAudit.craftsToNextSlot} Unique Crafts Needed)`,
-      category: "Minions",
-      priority: "🎯 SOLID PROGRESSION",
-      currentStatText: `Current: ${audit.minionAudit.currentSlots} Slots (${audit.minionAudit.uniqueCrafts} unique crafts)`,
-      targetGoalText: `Craft Tier 1–4 of ${audit.minionAudit.craftsToNextSlot} uncrafted minion types`,
-      exactRewardText: "+1 Minion Slot (+150k - 300k passive coins/day forever)",
-      estimatedCost: `~${formatNumber(audit.minionAudit.craftsToNextSlot * 80_000)} coins in Bazaar materials`,
-      actionGuidance:
-        "Crafting Tier 1 through Tier 4 of unused minions (e.g. Flower, Clay, Obsidian, Redstone) is extremely cheap and unlocks slots rapidly.",
-      inGameCommand: "/bz",
-    });
-  }
-
-  // 7. Personal Bank Gold Interest Deposit
-  const bankBalance = player?.bank ?? 0;
-  if (bankBalance < 10_000_000 && purse > 5_000_000) {
-    actions.push({
-      id: "action_bank_interest",
-      title: "Deposit Purse into Personal Bank before Season Ends",
-      category: "Economy",
-      priority: "🎯 SOLID PROGRESSION",
-      currentStatText: `Bank Balance: ${formatFull(bankBalance)} · Purse: ${formatFull(purse)}`,
-      targetGoalText: "Deposit at least 10,000,000 coins into Bank",
-      exactRewardText: `+200,000 to +500,000 coins free passive interest every SkyBlock season (31 hours)`,
-      estimatedCost: "0 coins (Depositing coins)",
-      actionGuidance:
-        "The Hypixel SkyBlock bank pays 2% interest on your balance up to your account cap every 31 real hours.",
-      inGameCommand: "/bank",
+      id: "check-fairy-souls",
+      title: "Check uncollected Fairy Souls",
+      detail:
+        "This profile has " +
+        formatFull(player.fairySouls) +
+        " collected. Open the Fairy Souls tracker in SkyBlock and choose an area you already have access to.",
+      benefit: "Fairy Soul milestones grant SkyBlock XP and unlock backpack slots.",
+      cost: "No purchase needed",
     });
   }
 
   return actions;
 }
-
-// ---------------------------------------------------------------------------
-// 3. DETECTED GEAR AUDIT & NEXT GEAR UPGRADE
-// ---------------------------------------------------------------------------
 
 export type DetectedGearReport = {
   detectedHelmet: string;

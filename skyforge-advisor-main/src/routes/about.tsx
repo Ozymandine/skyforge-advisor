@@ -33,27 +33,9 @@ function AboutPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <PageHero
-        eyebrow="Provenance & Philosophy"
         title="About SkyForge"
-        description="A real-time SkyBlock companion built on the principles of precision, live market samples, and complete client-side privacy."
+        description="SkyBlock profile lookup, market quotes, and item reference."
       />
-
-      <Section title="Zero invented numbers">
-        <p>
-          SkyBlock players make multi-million coin decisions based on tool data. When a tool
-          guesses, players lose coins.
-        </p>
-        <p>
-          SkyForge is built on a strict rule: every stat, recipe, multiplier, and price is either
-          pulled directly from the official Hypixel API, verified against game constants, or
-          computed from live market samples.
-        </p>
-        <p>
-          When a value is unknown, we show a dash or "Not available" — we never invent numbers.
-          Price history and flip-accuracy records are built from real samples recorded since the
-          site started tracking, not backfilled.
-        </p>
-      </Section>
 
       <Section title="Profile lookup">
         <p>
@@ -81,15 +63,11 @@ function AboutPage() {
         </p>
       </Section>
 
-      <Section title="Flip suggestions & accuracy">
+      <Section title="Market quotes">
         <p>
-          Flip suggestions are generated from live market spreads (Bazaar order margins after the
-          1.25% tax, and Auction listings under their lowest BIN). Every suggestion is logged and
-          later re-priced against the real market — the{" "}
-          <Link to="/flips" className="text-primary hover:underline">
-            flips page
-          </Link>{" "}
-          publishes the actual win rate and average realized margin, good or bad. No cherry-picking.
+          Bazaar spreads are per-unit estimates based on Hypixel quotes and an assumed 1.25% sell
+          fee. They assume both orders fill at the displayed prices. Auction House shows a sample of
+          active listings and their asking prices or bids.
         </p>
       </Section>
 

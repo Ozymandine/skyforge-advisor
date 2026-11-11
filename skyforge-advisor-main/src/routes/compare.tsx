@@ -109,11 +109,7 @@ function ComparePage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <PageHero
-        eyebrow="Tools"
-        title="Profile Comparison"
-        description="Head-to-head stats with mirrored bars, weight scoring and your local leaderboard."
-      />
+      <PageHero title="Profile Comparison" />
 
       {!account.connected && (
         <Panel>

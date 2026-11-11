@@ -55,7 +55,6 @@ function Connect() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <PageHero
-        eyebrow="SkyBlock"
         title="Connect your profile"
         description="Enter your Minecraft Java username to load your SkyBlock stats, gear, and progression."
       />

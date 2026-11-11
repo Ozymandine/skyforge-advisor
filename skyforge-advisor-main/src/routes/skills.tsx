@@ -39,7 +39,7 @@ import {
   HOTM_TIER_XP_REQUIREMENTS,
   type HotmNode,
 } from "@/lib/hotm-engine";
-import { DungeonFloorMap, SkillRadar } from "@/components/progression-visuals";
+import { DungeonFloorMap } from "@/components/progression-visuals";
 import { usePlayer } from "@/hooks/use-account";
 import { formatFull, formatNumber } from "@/lib/skyblock";
 import { calculateFarmingFortune } from "@/lib/farming-calculator";
@@ -258,51 +258,48 @@ function SkillsRoute() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <PageHero
-        eyebrow="Progression Intelligence"
-        title="Skills & Specialization Suites"
-        description="Skill levels, Catacombs tactical breakdowns, Crimson Isle & Kuudra hubs, The Rift Dimension, Farming Fortune, and Trophy Fish."
-      />
+      <PageHero title="Skills" />
 
       {!connected && <ConnectPrompt what="your real skill levels" />}
-      {connected && isLoading && <LoadState>Loading skill telemetry from Hypixel…</LoadState>}
+      {connected && isLoading && <LoadState>Loading skills…</LoadState>}
       {connected && error && <ErrorState error={error} />}
 
       {data && (
         <>
           {/* Sub-Navigation Tabs Grid (Equal-Width, Zero Scrollbars) */}
-          <div className="rounded-2xl border border-white/10 bg-[#0E121B]/80 backdrop-blur-xl p-2 shadow-xl">
+          <div className="rounded-2xl border border-border bg-background/35 p-2">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5">
               {[
-                { id: "overview", label: "Skills Constellation", icon: IconSparkles },
-                { id: "bestiary", label: "Bestiary & Mobs", icon: IconCrosshair },
-                { id: "dungeons", label: "Catacombs & Dungeons", icon: IconSkull },
-                { id: "kuudra", label: "Crimson & Kuudra", icon: IconFlame },
-                { id: "rift", label: "The Rift Dimension", icon: IconMoon },
-                { id: "farming", label: "Farming & Garden", icon: IconWheat },
-                { id: "mining", label: "Mining & HOTM", icon: IconPickaxe },
-                { id: "combat", label: "Combat & Magic Find", icon: IconSwords },
-                { id: "fishing", label: "Crimson Trophy Fish", icon: IconFish },
-                { id: "experiments", label: "Slayers & Experiments", icon: IconFlaskConical },
+                { id: "overview", label: "Overview", sprite: "experience_bottle" },
+                { id: "bestiary", label: "Bestiary & Mobs", sprite: "spider_eye" },
+                { id: "dungeons", label: "Catacombs & Dungeons", sprite: "bone" },
+                { id: "kuudra", label: "Crimson & Kuudra", sprite: "blaze_powder" },
+                { id: "rift", label: "The Rift Dimension", sprite: "ender_eye" },
+                { id: "farming", label: "Farming & Garden", sprite: "wheat" },
+                { id: "mining", label: "Mining & HOTM", sprite: "iron_pickaxe" },
+                { id: "combat", label: "Combat & Magic Find", sprite: "iron_sword" },
+                { id: "fishing", label: "Crimson Trophy Fish", sprite: "fishing_rod" },
+                { id: "experiments", label: "Slayers & Experiments", sprite: "book" },
               ].map((tab) => {
-                const Icon = tab.icon;
                 const active = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
+                    aria-pressed={active}
                     onClick={() => setActiveTab(tab.id as SkillTab)}
                     className={cn(
                       "group relative flex h-10 items-center justify-center gap-2 rounded-xl px-3 text-xs font-semibold transition-all duration-150 cursor-pointer select-none border",
                       active
-                        ? "bg-gradient-to-r from-emerald-500/25 via-teal-500/20 to-emerald-500/15 text-white border-emerald-500/50 shadow-md shadow-emerald-500/20"
+                        ? "bg-primary/10 text-foreground border-primary/30"
                         : "bg-white/[0.02] text-white/65 hover:bg-white/[0.06] hover:text-white border-white/[0.04] hover:border-white/10",
                     )}
                   >
-                    <Icon
-                      className={cn(
-                        "size-3.5 shrink-0 transition-colors",
-                        active ? "text-emerald-400" : "text-white/40 group-hover:text-white/80",
-                      )}
+                    <img
+                      src={"/vanilla/" + tab.sprite + ".png"}
+                      alt=""
+                      width={16}
+                      height={16}
+                      className="shrink-0 [image-rendering:pixelated]"
                     />
                     <span className="truncate">{tab.label}</span>
                     {active && (
@@ -322,8 +319,9 @@ function SkillsRoute() {
                   <div>
                     <p className="eyebrow">Skill Average</p>
                     <p className="mt-2 text-4xl font-semibold tracking-tight">
-                      {data.skillAverage.toFixed(2)}{" "}
-                      <span className="text-lg font-normal text-muted-foreground">/ 56.75</span>
+                      {data.availability && data.availability.skillKeys.length === 0
+                        ? "Unavailable"
+                        : data.skillAverage.toFixed(2)}
                     </p>
                   </div>
                   <p className="text-sm text-muted-foreground">
@@ -331,51 +329,35 @@ function SkillsRoute() {
                   </p>
                 </div>
 
-                <div className="mt-4 space-y-2">
-                  <div className="flex justify-between text-xs font-medium text-muted-foreground">
-                    <span>Progress to Max Skill Average</span>
-                    <span>{((data.skillAverage / 56.75) * 100).toFixed(1)}%</span>
-                  </div>
-                  <ProgressBar pct={Math.min(100, Math.round((data.skillAverage / 56.75) * 100))} />
-                </div>
-
-                <div className="mt-6 rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <p className="eyebrow">Skill constellation</p>
-                  <SkillRadar skills={data.skills} />
-                </div>
-
-                <div className="mt-6 grid gap-3 rounded-2xl bg-secondary/25 p-4 lg:grid-cols-2">
-                  {data.skills.map((s) => (
-                    <div
-                      key={s.key}
-                      className="glass-soft rounded-2xl px-5 py-4 transition-all duration-75 ease-out hover:scale-[1.01] hover:border-primary/30"
-                    >
-                      <div className="flex items-baseline justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                          <ItemIcon id={s.key} name={s.name} className="size-7 shrink-0" />
-                          <p className="text-lg font-semibold">
-                            {s.name} {s.level}
-                            {s.maxed && (
-                              <span className="ml-2 text-xs font-medium text-primary">MAXED</span>
-                            )}
-                          </p>
+                <ul className="mt-5 grid gap-x-8 lg:grid-cols-2">
+                  {data.skills.map((skill) => {
+                    const known =
+                      !data.availability || data.availability.skillKeys.includes(skill.key);
+                    return (
+                      <li key={skill.key} className="border-t border-border py-3">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                          <ItemIcon id={skill.key} name={skill.name} className="size-6 shrink-0" />
+                          <span className="flex-1 text-sm font-medium">{skill.name}</span>
+                          <span className="text-sm tabular-nums">
+                            {known ? "Level " + skill.level : "Unavailable"}
+                          </span>
                         </div>
-                        <p className="font-mono text-xs text-muted-foreground">
-                          {s.maxed
-                            ? `${formatNumber(s.totalXp)} XP`
-                            : `${formatNumber(s.currentXp)} / ${formatNumber(s.neededXp)} XP`}
-                        </p>
-                      </div>
-                      <div className="mt-3">
-                        <ProgressBar pct={s.pct} />
-                      </div>
-                      <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-                        <span>Cap {s.cap}</span>
-                        <span>{s.pct}%</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                        {known && (
+                          <div className="mt-2 flex items-center gap-3 pl-9">
+                            <div className="min-w-12 flex-1">
+                              <ProgressBar pct={skill.pct} />
+                            </div>
+                            <span className="text-xs tabular-nums text-muted-foreground">
+                              {skill.maxed
+                                ? "Maxed"
+                                : `${formatNumber(skill.currentXp)} / ${formatNumber(skill.neededXp)} XP`}
+                            </span>
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
               </Panel>
             </div>
           )}

@@ -103,11 +103,7 @@ function Inventory() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <PageHero
-        eyebrow="Progression"
-        title="Inventory"
-        description="Every container on the profile, decoded from the raw Hypixel item data — plus your accessories and pets."
-      />
+      <PageHero title="Inventory" />
 
       {!connected && <ConnectPrompt what="your real inventories" />}
       {connected && !data && !error && <LoadState>Decoding inventory data…</LoadState>}
