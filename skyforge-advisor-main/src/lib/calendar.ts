@@ -1,6 +1,7 @@
 // SkyBlock clock and estimated Jacob contest times.
 
 export const SKYBLOCK_EPOCH = 1560275700000; // June 11, 2019 17:55:00 UTC
+export const HYPIXEL_FIRE_SALES_URL = "https://api.hypixel.net/v2/skyblock/firesales";
 
 // Real-world time constants
 export const REAL_SECOND = 1_000;

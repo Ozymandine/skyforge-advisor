@@ -23,6 +23,7 @@ import { validatePlayerData, type PlayerDataValidated } from "./schemas";
 import { getHypixelApplicationKey } from "./env";
 import { calculateBestiary } from "./bestiary";
 import { calculateSlayerOverview } from "./slayer";
+import { HYPIXEL_FIRE_SALES_URL } from "./calendar";
 import {
   isWikiAuctionCandidate,
   summarizeWikiAuctionQuote,
@@ -282,28 +283,30 @@ export async function getElection(): Promise<{
   return result;
 }
 
-let newsCache: { at: number; data: unknown } | null = null;
+type SkyBlockNews = { title: string; text?: string; date?: string; link?: string };
 
-export async function getNews(): Promise<
-  Array<{ title?: string; text?: string; date?: string; link?: string }>
-> {
+let newsCache: { at: number; data: SkyBlockNews[] } | null = null;
+
+export async function getNews(): Promise<SkyBlockNews[]> {
   if (newsCache && Date.now() - newsCache.at < 60 * 60_000) {
-    return newsCache.data as never;
+    return newsCache.data;
   }
   const data = unwrap(
-    await getJson<{ items?: Array<Record<string, unknown>> }>(`${API}/resources/skyblock/news`),
+    await getJson<{ items?: Array<Record<string, unknown>> }>(`${API}/skyblock/news`),
   );
-  // Keep stale good value instead of flashing empty on failure.
-  if (!data) return (newsCache?.data as never) ?? [];
-  const items = (data?.["items"] ?? []).flatMap((item) => {
-    const rec = item as Record<string, unknown>;
-    const out: Array<{ title?: string; text?: string; date?: string; link?: string }> = [{}];
-    if (typeof rec["title"] === "string") out[0]!.title = rec["title"];
-    if (typeof rec["text"] === "string") out[0]!.text = rec["text"];
-    const dateObj = rec["date"] as { date?: string } | undefined;
-    if (typeof dateObj?.["date"] === "string") out[0]!.date = dateObj["date"];
-    if (typeof rec["link"] === "string") out[0]!.link = rec["link"];
-    return out[0]!.title ? [out[0]!] : [];
+  if (!Array.isArray(data?.items)) return newsCache?.data ?? [];
+  const items = data.items.flatMap((item) => {
+    if (typeof item?.["title"] !== "string" || !item["title"].trim()) return [];
+    const date = (item["date"] as { date?: unknown } | undefined)?.date;
+    const link = item["link"];
+    return [
+      {
+        title: item["title"],
+        ...(typeof item["text"] === "string" ? { text: item["text"] } : {}),
+        ...(typeof date === "string" ? { date } : {}),
+        ...(typeof link === "string" && link.startsWith("https://hypixel.net/") ? { link } : {}),
+      },
+    ];
   });
   newsCache = { at: Date.now(), data: items };
   return items;
@@ -321,9 +324,7 @@ export async function getFireSaleSnapshot(): Promise<{
     return { sales: fireSaleCache.data, status: "fresh" };
   }
   const result = unwrap(
-    await getJson<{ sales?: Array<Record<string, unknown>> }>(
-      API + "/resources/skyblock/fire_sale",
-    ),
+    await getJson<{ sales?: Array<Record<string, unknown>> }>(HYPIXEL_FIRE_SALES_URL),
   );
   if (!Array.isArray(result?.sales)) {
     return fireSaleCache

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { PageHero, Panel } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { fetchFireSaleSnapshot } from "@/lib/hypixel.functions";
-import { formatTimeRemaining, getJacobContests } from "@/lib/calendar";
+import { formatTimeRemaining, getJacobContests, HYPIXEL_FIRE_SALES_URL } from "@/lib/calendar";
 import { titleCase } from "@/lib/skyblock";
 
 export const Route = createFileRoute("/calendar")({
@@ -125,7 +125,7 @@ function Calendar() {
         </ul>
         <a
           className="mt-2 inline-block text-sm text-primary hover:underline"
-          href="https://api.hypixel.net/v2/resources/skyblock/fire_sale"
+          href={HYPIXEL_FIRE_SALES_URL}
         >
           Hypixel Fire Sale feed
         </a>
