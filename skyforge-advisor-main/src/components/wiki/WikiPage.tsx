@@ -27,7 +27,7 @@ import {
   IconExternalLink,
 } from "@/components/ui/icon";
 import { Link } from "@tanstack/react-router";
-import { memo, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { memo, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -918,6 +918,7 @@ function PriceTile({
 }
 
 function WikiItemDetailCard({ item, onClose }: { item: WikiItem; onClose: () => void }) {
+  const cardRef = useRef<HTMLDivElement>(null);
   const meta = rarityMeta(item.rarity);
   const glow = RARITY_GLOW[normalizeRarity(item.rarity)] ?? "from-primary/20";
   const allStats = Object.entries(item.stats ?? {}).filter(([, value]) => Number.isFinite(value));
@@ -932,6 +933,13 @@ function WikiItemDetailCard({ item, onClose }: { item: WikiItem; onClose: () => 
   const enchantments = item.enchantments ?? [];
   const reforges = item.reforges ?? [];
   const upgradePath = item.upgradePath ?? [];
+
+  useEffect(() => {
+    const card = cardRef.current;
+    if (card && window.matchMedia("(width < 80rem)").matches) {
+      card.scrollIntoView({ block: "start" });
+    }
+  }, []);
 
   // Esc closes the card without leaving the page.
   useEffect(() => {
@@ -995,8 +1003,9 @@ function WikiItemDetailCard({ item, onClose }: { item: WikiItem; onClose: () => 
 
   return (
     <div
+      ref={cardRef}
       className={cn(
-        "relative flex flex-col overflow-hidden rounded-2xl border",
+        "relative flex scroll-mt-24 flex-col overflow-hidden rounded-2xl border",
         "border-border/70 shadow-xl backdrop-blur-md",
         "xl:max-h-[calc(100vh-7rem)]",
       )}
