@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
 import { ConnectPrompt, ErrorState } from "@/components/data-states";
 import { SkeletonPage } from "@/components/motion";
 import { PageHero, Panel, ProgressBar } from "@/components/layout/app-shell";
@@ -8,40 +7,7 @@ import { ItemIcon } from "@/components/ui/item-icon";
 import { RankBadge } from "@/components/ui/rank-badge";
 import { usePlayer } from "@/hooks/use-account";
 import { formatFull } from "@/lib/skyblock";
-import { calculateSkyBlockLevel } from "@/lib/skyblock-level";
-
-function getCategoryLink(id: string): { to: string; search?: Record<string, string> } {
-  switch (id) {
-    case "skills":
-      return { to: "/skills", search: { tab: "overview" } };
-    case "dungeons":
-      return { to: "/skills", search: { tab: "dungeons" } };
-    case "slayers":
-      return { to: "/skills", search: { tab: "experiments" } };
-    case "collections":
-    case "minions":
-      return { to: "/collections" };
-    case "bestiary":
-      return { to: "/skills", search: { tab: "bestiary" } };
-    case "fairy_souls":
-      return { to: "/skills", search: { tab: "overview" } };
-    case "museum":
-    case "accessories":
-      return { to: "/inventory" };
-    case "hotm":
-      return { to: "/skills", search: { tab: "mining" } };
-    case "garden":
-      return { to: "/skills", search: { tab: "farming" } };
-    case "crimson":
-      return { to: "/skills", search: { tab: "kuudra" } };
-    case "rift":
-      return { to: "/skills", search: { tab: "rift" } };
-    case "pets":
-      return { to: "/skills", search: { tab: "combat" } };
-    default:
-      return { to: "/skills" };
-  }
-}
+import { getReportedSkyBlockLevel } from "@/lib/skyblock-level";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -49,8 +15,7 @@ export const Route = createFileRoute("/dashboard")({
       { title: "Dashboard — SkyForge" },
       {
         name: "description",
-        content:
-          "Command center overview of your SkyBlock profile: completion, highlights and live sync status.",
+        content: "Your SkyBlock profile, progress, and latest reported stats.",
       },
       { property: "og:title", content: "Dashboard — SkyForge" },
       {
@@ -71,14 +36,17 @@ export const Route = createFileRoute("/dashboard")({
 
 function Dashboard() {
   const { data, isLoading, error, connected } = usePlayer();
-  const estimatedLevel = useMemo(() => calculateSkyBlockLevel(data), [data]);
   if (!connected) return <ConnectPrompt what="your SkyBlock dashboard" />;
   if (isLoading) return <SkeletonPage />;
   if (error) return <ErrorState error={error} />;
   if (!data) return <p role="status">Profile data is unavailable.</p>;
 
   const profile = data.profiles.find((entry) => entry.profileId === data.activeProfileId);
-  const balance = data.purse + (data.bank ?? 0);
+  const purse = data.availability?.purse ? data.purse : null;
+  const balance = purse !== null && data.bank !== null ? purse + data.bank : null;
+  const skyBlockLevel = getReportedSkyBlockLevel(data.skyBlockXp);
+  const mainSkills = data.skills.filter((skill) => !["RUNECRAFTING", "SOCIAL"].includes(skill.key));
+  const fairySouls = data.availability?.fairySouls ? data.fairySouls : null;
   const topSkills = data.skills
     .filter((skill) => !data.availability || data.availability.skillKeys.includes(skill.key))
     .sort((a, b) => b.level - a.level || b.totalXp - a.totalXp)
@@ -103,10 +71,12 @@ function Dashboard() {
                 username: data.username,
                 uuid: data.uuid,
                 profileName: profile?.cuteName ?? "SkyBlock",
-                skillAverage: data.skillAverage,
-                netWorth: balance,
-                fairySouls: data.fairySouls,
-                catacombsLevel: data.dungeons?.catacombsLevel ?? null,
+                skillAverage: mainSkills.length ? data.skillAverage : null,
+                coins: balance,
+                fairySouls,
+                catacombsLevel: data.availability?.catacombsXp
+                  ? (data.dungeons?.catacombsLevel ?? null)
+                  : null,
                 collectionsCount: data.collections.length,
               }}
             />
@@ -115,19 +85,21 @@ function Dashboard() {
         <dl className="grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-4">
           {[
             [
-              "Skill average",
-              data.availability && !data.availability.skillKeys.length
-                ? "Unavailable"
-                : data.skillAverage.toFixed(2),
+              "Available skill average",
+              mainSkills.length ? data.skillAverage.toFixed(2) : "Unavailable",
             ],
-            [data.bank == null ? "Purse (bank unavailable)" : "Purse + bank", formatFull(balance)],
             [
-              "Fairy Souls",
-              data.availability?.fairySouls === false ? "Unavailable" : formatFull(data.fairySouls),
+              balance === null ? "Purse" : "Purse + bank",
+              balance !== null
+                ? formatFull(balance)
+                : purse !== null
+                  ? formatFull(purse)
+                  : "Unavailable",
             ],
+            ["Fairy Souls", fairySouls === null ? "Unavailable" : formatFull(fairySouls)],
             [
               "Catacombs XP",
-              data.dungeons && data.availability?.dungeonCompletions !== false
+              data.dungeons && data.availability?.catacombsXp
                 ? formatFull(data.dungeons.catacombsXp)
                 : "Unavailable",
             ],
@@ -140,38 +112,24 @@ function Dashboard() {
         </dl>
       </Panel>
       <Panel>
-        <h2 className="text-lg font-semibold">SkyBlock level estimate</h2>
-        <div className="mt-3 flex flex-wrap justify-between gap-2 text-sm">
-          <span>Level {estimatedLevel.level}</span>
-          <span className="text-muted-foreground">
-            {estimatedLevel.xpToNextLevel} estimated XP to level {estimatedLevel.level + 1}
-          </span>
-        </div>
-        <div className="mt-2">
-          <ProgressBar pct={estimatedLevel.progressPct} />
-        </div>
-        <details className="mt-4 border-t border-border pt-3">
-          <summary className="cursor-pointer text-sm font-medium">Estimated XP breakdown</summary>
-          <ul className="mt-2 divide-y divide-border">
-            {estimatedLevel.categories.map((category) => {
-              const target = getCategoryLink(category.id);
-              return (
-                <li key={category.id}>
-                  <Link
-                    to={target.to}
-                    search={target.search ?? {}}
-                    className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2.5 text-sm hover:underline"
-                  >
-                    <span>{category.name}</span>
-                    <span className="tabular-nums text-muted-foreground">
-                      {formatFull(category.currentXp)} XP
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </details>
+        <h2 className="text-lg font-semibold">SkyBlock level</h2>
+        {skyBlockLevel ? (
+          <>
+            <div className="mt-3 flex flex-wrap justify-between gap-2 text-sm">
+              <span>Level {skyBlockLevel.level}</span>
+              <span className="text-muted-foreground">
+                {skyBlockLevel.remainingXp} XP to level {skyBlockLevel.level + 1}
+              </span>
+            </div>
+            <div className="mt-2">
+              <ProgressBar pct={skyBlockLevel.progress} />
+            </div>
+          </>
+        ) : (
+          <p className="mt-2 text-sm text-muted-foreground">
+            Hypixel has no SkyBlock XP for this profile.
+          </p>
+        )}
       </Panel>
       <Panel>
         <div className="flex flex-wrap items-center justify-between gap-2">

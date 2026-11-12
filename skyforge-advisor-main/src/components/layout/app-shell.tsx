@@ -1003,7 +1003,7 @@ export function Panel({
   );
 }
 
-export function StatTile({ label, value, sub }: { label: string; value: string; sub: string }) {
+export function StatTile({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="group relative px-6 py-5 transition-colors duration-75 ease-out hover:bg-white/[0.04]">
       <p className="eyebrow group-hover:text-emerald-400/90 transition-colors duration-75">
@@ -1012,16 +1012,14 @@ export function StatTile({ label, value, sub }: { label: string; value: string; 
       <p className="mt-3 text-3xl font-semibold tracking-tight text-foreground group-hover:text-emerald-300 transition-colors duration-75">
         {value}
       </p>
-      <p className="mt-2 text-xs text-muted-foreground group-hover:text-white/80 transition-colors duration-75">
-        {sub}
-      </p>
+      {sub && <p className="mt-2 text-xs text-muted-foreground">{sub}</p>}
     </div>
   );
 }
 
-export function StatRow({ stats }: { stats: { label: string; value: string; sub: string }[] }) {
+export function StatRow({ stats }: { stats: { label: string; value: string; sub?: string }[] }) {
   return (
-    <div className="grid grid-cols-1 divide-y divide-white/10 rounded-3xl border border-white/10 bg-slate-950/75 backdrop-blur-xl shadow-2xl sm:grid-cols-2 sm:divide-y-0 sm:divide-x lg:grid-cols-4 lg:divide-x lg:divide-white/10 overflow-hidden">
+    <div className="grid grid-cols-1 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-y-0">
       {stats.map((s) => (
         <StatTile key={s.label} {...s} />
       ))}

@@ -93,9 +93,19 @@ describe("Advisor next steps", () => {
 
   it("uses recorded floor completions and measured skill progress", () => {
     const actions = generateTailoredActionPlan({
+      activeProfileId: "p1",
+      profiles: [{ profileId: "p1", gameMode: "Classic" }],
+      availability: {
+        skillKeys: ["COMBAT", "FARMING"],
+        containerIds: [],
+        fairySouls: true,
+        purse: false,
+        dungeonCompletions: true,
+        catacombsXp: true,
+      },
       fairySouls: 8,
       skills: [
-        { name: "Combat", key: "COMBAT", level: 10, currentXp: 400, neededXp: 500 },
+        { name: "Combat", key: "COMBAT", level: 16, currentXp: 400, neededXp: 500 },
         { name: "Farming", key: "FARMING", level: 3, currentXp: 20, neededXp: 150 },
       ],
       dungeons: {
@@ -109,8 +119,8 @@ describe("Advisor next steps", () => {
     });
 
     expect(actions.map((action) => action.title)).toEqual([
-      "Run Floor 3 again",
-      "Reach Combat 11",
+      "Run Floor 4",
+      "Reach Combat 17",
       "Check uncollected Fairy Souls",
     ]);
     expect(actions[1]?.detail).toContain("100 XP");
@@ -119,6 +129,44 @@ describe("Advisor next steps", () => {
   it("does not recommend clearing an unverified floor from a sparse record", () => {
     const actions = generateTailoredActionPlan({ dungeons: { catacombsLevel: 10, floors: [] } });
     expect(actions).toEqual([]);
+  });
+
+  it("only presents Master Mode 7 as a future goal below its verified requirement", () => {
+    const player = {
+      activeProfileId: "p1",
+      profiles: [{ profileId: "p1", gameMode: "Ironman" }],
+      availability: {
+        skillKeys: ["COMBAT"],
+        containerIds: [],
+        fairySouls: false,
+        purse: false,
+        dungeonCompletions: true,
+        catacombsXp: true,
+      },
+      skills: [{ key: "COMBAT", level: 45 }],
+      dungeons: {
+        catacombsLevel: 34,
+        floors: [{ name: "Floor 7", completions: 1 }],
+        masterMode: [{ name: "M6", completions: 2 }],
+      },
+    };
+    expect(generateTailoredActionPlan(player)[0]).toMatchObject({
+      title: "Reach Catacombs 36",
+      futureGoal: true,
+      detail: expect.stringContaining("Master Mode Floor 7"),
+    });
+    expect(
+      generateTailoredActionPlan({
+        ...player,
+        dungeons: { ...player.dungeons, catacombsLevel: 36 },
+      })[0]?.title,
+    ).toBe("Run Master Mode Floor 7");
+    expect(
+      generateTailoredActionPlan({
+        ...player,
+        profiles: [{ profileId: "p1", gameMode: "Stranded" }],
+      }),
+    ).toEqual([]);
   });
 });
 

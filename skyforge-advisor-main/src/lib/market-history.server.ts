@@ -362,10 +362,7 @@ function buildPriceMap(db: MarketStore): Map<string, number> {
   const prices = new Map<string, number>();
   for (const [id, points] of Object.entries(db.series)) {
     const latest = points[points.length - 1];
-    if (latest) {
-      // Prefer BIN, then bazaar buy price.
-      prices.set(id, latest.bin ?? latest.b ?? latest.s ?? 0);
-    }
+    if (latest?.b !== undefined && latest.b > 0) prices.set(id, latest.b);
   }
   return prices;
 }
@@ -503,8 +500,10 @@ export function getMarketHistory(
   return result;
 }
 
-export function getTrackedIds(): string[] {
-  return Object.keys(load().series);
+export function getTrackedIds(bazaarOnly = false): string[] {
+  return Object.entries(load().series)
+    .filter(([, points]) => !bazaarOnly || points.some((point) => point.b !== undefined))
+    .map(([id]) => id);
 }
 
 /* ============================================================================
@@ -568,7 +567,8 @@ export function getFlipAccuracy(
   let expectedSum = 0;
   let resolved = 0;
 
-  for (const flip of db.flipLog) {
+  const bazaarLog = db.flipLog.filter((flip) => flip.kind === "bazaar");
+  for (const flip of bazaarLog) {
     if (now - flip.ts < minAgeMs) continue;
     const current = currentPrices.get(flip.itemId);
     if (current == null || current <= 0 || flip.price <= 0) continue;
@@ -585,7 +585,7 @@ export function getFlipAccuracy(
   }
 
   return {
-    tracked: db.flipLog.length,
+    tracked: bazaarLog.length,
     resolved,
     wins,
     losses,

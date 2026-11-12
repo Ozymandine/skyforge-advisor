@@ -77,6 +77,8 @@ export type ProfileAudit = {
 
 export type AdvisorPlayerInput = {
   availability?: ProfileAvailability | undefined;
+  activeProfileId?: string | undefined;
+  profiles?: Array<{ profileId: string; gameMode: string }> | undefined;
   username?: string | undefined;
   uuid?: string | undefined;
   purse?: number | undefined;
@@ -105,6 +107,7 @@ export type AdvisorPlayerInput = {
     | {
         catacombsLevel?: number | undefined;
         floors?: Array<{ name: string; completions: number }> | undefined;
+        masterMode?: Array<{ name: string; completions: number }> | undefined;
       }
     | undefined;
   containers?: Array<{ id: string; items: InventoryItem[] }> | undefined;
@@ -363,35 +366,88 @@ export type TailoredAction = {
   cost?: string;
   link?: "/skills" | "/inventory";
   marketItemId?: string;
+  futureGoal?: boolean;
 };
+
+// Published Catacombs entry requirements for floors 1–7. Each floor also
+// requires the preceding clear. Master Mode starts with a normal Floor 7 clear.
+const normalFloorLevels = [0, 1, 3, 5, 9, 14, 19, 24];
+const masterFloorLevels = [0, 24, 26, 28, 30, 32, 34, 36];
+
+function highestVerifiedFloor(
+  floors: Array<{ name: string; completions: number }> | undefined,
+  pattern: RegExp,
+) {
+  let highest: number | null = null;
+  for (const floor of floors ?? []) {
+    const match = pattern.exec(floor.name);
+    if (!match || !Number.isFinite(floor.completions) || floor.completions <= 0) continue;
+    const number = Number(match[1]);
+    highest = highest === null ? number : Math.max(highest, number);
+  }
+  return highest;
+}
+
+function dungeonNextStep(player: AdvisorPlayerInput): TailoredAction | null {
+  const mode = player.profiles?.find(
+    (profile) => profile.profileId === player.activeProfileId,
+  )?.gameMode;
+  if (mode !== "Classic" && mode !== "Ironman") return null;
+  const availability = player.availability;
+  const combat = player.skills?.find((skill) => skill.key === "COMBAT")?.level;
+  const level = player.dungeons?.catacombsLevel;
+  if (
+    !availability?.catacombsXp ||
+    !availability.dungeonCompletions ||
+    !availability.skillKeys.includes("COMBAT") ||
+    typeof combat !== "number" ||
+    combat < 15 ||
+    typeof level !== "number" ||
+    !Number.isFinite(level)
+  ) {
+    return null;
+  }
+
+  const normal = highestVerifiedFloor(player.dungeons?.floors, /^Floor ([0-7])$/);
+  if (normal === null) return null;
+  const master =
+    normal === 7 ? highestVerifiedFloor(player.dungeons?.masterMode, /^M([1-7])$/) : null;
+  const next = normal < 7 ? normal + 1 : (master ?? 0) + 1;
+  const requirements = normal < 7 ? normalFloorLevels : masterFloorLevels;
+  const requiredLevel = requirements[next];
+  if (requiredLevel === undefined) return null;
+  const floor = normal < 7 ? `Floor ${next}` : `Master Mode Floor ${next}`;
+  const prior =
+    master !== null ? `Master Mode Floor ${master}` : normal === 0 ? "Entrance" : `Floor ${normal}`;
+  if (level >= requiredLevel) {
+    return {
+      id: "dungeon-next-floor",
+      title: `Run ${floor}`,
+      detail: `You have a recorded ${prior} clear and Catacombs ${level}. This floor requires Catacombs ${requiredLevel}.`,
+      benefit: "A clear advances the Catacombs floor progression.",
+      link: "/skills",
+    };
+  }
+  const priorLevel = master !== null ? masterFloorLevels[master] : normalFloorLevels[normal];
+  const training =
+    priorLevel !== undefined && level >= priorLevel ? ` Repeat ${prior} for XP.` : "";
+  return {
+    id: "dungeon-level-goal",
+    title: `Reach Catacombs ${requiredLevel}`,
+    detail: `${floor} requires Catacombs ${requiredLevel} and a ${prior} clear. Your profile is Catacombs ${level} and has that clear.${training}`,
+    benefit: `Meets the remaining level requirement for ${floor}.`,
+    link: "/skills",
+    futureGoal: true,
+  };
+}
 
 export function generateTailoredActionPlan(player?: AdvisorPlayerInput | null): TailoredAction[] {
   if (!player) return [];
   const actions: TailoredAction[] = [];
   const availability = player.availability;
 
-  // Repeat only a floor the profile has actually cleared. Skill XP and net
-  // worth cannot establish an unlocked floor, and sparse records omit floors.
-  const completedFloor =
-    availability?.dungeonCompletions === false
-      ? undefined
-      : player.dungeons?.floors
-          ?.filter((floor) => /^Floor [1-7]$/.test(floor.name) && floor.completions > 0)
-          .sort((a, b) => Number(b.name.at(-1)) - Number(a.name.at(-1)))[0];
-  if (completedFloor) {
-    actions.push({
-      id: "repeat-dungeon-floor",
-      title: "Run " + completedFloor.name + " again",
-      detail:
-        "This profile has " +
-        formatFull(completedFloor.completions) +
-        " recorded " +
-        (completedFloor.completions === 1 ? "clear" : "clears") +
-        " on this floor. Check Mort for current entry requirements.",
-      benefit: "Earn Catacombs XP without assuming the next floor is unlocked.",
-      link: "/skills",
-    });
-  }
+  const dungeon = dungeonNextStep(player);
+  if (dungeon) actions.push(dungeon);
 
   const nextSkill = (player.skills ?? [])
     .filter(
@@ -399,7 +455,7 @@ export function generateTailoredActionPlan(player?: AdvisorPlayerInput | null): 
         skill.name &&
         skill.key &&
         !["SOCIAL", "RUNECRAFTING"].includes(skill.key) &&
-        (!availability || availability.skillKeys.includes(skill.key)) &&
+        availability?.skillKeys.includes(skill.key) &&
         !skill.maxed &&
         typeof skill.level === "number" &&
         typeof skill.neededXp === "number" &&
@@ -423,7 +479,7 @@ export function generateTailoredActionPlan(player?: AdvisorPlayerInput | null): 
   }
 
   if (
-    availability?.fairySouls !== false &&
+    availability?.fairySouls === true &&
     typeof player.fairySouls === "number" &&
     Number.isFinite(player.fairySouls) &&
     player.fairySouls >= 0 &&

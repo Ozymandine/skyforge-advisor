@@ -6,7 +6,11 @@ import { usePlayer } from "@/hooks/use-account";
 import { useAuctionQuote } from "@/hooks/use-auction-quote";
 import { generateTailoredActionPlan } from "@/lib/advisor-engine";
 import {
+  JUNGLE_AMULET_ID,
   RED_CLAW_ARTIFACT_ID,
+  jungleAmuletBudget,
+  recommendJungleAmulet,
+  recommendOdawaTrade,
   recommendRedClawUpgrade,
   redClawUpgradeBudget,
 } from "@/lib/advisor-market";
@@ -20,13 +24,25 @@ function AdvisorRoute() {
   const { data, isLoading, error, connected } = usePlayer();
   const baseActions = useMemo(() => generateTailoredActionPlan(data), [data]);
   const budget = useMemo(() => redClawUpgradeBudget(error ? undefined : data), [data, error]);
+  const miningBudget = useMemo(() => jungleAmuletBudget(error ? undefined : data), [data, error]);
   const market = useAuctionQuote(RED_CLAW_ARTIFACT_ID, budget !== null);
-  const upgrade = recommendRedClawUpgrade(
-    budget,
-    market.isError || market.expired ? undefined : market.quote,
-    Date.now(),
-  );
+  const miningMarket = useAuctionQuote(JUNGLE_AMULET_ID, miningBudget !== null);
+  const upgrade =
+    recommendRedClawUpgrade(
+      budget,
+      market.isError || market.expired ? undefined : market.quote,
+      Date.now(),
+    ) ??
+    recommendJungleAmulet(
+      miningBudget,
+      miningMarket.isError || miningMarket.expired ? undefined : miningMarket.quote,
+      Date.now(),
+    ) ??
+    recommendOdawaTrade(error ? undefined : data);
   const actions = upgrade ? [...baseActions, upgrade] : baseActions;
+  const checkingMarket =
+    (budget !== null && !market.quote && !market.isError) ||
+    (miningBudget !== null && !miningMarket.quote && !miningMarket.isError);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -56,6 +72,9 @@ function AdvisorRoute() {
                         {index + 1}.
                       </span>
                       <h3 className="text-base font-semibold">{action.title}</h3>
+                      {action.futureGoal && (
+                        <span className="text-xs text-muted-foreground">Future goal</span>
+                      )}
                     </div>
                     <div className="mt-2 space-y-2 pl-6 text-sm leading-relaxed">
                       <p>{action.detail}</p>
@@ -64,7 +83,7 @@ function AdvisorRoute() {
                       {action.link && (
                         <Link
                           to={action.link}
-                          {...(action.id === "repeat-dungeon-floor"
+                          {...(action.id.startsWith("dungeon-")
                             ? { search: { tab: "dungeons" } }
                             : {})}
                           className="inline-block text-primary hover:underline"
@@ -85,9 +104,9 @@ function AdvisorRoute() {
                   </li>
                 ))}
               </ol>
-            ) : budget !== null && !market.quote && !market.isError ? (
+            ) : checkingMarket ? (
               <p role="status" className="mt-3 text-sm text-muted-foreground">
-                Checking Red Claw Artifact prices…
+                Checking comparable Auction House prices…
               </p>
             ) : (
               <p className="mt-3 text-sm text-muted-foreground">

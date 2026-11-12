@@ -46,20 +46,6 @@ export const fetchAuctions = createServerFn({ method: "GET" }).handler(async () 
   // Limit the listing sample payload to the soonest-ending rows.
   const entries = [...data.entries].sort((a, b) => a.endsInMs - b.endsInMs).slice(0, 720);
 
-  // Record lowest-BIN observations into the market history store.
-  const { recordBinSample } = await import("./market-history.server");
-  const bins = new Map<string, number>();
-  for (const entry of data.entries) {
-    if (entry.id && entry.lowestBin != null && entry.lowestBin > 0) {
-      const existing = bins.get(entry.id);
-      if (existing == null || entry.lowestBin < existing) {
-        bins.set(entry.id, entry.lowestBin);
-      }
-    }
-  }
-  if (!data.stale && data.lastUpdated > 0)
-    recordBinSample([...bins].map(([id, lowestBin]) => ({ id, lowestBin })));
-
   return { ...data, entries };
 });
 
@@ -73,7 +59,7 @@ export const fetchPriceHistory = createServerFn({ method: "POST" })
 
 export const fetchTrackedIds = createServerFn({ method: "GET" }).handler(async () => {
   const { getTrackedIds } = await import("./market-history.server");
-  return getTrackedIds();
+  return getTrackedIds(true);
 });
 
 /**
@@ -92,29 +78,20 @@ export const sampleMarket = createServerFn({ method: "GET" }).handler(async () =
     return { sampled: false, throttled: true as const, at: now };
   }
   lastSampleMarketAt = now;
-  const { getBazaar, getAuctions } = await import("./hypixel.server");
+  const { getBazaar } = await import("./hypixel.server");
   const market = await import("./market-history.server");
-
-  const [bazaar, auctions] = await Promise.all([getBazaar(), getAuctions(2)]);
-
-  const bins = new Map<string, number>();
-  for (const entry of auctions.entries) {
-    if (entry.id && entry.lowestBin != null && entry.lowestBin > 0) {
-      const existing = bins.get(entry.id);
-      if (existing == null || entry.lowestBin < existing) bins.set(entry.id, entry.lowestBin);
-    }
-  }
-
-  const sampled = market.recordMarketSample({
-    products: bazaar.products.map((p) => ({
-      id: p.id,
-      buyPrice: p.buyPrice,
-      sellPrice: p.sellPrice,
-      buyMovingWeek: p.buyMovingWeek,
-    })),
-  });
-  market.recordBinSample([...bins].map(([id, lowestBin]) => ({ id, lowestBin })));
-
+  const bazaar = await getBazaar();
+  const sampled =
+    !bazaar.stale &&
+    bazaar.lastUpdated > 0 &&
+    market.recordMarketSample({
+      products: bazaar.products.map((product) => ({
+        id: product.id,
+        buyPrice: product.buyPrice,
+        sellPrice: product.sellPrice,
+        buyMovingWeek: product.buyMovingWeek,
+      })),
+    });
   return { sampled, at: Date.now() };
 });
 
@@ -123,17 +100,10 @@ export const fetchFlipAccuracy = createServerFn({ method: "GET" }).handler(async
     import("./hypixel.server"),
     import("./market-history.server"),
   ]);
-  const { getAuctions } = await import("./hypixel.server");
-  const [bazaar, auctions] = await Promise.all([getBazaar(), getAuctions(6)]);
-
-  const prices = new Map<string, number>();
-  for (const p of bazaar.products) prices.set(p.id, p.sellPrice);
-  for (const e of auctions.entries) {
-    if (e.id && e.lowestBin != null) {
-      const existing = prices.get(e.id);
-      if (existing == null || e.lowestBin < existing) prices.set(e.id, e.lowestBin);
-    }
-  }
+  const bazaar = await getBazaar();
+  const prices = bazaar.stale
+    ? new Map<string, number>()
+    : new Map(bazaar.products.map((product) => [product.id, product.sellPrice]));
   return market.getFlipAccuracy(prices);
 });
 
@@ -298,6 +268,19 @@ export const fetchExternalPriceHistory = createServerFn({ method: "POST" })
 export const fetchItems = createServerFn({ method: "GET" }).handler(async () => {
   const { getItems } = await import("./hypixel.server");
   return getItems();
+});
+
+export const fetchSimulatorWeapons = createServerFn({ method: "GET" }).handler(async () => {
+  const [{ getItems }, { buildWeaponCatalog }] = await Promise.all([
+    import("./hypixel.server"),
+    import("./damage-simulator"),
+  ]);
+  return buildWeaponCatalog(await getItems());
+});
+
+export const fetchCollectionTiers = createServerFn({ method: "GET" }).handler(async () => {
+  const { getOfficialCollectionTiers } = await import("./hypixel.server");
+  return getOfficialCollectionTiers();
 });
 
 /**

@@ -200,9 +200,6 @@ export type BazaarProduct = {
   sellVolume: number;
   buyMovingWeek: number;
   sellMovingWeek: number;
-  profitPerHour: number;
-  liquidity: number;
-  health: number;
 };
 
 export type AuctionEntry = {
@@ -215,8 +212,6 @@ export type AuctionEntry = {
   price: number;
   /** Current top bid for non-BIN auctions (null for BIN). */
   topBid: number | null;
-  lowestBin: number | null;
-  profit: number;
   endsInMs: number;
   endsAt?: number;
   bids: number;
@@ -227,6 +222,7 @@ export type InventoryItem = {
   slot: number;
   name: string;
   id: string;
+  instanceId?: string | undefined;
   texture?: string | undefined;
   rarity: string;
   count: number;
@@ -236,6 +232,7 @@ export type InventoryItem = {
   reforge?: string | undefined;
   /** Dungeon stars (0–10). */
   stars?: number | undefined;
+  rarityUpgrades?: number | undefined;
   hotPotatoBooks?: number | undefined;
   /** Gemstone slots filled, keyed by slot name. */
   gems?: Record<string, string> | undefined;
@@ -265,39 +262,19 @@ export type ProfileSummary = {
   selected: boolean;
 };
 
-/** Cumulative XP required per pet level (levels 1–100). */
-export const PET_XP_PER_LEVEL = [
-  100, 215, 330, 450, 570, 690, 810, 930, 1050, 1170, 1290, 1410, 1530, 1650, 1770, 1890, 2010,
-  2130, 2250, 2370, 2500, 2630, 2760, 2890, 3020, 3150, 3280, 3410, 3540, 3670, 3800, 3930, 4060,
-  4190, 4320, 4450, 4580, 4710, 4840, 4970, 5100, 5240, 5380, 5520, 5660, 5800, 5940, 6080, 6220,
-  6360, 6500, 6650, 6800, 6950, 7100, 7250, 7400, 7550, 7700, 7850, 8000, 8200, 8400, 8600, 8800,
-  9000, 9200, 9400, 9600, 9800, 10000, 10300, 10600, 10900, 11200, 11500, 11800, 12100, 12400,
-  12700, 13000, 13500, 14000, 14500, 15000, 15500, 16000, 16500, 17000, 17500, 18000, 18500, 19000,
-  19500, 20000, 21000, 22000, 23000, 24000, 25000,
-];
-
-export function computePetLevel(xp: number): number {
-  let remaining = Math.max(0, xp);
-  let level = 1;
-  for (const req of PET_XP_PER_LEVEL) {
-    if (remaining >= req) {
-      remaining -= req;
-      level += 1;
-    } else break;
-  }
-  return Math.min(100, level);
-}
-
 export type PetInfo = {
+  typeId?: string | undefined;
+  instanceId?: string | undefined;
   name: string;
   rarity: string;
-  level: number;
-  xp: number;
+  level: number | null;
+  maxLevel?: number | undefined;
+  xp: number | null;
   /** True when this pet is currently summoned. */
-  active?: boolean;
-  heldItem?: string;
-  skin?: string;
-  candyUsed?: number;
+  active?: boolean | undefined;
+  heldItem?: string | undefined;
+  skin?: string | undefined;
+  candyUsed?: number | undefined;
 };
 
 // XP required per dungeon level, from the NEU leveling dataset. Level 50 is
@@ -423,6 +400,8 @@ export type ProfileAvailability = {
   fairySouls: boolean;
   purse: boolean;
   dungeonCompletions: boolean;
+  catacombsXp?: boolean | undefined;
+  collections?: boolean | undefined;
 };
 
 export type PlayerData = {
@@ -431,6 +410,7 @@ export type PlayerData = {
   uuid: string;
   profiles: ProfileSummary[];
   activeProfileId: string;
+  skyBlockXp?: number | undefined;
   skills: SkillProgress[];
   skillAverage: number;
   totalSkillXp: number;

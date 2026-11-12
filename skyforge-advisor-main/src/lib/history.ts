@@ -8,9 +8,10 @@
 export type ProfileSnapshot = {
   /** Epoch ms of the snapshot. */
   t: number;
-  /** Purse + bank at snapshot time. */
-  netWorth: number;
-  skillAverage: number;
+  /** Purse + bank, when both were reported. Older snapshots omit this field. */
+  coins?: number | null;
+  skillAverage: number | null;
+  reported?: true;
   totalSkillXp: number;
   fairySouls: number;
   collections: number;
@@ -63,6 +64,7 @@ export type SnapshotSource = {
   totalSkillXp: number;
   fairySouls: number;
   collections: unknown[];
+  availability?: { purse: boolean; skillKeys: string[] } | undefined;
 };
 
 export function recordSnapshot(data: SnapshotSource): void {
@@ -73,8 +75,13 @@ export function recordSnapshot(data: SnapshotSource): void {
 
   const snapshot: ProfileSnapshot = {
     t: now,
-    netWorth: data.purse + (data.bank ?? 0),
-    skillAverage: data.skillAverage,
+    coins: data.availability?.purse && data.bank !== null ? data.purse + data.bank : null,
+    skillAverage: data.availability?.skillKeys.some(
+      (key) => key !== "SOCIAL" && key !== "RUNECRAFTING",
+    )
+      ? data.skillAverage
+      : null,
+    reported: true,
     totalSkillXp: data.totalSkillXp,
     fairySouls: data.fairySouls,
     collections: data.collections.length,

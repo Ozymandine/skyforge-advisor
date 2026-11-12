@@ -2,18 +2,35 @@ export const WIKI_AUCTION_PAGES = 24;
 export const MIN_COMPARABLE_LISTINGS = 3;
 export const WIKI_AUCTION_MAX_AGE_MS = 5 * 60_000;
 
-const supportedRarities = new Map([
-  ["JUNGLE_AMULET", "UNCOMMON"],
-  ["RED_CLAW_ARTIFACT", "EPIC"],
-]);
+const variants = new Map(
+  Object.entries({
+    JUNGLE_AMULET: { rarity: "UNCOMMON", category: "accessories" },
+    RED_CLAW_ARTIFACT: { rarity: "EPIC", category: "accessories" },
+    GRAVITY_TALISMAN: { rarity: "UNCOMMON", category: "accessories" },
+    FISH_AFFINITY_TALISMAN: { rarity: "RARE", category: "accessories" },
+    ARTIFACT_POTION_AFFINITY: { rarity: "RARE", category: "accessories" },
+    LUMBERJACK_ARTIFACT: { rarity: "RARE", category: "accessories" },
+    ENDER_ARTIFACT: { rarity: "EPIC", category: "accessories" },
+    ASPECT_OF_THE_END: { rarity: "RARE", category: "weapon" },
+    ASPECT_OF_THE_VOID: { rarity: "EPIC", category: "weapon" },
+    LIVID_DAGGER: { rarity: "LEGENDARY", category: "weapon" },
+  } satisfies Record<string, { rarity: string; category: "accessories" | "weapon" }>),
+);
 
 export function wikiAuctionRarity(itemId: string): string | undefined {
-  return supportedRarities.get(itemId);
+  return variants.get(itemId)?.rarity;
 }
 
-const baseRarities = new Set(supportedRarities.values());
+const candidateTypes = new Set(
+  Array.from(variants.values(), ({ category, rarity }) => `${category}:${rarity}`),
+);
 const baseTags = new Set(["HideFlags", "SkullOwner", "display", "ExtraAttributes"]);
 const identityAttributes = new Set(["id", "uuid", "timestamp"]);
+
+export function matchesWikiAuctionVariant(itemId: string, tier: string, category: string): boolean {
+  const variant = variants.get(itemId);
+  return variant?.rarity === tier && variant.category === category;
+}
 
 export function isWikiAuctionCandidate(auction: {
   bin: boolean;
@@ -23,25 +40,29 @@ export function isWikiAuctionCandidate(auction: {
 }): boolean {
   return (
     auction.bin === true &&
-    auction.category === "accessories" &&
-    baseRarities.has(auction.tier) &&
+    candidateTypes.has(`${auction.category}:${auction.tier}`) &&
     Number.isSafeInteger(auction.starting_bid) &&
     auction.starting_bid > 0
   );
 }
 
-export function unmodifiedWikiAccessoryId(
+export function unmodifiedWikiItemId(
   count: unknown,
   tag: Record<string, unknown> | null,
   extra: Record<string, unknown> | null,
 ): string | undefined {
   const id = extra?.["id"];
+  const variant = typeof id === "string" ? variants.get(id) : undefined;
   if (
     typeof id === "string" &&
-    wikiAuctionRarity(id) &&
+    variant &&
     count === 1 &&
     tag &&
-    Object.keys(tag).every((key) => baseTags.has(key)) &&
+    Object.keys(tag).every(
+      (key) =>
+        baseTags.has(key) ||
+        (variant.category === "weapon" && key === "Unbreakable" && tag[key] === 1),
+    ) &&
     extra &&
     Object.keys(extra).every((key) => identityAttributes.has(key))
   ) {

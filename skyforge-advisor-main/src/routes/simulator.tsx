@@ -1,443 +1,563 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
-import { usePlayer } from "@/hooks/use-account";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { PageHero, Panel } from "@/components/layout/app-shell";
+import { marketControl } from "@/components/market-controls";
+import { ItemIcon } from "@/components/ui/item-icon";
+import { usePlayer } from "@/hooks/use-account";
 import {
   calculateSimulation,
-  getDefaultLoadout,
-  ACCESSORY_POWERS,
+  isOwnedMeleeWeapon,
   MOB_TARGETS,
-  type SimulatorLoadout,
+  readDisplayedCombatStats,
+  type CombatStats,
 } from "@/lib/damage-simulator";
-import {
-  IconSwords,
-  IconShield,
-  IconZap,
-  IconTarget,
-  IconSparkles,
-  IconFlame,
-  IconTrendingUp,
-  IconRotateCcw,
-  IconSliders,
-  IconCrosshair,
-} from "@/assets/icons";
-import { cn } from "@/lib/utils";
+import { fetchSimulatorWeapons } from "@/lib/hypixel.functions";
+import { getPetCombatStats, PET_CATALOG } from "@/lib/pet-catalog";
+import { formatFull } from "@/lib/skyblock";
 
 export const Route = createFileRoute("/simulator")({
+  head: () => ({ meta: [{ title: "Damage Simulator — SkyForge" }] }),
   component: SimulatorPage,
 });
 
-function formatNumber(num: number): string {
-  if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(2)}B`;
-  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(2)}M`;
-  if (num >= 1_000) return `${(num / 1_000).toFixed(1)}k`;
-  return num.toLocaleString();
+const control = marketControl + " mt-1 block w-full";
+const editableStats = [
+  ["STRENGTH", "Strength"],
+  ["CRIT_DAMAGE", "Crit Damage (%)"],
+  ["HEALTH", "Health"],
+  ["DEFENSE", "Defense"],
+] as const;
+
+function NumberField({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step = "any",
+  placeholder,
+}: {
+  label: string;
+  value: number | null;
+  onChange: (value: number | null) => void;
+  min?: number;
+  max?: number;
+  step?: number | "any";
+  placeholder?: string;
+}) {
+  return (
+    <label className="block min-w-0 text-sm text-muted-foreground">
+      {label}
+      <input
+        type="number"
+        inputMode="decimal"
+        className={control}
+        value={value ?? ""}
+        min={min}
+        max={max}
+        step={step}
+        placeholder={placeholder}
+        onChange={(event) => {
+          const number = event.target.valueAsNumber;
+          onChange(Number.isFinite(number) ? number : null);
+        }}
+      />
+    </label>
+  );
 }
 
-export function SimulatorPage() {
-  const player = usePlayer();
-  const [loadout, setLoadout] = useState<SimulatorLoadout>(() => getDefaultLoadout());
-
-  const result = useMemo(() => calculateSimulation(loadout), [loadout]);
-
-  const combat = player.data?.skills.find(
-    (skill) => skill.key === "COMBAT" && player.data?.availability?.skillKeys.includes(skill.key),
+function StatFields({
+  values,
+  onChange,
+}: {
+  values: CombatStats;
+  onChange: (stats: CombatStats) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {editableStats.map(([key, label]) => (
+        <NumberField
+          key={key}
+          label={label}
+          placeholder="0"
+          value={values[key] ?? null}
+          onChange={(value) => {
+            const next = { ...values };
+            if (value === null) delete next[key];
+            else next[key] = value;
+            onChange(next);
+          }}
+        />
+      ))}
+    </div>
   );
-  const loadFromProfile = () => {
-    if (combat) setLoadout((previous) => ({ ...previous, combatLevel: combat.level }));
-  };
+}
 
-  const resetDefaults = () => {
-    setLoadout(getDefaultLoadout());
-  };
+function SimulatorPage() {
+  const player = usePlayer();
+  const profile = player.data;
+  const catalog = useQuery({
+    queryKey: ["simulator-weapons"],
+    queryFn: () => fetchSimulatorWeapons(),
+    staleTime: 30 * 60_000,
+    retry: false,
+  });
+
+  const [weaponChoice, setWeaponChoice] = useState("");
+  const [customWeapon, setCustomWeapon] = useState<CombatStats>({});
+  const [combatLevel, setCombatLevel] = useState<number | null>(0);
+  const [petChoice, setPetChoice] = useState<{
+    id: string;
+    rarity: string;
+    level: number | null;
+  } | null>(null);
+  const [gearProfile, setGearProfile] = useState<string | null>(null);
+  const [additional, setAdditional] = useState<CombatStats>({});
+  const [targetId, setTargetId] = useState("");
+  const [targetDefense, setTargetDefense] = useState<number | null>(null);
+
+  const weaponLookup = useMemo(
+    () => new Map(catalog.data?.map((weapon) => [weapon.id, weapon])),
+    [catalog.data],
+  );
+  const readableContainers = profile?.availability?.containerIds ?? [];
+  const profileKey = profile ? profile.uuid + ":" + profile.activeProfileId : null;
+  const readableGear =
+    readableContainers.includes("armor") || readableContainers.includes("equipment");
+  const usingGear = gearProfile !== null && gearProfile === profileKey && readableGear;
+  const gearItems =
+    profile?.containers
+      .filter(
+        (container) =>
+          (container.id === "armor" || container.id === "equipment") &&
+          readableContainers.includes(container.id) &&
+          !container.locked,
+      )
+      .flatMap((container) => container.items) ?? [];
+  const gear = usingGear
+    ? gearItems.flatMap((item) => {
+        const stats = readDisplayedCombatStats(item);
+        return stats ? [stats] : [];
+      })
+    : [];
+
+  const ownedWeapons =
+    profile?.containers.flatMap((container) =>
+      readableContainers.includes(container.id) && !container.locked
+        ? container.items
+            .filter((item) => isOwnedMeleeWeapon(item, weaponLookup))
+            .map((item) => ({
+              value: `owned:${profileKey}:${container.id}:${item.slot}`,
+              item,
+              label: `${item.name} · ${container.label} #${item.slot + 1}`,
+            }))
+        : [],
+    ) ?? [];
+  const ownedWeapon = ownedWeapons.find((entry) => entry.value === weaponChoice)?.item;
+  const catalogWeapon = weaponLookup.get(weaponChoice);
+  const weapon =
+    weaponChoice === "unarmed"
+      ? { DAMAGE: 0 }
+      : weaponChoice === "custom"
+        ? customWeapon
+        : ownedWeapon
+          ? readDisplayedCombatStats(ownedWeapon)
+          : catalogWeapon?.melee
+            ? catalogWeapon.stats
+            : null;
+  const weaponIcon = ownedWeapon ?? catalogWeapon;
+
+  const petEntry = PET_CATALOG.find((entry) => entry.id === petChoice?.id);
+  const petStats =
+    petChoice === null
+      ? {}
+      : petChoice.level === null
+        ? null
+        : getPetCombatStats(petChoice.id, petChoice.rarity, petChoice.level);
+  const ownedPets = (profile?.pets ?? []).filter((pet) => pet.typeId);
+  const activeCombat = profile?.skills.find(
+    (skill) => skill.key === "COMBAT" && profile.availability?.skillKeys.includes(skill.key),
+  );
+
+  const mob = MOB_TARGETS.find((target) => target.id === targetId);
+  const result = calculateSimulation({
+    combatLevel: combatLevel ?? Number.NaN,
+    weapon,
+    pet: petStats,
+    gear,
+    additional,
+    targetDefense: mob ? targetDefense : null,
+  });
+
+  const damageContext = result.afterDefense ? "After target defense" : "Before target defense";
+  const shownNormal = result.afterDefense?.normal ?? result.normalHit;
+  const shownCrit = result.afterDefense?.critical ?? result.critHit;
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <PageHero
-        title="Damage Simulator"
-        actions={
-          <div className="flex flex-wrap gap-2">
-            {combat && (
-              <button
-                type="button"
-                className="rounded-xl border border-border px-3 py-2 text-sm"
-                onClick={loadFromProfile}
-              >
-                Use profile Combat level
-              </button>
-            )}
-            <button
-              type="button"
-              className="rounded-xl border border-border px-3 py-2 text-sm"
-              onClick={resetDefaults}
-            >
-              Reset example
-            </button>
-          </div>
-        }
-      />
+    <div className="mx-auto max-w-5xl space-y-6">
+      <PageHero title="Damage Simulator" />
       <p className="text-sm text-muted-foreground">
-        Starts with an example loadout. Results are approximate and do not model every ability,
-        modifier, or boss phase.
+        Estimate a standard overworld melee hit with base item stats or a readable copy from your
+        profile.
       </p>
 
-      {/* Real-time KPI Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Estimated hit damage */}
-        <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/10 to-transparent p-5">
-          <div className="flex items-center justify-between text-amber-400">
-            <span className="text-xs font-bold uppercase tracking-wider">Single Hit Damage</span>
-            <IconFlame className="size-4" />
-          </div>
-          <p className="mt-2 font-mono text-3xl font-black text-white">
-            {formatNumber(result.singleHitDamage)}
+      <div aria-live="polite" className="grid gap-3 sm:grid-cols-3">
+        <Panel className="p-4">
+          <p className="text-sm text-muted-foreground">Normal hit</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums">
+            {shownNormal === null ? "—" : formatFull(shownNormal)}
           </p>
-          <div className="mt-1 flex items-center justify-between text-xs text-white/60">
-            <span>First Strike:</span>
-            <span className="font-mono font-bold text-amber-300">
-              {formatNumber(result.firstStrikeDamage)}
-            </span>
-          </div>
-        </div>
-
-        {/* Effective Health (EHP) */}
-        <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-b from-emerald-500/10 to-transparent p-5">
-          <div className="flex items-center justify-between text-emerald-400">
-            <span className="text-xs font-bold uppercase tracking-wider">
-              Estimated effective HP
-            </span>
-            <IconShield className="size-4" />
-          </div>
-          <p className="mt-2 font-mono text-3xl font-black text-white">
-            {formatNumber(result.effectiveHealth)}
+          {shownNormal !== null && <p className="text-xs text-muted-foreground">{damageContext}</p>}
+        </Panel>
+        <Panel className="p-4">
+          <p className="text-sm text-muted-foreground">Critical hit</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums">
+            {shownCrit === null ? "—" : formatFull(shownCrit)}
           </p>
-          <div className="mt-1 flex items-center justify-between text-xs text-white/60">
-            <span>HP / Defense:</span>
-            <span className="font-mono text-white/80">
-              {formatNumber(result.totalHealth)} / {formatNumber(result.totalDefense)}
-            </span>
-          </div>
-        </div>
+          {shownCrit !== null && <p className="text-xs text-muted-foreground">{damageContext}</p>}
+        </Panel>
+        <Panel className="p-4">
+          <p className="text-sm text-muted-foreground">Effective health</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums">
+            {result.effectiveHealth === null ? "—" : formatFull(result.effectiveHealth)}
+          </p>
+          <p className="text-xs text-muted-foreground">Against damage reduced by Defense</p>
+        </Panel>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column: Interactive Gear & Profile Controls */}
-        <div className="space-y-6 lg:col-span-2">
-          {/* Environment & Target Selection */}
-          <Panel className="space-y-4">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2">
-                <IconTarget className="size-4 text-emerald-400" />
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Target Mob & Environment
-                </h2>
-              </div>
-              <span className="text-xs text-white/40">Affects mitigation & enchants</span>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="text-xs font-semibold text-white/70">Select Target Mob</label>
-                <select
-                  value={loadout.targetMob}
-                  onChange={(e) =>
-                    setLoadout((prev: SimulatorLoadout) => ({
-                      ...prev,
-                      targetMob: e.target.value as SimulatorLoadout["targetMob"],
-                    }))
-                  }
-                  className="mt-1.5 w-full rounded-xl border border-white/10 bg-[#0B0E14] px-3 py-2 text-xs font-bold text-white outline-none"
-                >
-                  {(Object.keys(MOB_TARGETS) as Array<keyof typeof MOB_TARGETS>).map((key) => {
-                    const mob = MOB_TARGETS[key];
-                    return (
-                      <option key={key} value={key}>
-                        {mob?.name ?? key} ({formatNumber(mob?.maxHp ?? 0)} HP · {mob?.defense ?? 0}
-                        % Def)
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-
-              <div className="flex items-end gap-3">
-                <button
-                  onClick={() =>
-                    setLoadout((prev: SimulatorLoadout) => ({
-                      ...prev,
-                      insideDungeons: !prev.insideDungeons,
-                    }))
-                  }
-                  className={cn(
-                    "flex-1 rounded-xl border py-2 text-xs font-bold transition-none",
-                    loadout.insideDungeons
-                      ? "border-purple-500/40 bg-purple-500/20 text-purple-300"
-                      : "border-white/10 bg-white/[0.04] text-white/60 hover:bg-white/10",
-                  )}
-                >
-                  {loadout.insideDungeons ? "🏰 Inside Dungeons (Active)" : "🌲 Overworld Mode"}
-                </button>
-
-                {loadout.insideDungeons && (
-                  <button
-                    onClick={() =>
-                      setLoadout((prev: SimulatorLoadout) => ({
-                        ...prev,
-                        masterMode: !prev.masterMode,
-                      }))
-                    }
-                    className={cn(
-                      "flex-1 rounded-xl border py-2 text-xs font-bold transition-none",
-                      loadout.masterMode
-                        ? "border-red-500/40 bg-red-500/20 text-red-300"
-                        : "border-white/10 bg-white/[0.04] text-white/60 hover:bg-white/10",
-                    )}
+      <div className="grid items-start gap-4 lg:grid-cols-2">
+        <Panel className="space-y-4">
+          <h2 className="font-semibold">Weapon</h2>
+          <label className="block text-sm text-muted-foreground">
+            Select weapon
+            <select
+              value={weaponChoice}
+              onChange={(e) => setWeaponChoice(e.target.value)}
+              className={control}
+            >
+              <option value="">Choose a weapon</option>
+              <option value="unarmed">Unarmed</option>
+              <option value="custom">Enter melee weapon stats</option>
+              {ownedWeapons.length > 0 && (
+                <optgroup label="Owned melee weapons">
+                  {ownedWeapons.map((entry) => (
+                    <option key={entry.value} value={entry.value}>
+                      {entry.label}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {catalog.data && (
+                <>
+                  <optgroup label="Catalog · Melee weapons">
+                    {catalog.data
+                      .filter((item) => item.melee)
+                      .map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                        </option>
+                      ))}
+                  </optgroup>
+                  <optgroup label="Catalog · Bows and wands">
+                    {catalog.data
+                      .filter((item) => !item.melee)
+                      .map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                        </option>
+                      ))}
+                  </optgroup>
+                </>
+              )}
+            </select>
+          </label>
+          {catalog.isPending && (
+            <p role="status" className="text-sm text-muted-foreground">
+              Loading weapon catalog…
+            </p>
+          )}
+          {(catalog.isError || catalog.data?.length === 0) && (
+            <p role="status" className="text-sm text-muted-foreground">
+              Catalog unavailable. You can enter weapon stats manually.{" "}
+              <button
+                type="button"
+                className="text-primary underline"
+                onClick={() => void catalog.refetch()}
+              >
+                Retry
+              </button>
+            </p>
+          )}
+          {weaponIcon && (
+            <div className="flex items-start gap-3">
+              <ItemIcon
+                id={weaponIcon.id}
+                name={weaponIcon.name}
+                {...(ownedWeapon?.texture ? { texture: ownedWeapon.texture } : {})}
+                className="size-8 shrink-0"
+              />
+              <div className="min-w-0 space-y-1">
+                <p className="text-sm font-medium">{weaponIcon.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {ownedWeapon ? "Displayed stats from this copy" : "Catalog base stats"}
+                  {ownedWeapon?.stars ? ` · ${ownedWeapon.stars} stars` : ""}
+                  {ownedWeapon?.rarityUpgrades ? " · Rarity upgraded" : ""}
+                </p>
+                {catalogWeapon && (
+                  <Link
+                    to="/wiki/$itemId"
+                    params={{ itemId: catalogWeapon.id }}
+                    className="text-xs text-primary hover:underline"
                   >
-                    {loadout.masterMode ? "☠️ Master Mode" : "Normal F1-F7"}
-                  </button>
+                    View item requirements
+                  </Link>
                 )}
               </div>
             </div>
-          </Panel>
-
-          {/* Player Core Progression (Cata & MP) */}
-          <Panel className="space-y-4">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2">
-                <IconSliders className="size-4 text-sky-400" />
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Core Progression & Magical Power
-                </h2>
-              </div>
+          )}
+          {catalogWeapon && !catalogWeapon.melee && (
+            <p role="status" className="text-sm text-muted-foreground">
+              Choose a melee weapon to calculate a hit. This item uses a separate damage model.
+            </p>
+          )}
+          {(ownedWeapon || catalogWeapon?.melee) && weapon?.DAMAGE === undefined && (
+            <p role="status" className="text-sm text-muted-foreground">
+              Weapon damage is unavailable. Enter the displayed stats manually.
+            </p>
+          )}
+          {weaponChoice === "custom" && (
+            <div className="space-y-3">
+              <NumberField
+                label="Weapon damage"
+                value={customWeapon.DAMAGE ?? null}
+                min={0}
+                onChange={(value) => {
+                  const next = { ...customWeapon };
+                  if (value === null) delete next.DAMAGE;
+                  else next.DAMAGE = value;
+                  setCustomWeapon(next);
+                }}
+              />
+              <StatFields values={customWeapon} onChange={setCustomWeapon} />
             </div>
+          )}
+          {player.connected && profile && !readableContainers.includes("inventory") && (
+            <p className="text-xs text-muted-foreground">
+              Main inventory is unavailable for this profile.
+            </p>
+          )}
+        </Panel>
 
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div>
-                <label className="flex justify-between text-xs text-white/70">
-                  <span>Combat Level</span>
-                  <span className="font-mono font-bold text-white">{loadout.combatLevel}</span>
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="60"
-                  value={loadout.combatLevel}
-                  onChange={(e) =>
-                    setLoadout((prev: SimulatorLoadout) => ({
-                      ...prev,
-                      combatLevel: Number(e.target.value),
-                    }))
-                  }
-                  className="mt-2 w-full accent-emerald-400 cursor-pointer"
-                />
-              </div>
-
-              <div>
-                <label className="flex justify-between text-xs text-white/70">
-                  <span>Catacombs Level</span>
-                  <span className="font-mono font-bold text-purple-300">
-                    {loadout.catacombsLevel}
-                  </span>
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="50"
-                  value={loadout.catacombsLevel}
-                  onChange={(e) =>
-                    setLoadout((prev: SimulatorLoadout) => ({
-                      ...prev,
-                      catacombsLevel: Number(e.target.value),
-                    }))
-                  }
-                  className="mt-2 w-full accent-purple-400 cursor-pointer"
-                />
-              </div>
-
-              <div>
-                <label className="flex justify-between text-xs text-white/70">
-                  <span>Magical Power (MP)</span>
-                  <span className="font-mono font-bold text-amber-300">{loadout.magicalPower}</span>
-                </label>
-                <input
-                  type="range"
-                  min="50"
-                  max="1600"
-                  step="25"
-                  value={loadout.magicalPower}
-                  onChange={(e) =>
-                    setLoadout((prev: SimulatorLoadout) => ({
-                      ...prev,
-                      magicalPower: Number(e.target.value),
-                    }))
-                  }
-                  className="mt-2 w-full accent-amber-400 cursor-pointer"
-                />
-              </div>
+        <Panel className="space-y-4">
+          <h2 className="font-semibold">Pet</h2>
+          <div className="block text-sm text-muted-foreground">
+            <label htmlFor="simulator-pet">Select pet</label>
+            <select
+              id="simulator-pet"
+              className={control}
+              value={petChoice?.id ?? ""}
+              onChange={(event) => {
+                const pet = PET_CATALOG.find((entry) => entry.id === event.target.value);
+                setPetChoice(pet ? { id: pet.id, rarity: pet.rarities[0] ?? "", level: 1 } : null);
+              }}
+            >
+              <option value="">No pet</option>
+              {PET_CATALOG.map((pet) => (
+                <option key={pet.id} value={pet.id}>
+                  {pet.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          {ownedPets.length > 0 && (
+            <label className="block text-sm text-muted-foreground">
+              Import an owned pet
+              <select
+                className={control}
+                value=""
+                onChange={(event) => {
+                  const pet = ownedPets[Number(event.target.value)];
+                  if (event.target.value && pet?.typeId)
+                    setPetChoice({ id: pet.typeId, rarity: pet.rarity, level: pet.level });
+                }}
+              >
+                <option value="">Choose from profile</option>
+                {ownedPets.map((pet, index) => (
+                  <option key={pet.instanceId ?? index} value={index}>
+                    {pet.name} · {pet.rarity} · Lv {pet.level ?? "—"}
+                    {pet.active ? " · Active" : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {petChoice && petEntry && (
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block text-sm text-muted-foreground">
+                Pet rarity
+                <select
+                  className={control}
+                  value={petChoice.rarity}
+                  onChange={(event) => setPetChoice({ ...petChoice, rarity: event.target.value })}
+                >
+                  {!petEntry.rarities.includes(petChoice.rarity) && (
+                    <option value={petChoice.rarity}>{petChoice.rarity}</option>
+                  )}
+                  {petEntry.rarities.map((rarity) => (
+                    <option key={rarity} value={rarity}>
+                      {rarity}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <NumberField
+                label="Pet level"
+                value={petChoice.level}
+                min={1}
+                max={petEntry.maxLevel}
+                step={1}
+                onChange={(level) => setPetChoice({ ...petChoice, level })}
+              />
             </div>
+          )}
+          {petChoice && !petStats && (
+            <p role="status" className="text-sm text-muted-foreground">
+              Combat stats are unavailable for this pet, rarity, or level.
+            </p>
+          )}
+          {petChoice && petStats && (
+            <p className="text-xs text-muted-foreground">
+              Includes estimated base pet stats. Pet perks and held items require a separate
+              calculation.
+            </p>
+          )}
+        </Panel>
 
-            <div className="pt-2">
-              <label className="text-xs font-semibold text-white/70">Accessory Power Tuning</label>
-              <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
-                {Object.keys(ACCESSORY_POWERS).map((powerName) => {
-                  const power = ACCESSORY_POWERS[powerName];
-                  return (
-                    <button
-                      key={powerName}
-                      onClick={() =>
-                        setLoadout((prev: SimulatorLoadout) => ({
-                          ...prev,
-                          accessoryPowerTuning: powerName,
-                        }))
-                      }
-                      className={cn(
-                        "flex flex-col items-center justify-center rounded-xl border p-2 text-xs font-bold transition-none",
-                        loadout.accessoryPowerTuning === powerName
-                          ? "border-amber-400/50 bg-amber-400/15 text-amber-300"
-                          : "border-white/10 bg-white/[0.03] text-white/60 hover:bg-white/10 hover:text-white",
-                      )}
-                    >
-                      <span>{powerName}</span>
-                      <span className="text-[10px] font-normal text-white/40">
-                        {power?.bonusName ?? ""}
-                      </span>
-                    </button>
-                  );
-                })}
+        <Panel className="space-y-4">
+          <h2 className="font-semibold">Player stats</h2>
+          <div className="flex flex-wrap items-end gap-3">
+            <NumberField
+              label="Combat level"
+              value={combatLevel}
+              min={0}
+              max={60}
+              step={1}
+              onChange={setCombatLevel}
+            />
+            {activeCombat && (
+              <button
+                type="button"
+                className={marketControl}
+                onClick={() => setCombatLevel(activeCombat.level)}
+              >
+                Use profile Combat {activeCombat.level}
+              </button>
+            )}
+            {readableGear && (
+              <button
+                type="button"
+                className={marketControl}
+                aria-pressed={usingGear}
+                onClick={() => setGearProfile(usingGear ? null : profileKey)}
+              >
+                {usingGear ? "Remove imported gear" : "Use equipped gear"}
+              </button>
+            )}
+          </div>
+          {usingGear && (
+            <p className="text-xs text-muted-foreground">
+              Using displayed stats from {gear.length} equipped{" "}
+              {gear.length === 1 ? "piece" : "pieces"}.
+              {gearItems.length > gear.length
+                ? ` ${gearItems.length - gear.length} pieces have no readable combat stats.`
+                : ""}
+              {!readableContainers.includes("armor") ? " Armor data is unavailable." : ""}
+              {!readableContainers.includes("equipment") ? " Equipment data is unavailable." : ""}
+            </p>
+          )}
+          <div>
+            <p className="mb-2 text-sm font-medium">Additional stats</p>
+            <StatFields values={additional} onChange={setAdditional} />
+            <p className="mt-2 text-xs text-muted-foreground">
+              Enter other bonuses from your in-game stats breakdown, such as Accessories or effects.
+            </p>
+          </div>
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 border-t border-border pt-3 text-sm tabular-nums">
+            {(
+              [
+                ["Strength", result.strength],
+                ["Crit Damage", result.critDamage],
+                ["Health", result.health],
+                ["Defense", result.defense],
+              ] as const
+            ).map(([label, value]) => (
+              <div key={label} className="flex items-baseline justify-between gap-2">
+                <dt className="text-muted-foreground">{label}</dt>
+                <dd>
+                  {value.toLocaleString("en-US", { maximumFractionDigits: 2 })}
+                  {label === "Crit Damage" ? "%" : ""}
+                </dd>
               </div>
+            ))}
+          </dl>
+        </Panel>
+
+        <Panel className="space-y-4">
+          <h2 className="font-semibold">Target mob</h2>
+          <label className="block text-sm text-muted-foreground">
+            Choose a target
+            <select
+              className={control}
+              value={targetId}
+              onChange={(event) => {
+                const selected = MOB_TARGETS.find((entry) => entry.id === event.target.value);
+                setTargetId(event.target.value);
+                setTargetDefense(selected?.defense ?? null);
+              }}
+            >
+              <option value="">Compare before target defense</option>
+              {MOB_TARGETS.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          {mob && (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">{formatFull(mob.health)} HP</p>
+              <NumberField
+                label="Target Defense"
+                value={targetDefense}
+                min={0}
+                placeholder="Unknown"
+                onChange={setTargetDefense}
+              />
+              {targetDefense === null && (
+                <p className="text-xs text-muted-foreground">
+                  Defense is unverified for this target. Hit values are shown before mitigation.
+                </p>
+              )}
             </div>
-          </Panel>
-
-          {/* Weapon & Pet Config */}
-          <Panel className="space-y-4">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <div className="flex items-center gap-2">
-                <IconSwords className="size-4 text-red-400" />
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Primary Weapon & Pet
-                </h2>
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              {/* Weapon */}
-              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white">
-                    Weapon: {loadout.weapon.name}
-                  </span>
-                  <span className="rounded-md border border-white/10 bg-black/40 px-2 py-0.5 font-mono text-[10px] text-amber-300">
-                    +{loadout.weapon.damage} Base DMG
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <label className="text-[11px] text-white/60">Weapon Stars</label>
-                    <select
-                      value={loadout.weapon.stars}
-                      onChange={(e) =>
-                        setLoadout((prev: SimulatorLoadout) => ({
-                          ...prev,
-                          weapon: { ...prev.weapon, stars: Number(e.target.value) },
-                        }))
-                      }
-                      className="mt-1 w-full rounded-lg border border-white/10 bg-[#0B0E14] p-1.5 text-xs text-white"
-                    >
-                      {[0, 1, 2, 3, 4, 5].map((s) => (
-                        <option key={s} value={s}>
-                          {s}★ Stars
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] text-white/60">Master Stars</label>
-                    <select
-                      value={loadout.weapon.masterStars}
-                      onChange={(e) =>
-                        setLoadout((prev: SimulatorLoadout) => ({
-                          ...prev,
-                          weapon: { ...prev.weapon, masterStars: Number(e.target.value) },
-                        }))
-                      }
-                      className="mt-1 w-full rounded-lg border border-white/10 bg-[#0B0E14] p-1.5 text-xs text-white"
-                    >
-                      {[0, 1, 2, 3, 4, 5].map((s) => (
-                        <option key={s} value={s}>
-                          {s}✪ Master Stars
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Pet */}
-              <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white">Pet: {loadout.pet.name}</span>
-                  <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] text-amber-300">
-                    LVL {loadout.pet.level}
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="flex justify-between text-xs text-white/60">
-                    <span>Pet Level</span>
-                    <span className="font-mono text-white">{loadout.pet.level}</span>
-                  </label>
-                  <input
-                    type="range"
-                    min="1"
-                    max="200"
-                    value={loadout.pet.level}
-                    onChange={(e) =>
-                      setLoadout((prev: SimulatorLoadout) => ({
-                        ...prev,
-                        pet: { ...prev.pet, level: Number(e.target.value) },
-                      }))
-                    }
-                    className="w-full accent-amber-400 cursor-pointer"
-                  />
-                </div>
-              </div>
-            </div>
-          </Panel>
-        </div>
-
-        {/* Right Column: Upgrade ROI & DPS Recommendations */}
-        <div className="space-y-6">
-          {/* Stat Totals Summary */}
-          <Panel className="space-y-3">
-            <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-              <IconCrosshair className="size-4 text-purple-400" />
-              <h3 className="text-xs font-bold uppercase text-white tracking-wider">
-                Active Combat Stats
-              </h3>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-              <div className="flex justify-between rounded-lg bg-black/40 p-2 text-white/60">
-                <span>Strength:</span>
-                <span className="text-red-400 font-bold">+{result.totalStrength} ❁</span>
-              </div>
-              <div className="flex justify-between rounded-lg bg-black/40 p-2 text-white/60">
-                <span>Crit Damage:</span>
-                <span className="text-blue-400 font-bold">+{result.totalCritDamage}% ☠</span>
-              </div>
-              <div className="flex justify-between rounded-lg bg-black/40 p-2 text-white/60">
-                <span>Ferocity:</span>
-                <span className="text-red-500 font-bold">+{result.ferocity} ⫽</span>
-              </div>
-              <div className="flex justify-between rounded-lg bg-black/40 p-2 text-white/60">
-                <span>Intelligence:</span>
-                <span className="text-cyan-400 font-bold">+{result.totalIntelligence} ✎</span>
-              </div>
-            </div>
-          </Panel>
-        </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Dungeon scaling, enchantment bonuses, abilities, and mob-specific modifiers require
+            separate calculations.
+          </p>
+          <a
+            className="text-xs text-primary hover:underline"
+            href="https://hypixelskyblock.minecraft.wiki/w/Damage_Calculation"
+          >
+            Damage formula
+          </a>
+          <a
+            className="ml-3 text-xs text-primary hover:underline"
+            href="https://hypixelskyblock.minecraft.wiki/w/Mobs"
+          >
+            Mob data
+          </a>
+        </Panel>
       </div>
     </div>
   );

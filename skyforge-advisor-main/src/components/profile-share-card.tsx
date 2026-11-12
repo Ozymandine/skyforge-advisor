@@ -13,9 +13,9 @@ export type ShareCardData = {
   username: string;
   uuid: string;
   profileName: string;
-  skillAverage: number;
-  netWorth: number;
-  fairySouls: number;
+  skillAverage: number | null;
+  coins: number | null;
+  fairySouls: number | null;
   catacombsLevel: number | null;
   collectionsCount: number;
 };
@@ -72,9 +72,9 @@ function drawCard(
 
   // Stat blocks.
   const stats: Array<[string, string]> = [
-    ["Skill Average", data.skillAverage.toFixed(2)],
-    ["Net Worth", formatFull(data.netWorth)],
-    ["Fairy Souls", `${data.fairySouls}`],
+    ["Skill Average", data.skillAverage?.toFixed(2) ?? "—"],
+    ["Purse + Bank", data.coins === null ? "—" : formatFull(data.coins)],
+    ["Fairy Souls", data.fairySouls === null ? "—" : formatFull(data.fairySouls)],
     ["Catacombs", data.catacombsLevel !== null ? `${data.catacombsLevel}` : "—"],
   ];
 
@@ -134,7 +134,11 @@ export function ProfileShareCard({ data }: { data: ShareCardData | null }) {
   };
 
   const shareText = data
-    ? `${data.username} · Skill avg ${data.skillAverage.toFixed(2)} · Net worth ${formatFull(data.netWorth)}`
+    ? [
+        data.username,
+        ...(data.skillAverage === null ? [] : [`Skill avg ${data.skillAverage.toFixed(2)}`]),
+        ...(data.coins === null ? [] : [`Purse + bank ${formatFull(data.coins)}`]),
+      ].join(" · ")
     : "";
 
   return (

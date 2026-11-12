@@ -5,6 +5,12 @@
 
 import type { PlayerData } from "./skyblock";
 
+export function getReportedSkyBlockLevel(experience: number | undefined) {
+  if (experience === undefined || !Number.isSafeInteger(experience) || experience < 0) return null;
+  const progress = experience % 100;
+  return { level: Math.floor(experience / 100), progress, remainingXp: 100 - progress };
+}
+
 export type LevelCategoryBreakdown = {
   id: string;
   name: string;
@@ -51,7 +57,7 @@ export type PlayerLevelInput = {
       }
     | undefined;
   rift?: { progress?: Record<string, number> | undefined } | undefined;
-  pets?: Array<{ level: number }> | undefined;
+  pets?: Array<{ level: number | null }> | undefined;
   museum?: { donatedItems?: number | undefined; appraised?: number | undefined } | undefined;
   lifetimeStats?: { kills?: number | undefined } | undefined;
   communityUpgrades?: Array<{ level: number }> | undefined;
@@ -239,7 +245,7 @@ export function calculateSkyBlockLevel(
   });
 
   // 13. PETS
-  const petLvl100Count = (player.pets ?? []).filter((p) => p.level >= 100).length;
+  const petLvl100Count = (player.pets ?? []).filter((p) => (p.level ?? 0) >= 100).length;
   const petsXp = (player.pets?.length ?? 0) * 5 + petLvl100Count * 15;
   categories.push({
     id: "pets",
@@ -248,7 +254,9 @@ export function calculateSkyBlockLevel(
     currentXp: petsXp,
     maxEstimatedXp: 700,
     levelContribution: Math.round((petsXp / 100) * 10) / 10,
-    details: `${player.pets?.length ?? 0} unique pets (${petLvl100Count} maxed Level 100)`,
+    details: player.pets
+      ? `${player.pets.length} pets (${petLvl100Count} at level 100 or higher)`
+      : "Pet data unavailable",
   });
 
   // 14. ACCESSORIES (Magical Power)

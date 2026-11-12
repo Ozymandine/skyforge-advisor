@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -35,7 +35,6 @@ import {
   RAW_MINION_PROFILES,
   calculateMinionDailyOutput,
   getMinionSlotProgression,
-  getCheapestMinionCrafts,
   type MinionDefinition,
   type MinionCategory,
 } from "@/lib/minions-engine";
@@ -47,7 +46,8 @@ export const Route = createFileRoute("/minions")({
 type TabMode = "leaderboard" | "slots" | "fuels";
 
 export function MinionsRoute() {
-  const { data: player, isLoading, error } = usePlayer();
+  const { data: player } = usePlayer();
+  const craftHistoryKnown = player?.craftedGenerators !== undefined;
   const [tab, setTab] = useState<TabMode>("leaderboard");
   const [categoryFilter, setCategoryFilter] = useState<"all" | MinionCategory>("all");
   const [sellMode, setSellMode] = useState<"npc" | "bazaar">("npc");
@@ -105,16 +105,20 @@ export function MinionsRoute() {
           minion,
           output,
           dailyCoins,
-          fullSetupDailyCoins: dailyCoins * (slotProgression.totalSlotsUnlocked || 24),
+          fullSetupDailyCoins: craftHistoryKnown
+            ? dailyCoins * slotProgression.totalSlotsUnlocked
+            : null,
         };
       })
       .sort((a, b) => b.dailyCoins - a.dailyCoins);
-  }, [categoryFilter, searchQuery, sellMode, bazaarPriceMap, slotProgression.totalSlotsUnlocked]);
-
-  // Cheapest missing unique crafts
-  const cheapestCrafts = useMemo(() => {
-    return getCheapestMinionCrafts(player?.craftedGenerators ?? [], bazaarPriceMap, 18);
-  }, [player?.craftedGenerators, bazaarPriceMap]);
+  }, [
+    categoryFilter,
+    searchQuery,
+    sellMode,
+    bazaarPriceMap,
+    slotProgression.totalSlotsUnlocked,
+    craftHistoryKnown,
+  ]);
 
   // Top meta recommendations
   const topAfkMinion = leaderboardEntries[0];
@@ -138,7 +142,7 @@ export function MinionsRoute() {
                 setTab("leaderboard");
               }}
             >
-              <IconTrendingUp className="size-3.5" /> Profit Leaderboard
+              <IconTrendingUp className="size-3.5" /> Yield estimates
             </Chip>
             <Chip
               active={tab === "slots"}
@@ -174,13 +178,17 @@ export function MinionsRoute() {
             <IconAward className="size-4 text-amber-400" />
           </div>
           <p className="mt-2 text-2xl font-bold font-mono text-amber-300">
-            {slotProgression.totalSlotsUnlocked}{" "}
+            {craftHistoryKnown ? slotProgression.totalSlotsUnlocked : "—"}{" "}
             <span className="text-sm font-normal text-muted-foreground">
               / {slotProgression.maxPossibleSlots} max
             </span>
           </p>
           <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span>{slotProgression.uniqueCraftsCount} unique crafts</span>
+            <span>
+              {craftHistoryKnown
+                ? slotProgression.uniqueCraftsCount + " unique crafts"
+                : "Craft history unavailable"}
+            </span>
             {slotProgression.communitySlots > 0 && (
               <span className="text-emerald-400 font-medium">
                 (+{slotProgression.communitySlots} Elizabeth)
@@ -197,26 +205,28 @@ export function MinionsRoute() {
             <IconCompass className="size-4 text-primary" />
           </div>
           <p className="mt-2 text-2xl font-bold font-mono text-white">
-            {slotProgression.craftsForNextSlot}{" "}
+            {craftHistoryKnown ? slotProgression.craftsForNextSlot : "—"}{" "}
             <span className="text-xs text-muted-foreground font-normal">crafts needed</span>
           </p>
-          <div className="mt-2">
-            <ProgressBar pct={slotProgression.progressToNextPct} tone="gold" />
-            <span className="mt-1 block text-[10px] text-muted-foreground">
-              {slotProgression.uniqueCraftsCount} / {slotProgression.nextSlotThreshold} threshold
-            </span>
-          </div>
+          {craftHistoryKnown && (
+            <div className="mt-2">
+              <ProgressBar pct={slotProgression.progressToNextPct} tone="gold" />
+              <span className="mt-1 block text-[10px] text-muted-foreground">
+                {slotProgression.uniqueCraftsCount} / {slotProgression.nextSlotThreshold} threshold
+              </span>
+            </div>
+          )}
         </Panel>
 
         <Panel className="relative overflow-hidden bg-slate-900/60 border-emerald-500/20">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
-              Top AFK Minion Meta
+              Highest estimated yield
             </span>
             <IconCoins className="size-4 text-emerald-400" />
           </div>
           <p className="mt-2 text-lg font-bold text-white truncate">
-            {topAfkMinion?.minion.name ?? "Slime XI"}
+            {topAfkMinion?.minion.name ?? "—"}
           </p>
           <p className="text-xs font-mono font-bold text-emerald-400">
             +{topAfkMinion?.dailyCoins.toLocaleString()}{" "}
@@ -227,12 +237,12 @@ export function MinionsRoute() {
         <Panel className="relative overflow-hidden bg-slate-900/60 border-purple-500/20">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-purple-300 uppercase tracking-wider">
-              Top Bazaar Meta
+              Highest Bazaar estimate
             </span>
             <IconSparkles className="size-4 text-purple-400" />
           </div>
           <p className="mt-2 text-lg font-bold text-white truncate">
-            {topBazaarMinion?.minion.name ?? "Sheep XII"}
+            {topBazaarMinion?.minion.name ?? "—"}
           </p>
           <p className="text-xs font-mono font-bold text-purple-300">
             +{topBazaarMinion?.output.dailyBazaarCoins.toLocaleString()}{" "}
@@ -355,7 +365,9 @@ export function MinionsRoute() {
                         +{entry.dailyCoins.toLocaleString()}
                       </td>
                       <td className="px-4 py-3 text-right font-bold text-amber-300 text-sm">
-                        +{entry.fullSetupDailyCoins.toLocaleString()}
+                        {entry.fullSetupDailyCoins === null
+                          ? "—"
+                          : entry.fullSetupDailyCoins.toLocaleString()}
                       </td>
                     </tr>
                   ))}
@@ -369,7 +381,14 @@ export function MinionsRoute() {
       {/* =========================================================================
        * TAB 2: SLOT PROGRESSION & CHEAPEST CRAFTS
        * ======================================================================= */}
-      {tab === "slots" && (
+      {tab === "slots" && !craftHistoryKnown && (
+        <Panel>
+          <p className="text-sm text-muted-foreground">
+            Minion craft history is unavailable for this profile.
+          </p>
+        </Panel>
+      )}
+      {tab === "slots" && craftHistoryKnown && (
         <div className="space-y-6">
           <Panel className="bg-slate-950/80">
             <div className="flex items-center justify-between">
@@ -400,37 +419,18 @@ export function MinionsRoute() {
             </div>
           </Panel>
 
-          {/* Cheapest Missing Crafts */}
-          <Panel className="bg-slate-950/80">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <IconTrendingUp className="size-4 text-emerald-400" /> Cheapest Unique Crafts to
-              Unlock Next Slot
-            </h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Ranked by lowest Bazaar material cost to unlock your next minion slot with the fewest
-              coins possible.
+          <Panel>
+            <h3 className="text-base font-semibold">Minion recipes</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Check the materials and requirements for your next craft.
             </p>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {cheapestCrafts.map((craft) => (
-                <div
-                  key={`${craft.minionId}-${craft.tier}`}
-                  className="flex items-center justify-between rounded-xl border border-white/10 bg-black/40 p-3 hover:border-primary/30 transition-all"
-                >
-                  <div className="min-w-0">
-                    <h4 className="truncate text-sm font-bold text-white">{craft.minionName}</h4>
-                    <span className="text-[11px] text-muted-foreground">
-                      {craft.materialsNeeded}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-mono text-xs font-bold text-emerald-400">
-                      ≈ {craft.craftCostCoins.toLocaleString()} coins
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Link
+              to="/wiki"
+              search={{ q: "minion" }}
+              className="mt-2 inline-block text-sm text-primary hover:underline"
+            >
+              Browse minions in the Wiki
+            </Link>
           </Panel>
         </div>
       )}

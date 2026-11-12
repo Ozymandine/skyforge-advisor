@@ -3,7 +3,6 @@
 import { decodeNbt, type NbtValue } from "./nbt.server";
 import {
   computeDungeonLevel,
-  computePetLevel,
   computeSkill,
   SKILL_META,
   titleCase,
@@ -24,10 +23,14 @@ import { getHypixelApplicationKey } from "./env";
 import { calculateBestiary } from "./bestiary";
 import { calculateSlayerOverview } from "./slayer";
 import { HYPIXEL_FIRE_SALES_URL } from "./calendar";
+import { getPetLevel } from "./pet-catalog";
+import { getHotmTier } from "./hotm-engine";
+import type { CollectionTier, OfficialCollection } from "./collection-progress";
 import {
   isWikiAuctionCandidate,
+  matchesWikiAuctionVariant,
   summarizeWikiAuctionQuote,
-  unmodifiedWikiAccessoryId,
+  unmodifiedWikiItemId,
   wikiAuctionRarity,
   WIKI_AUCTION_PAGES,
   type ComparableListing,
@@ -375,23 +378,58 @@ export async function getOfficialSkillTables(): Promise<Record<
   return data.skills;
 }
 
-let officialCollectionsCache: { at: number; data: unknown } | null = null;
+let officialCollectionsCache: { at: number; data: Record<string, OfficialCollection> } | null =
+  null;
 
 export async function getOfficialCollectionTiers(): Promise<Record<
   string,
-  { tiers?: number[] }
+  OfficialCollection
 > | null> {
   if (officialCollectionsCache && Date.now() - officialCollectionsCache.at < 24 * 60 * 60_000) {
-    return officialCollectionsCache.data as never;
+    return officialCollectionsCache.data;
   }
   const data = unwrap(
     await getJson<{
-      collections?: Record<string, { tiers?: number[] }>;
+      collections?: Record<
+        string,
+        {
+          name: string;
+          items: Record<string, { name: string; tiers: CollectionTier[] }>;
+        }
+      >;
     }>(`${API}/resources/skyblock/collections`),
   );
-  if (!data?.collections) return (officialCollectionsCache?.data as never) ?? null;
-  officialCollectionsCache = { at: Date.now(), data: data.collections };
-  return data.collections;
+  if (!data?.collections) return officialCollectionsCache?.data ?? null;
+  const items: Record<string, OfficialCollection> = {};
+  for (const category of Object.values(data.collections)) {
+    if (typeof category?.name !== "string" || !category.items) continue;
+    for (const [id, item] of Object.entries(category.items)) {
+      if (typeof item?.name !== "string" || !Array.isArray(item.tiers)) continue;
+      const tiers = item.tiers
+        .filter(
+          (tier) =>
+            tier && Number.isSafeInteger(tier.tier) && Number.isSafeInteger(tier.amountRequired),
+        )
+        .map(({ tier, amountRequired }) => ({ tier, amountRequired }))
+        .sort((a, b) => a.tier - b.tier);
+      if (tiers.length !== item.tiers.length) continue;
+      if (
+        !tiers.length ||
+        !tiers.every(
+          (tier, index) =>
+            Number.isSafeInteger(tier.tier) &&
+            tier.tier === index + 1 &&
+            Number.isSafeInteger(tier.amountRequired) &&
+            tier.amountRequired > (tiers[index - 1]?.amountRequired ?? 0),
+        )
+      )
+        continue;
+      items[id] = { name: item.name, category: category.name, tiers };
+    }
+  }
+  if (!Object.keys(items).length) return officialCollectionsCache?.data ?? null;
+  officialCollectionsCache = { at: Date.now(), data: items };
+  return items;
 }
 
 // ============================================================================
@@ -916,6 +954,9 @@ export async function getBazaar(): Promise<{
         !q ||
         !Number.isFinite(q.buyPrice) ||
         !Number.isFinite(q.sellPrice) ||
+        ![q.buyVolume, q.sellVolume, q.buyMovingWeek, q.sellMovingWeek].every(
+          (value) => Number.isFinite(value) && value >= 0,
+        ) ||
         q.buyPrice <= 0 ||
         q.sellPrice <= 0
       ) {
@@ -925,10 +966,6 @@ export async function getBazaar(): Promise<{
       const gross = q.buyPrice - q.sellPrice;
 
       const spread = gross - q.buyPrice * 0.0125;
-
-      const flipsPerHour = Math.min(q.buyMovingWeek, q.sellMovingWeek) / 168;
-
-      const liquidity = Math.min(100, Math.round(Math.log10(Math.max(1, flipsPerHour)) * 25));
 
       const margin = (spread / q.sellPrice) * 100;
 
@@ -948,16 +985,12 @@ export async function getBazaar(): Promise<{
         buyMovingWeek: q.buyMovingWeek,
 
         sellMovingWeek: q.sellMovingWeek,
-
-        profitPerHour: spread * flipsPerHour,
-
-        liquidity,
-
-        health: Math.min(100, Math.round(liquidity * 0.6 + Math.min(margin, 60) * 0.7)),
       });
     }
 
-    products.sort((a, b) => b.profitPerHour - a.profitPerHour);
+    products.sort(
+      (a, b) => b.buyMovingWeek + b.sellMovingWeek - a.buyMovingWeek - a.sellMovingWeek,
+    );
 
     const fresh = {
       lastUpdated: data.lastUpdated ?? 0,
@@ -1012,7 +1045,7 @@ type AuctionsResponse = {
 
 type RawAuction = AuctionsResponse["auctions"][number];
 
-type AuctionItemIdentity = Pick<AuctionEntry, "id" | "texture"> & { wikiAccessoryId?: string };
+type AuctionItemIdentity = Pick<AuctionEntry, "id" | "texture"> & { wikiComparableId?: string };
 
 type AuctionCandidate = {
   entry: AuctionEntry;
@@ -1125,14 +1158,14 @@ async function extractAuctionItemIdentity(data: string): Promise<AuctionItemIden
     const id = extra?.["id"];
 
     const texture = tag ? textureFromTag(tag) : undefined;
-    const wikiAccessoryId =
-      stacks.length === 1 ? unmodifiedWikiAccessoryId(itemStack?.["Count"], tag, extra) : undefined;
+    const wikiComparableId =
+      stacks.length === 1 ? unmodifiedWikiItemId(itemStack?.["Count"], tag, extra) : undefined;
 
     return {
       ...(typeof id === "string" && id ? { id } : {}),
 
       ...(texture ? { texture } : {}),
-      ...(wikiAccessoryId ? { wikiAccessoryId } : {}),
+      ...(wikiComparableId ? { wikiComparableId } : {}),
     };
   } catch {
     return {};
@@ -1338,11 +1371,15 @@ async function indexWikiAuctionListings(snapshot: AuctionSnapshot) {
     async () => {
       while (next < candidates.length) {
         const auction = candidates[next++]!;
-        const { wikiAccessoryId } = await auctionItemIdentity(auction.uuid, auction.item_bytes);
-        if (!wikiAccessoryId || wikiAuctionRarity(wikiAccessoryId) !== auction.tier) continue;
-        const matches = listings.get(wikiAccessoryId) ?? [];
+        const { wikiComparableId } = await auctionItemIdentity(auction.uuid, auction.item_bytes);
+        if (
+          !wikiComparableId ||
+          !matchesWikiAuctionVariant(wikiComparableId, auction.tier, auction.category)
+        )
+          continue;
+        const matches = listings.get(wikiComparableId) ?? [];
         matches.push({ price: auction.starting_bid, endsAt: auction.end });
-        listings.set(wikiAccessoryId, matches);
+        listings.set(wikiComparableId, matches);
       }
     },
   );
@@ -1382,8 +1419,6 @@ export async function getAuctions(pages = 6): Promise<{
   stale?: boolean;
   binCount: number;
   auctionCount: number;
-  uniqueItems: number;
-  averageBin: number;
   entries: AuctionEntry[];
 }> {
   const fallback = {
@@ -1394,8 +1429,6 @@ export async function getAuctions(pages = 6): Promise<{
     stale: true,
     binCount: 0,
     auctionCount: 0,
-    uniqueItems: 0,
-    averageBin: 0,
     entries: [] as AuctionEntry[],
   };
 
@@ -1410,38 +1443,14 @@ export async function getAuctions(pages = 6): Promise<{
     const now = Date.now();
     const raw = snapshot.auctions.filter((auction) => auction.end > now);
 
-    const lowestBin = new Map<string, number>();
-
-    let binCount = 0;
-    let binTotal = 0;
-
-    for (const auction of raw) {
-      if (!auction.bin) {
-        continue;
-      }
-
-      binCount += 1;
-      binTotal += auction.starting_bid;
-
-      const key = `${auction.item_name}|${auction.tier}`;
-
-      const previous = lowestBin.get(key);
-
-      if (previous === undefined || auction.starting_bid < previous) {
-        lowestBin.set(key, auction.starting_bid);
-      }
-    }
+    const binCount = raw.filter((auction) => auction.bin === true).length;
 
     pruneAuctionItemCache(now);
 
     const candidates: AuctionCandidate[] = raw.map((auction) => {
-      const key = `${auction.item_name}|${auction.tier}`;
-
       const price = auction.bin
         ? auction.starting_bid
         : Math.max(auction.highest_bid_amount, auction.starting_bid);
-
-      const lb = lowestBin.get(key) ?? null;
 
       return {
         uuid: auction.uuid,
@@ -1467,9 +1476,6 @@ export async function getAuctions(pages = 6): Promise<{
 
           topBid: auction.bin ? null : Math.max(auction.highest_bid_amount, 0) || null,
 
-          lowestBin: lb,
-
-          profit: auction.bin && lb !== null ? lb - price : 0,
           endsAt: auction.end,
 
           endsInMs: auction.end - now,
@@ -1497,10 +1503,6 @@ export async function getAuctions(pages = 6): Promise<{
       binCount,
 
       auctionCount: raw.length - binCount,
-
-      uniqueItems: lowestBin.size,
-
-      averageBin: binCount ? binTotal / binCount : 0,
 
       entries,
     };
@@ -1818,9 +1820,7 @@ async function parseContainer(
     list.forEach((entry, index) => {
       const it = nbtObject(entry);
 
-      if (!it) {
-        return;
-      }
+      if (!it) throw new Error("Invalid inventory slot");
 
       const tag = nbtObject(it["tag"]) ?? {};
 
@@ -1864,6 +1864,8 @@ async function parseContainer(
 
       const starsRaw = extra["dungeon_item_level"] ?? extra["upgrade_level"];
       const hpbRaw = extra["hot_potato_count"];
+      const rarityUpgrades = extra["rarity_upgrades"];
+      const instanceId = extra["uuid"];
 
       const scrollsRaw = nbtArray(extra["ability_scroll"]);
 
@@ -1883,6 +1885,7 @@ async function parseContainer(
         name,
 
         id: itemId,
+        ...(typeof instanceId === "string" && instanceId ? { instanceId } : {}),
 
         ...(texture ? { texture } : {}),
 
@@ -1899,6 +1902,7 @@ async function parseContainer(
           : {}),
 
         ...(typeof starsRaw === "number" && starsRaw > 0 ? { stars: starsRaw } : {}),
+        ...(typeof rarityUpgrades === "number" && rarityUpgrades > 0 ? { rarityUpgrades } : {}),
 
         ...(typeof hpbRaw === "number" && hpbRaw > 0 ? { hotPotatoBooks: hpbRaw } : {}),
 
@@ -2030,18 +2034,21 @@ export async function getPlayerData(
       selected: profile.profile_id === chosen.profile_id,
     }));
 
-    const experience =
-      (
-        member["player_data"] as
-          | {
-              experience?: Record<string, number>;
-            }
-          | undefined
-      )?.experience ?? {};
+    const playerData = member["player_data"] as
+      { experience?: Record<string, number>; crafted_generators?: unknown[] } | undefined;
+    const experience = playerData?.experience ?? {};
+    const craftedGenerators = Array.isArray(playerData?.crafted_generators)
+      ? playerData.crafted_generators.filter(
+          (id): id is string => typeof id === "string" && id.length > 0,
+        )
+      : undefined;
 
-    const skills = SKILL_META.map((meta) =>
-      computeSkill(meta.key as SkillKey, Number(experience[`SKILL_${meta.key}`] ?? 0)),
-    );
+    const skills = SKILL_META.flatMap((meta) => {
+      const xp = experience[`SKILL_${meta.key}`];
+      return typeof xp === "number" && Number.isFinite(xp) && xp >= 0
+        ? [computeSkill(meta.key as SkillKey, xp)]
+        : [];
+    });
 
     const rated = skills.filter((skill) => skill.key !== "RUNECRAFTING" && skill.key !== "SOCIAL");
 
@@ -2116,20 +2123,30 @@ export async function getPlayerData(
       (container) => container.items.length > 0 || container.locked,
     );
 
-    const collectionRaw = (member["collection"] ?? {}) as Record<string, number>;
+    const rawCollection = member["collection"];
+    const collectionRaw =
+      rawCollection && typeof rawCollection === "object" && !Array.isArray(rawCollection)
+        ? (rawCollection as Record<string, unknown>)
+        : null;
 
     const names = await nameLookup();
 
-    const collections = Object.entries(collectionRaw)
-      .map(([id, amount]) => ({
-        id,
+    const collections = Object.entries(collectionRaw ?? {})
+      .flatMap(([id, amount]) =>
+        typeof amount === "number" && Number.isFinite(amount) && amount >= 0
+          ? [
+              {
+                id,
 
-        name: names.get(id) ?? titleCase(id),
+                name: names.get(id) ?? titleCase(id),
 
-        category: getCollectionCategory(id),
+                category: getCollectionCategory(id),
 
-        amount: Number(amount) || 0,
-      }))
+                amount,
+              },
+            ]
+          : [],
+      )
       .sort((a, b) => b.amount - a.amount);
 
     const currencies = member["currencies"] as
@@ -2278,28 +2295,47 @@ export async function getPlayerData(
             type?: string;
             name?: string;
             tier?: string;
-            experience?: number;
+            exp?: number;
+            active?: boolean;
             heldItem?: string | null;
             skin?: string | null;
             candyUsed?: number;
             uuid?: string;
+            uniqueId?: string;
           }>;
           current?: string | null;
         }
       | undefined;
 
-    const pets = (petsRaw?.pets ?? [])
-      .map((pet) => ({
-        name: titleCase(String(pet.name ?? pet.type ?? "Pet")),
-        rarity: String(pet.tier ?? "COMMON"),
-        level: computePetLevel(Number(pet.experience ?? 0)),
-        xp: Number(pet.experience ?? 0),
-        ...(petsRaw?.current && pet.uuid && petsRaw.current === pet.uuid ? { active: true } : {}),
-        ...(pet.heldItem ? { heldItem: titleCase(String(pet.heldItem).replace(/_/g, " ")) } : {}),
-        ...(pet.skin ? { skin: String(pet.skin) } : {}),
-        ...(Number(pet.candyUsed ?? 0) > 0 ? { candyUsed: Number(pet.candyUsed) } : {}),
-      }))
-      .sort((a, b) => b.level - a.level || b.xp - a.xp);
+    const pets = Array.isArray(petsRaw?.pets)
+      ? petsRaw.pets
+          .filter((pet) => typeof pet?.type === "string" || typeof pet?.name === "string")
+          .map((pet) => {
+            const xp =
+              typeof pet.exp === "number" && Number.isFinite(pet.exp) && pet.exp >= 0
+                ? pet.exp
+                : null;
+            const rarity = typeof pet.tier === "string" ? pet.tier.toUpperCase() : "Unknown";
+            const progress = pet.type ? getPetLevel(pet.type, rarity, xp) : null;
+            const instanceId = pet.uuid ?? pet.uniqueId;
+            return {
+              name: titleCase(pet.name ?? pet.type ?? "Pet"),
+              rarity,
+              level: progress?.level ?? null,
+              xp,
+              ...(pet.type ? { typeId: pet.type } : {}),
+              ...(instanceId ? { instanceId } : {}),
+              ...(progress ? { maxLevel: progress.maxLevel } : {}),
+              ...(pet.active === true || (pet.uuid && petsRaw.current === pet.uuid)
+                ? { active: true }
+                : {}),
+              ...(pet.heldItem ? { heldItem: titleCase(pet.heldItem) } : {}),
+              ...(pet.skin ? { skin: pet.skin } : {}),
+              ...(Number(pet.candyUsed ?? 0) > 0 ? { candyUsed: Number(pet.candyUsed) } : {}),
+            };
+          })
+          .sort((a, b) => (b.level ?? 0) - (a.level ?? 0) || (b.xp ?? 0) - (a.xp ?? 0))
+      : undefined;
 
     // Heart of the Mountain (mining core).
     const miningCore = member["mining_core"] as
@@ -2311,17 +2347,6 @@ export async function getPlayerData(
           selected_pickaxe_uid?: string;
         }
       | undefined;
-
-    // HOTM has its own XP curve (roughly: tier N requires ~640 * N^2.6 XP).
-    function hotmTierFromXp(xp: number): number {
-      if (xp <= 0) return 0;
-      let tier = 0;
-      for (let t = 1; t <= 10; t++) {
-        if (xp >= 640 * Math.pow(t, 2.6)) tier = t;
-        else break;
-      }
-      return tier;
-    }
 
     let hotm: import("./skyblock").HotmStats | undefined;
     if (
@@ -2343,7 +2368,10 @@ export async function getPlayerData(
         }
       }
       const xp = Number(miningCore.experience ?? 0);
-      const tier = hotmLevelFromNodes > 0 ? hotmLevelFromNodes : hotmTierFromXp(xp);
+      const tier =
+        typeof miningCore.experience === "number"
+          ? getHotmTier(miningCore.experience)
+          : hotmLevelFromNodes;
       hotm = {
         tier,
         xp,
@@ -2584,6 +2612,8 @@ export async function getPlayerData(
     }
 
     const profile = member["profile"] as { last_save?: number } | undefined;
+    const leveling = member["leveling"] as { experience?: unknown } | undefined;
+    const skyBlockXp = leveling?.experience;
     const lastSaveRaw = member["last_save"];
 
     // Bestiary: raw kills & deaths per mob (recursive multi-source scanner)
@@ -2660,15 +2690,21 @@ export async function getPlayerData(
       profiles: summaries,
 
       activeProfileId: chosen.profile_id,
+      ...(typeof skyBlockXp === "number" && Number.isSafeInteger(skyBlockXp) && skyBlockXp >= 0
+        ? { skyBlockXp }
+        : {}),
       availability: {
-        skillKeys: Object.keys(experience)
-          .filter((key) => key.startsWith("SKILL_") && Number.isFinite(experience[key]))
-          .map((key) => key.slice(6)),
+        skillKeys: skills.map((skill) => skill.key),
         containerIds: [...readableContainers],
         accessoryStorage,
         fairySouls: typeof fairySoul?.total_collected === "number",
         purse: typeof currencies?.coin_purse === "number",
         dungeonCompletions: Boolean(catacombs?.tier_completions),
+        catacombsXp:
+          typeof catacombs?.experience === "number" &&
+          Number.isFinite(catacombs.experience) &&
+          catacombs.experience >= 0,
+        collections: collectionRaw !== null,
       },
 
       skills,
@@ -2684,6 +2720,7 @@ export async function getPlayerData(
       containers,
 
       collections,
+      ...(craftedGenerators !== undefined ? { craftedGenerators } : {}),
 
       fairySouls: Number(fairySoul?.total_collected ?? 0),
 
@@ -2695,7 +2732,7 @@ export async function getPlayerData(
 
       ...(slayers.length ? { slayers } : {}),
 
-      ...(pets.length ? { pets } : {}),
+      ...(pets ? { pets } : {}),
 
       ...(hotm ? { hotm } : {}),
 

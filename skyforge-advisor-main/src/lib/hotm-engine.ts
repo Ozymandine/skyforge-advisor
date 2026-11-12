@@ -32,6 +32,18 @@ export const HOTM_TIER_XP_REQUIREMENTS: Record<number, number> = {
   10: 400_000,
 };
 
+export function getHotmTier(totalXp: number): number {
+  if (!Number.isFinite(totalXp) || totalXp < 0) return 0;
+  let tier = 0;
+  let remaining = totalXp;
+  for (const required of Object.values(HOTM_TIER_XP_REQUIREMENTS)) {
+    if (remaining < required) break;
+    remaining -= required;
+    tier++;
+  }
+  return tier;
+}
+
 export const HOTM_NODES: HotmNode[] = [
   // TIER 1
   {

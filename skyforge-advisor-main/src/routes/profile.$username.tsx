@@ -507,14 +507,14 @@ function PublicProfileRoute() {
                     className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] p-3"
                   >
                     <ItemIcon
-                      id={pet.name.toUpperCase()}
+                      id={pet.typeId ?? pet.name.toUpperCase()}
                       name={pet.name}
                       className="size-10 object-contain"
                     />
                     <div>
                       <span className="text-xs font-bold text-white block">{pet.name}</span>
                       <span className="font-mono text-[10px] font-bold text-amber-300">
-                        Lv {pet.level} • {pet.rarity}
+                        Lv {pet.level ?? "—"} • {pet.rarity}
                       </span>
                       {pet.heldItem && (
                         <span className="font-mono text-[9px] text-muted-foreground block truncate">

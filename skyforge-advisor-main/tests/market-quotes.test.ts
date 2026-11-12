@@ -41,7 +41,7 @@ describe("market snapshots", () => {
     expect(stale).toMatchObject({ lastUpdated: timestamp, stale: true, products: fresh.products });
   });
 
-  it("excludes mixed-generation pages and never assigns profit to a bid", async () => {
+  it("excludes mixed-generation pages and preserves actual bids", async () => {
     vi.resetModules();
     const timestamp = Date.now();
     const listing = {
@@ -79,7 +79,6 @@ describe("market snapshots", () => {
     expect(snapshot.entries).toHaveLength(2);
     expect(snapshot.entries.find((entry) => entry.uuid === "bid")).toMatchObject({
       topBid: 200,
-      profit: 0,
     });
   });
 });

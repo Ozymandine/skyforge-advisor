@@ -1,5 +1,5 @@
 // server/api/flips.ts
-// Public JSON endpoint: current top flip suggestions + published accuracy.
+// Public JSON endpoint: current Bazaar order spreads and quote-based tracking.
 // Registered as a Nitro handler in vite.config.ts (route: /api/flips).
 // CORS allowlisted + rate-limited — intended for mods and third-party tools.
 
@@ -47,52 +47,42 @@ export default defineEventHandler(async (event) => {
     return { error: "Rate limited", retryAfterMs: 60_000 };
   }
 
-  const [{ getBazaar, getAuctions }, market] = await Promise.all([
+  const [{ getBazaar }, market] = await Promise.all([
     import("../../src/lib/hypixel.server"),
     import("../../src/lib/market-history.server"),
   ]);
+  const bazaar = await getBazaar();
+  const fresh =
+    !bazaar.stale && bazaar.lastUpdated > 0 && Date.now() - bazaar.lastUpdated <= 5 * 60_000;
+  const products = fresh ? bazaar.products : [];
+  const prices = new Map(products.map((product) => [product.id, product.sellPrice]));
 
-  const [bazaar, auctions] = await Promise.all([getBazaar(), getAuctions(6)]);
-
-  const prices = new Map<string, number>();
-  for (const p of bazaar.products) prices.set(p.id, p.sellPrice);
-  for (const e of auctions.entries) {
-    if (e.id && e.lowestBin != null) {
-      const existing = prices.get(e.id);
-      if (existing == null || e.lowestBin < existing) prices.set(e.id, e.lowestBin);
-    }
-  }
-
-  const topBazaar = [...bazaar.products]
-    .sort((a, b) => b.profitPerHour - a.profitPerHour)
+  const topBazaar = products
+    .filter(
+      (product) => product.spread > 0 && product.buyMovingWeek > 0 && product.sellMovingWeek > 0,
+    )
+    .sort((a, b) => b.buyMovingWeek + b.sellMovingWeek - a.buyMovingWeek - a.sellMovingWeek)
     .slice(0, 25)
-    .map((p) => ({
-      id: p.id,
-      name: p.name,
-      buy: p.buyPrice,
-      sell: p.sellPrice,
-      marginPct: Number(p.margin.toFixed(2)),
-      profitPerHour: Math.round(p.profitPerHour),
-      weeklyVolume: p.buyMovingWeek + p.sellMovingWeek,
-    }));
-
-  const topAuctions = auctions.entries
-    .filter((e) => e.bin && e.profit > 0)
-    .slice(0, 25)
-    .map((e) => ({
-      uuid: e.uuid,
-      id: e.id ?? null,
-      name: e.name,
-      price: e.price,
-      lowestBin: e.lowestBin,
-      profit: Math.round(e.profit),
-      endsInMs: e.endsInMs,
+    .map((product) => ({
+      id: product.id,
+      name: product.name,
+      buy: product.buyPrice,
+      sell: product.sellPrice,
+      buyOrder: product.sellPrice,
+      sellOffer: product.buyPrice,
+      grossSpreadPerUnit: product.buyPrice - product.sellPrice,
+      netSpreadPerUnit: product.spread,
+      marginPct: Number(product.margin.toFixed(2)),
+      weeklyVolume: product.buyMovingWeek + product.sellMovingWeek,
     }));
 
   return {
-    updatedAt: new Date().toISOString(),
+    updatedAt: bazaar.lastUpdated > 0 ? new Date(bazaar.lastUpdated).toISOString() : null,
+    stale: !fresh,
+    assumptions: "Both orders fill at the observed quotes. Net spread includes a 1.25% sell fee.",
     bazaar: topBazaar,
-    auctions: topAuctions,
+    auctions: [],
     accuracy: market.getFlipAccuracy(prices),
+    accuracyBasis: "Current Bazaar order quotes for logged suggestions",
   };
 });

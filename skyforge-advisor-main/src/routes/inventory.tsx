@@ -26,6 +26,7 @@ import {
   type AccessoryRarity,
 } from "@/lib/accessory-data";
 import { formatNumber, formatFull } from "@/lib/skyblock";
+import { getPetXpBetween } from "@/lib/pet-catalog";
 import { cn } from "@/lib/utils";
 import { getTopMpUpgrades, POWER_STONES, getRecombPriorities } from "@/lib/mp-optimizer";
 
@@ -49,35 +50,6 @@ export const Route = createFileRoute("/inventory")({
 });
 
 type Mode = "containers" | "accessories" | "pets" | "profile";
-
-/* ============================================================================
- * PET XP TABLE (cumulative XP required to reach each level, 1-100)
- * ========================================================================== */
-
-const PET_XP_LEVELS = [
-  0, 100, 275, 525, 850, 1250, 1725, 2275, 2900, 3600, 4375, 5225, 6150, 7150, 8225, 9375, 10600,
-  11900, 13275, 14725, 16250, 17850, 19525, 21275, 23100, 25000, 26975, 29025, 31150, 33350, 35625,
-  37975, 40400, 42900, 45475, 48125, 50850, 53650, 56525, 59475, 62500, 65600, 68775, 72025, 75350,
-  78750, 82225, 85775, 89400, 93100, 96875, 100725, 104650, 108650, 112725, 116875, 121100, 125400,
-  129775, 134225, 138750, 143350, 148025, 152775, 157600, 162500, 167475, 172525, 177650, 182850,
-  188125, 193475, 198900, 204400, 209975, 215625, 221350, 227150, 233025, 238975, 245000, 251100,
-  257275, 263525, 269850, 276250, 282725, 289275, 295900, 302600, 309375, 316225, 323150, 330150,
-  337225, 344375, 351600, 358900, 366275, 373725, 381250,
-];
-
-function petXpForLevel(level: number) {
-  return PET_XP_LEVELS[Math.min(99, Math.max(0, level))] ?? 0;
-}
-
-/** Total XP needed to go from `fromLevel` to `toLevel` at a given rarity multiplier. */
-const RARITY_XP_MULT: Record<string, number> = {
-  COMMON: 1,
-  UNCOMMON: 1.5,
-  RARE: 2,
-  EPIC: 3,
-  LEGENDARY: 4,
-  MYTHIC: 5,
-};
 
 /* ============================================================================
  * PAGE
@@ -777,7 +749,7 @@ function PetsSection() {
     return (data?.pets ?? [])
       .filter((pet) => !q || pet.name.toLowerCase().includes(q))
       .filter((pet) => rarityFilter === "All" || pet.rarity === rarityFilter)
-      .sort((a, b) => b.level - a.level || a.name.localeCompare(b.name));
+      .sort((a, b) => (b.level ?? 0) - (a.level ?? 0) || a.name.localeCompare(b.name));
   }, [data?.pets, query, rarityFilter]);
 
   const rarities = useMemo(
@@ -785,7 +757,12 @@ function PetsSection() {
     [data?.pets],
   );
 
-  const maxedPets = (data?.pets ?? []).filter((p) => p.level >= 100).length;
+  const maxedPets = (data?.pets ?? []).filter(
+    (pet) => pet.level !== null && pet.maxLevel !== undefined && pet.level === pet.maxLevel,
+  ).length;
+  const levelingPets = (data?.pets ?? []).flatMap((pet, index) =>
+    pet.typeId && pet.maxLevel ? [{ key: pet.instanceId ?? String(index), pet }] : [],
+  );
 
   // Best pet per skill (highest level pet whose name matches a skill keyword).
   const bestPets = useMemo(() => {
@@ -804,28 +781,32 @@ function PetsSection() {
       .map(([skill, names]) => {
         const best = all
           .filter((p) => names.some((n) => p.name.toLowerCase().includes(n)))
-          .sort((a, b) => b.level - a.level)[0];
+          .sort((a, b) => (b.level ?? 0) - (a.level ?? 0))[0];
         return best ? { skill, pet: best } : null;
       })
       .filter((x): x is { skill: string; pet: (typeof all)[number] } => x !== null);
   }, [data?.pets]);
 
-  const rarityOfCalcPet =
-    (data?.pets ?? []).find((p) => `${p.name} (${p.rarity})` === calcPet)?.rarity ?? "COMMON";
-
-  const calcXp = useMemo(() => {
-    const mult = RARITY_XP_MULT[rarityOfCalcPet] ?? 1;
-    const fromXp = petXpForLevel(calcFrom - 1);
-    const toXp = petXpForLevel(Math.min(99, calcTo - 1));
-    return Math.max(0, Math.round((toXp - fromXp) * mult));
-  }, [calcFrom, calcTo, rarityOfCalcPet]);
+  const levelingPet = levelingPets.find(({ key }) => key === calcPet)?.pet;
+  const maxLevel = levelingPet?.maxLevel ?? 100;
+  const calcXp = levelingPet?.typeId
+    ? getPetXpBetween(levelingPet.typeId, levelingPet.rarity, calcFrom, calcTo)
+    : null;
 
   return (
     <div className="space-y-6">
       <StatRow
         stats={[
-          { label: "Pets owned", value: String(data?.pets?.length ?? 0), sub: "On this profile" },
-          { label: "Level 100 pets", value: String(maxedPets), sub: "Fully leveled" },
+          {
+            label: "Pets owned",
+            value: data?.pets ? String(data.pets.length) : "—",
+            sub: "On this profile",
+          },
+          {
+            label: "Max-level pets",
+            value: data?.pets ? String(maxedPets) : "—",
+            sub: "Fully leveled",
+          },
           {
             label: "Taming level",
             value: String(data?.skills.find((s) => s.key === "TAMING")?.level ?? 0),
@@ -845,13 +826,19 @@ function PetsSection() {
             Pet
             <select
               value={calcPet}
-              onChange={(e) => setCalcPet(e.target.value)}
+              onChange={(e) => {
+                const key = e.target.value;
+                const pet = levelingPets.find((option) => option.key === key)?.pet;
+                setCalcPet(key);
+                setCalcFrom(pet?.level ?? 1);
+                setCalcTo(pet?.maxLevel ?? 100);
+              }}
               className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60"
             >
               <option value="">Select a pet…</option>
-              {(data?.pets ?? []).map((p) => (
-                <option key={`${p.name}-${p.rarity}`} value={`${p.name} (${p.rarity})`}>
-                  {p.name} ({p.rarity}) · Lv {p.level}
+              {levelingPets.map(({ key, pet }) => (
+                <option key={key} value={key}>
+                  {pet.name} ({pet.rarity}) · Lv {pet.level ?? "—"}
                 </option>
               ))}
             </select>
@@ -861,9 +848,9 @@ function PetsSection() {
             <input
               type="number"
               min={1}
-              max={100}
+              max={maxLevel}
               value={calcFrom}
-              onChange={(e) => setCalcFrom(Math.min(100, Math.max(1, Number(e.target.value))))}
+              onChange={(e) => setCalcFrom(Math.min(maxLevel, Math.max(1, Number(e.target.value))))}
               className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60"
             />
           </label>
@@ -872,21 +859,18 @@ function PetsSection() {
             <input
               type="number"
               min={1}
-              max={100}
+              max={maxLevel}
               value={calcTo}
-              onChange={(e) => setCalcTo(Math.min(100, Math.max(1, Number(e.target.value))))}
+              onChange={(e) => setCalcTo(Math.min(maxLevel, Math.max(1, Number(e.target.value))))}
               className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60"
             />
           </label>
         </div>
-        {calcPet && (
+        {levelingPet && (
           <p className="mt-4 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
-            Estimated XP to go from level {calcFrom} → {calcTo}:{" "}
-            <span className="font-mono font-semibold text-primary">{formatNumber(calcXp)} XP</span>{" "}
-            <span className="text-xs text-muted-foreground">
-              (at {rarityOfCalcPet.toLowerCase()} rarity ×{RARITY_XP_MULT[rarityOfCalcPet] ?? 1}{" "}
-              rate)
-            </span>
+            {calcXp === null
+              ? "Choose whole levels in order."
+              : `${formatFull(calcXp)} pet XP from level ${calcFrom} to ${calcTo}.`}
           </p>
         )}
       </Panel>
@@ -900,7 +884,7 @@ function PetsSection() {
               <li key={skill} className="glass-soft rounded-xl px-4 py-3">
                 <p className="text-xs uppercase tracking-widest text-muted-foreground">{skill}</p>
                 <p className="mt-1 truncate text-sm font-medium">{pet.name}</p>
-                <p className="text-xs text-primary">Level {pet.level}</p>
+                <p className="text-xs text-primary">Level {pet.level ?? "unavailable"}</p>
               </li>
             ))}
           </ul>
@@ -913,7 +897,7 @@ function PetsSection() {
           <h2 className="text-xl font-semibold">All pets</h2>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
-              <IconSearch className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground size-14" />
+              <IconSearch className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -935,24 +919,31 @@ function PetsSection() {
 
         {pets.length === 0 ? (
           <p className="mt-4 text-sm text-muted-foreground">
-            No pets match. Enable the pets API or adjust your filters.
+            {data?.pets
+              ? "No pets match these filters."
+              : "Pet data is unavailable for this profile."}
           </p>
         ) : (
           <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {pets.map((pet) => (
-              <li key={`${pet.name}-${pet.rarity}`} className="glass-soft rounded-xl px-4 py-3">
+            {pets.map((pet, index) => (
+              <li
+                key={pet.instanceId ?? `${pet.name}-${pet.rarity}-${index}`}
+                className="glass-soft rounded-xl px-4 py-3"
+              >
                 <div className="flex items-baseline justify-between gap-2">
                   <p className="min-w-0 truncate text-sm font-medium">{pet.name}</p>
                   <RarityTag rarity={pet.rarity} />
                 </div>
                 <div className="mt-2 flex items-center gap-2">
-                  <span className="text-xs font-semibold text-primary">Lv {pet.level}</span>
-                  <div className="flex-1">
-                    <ProgressBar pct={Math.round((pet.level / 100) * 100)} />
-                  </div>
+                  <span className="text-xs font-semibold text-primary">Lv {pet.level ?? "—"}</span>
+                  {pet.level !== null && pet.maxLevel !== undefined && (
+                    <div className="flex-1">
+                      <ProgressBar pct={Math.round((pet.level / pet.maxLevel) * 100)} />
+                    </div>
+                  )}
                 </div>
                 <p className="mt-1 text-right text-[11px] text-muted-foreground">
-                  {formatNumber(pet.xp)} XP
+                  {pet.xp === null ? "XP unavailable" : `${formatNumber(pet.xp)} XP`}
                 </p>
               </li>
             ))}

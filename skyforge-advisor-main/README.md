@@ -44,8 +44,10 @@ coverage.
 
 ## Wiki Auction House quotes
 
-The Wiki quotes single, unmodified Jungle Amulets (Uncommon) and Red Claw
-Artifacts (Epic). It matches the canonical item ID and stack count in the
+The Wiki quotes single, unmodified copies of Jungle Amulet, Red Claw Artifact,
+Gravity Talisman, Fish Affinity Talisman, Potion Affinity Artifact, Lumberjack
+Artifact, Ender Artifact, Aspect of the End, Aspect of the Void, and Livid Dagger.
+It matches the canonical item ID and stack count in the
 listing's decoded NBT, requires base rarity, and excludes unknown item metadata
 and modifiers. Each quote requires at least three active, unique BIN listings.
 
@@ -61,10 +63,28 @@ Accessory Bag. It checks the reported purse and readable inventory, Accessory Ba
 Chest, Personal Vault, and any reported backpacks before suggesting the
 purchase. The advice is withheld if a Red Claw Artifact is already visible in
 storage, the asking price exceeds the purse, or a required input is unavailable.
+Gemstone miners can get a comparable Jungle Amulet quote or a verified Odawa
+trade on Ironman. Dungeon next steps use reported XP, recorded clears, and
+published floor requirements.
+
+## Damage Simulator and pet data
+
+The simulator uses the Hypixel item catalog for sword, longsword, qualifying
+axe, bow, and wand presets. It calculates standard overworld melee hits and
+effective health. A readable owned weapon or equipped piece contributes its
+displayed overworld stats. Other player bonuses can be entered manually.
+The mob list records published health and applies mitigation when a defense
+value is available or entered. Bow, ability, and dungeon mechanics require
+separate damage models.
+
+The pet catalog and XP curves come from the pinned MIT-licensed
+[NotEnoughUpdates data](https://github.com/NotEnoughUpdates/NotEnoughUpdates-REPO).
+Pet combat presets estimate base stats between the source's level endpoints.
+Run `node scripts/generate-pet-catalog.mjs <NEU-commit-SHA>` to refresh the tables.
 
 ## Market history store
 
-`src/lib/market-history.server.ts` records bazaar prices + lowest BINs on every
+`src/lib/market-history.server.ts` records Bazaar quotes on every
 live fetch (throttled to one sample / 5 min, 14-day retention) into
 `.data/market-store.json`. It also evaluates price-alert rules server-side and
 queues notifications.
@@ -84,9 +104,10 @@ queues notifications.
 
 ## Public API
 
-- `GET /api/flips` — current top 25 Bazaar + top 25 Auction flip suggestions
-  and the published accuracy score. JSON, CORS open, no auth. Intended for
-  mods and third-party tools.
+- `GET /api/flips` — current Bazaar order spreads, the snapshot timestamp, and
+  quote-based tracking. Spreads assume both orders fill at the observed
+  prices and include the standard sell fee. Intended for mods and third-party
+  tools.
 
 ## SEO
 

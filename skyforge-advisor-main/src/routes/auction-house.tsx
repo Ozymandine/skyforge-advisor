@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { ErrorState, LoadState } from "@/components/data-states";
 import { PageHero, Panel, RarityTag } from "@/components/layout/app-shell";
 import { MarketControls, MarketFreshness, marketControl } from "@/components/market-controls";
@@ -27,6 +27,11 @@ function AuctionHouse() {
   const [maxPrice, setMaxPrice] = useState("");
   const [category, setCategory] = useState("");
   const [visible, setVisible] = useState(pageSize);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 5_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const [copyStatus, setCopyStatus] = useState<{ id: string; copied: boolean } | null>(null);
   const search = useDeferredValue(query.trim().toLowerCase());
   const { data, isLoading, error, refetch, isFetching } = useQuery({
@@ -44,19 +49,19 @@ function AuctionHouse() {
       (data?.entries ?? [])
         .filter(
           (entry) =>
+            (entry.endsAt === undefined || entry.endsAt > now) &&
             (kind === "All listings" || entry.bin === (kind === "BIN only")) &&
             (!category || entry.category === category) &&
             (!maxPrice || entry.price <= Number(maxPrice)) &&
             (entry.name.toLowerCase().includes(search) || entry.id?.toLowerCase().includes(search)),
         )
         .sort(sorts[sort]),
-    [data, kind, category, maxPrice, search, sort],
+    [data, kind, category, maxPrice, search, sort, now],
   );
   const stale =
     data?.stale ||
     Boolean(error) ||
     Boolean(data?.lastUpdated && Date.now() - data.lastUpdated > 5 * 60_000);
-  const now = Date.now();
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHero
@@ -161,7 +166,8 @@ function AuctionHouse() {
           <>
             <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
               <p>
-                Listing sample · {data.pagesScanned} of {data.totalPages} pages scanned
+                Up to 720 listings by expiry · {data.pagesScanned} of {data.totalPages} pages
+                scanned
               </p>
               <MarketFreshness updated={data.lastUpdated} stale={stale} />
             </div>

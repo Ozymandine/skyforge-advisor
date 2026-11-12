@@ -15,7 +15,7 @@ import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
 import { PageHero, Panel, ProgressBar, StatRow } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { useAccount, usePlayer } from "@/hooks/use-account";
-import { getHistory, hasTrend, historySpanDays } from "@/lib/history";
+import { getHistory } from "@/lib/history";
 import { fetchItems, fetchPriceHistory, fetchTrackedIds } from "@/lib/hypixel.functions";
 import { formatFull, formatNumber } from "@/lib/skyblock";
 
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/analytics")({
       { property: "og:title", content: "Analytics — SkyBlock Assistant" },
       {
         property: "og:description",
-        content: "Live profile analytics for skill progress, net worth and collection tracking.",
+        content: "Live profile analytics for skill progress, balances, and collections.",
       },
     ],
   }),
@@ -76,11 +76,7 @@ function Analytics() {
     return points
       .map((p) => ({
         t: new Date(p.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        v:
-          (p as { b?: number; bin?: number; s?: number }).bin ??
-          (p as { b?: number }).b ??
-          (p as { s?: number }).s ??
-          0,
+        v: p.b ?? 0,
       }))
       .filter((p) => p.v > 0);
   }, [marketHistoryQuery.data, activeId]);
@@ -92,16 +88,23 @@ function Analytics() {
 
   const trendData = useMemo(
     () =>
-      history.map((s) => ({
-        date: new Date(s.t).toLocaleDateString([], { month: "short", day: "numeric" }),
-        netWorth: s.netWorth,
-        skillAverage: s.skillAverage,
-        fairySouls: s.fairySouls,
-      })),
+      history
+        .filter((snapshot) => snapshot.reported)
+        .map((s) => ({
+          date: new Date(s.t).toLocaleDateString([], { month: "short", day: "numeric" }),
+          coins: s.coins,
+          skillAverage: s.skillAverage,
+          fairySouls: s.fairySouls,
+        })),
     [history],
   );
 
-  const netWorth = data ? data.purse + (data.bank ?? 0) : 0;
+  const purse = data?.availability?.purse ? data.purse : null;
+  const bank = data?.bank ?? null;
+  const balance = purse !== null && bank !== null ? purse + bank : null;
+  const skillAverage = data?.skills.some((skill) => !["SOCIAL", "RUNECRAFTING"].includes(skill.key))
+    ? data.skillAverage.toFixed(2)
+    : "Unavailable";
   const topSkills = data
     ? [...data.skills].sort((a, b) => b.level - a.level || b.totalXp - a.totalXp).slice(0, 4)
     : [];
@@ -118,72 +121,38 @@ function Analytics() {
         <>
           <StatRow
             stats={[
-              { label: "Skill average", value: data.skillAverage.toFixed(2), sub: "All skills" },
+              { label: "Available skill average", value: skillAverage },
               {
                 label: "Total skill XP",
-                value: formatFull(data.totalSkillXp),
-                sub: "Current progress",
+                value: data.skills.length ? formatFull(data.totalSkillXp) : "Unavailable",
               },
-              { label: "Net worth estimate", value: formatFull(netWorth), sub: "Purse + bank" },
               {
-                label: "Collections tracked",
-                value: String(data.collections.length),
-                sub: "Unique categories",
+                label: balance === null ? "Purse" : "Purse + bank",
+                value:
+                  balance !== null
+                    ? formatFull(balance)
+                    : purse !== null
+                      ? formatFull(purse)
+                      : "Unavailable",
+              },
+              {
+                label: "Fairy Souls",
+                value: data.availability?.fairySouls ? formatFull(data.fairySouls) : "Unavailable",
               },
             ]}
           />
 
-          <Panel>
-            <div className="flex flex-wrap items-start justify-between gap-6">
-              <div className="max-w-2xl">
-                <p className="eyebrow">Profile performance</p>
-                <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                  Connected account analytics
-                </h2>
-                <p className="mt-3 text-sm text-muted-foreground">
-                  These insights are pulled from your live Hypixel SkyBlock profile. A daily
-                  snapshot of your profile is stored locally each time you visit, building up trend
-                  history over time.
-                </p>
-              </div>
-            </div>
+          <p className="text-sm text-muted-foreground">
+            {history.length
+              ? `${history.length} daily snapshots stored on this device.`
+              : "Daily snapshots are stored on this device."}
+          </p>
 
-            <div className="mt-8 grid gap-4 lg:grid-cols-3">
-              <div className="glass-soft rounded-2xl p-5">
-                <p className="text-sm font-medium">Live net worth</p>
-                <p className="mt-3 text-3xl font-semibold">{formatFull(netWorth)}</p>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {data.bank === null
-                    ? "Bank hidden by profile"
-                    : `${formatFull(data.purse)} purse · ${formatFull(data.bank)} bank`}
-                </p>
-              </div>
-
-              <div className="glass-soft rounded-2xl p-5">
-                <p className="text-sm font-medium">Fairy souls</p>
-                <p className="mt-3 text-3xl font-semibold">{formatFull(data.fairySouls)}</p>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Total fairy souls collected for this profile
-                </p>
-              </div>
-
-              <div className="glass-soft rounded-2xl p-5">
-                <p className="text-sm font-medium">History recorded</p>
-                <p className="mt-3 text-3xl font-semibold">{history.length}</p>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {hasTrend(history)
-                    ? `${historySpanDays(history)} day${historySpanDays(history) > 1 ? "s" : ""} of daily snapshots`
-                    : "Daily snapshots appear here as you keep visiting"}
-                </p>
-              </div>
-            </div>
-          </Panel>
-
-          {hasTrend(history) && (
+          {trendData.length >= 2 && (
             <Panel>
               <h2 className="text-xl font-semibold">Trends over time</h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Net worth and skill average captured from your daily local snapshots.
+                Reported balances and skill averages from daily snapshots.
               </p>
               <div className="mt-6 h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -210,14 +179,14 @@ function Analytics() {
                         borderRadius: 12,
                       }}
                       formatter={(value, name) =>
-                        name === "Net worth" ? formatFull(Number(value)) : String(value)
+                        name === "Purse + bank" ? formatFull(Number(value)) : String(value)
                       }
                     />
                     <Line
                       yAxisId="worth"
                       type="monotone"
-                      dataKey="netWorth"
-                      name="Net worth"
+                      dataKey="coins"
+                      name="Purse + bank"
                       stroke="#34d399"
                       strokeWidth={2}
                       dot={false}
@@ -240,9 +209,9 @@ function Analytics() {
           <Panel>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-xl font-semibold">Market trends</h2>
+                <h2 className="text-xl font-semibold">Bazaar price history</h2>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Server-recorded price history — survives across sessions and visitors.
+                  Recorded sell offer quotes.
                   {trackedIds.length > 0 && ` ${trackedIds.length} markets tracked.`}
                 </p>
               </div>

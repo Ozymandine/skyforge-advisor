@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { recommendRedClawUpgrade, redClawUpgradeBudget } from "../src/lib/advisor-market";
+import {
+  jungleAmuletBudget,
+  recommendJungleAmulet,
+  recommendOdawaTrade,
+  recommendRedClawUpgrade,
+  redClawUpgradeBudget,
+} from "../src/lib/advisor-market";
+import { computeSkill } from "../src/lib/skyblock";
 import type { WikiAuctionQuote } from "../src/lib/wiki-auction";
 
 const now = Date.parse("2026-11-11T18:00:00Z");
@@ -126,5 +133,47 @@ describe("Red Claw Artifact Advisor recommendation", () => {
       recommendRedClawUpgrade(player.purse, { ...coverage, status: "insufficient" }, now),
     ).toBeNull();
     expect(recommendRedClawUpgrade(player.purse, { status: "unavailable" }, now)).toBeNull();
+  });
+});
+
+describe("gemstone progression advice", () => {
+  const mining = {
+    ...player,
+    collections: [{ id: "GEMSTONE_COLLECTION", name: "Gemstone", category: "Mining", amount: 300 }],
+    skills: [computeSkill("MINING", 1_000_000)],
+    hotm: { tier: 4, xp: 37_000, powders: { mithril: 0, gemstone: 0, glacite: 0 }, nodes: {} },
+  };
+  it("recommends a quoted Jungle Amulet to a Classic profile with gemstone progress", () => {
+    const budget = jungleAmuletBudget(mining);
+    expect(recommendJungleAmulet(budget, quote, now)).toMatchObject({
+      marketItemId: "JUNGLE_AMULET",
+      benefit: expect.stringContaining("+10 Gemstone Fortune"),
+    });
+    expect(jungleAmuletBudget({ ...mining, collections: [] })).toBeNull();
+  });
+
+  it("uses the verified Odawa trade for Ironman only with access and enough materials", () => {
+    const ironman = {
+      ...mining,
+      profiles: [{ ...player.profiles[0]!, gameMode: "Ironman" }],
+      containers: [
+        ...player.containers,
+        {
+          id: "inventory",
+          label: "Inventory",
+          slots: 36,
+          items: [
+            { ...ring, id: "JUNGLE_HEART", count: 4 },
+            { ...ring, id: "SLUDGE_JUICE", count: 500 },
+          ],
+        },
+      ],
+    };
+    expect(jungleAmuletBudget(ironman)).toBeNull();
+    expect(recommendOdawaTrade(ironman)).toMatchObject({
+      cost: "4 Jungle Hearts and 500 Sludge Juice",
+    });
+    expect(recommendOdawaTrade({ ...ironman, hotm: { ...ironman.hotm, xp: 36_999 } })).toBeNull();
+    expect(recommendOdawaTrade({ ...ironman, containers: player.containers })).toBeNull();
   });
 });

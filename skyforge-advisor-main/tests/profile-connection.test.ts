@@ -41,7 +41,18 @@ describe("username-only SkyBlock profiles", () => {
               profile_id: profileId,
               cute_name: "Apple",
               selected: true,
-              members: { [uuid]: {} },
+              members: {
+                [uuid]: {
+                  leveling: { experience: 3_451 },
+                  player_data: { experience: { SKILL_MINING: 100, SKILL_COMBAT: 0 } },
+                  pets_data: {
+                    pets: [
+                      { type: "GRIFFIN", tier: "LEGENDARY", exp: 660, active: true },
+                      { type: "TIGER", tier: "LEGENDARY" },
+                    ],
+                  },
+                },
+              },
             },
           ],
         });
@@ -52,6 +63,15 @@ describe("username-only SkyBlock profiles", () => {
 
     const player = await getPlayerData("Steve");
     expect(player).toMatchObject({ username: "Steve", uuid, activeProfileId: profileId });
+    expect(player?.skyBlockXp).toBe(3451);
+    expect(player?.skills.map((skill) => skill.key)).toEqual(
+      expect.arrayContaining(["MINING", "COMBAT"]),
+    );
+    expect(player?.skills).toHaveLength(2);
+    expect(player?.pets).toMatchObject([
+      { typeId: "GRIFFIN", level: 2, maxLevel: 100, xp: 660, active: true },
+      { typeId: "TIGER", level: null, xp: null },
+    ]);
     expect(JSON.stringify(player)).not.toContain(key);
     expect(request).toHaveBeenCalledWith(
       expect.stringContaining("/v2/skyblock/profiles"),

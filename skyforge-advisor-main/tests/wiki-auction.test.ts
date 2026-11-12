@@ -12,7 +12,7 @@ function nbtString(value: string) {
   return Buffer.concat([length, data]);
 }
 
-function itemBytes(id: string, count = 1, attributes: string[] = []) {
+function itemBytes(id: string, count = 1, attributes: string[] = [], weapon = false) {
   return gzipSync(
     Buffer.concat([
       Buffer.from([10, 0, 0, 9]), // Root compound and item list
@@ -21,6 +21,7 @@ function itemBytes(id: string, count = 1, attributes: string[] = []) {
       nbtString("Count"),
       Buffer.from([count, 10]),
       nbtString("tag"),
+      ...(weapon ? [Buffer.from([1]), nbtString("Unbreakable"), Buffer.from([1])] : []),
       Buffer.from([10]),
       nbtString("ExtraAttributes"),
       Buffer.from([8]),
@@ -152,6 +153,30 @@ describe("Wiki active BIN quotes", () => {
       totalPages: 1,
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("compares base weapons while excluding altered copies and mismatched categories", async () => {
+    const id = "ASPECT_OF_THE_END";
+    const raw = { category: "weapon", tier: "RARE", item_bytes: itemBytes(id, 1, [], true) };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        snapshotPage(0, [
+          listing("base-one", 300, raw),
+          listing("base-two", 320, raw),
+          listing("base-three", 305, raw),
+          listing("wrong-category", 1, { ...raw, category: "accessories" }),
+          listing("enchanted", 1, { ...raw, item_bytes: itemBytes(id, 1, ["enchantments"], true) }),
+          listing("starred", 1, { ...raw, item_bytes: itemBytes(id, 1, ["upgrade_level"], true) }),
+        ]),
+      ),
+    );
+    const { getWikiAuctionQuote } = await import("../src/lib/hypixel.server");
+    expect(await getWikiAuctionQuote(id)).toMatchObject({
+      status: "quoted",
+      price: 300,
+      comparableListings: 3,
+    });
   });
 
   it("withholds prices after a failed refresh or when Hypixel's snapshot is old", async () => {

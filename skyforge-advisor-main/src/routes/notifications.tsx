@@ -15,12 +15,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Chip, PageHero, Panel } from "@/components/layout/app-shell";
 import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
 import { usePlayer } from "@/hooks/use-account";
-import {
-  fetchAuctions,
-  fetchBazaar,
-  fetchMyWebhookStatus,
-  saveMyWebhook,
-} from "@/lib/hypixel.functions";
+import { fetchBazaar, fetchMyWebhookStatus, saveMyWebhook } from "@/lib/hypixel.functions";
 import { getClientId } from "@/lib/client-id";
 import { evaluateAlerts, usePriceAlerts } from "@/hooks/use-price-alerts";
 import { useWatchlist } from "@/hooks/use-watchlist";
@@ -31,7 +26,7 @@ import {
   useNotificationFeed,
   type FeedItem,
 } from "@/hooks/use-notification-feed";
-import { formatDuration, formatNumber } from "@/lib/skyblock";
+import { formatNumber } from "@/lib/skyblock";
 import { MAX_FAIRY_SOULS } from "@/lib/constants";
 
 const icons: Record<string, typeof IconBell> = {
@@ -44,21 +39,18 @@ const icons: Record<string, typeof IconBell> = {
 
 type NotificationItem = FeedItem;
 
-/** Minimum flip profit (coins) for an auction alert to fire. */
-const FLIP_ALERT_THRESHOLD = 1_000_000;
-
 export const Route = createFileRoute("/notifications")({
   head: () => ({
     meta: [
       { title: "Notifications — SkyBlock Assistant" },
       {
         name: "description",
-        content: "Alerts for market flips, outbid events and goal achievements.",
+        content: "Bazaar price alerts and profile milestones.",
       },
       { property: "og:title", content: "Notifications — SkyBlock Assistant" },
       {
         property: "og:description",
-        content: "All profile alerts in one feed: flips, outbids and goals.",
+        content: "Bazaar price alerts and profile milestones.",
       },
     ],
   }),
@@ -79,8 +71,6 @@ function Notifications() {
   const { items, unreadCount } = useNotificationFeed();
   const [filter, setFilter] = useState("All");
   const [browserAlerts, setBrowserAlerts] = useState(false);
-  const seenFlips = useRef<Set<string>>(new Set());
-  const firstAuctionLoad = useRef(true);
   const priceAlerts = usePriceAlerts();
   const watchlist = useWatchlist();
   const lastPricesRef = useRef<Map<string, number>>(new Map());
@@ -176,56 +166,6 @@ function Notifications() {
 
     pushFeed(generated);
   }, [data]);
-
-  // ---------------------------------------------------------------------------
-  // Auction flip alerts (polled; fires browser notifications when enabled)
-  // ---------------------------------------------------------------------------
-
-  const auctionsQuery = useQuery({
-    queryKey: ["auctions"],
-    queryFn: () => fetchAuctions(),
-    enabled: connected,
-    staleTime: 60_000,
-    refetchInterval: 180_000,
-  });
-
-  useEffect(() => {
-    const entries = auctionsQuery.data?.entries;
-    if (!entries?.length) return;
-
-    const flips = entries.filter(
-      (a) => a.bin && a.profit >= FLIP_ALERT_THRESHOLD && !seenFlips.current.has(a.uuid),
-    );
-    if (!flips.length) return;
-
-    for (const flip of flips.slice(0, 5)) seenFlips.current.add(flip.uuid);
-
-    if (firstAuctionLoad.current) {
-      firstAuctionLoad.current = false;
-      return; // Don't spam on first load — only alert on *new* flips.
-    }
-
-    const fresh: NotificationItem[] = flips.map((flip) => ({
-      id: `flip-${flip.uuid}`,
-      title: `Flip opportunity: ${flip.name}`,
-      body: `Listed at ${formatNumber(flip.price)} vs lowest BIN ${formatNumber(flip.lowestBin ?? 0)} (+${formatNumber(flip.profit)} profit). Ends in ${formatDuration(flip.endsInMs)}.`,
-      time: "just now",
-      kind: "auction",
-      unread: true,
-    }));
-
-    pushFeed(fresh);
-
-    if (
-      browserAlerts &&
-      typeof Notification !== "undefined" &&
-      Notification.permission === "granted"
-    ) {
-      for (const item of fresh.slice(0, 3)) {
-        new Notification(item.title, { body: item.body });
-      }
-    }
-  }, [auctionsQuery.data, browserAlerts]);
 
   // ---------------------------------------------------------------------------
   // Watchlist price-threshold alerts (evaluated against live Bazaar data)
