@@ -193,7 +193,7 @@ function AuctionHouse() {
               {rows.slice(0, visible).map((entry) => (
                 <li
                   key={entry.uuid}
-                  className="min-w-0 rounded-2xl border border-border bg-background/35 p-4"
+                  className="game-tile min-w-0 rounded-xl border border-border bg-background/30 p-4"
                 >
                   <div className="flex items-start gap-3">
                     <ItemIcon
@@ -203,7 +203,9 @@ function AuctionHouse() {
                       className="size-7 shrink-0"
                     />
                     <div className="min-w-0">
-                      <h2 className="break-words text-sm font-semibold">{entry.name}</h2>
+                      <h2 className="break-words text-sm font-semibold">
+                        {entry.name.replace(/§./g, "")}
+                      </h2>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <RarityTag rarity={entry.rarity} />
                         {!entry.bin && <span>{entry.bids} bids</span>}

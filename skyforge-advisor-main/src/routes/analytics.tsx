@@ -82,11 +82,15 @@ function Analytics() {
     const points = marketHistoryQuery.data?.[activeId] ?? [];
     return points
       .map((p) => ({
-        t: new Date(p.t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        t: new Date(p.t).toLocaleString([], {
+          ...(range === 168 ? { weekday: "short" } : {}),
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
         v: p.b ?? 0,
       }))
       .filter((p) => p.v > 0);
-  }, [marketHistoryQuery.data, activeId]);
+  }, [marketHistoryQuery.data, activeId, range]);
 
   const nameOf = useMemo(() => {
     const map = new Map((itemsQuery.data ?? []).map((i) => [i.id, i.name]));

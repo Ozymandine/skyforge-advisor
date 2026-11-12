@@ -185,7 +185,7 @@ function Landing() {
 
       {/* Hypixel context strip: mayor, fire sale, news */}
       {(mayor || fireSale.length > 0 || news.length > 0) && (
-        <section className="grid gap-3 sm:grid-cols-3">
+        <section className="grid gap-3 sm:grid-cols-[repeat(auto-fit,minmax(14rem,1fr))]">
           {mayor && (
             <Panel className="p-4">
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -197,7 +197,7 @@ function Landing() {
               {(mayor.perks ?? []).slice(0, 2).map((perk) => (
                 <p key={perk.name} className="mt-1 text-[11px] text-muted-foreground">
                   <span className="font-semibold text-foreground/80">{perk.name}</span>
-                  {perk.description ? ` — ${perk.description}` : ""}
+                  {perk.description ? ` · ${perk.description.replace(/§./g, "")}` : ""}
                 </p>
               ))}
             </Panel>
