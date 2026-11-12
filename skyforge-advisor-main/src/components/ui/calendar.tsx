@@ -26,8 +26,8 @@ function Calendar({
       showOutsideDays={showOutsideDays}
       className={cn(
         "bg-background group/calendar p-3 [--cell-size:2rem] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
-        String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
-        String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
+        String.raw`rtl:**:[.rdp-button\_next>:is(svg,[data-ui-icon])]:rotate-180`,
+        String.raw`rtl:**:[.rdp-button\_previous>:is(svg,[data-ui-icon])]:rotate-180`,
         className,
       )}
       captionLayout={captionLayout}
@@ -70,7 +70,7 @@ function Calendar({
           "select-none font-medium",
           captionLayout === "label"
             ? "text-sm"
-            : "[&>svg]:text-muted-foreground flex h-8 items-center gap-1 rounded-md pl-2 pr-1 text-sm [&>svg]:size-3.5",
+            : "[&>:is(svg,[data-ui-icon])]:text-muted-foreground flex h-8 items-center gap-1 rounded-md pl-2 pr-1 text-sm [&>:is(svg,[data-ui-icon])]:size-3.5",
           defaultClassNames.caption_label,
         ),
         table: "w-full border-collapse",
