@@ -1,10 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 
 import { PageHero, Panel } from "@/components/layout/app-shell";
-import { playerQueryOptions, useAccount } from "@/hooks/use-account";
-import { usernameSchema } from "@/lib/schemas";
+import { useAccount, useConnectPlayer } from "@/hooks/use-account";
 
 export const Route = createFileRoute("/connect")({
   head: () => ({
@@ -22,45 +20,20 @@ export const Route = createFileRoute("/connect")({
 function Connect() {
   const account = useAccount();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [draft, setDraft] = useState<string>();
-  const [error, setError] = useState<string>();
-  const [connecting, setConnecting] = useState(false);
+  const { connect, connecting, error, clearError } = useConnectPlayer();
 
-  async function connect(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (connecting) return;
-    const name = usernameSchema.safeParse(draft ?? account.username);
-    if (!name.success) {
-      setError(name.error.issues[0]?.message ?? "Enter a Minecraft username.");
-      return;
-    }
-    setConnecting(true);
-    setError(undefined);
-    try {
-      const player = await queryClient.fetchQuery(playerQueryOptions(name.data));
-      if (!player) {
-        setError("SkyForge couldn't read that SkyBlock profile. Try again.");
-        return;
-      }
-      account.save({ username: name.data, profileId: "" });
-      await navigate({ to: "/dashboard" });
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not load your SkyBlock profile.");
-    } finally {
-      setConnecting(false);
-    }
+    if (await connect(draft ?? account.username)) await navigate({ to: "/dashboard" });
   }
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <PageHero
-        title="Connect your profile"
-        description="Enter your Minecraft Java username to load your SkyBlock stats, gear, and progression."
-      />
+      <PageHero title="Connect your profile" />
 
       <Panel>
-        <form onSubmit={(event) => void connect(event)} className="space-y-4">
+        <form onSubmit={(event) => void submit(event)} className="space-y-4">
           <label htmlFor="connect-username" className="block text-sm font-semibold">
             Minecraft username
           </label>
@@ -70,7 +43,7 @@ function Connect() {
               value={draft ?? account.username}
               onChange={(event) => {
                 setDraft(event.target.value);
-                setError(undefined);
+                clearError();
               }}
               placeholder="e.g. Deathstreeks"
               autoComplete="username"
@@ -113,7 +86,7 @@ function Connect() {
             onClick={() => {
               account.clear();
               setDraft("");
-              setError(undefined);
+              clearError();
             }}
             className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
           >

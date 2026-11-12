@@ -50,6 +50,13 @@ export const fetchAuctions = createServerFn({ method: "GET" }).handler(async () 
   return { ...data, entries };
 });
 
+export const searchAuctions = createServerFn({ method: "GET" })
+  .validator((input: unknown) => zod.string().trim().min(2).max(100).parse(input))
+  .handler(async ({ data }) => {
+    const { getAuctions } = await import("./hypixel.server");
+    return getAuctions(WIKI_AUCTION_PAGES, data.toLowerCase().replace(/_/g, " "));
+  });
+
 export const fetchPriceHistory = createServerFn({ method: "POST" })
   .validator((input: unknown) => priceHistoryInputSchema.parse(input ?? { ids: [] }))
   .handler(async ({ data }) => {

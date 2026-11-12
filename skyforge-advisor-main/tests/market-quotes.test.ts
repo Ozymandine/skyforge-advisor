@@ -140,4 +140,90 @@ describe("market snapshots", () => {
       bazaarStale: true,
     });
   });
+
+  it("searches auction pages before truncating the soonest-ending listings", async () => {
+    vi.resetModules();
+    const now = Date.now();
+    const listing = {
+      tier: "RARE",
+      bin: true,
+      starting_bid: 100,
+      highest_bid_amount: 0,
+      bids: [],
+      category: "weapon",
+      item_lore: "",
+    };
+    const fetchMock = vi.fn(async (url: string) => {
+      const page = Number(new URL(url).searchParams.get("page"));
+      return Response.json({
+        success: true,
+        page,
+        totalPages: 2,
+        totalAuctions: 1_051,
+        lastUpdated: now,
+        auctions:
+          page === 0
+            ? Array.from({ length: 1_050 }, (_, index) => ({
+                ...listing,
+                uuid: `filler-${index}`,
+                item_name: "Unrelated sword",
+                end: now + 600_000 + index,
+              }))
+            : [
+                {
+                  ...listing,
+                  uuid: "target",
+                  item_name: "§9Spicy Aspect of the End",
+                  end: now + 700_000,
+                },
+              ],
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { getAuctions } = await import("../src/lib/hypixel.server");
+    const defaultBoard = await getAuctions(2);
+    expect(defaultBoard.entries.some(({ uuid }) => uuid === "target")).toBe(false);
+    const search = await getAuctions(2, "aspect of the end");
+    expect(search.pagesScanned).toBe(2);
+    expect(search.entries.map(({ uuid }) => uuid)).toEqual(["target"]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries a mostly mismatched auction snapshot without mixing generations", async () => {
+    vi.resetModules();
+    const timestamp = Date.now() - 5_000;
+    let scans = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        const page = Number(new URL(url).searchParams.get("page"));
+        if (page === 0) scans++;
+        const generation = scans === 1 && page === 0 ? timestamp : timestamp + 1;
+        return Response.json({
+          success: true,
+          page,
+          totalPages: 8,
+          totalAuctions: 8,
+          lastUpdated: generation,
+          auctions: [
+            {
+              uuid: `${generation}-${page}`,
+              item_name: "Test Sword",
+              category: "weapon",
+              tier: "RARE",
+              bin: true,
+              starting_bid: 100,
+              end: timestamp + 600_000,
+            },
+          ],
+        });
+      }),
+    );
+    const { getAuctions } = await import("../src/lib/hypixel.server");
+    const snapshot = await getAuctions(8);
+    expect(scans).toBe(2);
+    expect(snapshot).toMatchObject({ pagesScanned: 8, lastUpdated: timestamp + 1 });
+    expect(snapshot.entries).toHaveLength(8);
+    expect(snapshot.entries.every(({ uuid }) => uuid.startsWith(`${timestamp + 1}-`))).toBe(true);
+  });
 });

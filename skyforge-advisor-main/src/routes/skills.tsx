@@ -36,7 +36,11 @@ export const Route = createFileRoute("/skills")({
 
 function StatList({ rows }: { rows: Stat[] }) {
   return (
-    <dl className="grid gap-x-6 divide-y divide-border sm:grid-cols-2 sm:divide-y-0">
+    <dl
+      className={
+        rows.length > 1 ? "grid gap-x-6 divide-y divide-border sm:grid-cols-2 sm:divide-y-0" : ""
+      }
+    >
       {rows.map(([label, value]) => (
         <div
           className="flex flex-wrap items-baseline justify-between gap-2 border-border py-2.5 text-sm sm:border-b"
@@ -171,19 +175,24 @@ function DungeonProgress({ data }: PlayerProps) {
 function Bestiary({ data }: PlayerProps) {
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState("");
+  const [sort, setSort] = useState("kills");
   const groups = data.bestiary?.families ?? [];
   const search = query.trim().toLowerCase();
   const families = groups
     .filter((family) => !group || group === family.id)
     .map((family) => ({
       ...family,
-      mobs: family.mobs.filter(
-        (mob) => mob.kills > 0 && (!search || mob.name.toLowerCase().includes(search)),
-      ),
+      mobs: family.mobs
+        .filter((mob) => mob.kills > 0 && (!search || mob.name.toLowerCase().includes(search)))
+        .sort((a, b) =>
+          sort === "name"
+            ? a.name.localeCompare(b.name)
+            : b.kills - a.kills || a.name.localeCompare(b.name),
+        ),
     }))
     .filter((family) => family.mobs.length > 0);
   return (
-    <Section title="Recorded mob kills">
+    <Section title="Bestiary">
       <div className="flex flex-wrap items-end gap-3">
         <label className="min-w-36 flex-1 text-sm">
           Search mobs
@@ -211,14 +220,41 @@ function Bestiary({ data }: PlayerProps) {
               ))}
           </select>
         </label>
+        <label className="text-sm">
+          Sort by
+          <select
+            className={marketControl + " mt-1 block"}
+            value={sort}
+            onChange={(event) => setSort(event.target.value)}
+          >
+            <option value="kills">Most kills</option>
+            <option value="name">Name A–Z</option>
+          </select>
+        </label>
       </div>
       {!families.length && <Note>No recorded kills match these filters.</Note>}
-      {families.map((family) => (
-        <div key={family.id} className="border-t border-border pt-3">
-          <h3 className="text-sm font-semibold">{family.name}</h3>
-          <StatList rows={family.mobs.map((mob) => [mob.name, `${formatFull(mob.kills)} kills`])} />
-        </div>
-      ))}
+      <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {families.map((family) => (
+          <section key={family.id} className="rounded-xl border border-border bg-background/25 p-3">
+            <h3 className="flex items-center justify-between gap-2 text-sm font-semibold">
+              {family.name}
+              <span className="text-xs font-normal text-muted-foreground">
+                {family.mobs.length} mobs
+              </span>
+            </h3>
+            <ul className="mt-2 divide-y divide-border">
+              {family.mobs.map((mob) => (
+                <li key={mob.id} className="flex items-center justify-between gap-2 py-1.5 text-sm">
+                  <span>{mob.name}</span>
+                  <span className="shrink-0 tabular-nums text-muted-foreground">
+                    {formatFull(mob.kills)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
     </Section>
   );
 }
@@ -367,15 +403,55 @@ function ReportedProgress({
           </Link>
         </Section>
       );
-    case "combat":
+    case "combat": {
+      const combat = data.skills.find((skill) => skill.key === "COMBAT");
       return (
         <Section title="Combat">
-          <StatList rows={[["Combat level", level("COMBAT")]]} />
-          <Link to="/simulator" className="text-sm text-primary hover:underline">
-            Open Damage Simulator
-          </Link>
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+            <div className="rounded-xl border border-border bg-background/25 p-4">
+              <div className="flex items-center gap-3">
+                <ItemIcon id="IRON_SWORD" name="Iron Sword" className="size-9 shrink-0" />
+                <div>
+                  <p className="text-xl font-bold">
+                    {combat ? `Level ${combat.level}` : "Combat XP unavailable"}
+                  </p>
+                  {combat && (
+                    <p className="text-sm text-muted-foreground">
+                      {formatFull(combat.totalXp)} total XP
+                    </p>
+                  )}
+                </div>
+              </div>
+              {combat && (
+                <div className="mt-4 space-y-1.5">
+                  <ProgressBar pct={combat.pct} />
+                  <p className="text-xs text-muted-foreground">
+                    {combat.maxed
+                      ? "Max level"
+                      : `${formatFull(Math.max(0, combat.neededXp - combat.currentXp))} XP to level ${combat.level + 1}`}
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="grid gap-2">
+              <Link
+                to="/simulator"
+                className="game-tile flex items-center gap-3 rounded-xl border border-border bg-background/25 p-3 text-sm font-medium"
+              >
+                <ItemIcon id="IRON_SWORD" name="Iron Sword" className="size-5" /> Damage Simulator
+              </Link>
+              <Link
+                to="/skills"
+                search={{ tab: "bestiary" }}
+                className="game-tile flex items-center gap-3 rounded-xl border border-border bg-background/25 p-3 text-sm font-medium"
+              >
+                <ItemIcon id="SPIDER_EYE" name="Spider Eye" className="size-5" /> Bestiary
+              </Link>
+            </div>
+          </div>
         </Section>
       );
+    }
     case "fishing":
       return (
         <Section title="Fishing">
@@ -415,38 +491,33 @@ function SkillsRoute() {
       {connected && error && <ErrorState error={error} />}
       {data && (
         <>
-          <nav
-            aria-label="Skill views"
-            className="flex flex-wrap gap-1.5 rounded-2xl border border-border p-2"
-          >
+          <nav aria-label="Skill views" className="flex flex-wrap gap-1.5">
             {tabs.map((entry) => (
               <Link
                 key={entry.id}
                 to="/skills"
                 search={{ tab: entry.id }}
                 aria-current={entry.id === tab ? "page" : undefined}
-                className={
-                  marketControl +
-                  " inline-flex items-center gap-2 " +
-                  (entry.id === tab ? "border-primary/50 bg-primary/10 font-medium" : "")
-                }
+                className={`game-tile inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-ring ${entry.id === tab ? "border-primary/40 bg-primary/15 font-semibold text-foreground" : "border-border bg-card/45 text-muted-foreground hover:text-foreground"}`}
               >
                 <ItemIcon id={entry.sprite} name={entry.label} className="size-4 shrink-0" />
                 {entry.label}
               </Link>
             ))}
           </nav>
-          {active.id === "overview" ? (
-            <SkillsOverview data={data} />
-          ) : active.id === "bestiary" ? (
-            <Bestiary data={data} />
-          ) : active.id === "dungeons" ? (
-            <DungeonProgress data={data} />
-          ) : active.id === "mining" ? (
-            <Mining data={data} />
-          ) : (
-            <ReportedProgress data={data} tab={active.id} />
-          )}
+          <div key={active.id} className="animate-fade-slide-up">
+            {active.id === "overview" ? (
+              <SkillsOverview data={data} />
+            ) : active.id === "bestiary" ? (
+              <Bestiary data={data} />
+            ) : active.id === "dungeons" ? (
+              <DungeonProgress data={data} />
+            ) : active.id === "mining" ? (
+              <Mining data={data} />
+            ) : (
+              <ReportedProgress data={data} tab={active.id} />
+            )}
+          </div>
         </>
       )}
     </div>

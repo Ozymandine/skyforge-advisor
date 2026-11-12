@@ -17,7 +17,14 @@ import { ItemIcon } from "@/components/ui/item-icon";
 import { useAccount, usePlayer } from "@/hooks/use-account";
 import { getHistory } from "@/lib/history";
 import { fetchItems, fetchPriceHistory, fetchTrackedIds } from "@/lib/hypixel.functions";
-import { formatFull, formatNumber } from "@/lib/skyblock";
+import { formatFull, formatNumber, titleCase } from "@/lib/skyblock";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/analytics")({
   head: () => ({
@@ -83,7 +90,7 @@ function Analytics() {
 
   const nameOf = useMemo(() => {
     const map = new Map((itemsQuery.data ?? []).map((i) => [i.id, i.name]));
-    return (id: string) => map.get(id) ?? id;
+    return (id: string) => map.get(id) ?? titleCase(id);
   }, [itemsQuery.data]);
 
   const trendData = useMemo(
@@ -158,10 +165,10 @@ function Analytics() {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={trendData} margin={{ top: 8, right: 16, bottom: 8, left: 8 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-                    <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
+                    <XAxis dataKey="date" stroke="var(--color-parchment-muted)" fontSize={12} />
                     <YAxis
                       yAxisId="worth"
-                      stroke="#94a3b8"
+                      stroke="var(--color-parchment-muted)"
                       fontSize={12}
                       tickFormatter={(v) => formatNumber(Number(v))}
                     />
@@ -169,7 +176,7 @@ function Analytics() {
                       yAxisId="skill"
                       orientation="right"
                       domain={[0, 60]}
-                      stroke="#94a3b8"
+                      stroke="var(--color-parchment-muted)"
                       fontSize={12}
                     />
                     <Tooltip
@@ -239,17 +246,23 @@ function Analytics() {
               </p>
             ) : (
               <>
-                <select
-                  value={activeId ?? ""}
-                  onChange={(e) => setSelectedId(e.target.value)}
-                  className="mt-4 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none"
-                >
-                  {trackedIds.map((id) => (
-                    <option key={id} value={id} className="bg-slate-950">
-                      {nameOf(id)}
-                    </option>
-                  ))}
-                </select>
+                <Select value={activeId ?? ""} onValueChange={setSelectedId}>
+                  <SelectTrigger
+                    aria-label="Bazaar market"
+                    className="mt-4 max-w-full rounded-lg bg-background/40 sm:max-w-72"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[...trackedIds]
+                      .sort((a, b) => nameOf(a).localeCompare(nameOf(b)))
+                      .map((id) => (
+                        <SelectItem key={id} value={id}>
+                          {nameOf(id)}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
 
                 <div className="mt-4 h-64 w-full">
                   {marketChart.length >= 2 ? (
@@ -259,9 +272,14 @@ function Analytics() {
                         margin={{ top: 8, right: 16, bottom: 8, left: 8 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-                        <XAxis dataKey="t" stroke="#94a3b8" fontSize={11} minTickGap={40} />
+                        <XAxis
+                          dataKey="t"
+                          stroke="var(--color-parchment-muted)"
+                          fontSize={11}
+                          minTickGap={40}
+                        />
                         <YAxis
-                          stroke="#94a3b8"
+                          stroke="var(--color-parchment-muted)"
                           fontSize={11}
                           width={70}
                           tickFormatter={(v) => formatNumber(Number(v))}

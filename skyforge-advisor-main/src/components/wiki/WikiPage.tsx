@@ -1011,7 +1011,7 @@ function WikiItemDetailCard({ item, onClose }: { item: WikiItem; onClose: () => 
       )}
     >
       {/* Darkened translucent backdrop — readable, page still shows through */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-zinc-950/80" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-card/75" />
 
       <div className="relative flex min-h-0 flex-1 flex-col">
         {/* Header */}
@@ -1146,7 +1146,7 @@ function WikiItemDetailCard({ item, onClose }: { item: WikiItem; onClose: () => 
               </div>
             )}
 
-            <WikiAuctionQuote itemId={item.id} />
+            <WikiAuctionQuote itemId={item.id} name={item.name} />
           </DetailSection>
 
           {/* Stats */}

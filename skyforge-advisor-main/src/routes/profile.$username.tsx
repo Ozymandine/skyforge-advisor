@@ -13,7 +13,7 @@ import {
   IconUser,
   IconLayers,
 } from "@/assets/icons";
-import { fetchPlayer } from "@/lib/hypixel.functions";
+import { playerQueryOptions } from "@/hooks/use-account";
 import { Panel, ProgressBar } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { MinecraftTooltip } from "@/components/ui/minecraft-tooltip";
@@ -22,10 +22,10 @@ import { formatNumber, type PlayerData, type InventoryItem, type PetInfo } from 
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/profile/$username")({
-  loader: async ({ params }: { params: { username: string } }) => {
+  loader: async ({ params, context }) => {
     const username = params.username.trim();
     try {
-      const data = await fetchPlayer({ data: { username } });
+      const data = await context.queryClient.fetchQuery(playerQueryOptions(username));
       return {
         data: data as PlayerData | null,
         username,
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/profile/$username")({
       };
     }
   },
-  head: ({ loaderData }: { loaderData?: { data: PlayerData | null; username: string } }) => {
+  head: ({ loaderData }) => {
     const user = loaderData?.username ?? "Player";
     const nw = formatNumber(
       (loaderData?.data?.purse ?? 0) +

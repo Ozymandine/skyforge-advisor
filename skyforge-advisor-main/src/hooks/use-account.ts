@@ -1,8 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 
 import { fetchPlayer } from "@/lib/hypixel.functions";
 import { recordSnapshot } from "@/lib/history";
+import { usernameSchema } from "@/lib/schemas";
 
 const NAME_STORAGE = "sba.username";
 const PROFILE_STORAGE = "sba.profileId";
@@ -74,6 +75,44 @@ export function playerQueryOptions(username: string, profileId = "") {
     retry: false,
     queryFn: () => fetchPlayer({ data: { username, ...(profileId ? { profileId } : {}) } }),
   };
+}
+
+export function useConnectPlayer() {
+  const queryClient = useQueryClient();
+  const { save } = useAccount();
+  const [connecting, setConnecting] = useState(false);
+  const [error, setError] = useState<string>();
+
+  async function connect(username: string) {
+    if (connecting) return null;
+    const parsed = usernameSchema.safeParse(username);
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Enter a Minecraft username.");
+      return null;
+    }
+    setConnecting(true);
+    setError(undefined);
+    try {
+      const current = read();
+      const profileId =
+        current.username.toLowerCase() === parsed.data.toLowerCase() ? current.profileId : "";
+      const player = await queryClient.fetchQuery(playerQueryOptions(parsed.data, profileId));
+      if (!player) {
+        setError("SkyForge couldn't read that SkyBlock profile. Try again.");
+        return null;
+      }
+      queryClient.setQueryData(playerQueryOptions(player.username, profileId).queryKey, player);
+      save({ username: player.username, profileId });
+      return player;
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not load your SkyBlock profile.");
+      return null;
+    } finally {
+      setConnecting(false);
+    }
+  }
+
+  return { connect, connecting, error, clearError: () => setError(undefined) };
 }
 
 /** Live profile data for the stored account. */

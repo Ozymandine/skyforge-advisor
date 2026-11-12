@@ -1,4 +1,4 @@
-export const WIKI_AUCTION_PAGES = 24;
+export const WIKI_AUCTION_PAGES = 64;
 export const MIN_COMPARABLE_LISTINGS = 3;
 export const WIKI_AUCTION_MAX_AGE_MS = 5 * 60_000;
 

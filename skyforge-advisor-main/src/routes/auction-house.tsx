@@ -5,11 +5,13 @@ import { ErrorState, LoadState } from "@/components/data-states";
 import { PageHero, Panel, RarityTag } from "@/components/layout/app-shell";
 import { MarketControls, MarketFreshness, marketControl } from "@/components/market-controls";
 import { ItemIcon } from "@/components/ui/item-icon";
-import { fetchAuctions } from "@/lib/hypixel.functions";
+import { fetchAuctions, searchAuctions } from "@/lib/hypixel.functions";
 import { formatDuration, formatNumber, type AuctionEntry } from "@/lib/skyblock";
 
 export const Route = createFileRoute("/auction-house")({
   head: () => ({ meta: [{ title: "Auction House — SkyForge" }] }),
+  validateSearch: (search: Record<string, unknown>): { q?: string } =>
+    typeof search["q"] === "string" ? { q: search["q"].slice(0, 100) } : {},
   component: AuctionHouse,
 });
 
@@ -21,7 +23,8 @@ const sorts = {
 } as const;
 
 function AuctionHouse() {
-  const [query, setQuery] = useState("");
+  const { q = "" } = Route.useSearch();
+  const [query, setQuery] = useState(q);
   const [sort, setSort] = useState<keyof typeof sorts>("Ending soonest");
   const [kind, setKind] = useState("All listings");
   const [maxPrice, setMaxPrice] = useState("");
@@ -33,10 +36,16 @@ function AuctionHouse() {
     return () => window.clearInterval(timer);
   }, []);
   const [copyStatus, setCopyStatus] = useState<{ id: string; copied: boolean } | null>(null);
-  const search = useDeferredValue(query.trim().toLowerCase());
+  const search = useDeferredValue(query.trim().toLowerCase().replace(/_/g, " "));
+  const [serverSearch, setServerSearch] = useState(q.trim().toLowerCase().replace(/_/g, " "));
+  useEffect(() => {
+    const timer = window.setTimeout(() => setServerSearch(search), 250);
+    return () => window.clearTimeout(timer);
+  }, [search]);
+  const searching = serverSearch.length >= 2;
   const { data, isLoading, error, refetch, isFetching } = useQuery({
-    queryKey: ["auctions"],
-    queryFn: () => fetchAuctions(),
+    queryKey: searching ? ["auctions", serverSearch] : ["auctions"],
+    queryFn: () => (searching ? searchAuctions({ data: serverSearch }) : fetchAuctions()),
     staleTime: 60_000,
     refetchInterval: 180_000,
   });
@@ -53,7 +62,8 @@ function AuctionHouse() {
             (kind === "All listings" || entry.bin === (kind === "BIN only")) &&
             (!category || entry.category === category) &&
             (!maxPrice || entry.price <= Number(maxPrice)) &&
-            (entry.name.toLowerCase().includes(search) || entry.id?.toLowerCase().includes(search)),
+            (entry.name.replace(/§./g, "").toLowerCase().includes(search) ||
+              entry.id?.toLowerCase().replace(/_/g, " ").includes(search)),
         )
         .sort(sorts[sort]),
     [data, kind, category, maxPrice, search, sort, now],
@@ -81,7 +91,7 @@ function AuctionHouse() {
         <MarketControls
           query={query}
           onQuery={(value) => {
-            setQuery(value);
+            setQuery(value.slice(0, 100));
             setVisible(pageSize);
           }}
           sort={sort}
@@ -166,8 +176,11 @@ function AuctionHouse() {
           <>
             <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
               <p>
-                Up to 720 listings by expiry · {data.pagesScanned} of {data.totalPages} pages
-                scanned
+                {searching
+                  ? `${rows.length} matching listings${data.matchingCount > data.entries.length ? ` shown of ${data.matchingCount} search results` : " from scanned pages"}`
+                  : "Up to 720 listings by expiry"}
+                {" · "}
+                {data.pagesScanned} of {data.totalPages} pages scanned
               </p>
               <MarketFreshness updated={data.lastUpdated} stale={stale} />
             </div>

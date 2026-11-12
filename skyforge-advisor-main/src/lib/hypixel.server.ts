@@ -1277,8 +1277,10 @@ const auctionEntryCache = new Map<
 >();
 const AUCTION_CACHE_TTL = 3 * 60_000;
 
-async function scanAuctionSnapshot(pages: number): Promise<AuctionSnapshot | null> {
-  const signal = AbortSignal.timeout(10_000);
+async function scanAuctionSnapshot(
+  pages: number,
+  signal: AbortSignal,
+): Promise<AuctionSnapshot | null> {
   const first = unwrap(
     await getJson<AuctionsResponse>(`${API}/skyblock/auctions?page=0`, undefined, signal),
   );
@@ -1344,7 +1346,12 @@ async function scanAuctionSnapshot(pages: number): Promise<AuctionSnapshot | nul
 function getAuctionSnapshot(pages: number): Promise<AuctionScan | null> {
   const cached = auctionSnapshots.get(pages);
   const now = Date.now();
-  if (cached && now - cached.at < AUCTION_CACHE_TTL) {
+  const expected = (snapshot: AuctionSnapshot) => Math.min(pages, snapshot.totalPages);
+  if (
+    cached &&
+    now - cached.at <
+      (cached.snapshot.pagesScanned < expected(cached.snapshot) ? 20_000 : AUCTION_CACHE_TTL)
+  ) {
     return Promise.resolve({ snapshot: cached.snapshot, stale: false });
   }
 
@@ -1353,9 +1360,32 @@ function getAuctionSnapshot(pages: number): Promise<AuctionScan | null> {
   if (pending) return pending;
   if (now < (auctionRetryAfter.get(pages) ?? 0)) return Promise.resolve(fallback());
 
-  const request = scanAuctionSnapshot(pages)
+  const signal = AbortSignal.timeout(15_000);
+  const request = scanAuctionSnapshot(pages, signal)
+    .then(async (initial) => {
+      // Hypixel can rotate snapshots during a scan. Retry once if most pages
+      // belonged to a different generation. Each attempt remains independent.
+      if (
+        !initial ||
+        expected(initial) < 8 ||
+        initial.pagesScanned >= expected(initial) / 2 ||
+        signal.aborted
+      )
+        return initial;
+      const retry = await scanAuctionSnapshot(pages, signal);
+      return retry && retry.pagesScanned >= initial.pagesScanned ? retry : initial;
+    })
     .then((snapshot) => {
       if (snapshot && (!cached || snapshot.lastUpdated >= cached.snapshot.lastUpdated)) {
+        if (
+          cached &&
+          now - cached.snapshot.lastUpdated < 60_000 &&
+          snapshot.pagesScanned < expected(snapshot) / 2 &&
+          cached.snapshot.pagesScanned > snapshot.pagesScanned
+        ) {
+          auctionRetryAfter.set(pages, Date.now() + 10_000);
+          return { snapshot: cached.snapshot, stale: false };
+        }
         auctionSnapshots.set(pages, { at: Date.now(), snapshot });
         return { snapshot, stale: false };
       }
@@ -1422,7 +1452,10 @@ export async function getWikiAuctionQuote(itemId: string): Promise<WikiAuctionQu
   );
 }
 
-export async function getAuctions(pages = 6): Promise<{
+export async function getAuctions(
+  pages = 6,
+  search = "",
+): Promise<{
   lastUpdated: number;
   totalAuctions: number;
   totalPages: number;
@@ -1430,6 +1463,7 @@ export async function getAuctions(pages = 6): Promise<{
   stale?: boolean;
   binCount: number;
   auctionCount: number;
+  matchingCount: number;
   entries: AuctionEntry[];
 }> {
   const fallback = {
@@ -1440,6 +1474,7 @@ export async function getAuctions(pages = 6): Promise<{
     stale: true,
     binCount: 0,
     auctionCount: 0,
+    matchingCount: 0,
     entries: [] as AuctionEntry[],
   };
 
@@ -1448,7 +1483,7 @@ export async function getAuctions(pages = 6): Promise<{
     if (!scan) return fallback;
     const { snapshot, stale } = scan;
     const cached = auctionEntryCache.get(pages);
-    if (cached?.snapshot === snapshot) {
+    if (!search && cached?.snapshot === snapshot) {
       return stale ? { ...cached.data, stale: true } : cached.data;
     }
     const now = Date.now();
@@ -1458,7 +1493,14 @@ export async function getAuctions(pages = 6): Promise<{
 
     pruneAuctionItemCache(now);
 
-    const candidates: AuctionCandidate[] = raw.map((auction) => {
+    const matching = search
+      ? raw.filter((auction) =>
+          [auction.item_name, auction.item_id].some((value) =>
+            value?.replace(/§./g, "").toLowerCase().replace(/_/g, " ").includes(search),
+          ),
+        )
+      : raw;
+    const candidates: AuctionCandidate[] = matching.map((auction) => {
       const price = auction.bin
         ? auction.starting_bid
         : Math.max(auction.highest_bid_amount, auction.starting_bid);
@@ -1498,11 +1540,10 @@ export async function getAuctions(pages = 6): Promise<{
       };
     });
 
-    const entries = await hydrateAuctionEntries(
-      candidates
-        .sort((a, b) => a.entry.endsInMs - b.entry.endsInMs || a.uuid.localeCompare(b.uuid))
-        .slice(0, AUCTION_ICON_LIMIT),
+    const sorted = candidates.sort(
+      (a, b) => a.entry.endsInMs - b.entry.endsInMs || a.uuid.localeCompare(b.uuid),
     );
+    const entries = await hydrateAuctionEntries(sorted.slice(0, AUCTION_ICON_LIMIT));
 
     const result = {
       lastUpdated: snapshot.lastUpdated,
@@ -1512,13 +1553,14 @@ export async function getAuctions(pages = 6): Promise<{
       stale,
 
       binCount,
+      matchingCount: sorted.length,
 
       auctionCount: raw.length - binCount,
 
       entries,
     };
 
-    if (!stale && entries.length > 0) {
+    if (!search && !stale && entries.length > 0) {
       auctionEntryCache.set(pages, { snapshot, data: result });
     }
 
@@ -1527,7 +1569,7 @@ export async function getAuctions(pages = 6): Promise<{
     console.error("Error in getAuctions:", err);
 
     const stale = auctionEntryCache.get(pages);
-    return stale ? { ...stale.data, stale: true } : fallback;
+    return !search && stale ? { ...stale.data, stale: true } : fallback;
   }
 }
 

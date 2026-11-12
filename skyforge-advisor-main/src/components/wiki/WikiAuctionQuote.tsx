@@ -1,7 +1,9 @@
 import { useAuctionQuote } from "@/hooks/use-auction-quote";
 import { MIN_COMPARABLE_LISTINGS } from "@/lib/wiki-auction";
+import { Link } from "@tanstack/react-router";
+import { titleCase } from "@/lib/skyblock";
 
-export function WikiAuctionQuote({ itemId }: { itemId: string }) {
+export function WikiAuctionQuote({ itemId, name }: { itemId: string; name?: string }) {
   const { supported, quote, isError, expired } = useAuctionQuote(itemId);
 
   let message: string | undefined;
@@ -11,7 +13,7 @@ export function WikiAuctionQuote({ itemId }: { itemId: string }) {
   else if (!quote) message = "Checking active BIN listings…";
   else if (quote.status === "stale") message = "The Auction House snapshot is stale.";
   else if (quote.status === "insufficient")
-    message = `Too few comparable listings. A quote requires at least ${MIN_COMPARABLE_LISTINGS}.`;
+    message = `A quote requires ${MIN_COMPARABLE_LISTINGS} unmodified copies. Modified copies and bids are counted separately in Auction House search.`;
   else if (quote.status === "unsupported")
     message = "Comparable BIN pricing is unavailable for this item type.";
   else if (expired) message = "The last quote expired. Waiting for a fresh sample.";
@@ -50,6 +52,15 @@ export function WikiAuctionQuote({ itemId }: { itemId: string }) {
           </>
         ) : null}
       </div>
+      {supported && (
+        <Link
+          to="/auction-house"
+          search={{ q: name ?? titleCase(itemId) }}
+          className="inline-block text-xs font-medium text-primary hover:underline"
+        >
+          Search all variants in the Auction House
+        </Link>
+      )}
     </div>
   );
 }

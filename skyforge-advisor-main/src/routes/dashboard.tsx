@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ConnectPrompt, ErrorState } from "@/components/data-states";
 import { SkeletonPage } from "@/components/motion";
-import { PageHero, Panel, ProgressBar } from "@/components/layout/app-shell";
-import { ProfileShareCard } from "@/components/profile-share-card";
+import { PageHero, Panel, PlayerHeadAvatar, ProgressBar } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { RankBadge } from "@/components/ui/rank-badge";
 import { usePlayer } from "@/hooks/use-account";
@@ -57,6 +56,7 @@ function Dashboard() {
       <PageHero title="Dashboard" />
       <Panel className="space-y-5">
         <div className="flex flex-wrap items-center gap-3">
+          <PlayerHeadAvatar uuid={data.uuid} name={data.username} size={48} className="size-10" />
           <RankBadge rankData={data.hypixelPlayer} size="lg" />
           <h2 className="text-xl font-semibold">{data.username}</h2>
           {profile && (
@@ -65,22 +65,6 @@ function Dashboard() {
               {profile.gameMode ? " · " + profile.gameMode : ""}
             </span>
           )}
-          <div className="sm:ml-auto">
-            <ProfileShareCard
-              data={{
-                username: data.username,
-                uuid: data.uuid,
-                profileName: profile?.cuteName ?? "SkyBlock",
-                skillAverage: mainSkills.length ? data.skillAverage : null,
-                coins: balance,
-                fairySouls,
-                catacombsLevel: data.availability?.catacombsXp
-                  ? (data.dungeons?.catacombsLevel ?? null)
-                  : null,
-                collectionsCount: data.collections.length,
-              }}
-            />
-          </div>
         </div>
         <dl className="grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-4">
           {[

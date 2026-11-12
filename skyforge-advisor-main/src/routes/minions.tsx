@@ -132,7 +132,7 @@ export function MinionsRoute() {
   return (
     <div className="space-y-6 pb-12">
       <PageHero
-        title="Minion Economy & Craft Roadmap"
+        title="Minions"
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Chip
@@ -228,7 +228,7 @@ export function MinionsRoute() {
           <p className="mt-2 text-lg font-bold text-white truncate">
             {topAfkMinion?.minion.name ?? "—"}
           </p>
-          <p className="text-xs font-mono font-bold text-emerald-400">
+          <p className="text-xs font-bold text-emerald-400">
             +{topAfkMinion?.dailyCoins.toLocaleString()}{" "}
             <span className="text-[10px] text-muted-foreground font-normal">/ day per minion</span>
           </p>
@@ -244,7 +244,7 @@ export function MinionsRoute() {
           <p className="mt-2 text-lg font-bold text-white truncate">
             {topBazaarMinion?.minion.name ?? "—"}
           </p>
-          <p className="text-xs font-mono font-bold text-purple-300">
+          <p className="text-xs font-bold text-purple-300">
             +{topBazaarMinion?.output.dailyBazaarCoins.toLocaleString()}{" "}
             <span className="text-[10px] text-muted-foreground font-normal">/ day per minion</span>
           </p>
@@ -276,7 +276,7 @@ export function MinionsRoute() {
             </div>
 
             {/* Sell Mode Toggle (NPC vs Bazaar) */}
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/60 p-1">
+            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-background/30 p-1">
               <button
                 onClick={() => {
                   playClickSound();
@@ -307,10 +307,10 @@ export function MinionsRoute() {
           </div>
 
           {/* Leaderboard Table */}
-          <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80 shadow-2xl backdrop-blur-xl">
+          <div className="overflow-hidden rounded-2xl panel-card">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-mono">
-                <thead className="border-b border-white/10 bg-white/5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-white/10 bg-primary/5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                   <tr>
                     <th className="px-4 py-3 text-center">#</th>
                     <th className="px-4 py-3">Minion & Tier</th>
@@ -390,7 +390,7 @@ export function MinionsRoute() {
       )}
       {tab === "slots" && craftHistoryKnown && (
         <div className="space-y-6">
-          <Panel className="bg-slate-950/80">
+          <Panel>
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -406,7 +406,7 @@ export function MinionsRoute() {
             </div>
 
             <div className="mt-5 space-y-2">
-              <div className="flex items-center justify-between text-xs font-mono">
+              <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">
                   Unique Crafts: {slotProgression.uniqueCraftsCount} /{" "}
                   {slotProgression.nextSlotThreshold}
@@ -442,7 +442,7 @@ export function MinionsRoute() {
         <div className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             {/* Permanent Fuels */}
-            <Panel className="bg-slate-950/80">
+            <Panel>
               <h3 className="text-sm font-bold text-amber-300 flex items-center gap-2">
                 <IconZap className="size-4" /> Permanent Fuel Options
               </h3>
@@ -470,7 +470,7 @@ export function MinionsRoute() {
             </Panel>
 
             {/* Consumable Fuels */}
-            <Panel className="bg-slate-950/80">
+            <Panel>
               <h3 className="text-sm font-bold text-purple-300 flex items-center gap-2">
                 <IconSparkles className="size-4" /> Consumable & Timed Boosters
               </h3>

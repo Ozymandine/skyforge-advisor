@@ -2,6 +2,18 @@
 // Theme state shared by the header toggle and the Settings page.
 
 const THEME_STORAGE = "theme";
+export const clockThemes = [
+  { id: "dawn", label: "Dawn", sprite: "glowstone_dust" },
+  { id: "light", label: "Day", sprite: "clock" },
+  { id: "dusk", label: "Dusk", sprite: "lantern" },
+  { id: "dark", label: "Night", sprite: "soul_lantern" },
+] as const;
+
+export function nextClockTheme(theme: string) {
+  return clockThemes[
+    (clockThemes.findIndex((phase) => phase.id === theme) + 1) % clockThemes.length
+  ]!;
+}
 
 export function getTheme(): string {
   if (typeof window === "undefined") return "dark";
@@ -10,13 +22,15 @@ export function getTheme(): string {
 
 export function applyTheme(theme: string): void {
   const root = document.documentElement;
+  const mode =
+    theme === "system"
+      ? window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light"
+      : theme;
   root.classList.remove("dark", "light", "theme-solid");
-  if (theme === "system") {
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    root.classList.add(prefersDark ? "dark" : "light");
-  } else {
-    root.classList.add(theme === "light" ? "light" : "dark");
-  }
+  root.dataset["skyforgePhase"] = mode;
+  root.classList.add(mode === "light" || mode === "dawn" ? "light" : "dark");
   if (theme === "solid") root.classList.add("theme-solid");
 }
 
@@ -37,7 +51,7 @@ type Accent = (typeof accentOptions)[number];
 const SCENE_STORAGE = "skyforge.scene";
 
 export function getSceneTheme() {
-  const defaults = { accent: "stone" as Accent, opacity: 77, scenery: true };
+  const defaults = { accent: "stone" as Accent, opacity: 70, scenery: true };
   if (typeof window === "undefined") return defaults;
   try {
     const value = JSON.parse(window.localStorage.getItem(SCENE_STORAGE) ?? "{}");

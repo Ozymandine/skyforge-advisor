@@ -7,13 +7,11 @@ import {
   IconKeyRound,
   IconLayoutDashboard,
   IconMenu,
-  IconMoon,
   IconPanelLeftClose,
   IconPanelLeftOpen,
   IconRefreshCw,
   IconSearch,
   IconSettings,
-  IconSun,
   IconTarget,
   IconTrendingUp,
   IconUser,
@@ -35,8 +33,10 @@ import { markAllRead, useNotificationFeed } from "@/hooks/use-notification-feed"
 import {
   applySceneTheme,
   applyTheme,
+  clockThemes,
   getSceneTheme,
   getTheme,
+  nextClockTheme,
   onThemeChange,
   setTheme as setThemeStored,
 } from "@/lib/theme";
@@ -110,7 +110,7 @@ function NavSprite({ sprite }: { sprite: string }) {
   );
 }
 
-function PlayerHeadAvatar({
+export function PlayerHeadAvatar({
   uuid,
   name,
   size = 36,
@@ -121,15 +121,15 @@ function PlayerHeadAvatar({
   size?: number | undefined;
   className?: string | undefined;
 }) {
-  const [failed, setFailed] = useState(false);
+  const [failedFor, setFailedFor] = useState<string>();
   const identifier = uuid || name;
   const initials = (name || "SB").slice(0, 2).toUpperCase();
 
-  if (!identifier || failed) {
+  if (!identifier || failedFor === identifier) {
     return (
       <div
         className={cn(
-          "flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 font-mono text-xs font-bold",
+          "flex size-9 shrink-0 items-center justify-center rounded-xl border border-border bg-primary/10 text-primary font-mono text-xs font-bold",
           className,
         )}
       >
@@ -149,8 +149,8 @@ function PlayerHeadAvatar({
         src={`https://mc-heads.net/avatar/${encodeURIComponent(identifier)}/${size}`}
         alt={name || "Player avatar"}
         loading="lazy"
-        onError={() => setFailed(true)}
-        className="size-full object-cover"
+        onError={() => setFailedFor(identifier)}
+        className="size-full object-cover [image-rendering:pixelated]"
       />
     </div>
   );
@@ -207,14 +207,14 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                     to={item.to}
                     title={item.label}
                     className={cn(
-                      "group relative flex h-9 items-center gap-2.5 rounded-xl px-2.5 text-[15px] font-medium text-white/70 select-none cursor-pointer transition-all duration-150 border border-transparent will-change-transform",
+                      "group relative flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[15px] font-medium text-muted-foreground select-none cursor-pointer transition-all duration-150 border border-transparent",
                       "hover:transition-none hover:bg-white/[0.08] hover:text-white hover:border-white/10 hover:translate-x-0.5",
                       "active:scale-[0.98] active:bg-white/[0.15]",
                       collapsed && "justify-center px-0 hover:translate-x-0",
                     )}
                     activeProps={{
                       className:
-                        "bg-primary/15 text-primary border-l-2 border-primary font-semibold hover:translate-x-0",
+                        "bg-primary/15 text-primary border-primary/30 font-semibold hover:translate-x-0",
                     }}
                   >
                     <NavSprite sprite={item.sprite} />
@@ -333,18 +333,20 @@ function Header({
     setTheme(getTheme());
     applyTheme(getTheme());
     applySceneTheme(getSceneTheme());
-    return onThemeChange(setTheme);
+    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
+    const syncSystem = () => {
+      if (getTheme() === "system") applyTheme("system");
+    };
+    systemTheme.addEventListener("change", syncSystem);
+    const unsubscribe = onThemeChange(setTheme);
+    return () => {
+      systemTheme.removeEventListener("change", syncSystem);
+      unsubscribe();
+    };
   }, []);
 
   const cycleTheme = () => {
-    const order = ["dark", "solid", "light", "system"];
-    const next = order[(order.indexOf(theme) + 1) % order.length]!;
-    setThemeState(next);
-  };
-
-  const setThemeState = (next: string) => {
-    setTheme(next);
-    setThemeStored(next);
+    setThemeStored(nextClockTheme(theme).id);
   };
 
   // Expose theme cycling to the command palette.
@@ -355,14 +357,8 @@ function Header({
     };
   });
 
-  const themeIcon =
-    theme === "light" ? (
-      <IconMoon className="size-4 text-indigo-400" />
-    ) : theme === "solid" ? (
-      <IconSun className="size-4 text-slate-300" />
-    ) : (
-      <IconSun className="size-4 text-amber-400" />
-    );
+  const phase = clockThemes.find((entry) => entry.id === theme);
+  const phaseName = phase?.label ?? (theme === "solid" ? "Solid night" : "System");
 
   return (
     <header className="sticky top-0 z-40 border-b border-border skyforge-chrome">
@@ -382,20 +378,20 @@ function Header({
 
         <div className="ml-auto flex items-center gap-2.5">
           {/* Top-Right Profile Link (Connected) OR Connect Button (Not Connected) */}
-          {player.data ? (
+          {account.connected ? (
             <DropdownMenu>
               <DropdownMenuTrigger
                 aria-label="Profile options"
                 className="flex items-center gap-2 rounded-xl border border-border px-2.5 py-1.5"
               >
                 <PlayerHeadAvatar
-                  uuid={player.data.uuid}
-                  name={player.data.username}
+                  uuid={player.data?.uuid}
+                  name={player.data?.username ?? account.username}
                   size={24}
                   className="size-6 rounded-lg"
                 />
                 <span className="hidden max-w-28 truncate text-xs font-medium sm:inline">
-                  {activeProfile?.cuteName ?? player.data.username}
+                  {activeProfile?.cuteName ?? account.username}
                 </span>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -409,7 +405,7 @@ function Header({
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuItem asChild>
-                  <Link to="/profile/$username" params={{ username: player.data.username }}>
+                  <Link to="/profile/$username" params={{ username: account.username }}>
                     View public profile
                   </Link>
                 </DropdownMenuItem>
@@ -519,11 +515,13 @@ function Header({
           {/* Theme Toggle Button */}
           <button
             onClick={cycleTheme}
-            aria-label={`Change theme (current: ${theme})`}
-            className="rounded-lg p-2 text-muted-foreground transition-none hover:bg-white/10 hover:text-foreground active:opacity-75"
-            title={`Theme: ${theme} (click to change)`}
+            aria-label={`Change theme from ${phaseName} to ${nextClockTheme(theme).label}`}
+            className="clock-toggle rounded-lg p-2 text-muted-foreground transition hover:bg-foreground/10 active:scale-90"
+            title={`${phaseName} · Switch to ${nextClockTheme(theme).label}`}
           >
-            {themeIcon}
+            <span className="clock-phase block" key={phaseName}>
+              <NavSprite sprite={phase?.sprite ?? "clock"} />
+            </span>
           </button>
 
           {/* Settings Link */}
@@ -550,6 +548,16 @@ export function AppShell({ children }: { children: ReactNode }) {
   const player = usePlayer();
   const account = useAccount();
   const cycleThemeRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    const sync = () =>
+      document.documentElement.classList.toggle(
+        "force-reduced-motion",
+        getPref("reducedMotion", false),
+      );
+    sync();
+    return onPrefsChange(sync);
+  }, []);
 
   // Item + market indexes for the command palette (shared query keys —
   // free if the wiki/bazaar pages already fetched them). Uses the lightweight
@@ -623,16 +631,16 @@ export function AppShell({ children }: { children: ReactNode }) {
         />
       </div>
 
-      <div className="flex">
+      <div className="flex min-h-dvh">
         <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
-        <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 flex-col">
           <EconomyTicker />
           <Header
             onOpenSearch={() => setOpen(true)}
             onOpenNav={() => setNavOpen(true)}
             onCycleThemeRef={cycleThemeRef}
           />
-          <main key={pathname} className="animate-page-in px-4 pb-8 pt-6 sm:px-8 md:pb-12">
+          <main key={pathname} className="animate-page-in flex-1 px-4 pb-8 pt-6 sm:px-8 md:pb-12">
             {children}
           </main>
 
@@ -647,7 +655,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Mobile Floating Bottom Bar */}
       <nav
         aria-label="Primary"
-        className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-[#0B0E14]/90 p-2 backdrop-blur-xl md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 skyforge-chrome p-2 backdrop-blur-xl md:hidden"
       >
         <div className="flex items-center justify-around">
           <Link
@@ -706,7 +714,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             role="dialog"
             aria-modal="true"
             aria-label="Site navigation"
-            className="absolute left-0 top-0 h-full w-[280px] overflow-y-auto border-r border-white/10 bg-[#0E121B]/95 p-5 backdrop-blur-2xl"
+            className="absolute left-0 top-0 h-full w-[280px] overflow-y-auto border-r border-white/10 skyforge-chrome p-5 backdrop-blur-2xl"
           >
             <div className="flex items-center justify-between">
               <span className="text-primary font-black text-xl tracking-[0.18em] select-none">
@@ -865,7 +873,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               }}
               className="flex gap-2"
             >
-              <IconSun className="size-4" /> Cycle theme
+              <NavSprite sprite="clock" /> Cycle theme
             </CommandItem>
             <CommandItem value="top bazaar flip" asChild>
               <Link to="/bazaar" onClick={() => setOpen(false)} className="flex gap-2">
@@ -997,7 +1005,7 @@ export function Panel({
   children: ReactNode;
 } & HTMLAttributes<HTMLElement>) {
   return (
-    <section {...rest} className={cn("panel-card rounded-3xl p-6", className)}>
+    <section {...rest} className={cn("panel-card rounded-2xl p-5 sm:p-6", className)}>
       {children}
     </section>
   );
@@ -1037,9 +1045,12 @@ export function ProgressBar({
   const toneClass =
     tone === "gold" ? "bg-gold-foil" : tone === "danger" ? "bg-oxblood-bright" : "bg-emerald-500";
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10 backdrop-blur-sm">
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-foreground/10">
       <div
-        className={cn("h-full rounded-full transition-all duration-300 shadow-sm", toneClass)}
+        className={cn(
+          "progress-fill h-full rounded-full transition-[width] duration-500",
+          toneClass,
+        )}
         style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
       />
     </div>
@@ -1080,7 +1091,7 @@ export function Chip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-md transition-all duration-75 ease-out hover:scale-[1.04] hover:bg-white/10 hover:text-foreground active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-foil",
+        "rounded-lg border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur-md transition-all duration-75 ease-out hover:scale-[1.04] hover:bg-white/10 hover:text-foreground active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-foil",
         active && "border-primary/40 bg-primary/20 text-primary font-semibold shadow-sm",
       )}
     >

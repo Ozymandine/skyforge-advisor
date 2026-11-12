@@ -5,27 +5,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import {
-  IconArrowRight,
-  IconBarChart3,
-  IconBookOpen,
-  IconCoins,
-  IconHammer,
-  IconKeyRound,
-  IconTrendingUp,
-  IconUser,
-  IconSwords,
-  IconSkull,
-  IconSprout,
-  IconBot,
-  IconSearch,
-  IconTarget,
-} from "@/assets/icons";
+import { IconArrowRight, IconSearch, IconTrendingUp } from "@/assets/icons";
 
 import { Panel } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { fetchBazaar, fetchElection, fetchFireSale, fetchNews } from "@/lib/hypixel.functions";
 import { formatNumber } from "@/lib/skyblock";
+import { useAccount, useConnectPlayer } from "@/hooks/use-account";
+import landscape from "@/assets/skyblock-header.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -61,83 +48,27 @@ export const Route = createFileRoute("/")({
   component: Landing,
 });
 
-const FEATURES = [
-  {
-    to: "/advisor",
-    icon: IconBot,
-    title: "Autonomous Progression Advisor",
-    body: "Real-time account audit across MP, Slayers, Dungeons, and Minions with 1-click in-game commands.",
-    badge: "NEW",
-  },
-  {
-    to: "/simulator",
-    icon: IconSwords,
-    title: "Damage & Gear Lab",
-    body: "Live Hypixel damage formula sandbox, Catacombs scaling, mob defenses, and cost-to-DPS optimizer.",
-    badge: "NEW",
-  },
-  {
-    to: "/bosses",
-    icon: IconSkull,
-    title: "Boss Tactics & Kuudra Hub",
-    body: "Voidgloom T1–T4 hitsphase/survival audit and Infernal Kuudra role qualifications with profit-per-key forecasts.",
-    badge: "NEW",
-  },
-  {
-    to: "/garden",
-    icon: IconSprout,
-    title: "Garden & Farming Engine",
-    body: "Universal Farming Fortune breakdown, live coins/hr across 10 crops, and Jacob's Contest medal brackets.",
-    badge: "NEW",
-  },
-  {
-    to: "/flips",
-    icon: IconTarget,
-    title: "Live Flip Radar & Audio Sniper",
-    body: "Synthesized Web Audio Minecraft chimes, margin filters, liquidity scores, and 1-click clipboard execution.",
-    badge: "UPDATED",
-  },
-  {
-    to: "/dashboard",
-    icon: IconUser,
-    title: "Profile Command Center",
-    body: "Skills, dungeons, slayers, fairy souls, and inventory decoded live from Hypixel.",
-  },
-  {
-    to: "/net-worth",
-    icon: IconCoins,
-    title: "Net Worth & Valuation",
-    body: "Every container and accessory priced against live Bazaar and AH order books.",
-  },
-  {
-    to: "/wiki",
-    icon: IconBookOpen,
-    title: "8,700+ Item Wiki",
-    body: "Real stats, abilities, requirements and crafting grids from the NEU dataset, linked to live prices.",
-  },
-  {
-    to: "/crafting",
-    icon: IconHammer,
-    title: "Crafting Cost Trees",
-    body: "Full dependency trees priced to raw materials with the cheapest craft path highlighted.",
-  },
-];
-
-function TargetIcon(props: { className?: string }) {
-  return <IconTarget {...props} />;
-}
+const features = [
+  { to: "/dashboard", sprite: "compass", title: "Dashboard" },
+  { to: "/advisor", sprite: "ender_eye", title: "Advisor" },
+  { to: "/simulator", sprite: "iron_sword", title: "Damage Simulator" },
+  { to: "/calendar", sprite: "clock", title: "Calendar" },
+  { to: "/wiki", sprite: "book", title: "Item Wiki" },
+  { to: "/crafting", sprite: "crafting_table", title: "Crafting" },
+] as const;
 
 function Landing() {
   const navigate = useNavigate();
   const [searchIgn, setSearchIgn] = useState("");
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = searchIgn.trim();
-    if (trimmed) {
-      void navigate({ to: `/profile/${encodeURIComponent(trimmed)}` });
-    }
-  };
+  const account = useAccount();
+  const { connect, connecting, error, clearError } = useConnectPlayer();
+
+  async function handleSearch(event: React.FormEvent) {
+    event.preventDefault();
+    const player = await connect(searchIgn);
+    if (player) await navigate({ to: "/profile/$username", params: { username: player.username } });
+  }
 
   // Live proof: real flips + accuracy from public endpoints (no key needed).
   const bazaarQuery = useQuery({
@@ -168,7 +99,7 @@ function Landing() {
   const news = (newsQuery.data ?? []).slice(0, 2);
   const fireSale = (fireSaleQuery.data ?? []).slice(0, 4);
 
-  const topFlips = (bazaarQuery.data?.products ?? [])
+  const topFlips = (bazaarQuery.data?.stale ? [] : (bazaarQuery.data?.products ?? []))
     .slice()
     .filter((item) => item.spread > 0)
     .sort((a, b) => b.buyMovingWeek - a.buyMovingWeek)
@@ -176,58 +107,79 @@ function Landing() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-8">
-      {/* Hero */}
-      <section className="skyforge-hero overflow-hidden rounded-3xl px-6 py-10 sm:px-10 sm:py-12">
-        <h1 className="max-w-3xl break-words text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-          Live SkyBlock stats, <span className="skyforge-hero-accent">flips & progression</span>
-        </h1>
-        <p className="mt-4 max-w-xl text-sm text-neutral-300 sm:text-base">
-          Profile analytics, Bazaar order quotes, a full item wiki and crafting cost trees — powered
-          by the official Hypixel API and the NEU dataset.
-        </p>
-
-        {/* 1-Click Search Input */}
-        <form onSubmit={handleSearch} className="mt-6 flex max-w-xl flex-wrap items-center gap-2">
-          <div className="relative min-w-0 flex-[1_1_14rem]">
-            <IconSearch
-              aria-hidden="true"
-              className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
-            />
-            <label htmlFor="hero-username" className="sr-only">
-              Minecraft username
-            </label>
-            <input
-              id="hero-username"
-              value={searchIgn}
-              onChange={(e) => setSearchIgn(e.target.value)}
-              placeholder="Enter Minecraft username..."
-              autoComplete="username"
-              autoCapitalize="off"
-              spellCheck={false}
-              className="w-full rounded-2xl border border-white/25 bg-black/25 py-3.5 pl-11 pr-4 text-base text-white outline-none placeholder:text-stone-300 focus:border-stone-300 sm:text-sm"
-            />
-          </div>
-          <button
-            type="submit"
-            className="rounded-2xl bg-stone-100 px-5 py-3.5 text-sm font-bold text-stone-900 hover:bg-white"
+      <section className="skyforge-hero grid overflow-hidden rounded-2xl lg:grid-cols-[minmax(0,1fr)_minmax(19rem,0.9fr)]">
+        <div className="relative z-10 flex flex-col justify-center p-5 sm:p-8 lg:p-10">
+          <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
+            {account.connected ? "SkyForge" : "Connect your profile"}
+          </h1>
+          <form
+            onSubmit={(event) => void handleSearch(event)}
+            className="mt-5 flex flex-wrap gap-2"
           >
-            Explore Profile
-          </button>
-        </form>
-
-        {/* Quick picks */}
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-neutral-300">
-          <span>Popular profiles:</span>
-          {["Deathstreeks", "Refraction", "Hellcastle", "56ms"].map((name) => (
-            <Link
-              key={name}
-              to="/profile/$username"
-              params={{ username: name }}
-              className="rounded-lg border border-white/5 bg-white/[0.03] px-2.5 py-1 transition-colors hover:border-primary/30 hover:text-primary"
+            <div className="relative min-w-0 flex-[1_1_12rem]">
+              <IconSearch className="absolute left-3 top-1/2 size-4 -translate-y-1/2" />
+              <label htmlFor="hero-username" className="sr-only">
+                Minecraft username
+              </label>
+              <input
+                id="hero-username"
+                value={searchIgn}
+                onChange={(event) => {
+                  setSearchIgn(event.target.value);
+                  clearError();
+                }}
+                placeholder={account.username || "Minecraft username"}
+                autoComplete="username"
+                autoCapitalize="off"
+                spellCheck={false}
+                maxLength={16}
+                required
+                disabled={connecting}
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? "hero-connection-error" : undefined}
+                className="w-full rounded-lg border border-input bg-background/65 py-3 pl-10 pr-3 text-foreground outline-none placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-ring"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={connecting}
+              className="rounded-lg bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
             >
-              {name}
+              {connecting ? "Connecting…" : "Connect profile"}
+            </button>
+          </form>
+          {error && (
+            <p id="hero-connection-error" role="alert" className="mt-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          {account.connected && (
+            <Link
+              to="/dashboard"
+              className="mt-3 inline-flex w-fit items-center gap-1 text-sm font-medium text-primary hover:underline"
+            >
+              Open dashboard <IconArrowRight className="size-4" />
             </Link>
-          ))}
+          )}
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span>Popular profiles</span>
+            {["Deathstreeks", "Refraction", "Hellcastle", "56ms"].map((name) => (
+              <Link
+                key={name}
+                to="/profile/$username"
+                params={{ username: name }}
+                className="rounded-md border border-border px-2 py-1 transition-colors hover:bg-primary/10 hover:text-primary"
+              >
+                {name}
+              </Link>
+            ))}
+          </div>
+        </div>
+        <div
+          className="hero-landscape relative order-first min-h-28 overflow-hidden lg:order-last lg:min-h-64"
+          aria-hidden="true"
+        >
+          <img src={landscape} alt="" className="absolute inset-0 size-full object-cover" />
         </div>
       </section>
 
@@ -348,57 +300,27 @@ function Landing() {
         </div>
       </section>
 
-      {/* Feature grid */}
-      <section>
-        <h2 className="text-2xl font-semibold tracking-tight">Everything in one place</h2>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((feature) => (
-            <Link
-              key={feature.to}
-              to={feature.to}
-              className="glass-soft group relative rounded-2xl p-5 transition-all duration-75 ease-out hover:scale-[1.02] hover:border-primary/40"
-            >
-              <div className="flex items-center justify-between">
-                <feature.icon className="size-5 text-primary" />
-                {feature.badge && (
-                  <span className="rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 font-mono text-[11px] font-bold text-emerald-300">
-                    {feature.badge}
-                  </span>
-                )}
-              </div>
-              <p className="mt-3 font-semibold text-white">{feature.title}</p>
-              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{feature.body}</p>
-              <span className="mt-3 flex items-center gap-1 text-xs text-primary opacity-100 transition-opacity lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
-                Open <IconArrowRight className="size-3" aria-hidden="true" />
-              </span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Trust strip */}
-      <section>
-        <Panel className="text-center">
-          <p className="text-sm font-medium">
-            Powered by the official Hypixel API + the NEU community dataset
-          </p>
-          <p className="mx-auto mt-2 max-w-xl text-xs text-muted-foreground">
-            Profile lookups use your Minecraft username. Unknown values are shown as "not available"
-            — never invented. Flip results are published unedited.
-          </p>
-          <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs text-primary">
-            <Link to="/about" className="hover:underline">
-              How we handle data
-            </Link>
-            <Link to="/flips" className="hover:underline">
-              Flip methodology
-            </Link>
-            <Link to="/connect" className="hover:underline">
-              Connect your profile
-            </Link>
-          </div>
-        </Panel>
-      </section>
+      <nav
+        aria-label="SkyForge tools"
+        className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6"
+      >
+        {features.map(({ to, sprite, title }) => (
+          <Link
+            key={to}
+            to={to}
+            className="panel-card game-tile flex items-center gap-2 rounded-xl p-3 text-sm font-semibold"
+          >
+            <img
+              src={`/vanilla/${sprite}.png`}
+              alt=""
+              width={22}
+              height={22}
+              className="shrink-0 [image-rendering:pixelated]"
+            />
+            {title}
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 }

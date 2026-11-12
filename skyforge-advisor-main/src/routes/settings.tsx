@@ -6,8 +6,10 @@ import { Switch } from "@/components/ui/switch";
 import { getPref, onPrefsChange, setPref } from "@/lib/prefs";
 import {
   accentOptions,
+  clockThemes,
   getSceneTheme,
   getTheme,
+  onThemeChange,
   setSceneTheme,
   setTheme as setThemeStored,
 } from "@/lib/theme";
@@ -62,6 +64,7 @@ function Settings() {
   const [scene, setScene] = useState(getSceneTheme);
 
   useEffect(() => setScene(getSceneTheme()), []);
+  useEffect(() => onThemeChange(setTheme), []);
 
   function updateScene(next: typeof scene) {
     setScene(next);
@@ -79,11 +82,6 @@ function Settings() {
       setTicker(getPref("ticker", false));
     });
   }, []);
-  // Apply reduced motion globally when toggled.
-  useEffect(() => {
-    document.documentElement.classList.toggle("force-reduced-motion", reducedMotion);
-  }, [reducedMotion]);
-
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHero title="Settings" />
@@ -173,18 +171,22 @@ function Settings() {
 
       <Panel>
         <h2 className="text-xl font-semibold">Appearance</h2>
-        <Row title="Theme" description="Choose a glass, solid, or lighter backdrop.">
+        <Row title="Theme" description="Choose a time of day.">
           <select
             value={theme}
+            aria-label="Theme"
             onChange={(e) => {
               setTheme(e.target.value);
               setThemeStored(e.target.value);
             }}
             className="rounded-xl border border-input bg-secondary/40 px-4 py-2 text-sm outline-none"
           >
-            <option value="dark">Dark glass</option>
-            <option value="solid">Dark solid</option>
-            <option value="light">Light</option>
+            {clockThemes.map(({ id, label }) => (
+              <option key={id} value={id}>
+                {label}
+              </option>
+            ))}
+            <option value="solid">Solid night</option>
             <option value="system">System</option>
           </select>
         </Row>

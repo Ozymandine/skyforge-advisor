@@ -52,7 +52,7 @@ listing's decoded NBT, requires base rarity, and excludes unknown item metadata
 and modifiers. Each quote requires at least three active, unique BIN listings.
 
 The Wiki shows the lowest asking price observed, listing count, Hypixel
-snapshot timestamp, and matching pages scanned. It scans up to 24 pages from
+snapshot timestamp, and matching pages scanned. It scans up to 64 pages from
 one Hypixel snapshot and shares the cached scan across supported Wiki items
 within each server instance. Prices are withheld when the feed fails, the
 snapshot is over five minutes old, or fewer than three listings qualify.
@@ -72,6 +72,9 @@ published floor requirements.
 Bazaar prices use Hypixel's indicative order quotes. The Wiki labels an older
 or cached quote as stale and preserves Hypixel's original timestamp. Stale
 quotes are excluded from alerts and new history samples.
+
+Auction House search matches listings across those scanned pages before
+limiting the response. The default board still shows the soonest-ending sample.
 
 ## Damage Simulator and pet data
 

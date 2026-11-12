@@ -69,10 +69,8 @@ function fmt(n: number | null | undefined): string {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-white/50">
-        {title}
-      </h2>
+    <section className="panel-card rounded-2xl p-5">
+      <h2 className="mb-3 text-base font-semibold text-foreground">{title}</h2>
       {children}
     </section>
   );
@@ -122,7 +120,7 @@ function ItemEncyclopediaPage() {
     return (
       <div className="mx-auto max-w-xl p-10 text-center">
         <h1 className="text-2xl font-bold">Item not found</h1>
-        <p className="mt-2 text-white/60">No SkyBlock item matches “{itemId}”.</p>
+        <p className="mt-2 text-muted-foreground">No SkyBlock item matches “{itemId}”.</p>
         <Link
           to="/wiki"
           className="mt-6 inline-block rounded-full border border-primary/40 bg-primary/15 px-6 py-2 text-sm font-medium text-primary hover:bg-primary/25"
@@ -140,6 +138,9 @@ function ItemEncyclopediaPage() {
     : item.description
       ? [item.description]
       : [];
+  const usefulDescription = descriptionLines.filter(
+    (line) => line.trim() && line.trim().toUpperCase() !== item.rarity.toUpperCase(),
+  );
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-8">
@@ -165,7 +166,7 @@ function ItemEncyclopediaPage() {
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/70">
               {item.category}
             </span>
-            <code className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono text-white/50">
+            <code className="rounded-full border border-white/10 bg-white/5 px-3 py-1 font-mono text-muted-foreground">
               {item.id}
             </code>
             {extra?.wikiUrl ? (
@@ -173,7 +174,7 @@ function ItemEncyclopediaPage() {
                 href={extra.wikiUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-white/50 transition hover:text-white"
+                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-muted-foreground transition hover:text-white"
               >
                 Official wiki ↗
               </a>
@@ -182,12 +183,12 @@ function ItemEncyclopediaPage() {
         </div>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid items-start gap-4 lg:grid-cols-2">
         {/* Description / lore */}
-        {descriptionLines.length > 0 ? (
+        {usefulDescription.length > 0 ? (
           <Section title="Description">
             <div className="space-y-1 text-sm leading-relaxed text-white/80">
-              {descriptionLines.map((line, i) => (
+              {usefulDescription.map((line, i) => (
                 <p key={i}>{line}</p>
               ))}
             </div>
@@ -200,7 +201,7 @@ function ItemEncyclopediaPage() {
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
               {Object.entries(item.stats).map(([key, value]) => (
                 <div key={key} className="flex justify-between gap-2">
-                  <dt className="text-white/50">{key}</dt>
+                  <dt className="text-muted-foreground">{key}</dt>
                   <dd className="font-semibold">{value}</dd>
                 </div>
               ))}
@@ -244,7 +245,7 @@ function ItemEncyclopediaPage() {
             <ul className="flex flex-wrap gap-2 text-sm">
               {item.requirements.map((req, i) => (
                 <li key={i} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1">
-                  <span className="text-white/50">{req.type}</span>{" "}
+                  <span className="text-muted-foreground">{req.type}</span>{" "}
                   <span className="font-semibold">
                     {req.level !== undefined ? req.level : req.value}
                   </span>
@@ -276,7 +277,9 @@ function ItemEncyclopediaPage() {
                   </div>
                 ))}
               </div>
-              {extra?.craftText ? <p className="text-sm text-white/60">{extra.craftText}</p> : null}
+              {extra?.craftText ? (
+                <p className="text-sm text-muted-foreground">{extra.craftText}</p>
+              ) : null}
             </div>
           </Section>
         ) : null}
@@ -285,21 +288,21 @@ function ItemEncyclopediaPage() {
         <Section title="Market quotes">
           <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
             <div className="flex justify-between gap-2">
-              <dt className="text-white/50">NPC sell</dt>
+              <dt className="text-muted-foreground">NPC sell</dt>
               <dd className="font-semibold">{fmt(item.npcSell)} coins</dd>
             </div>
             {item.bazaar ? (
               <>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-white/50">Sell offer quote</dt>
+                  <dt className="text-muted-foreground">Sell offer quote</dt>
                   <dd className="font-semibold">{fmt(item.bazaar.buyPrice)}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-white/50">Buy order quote</dt>
+                  <dt className="text-muted-foreground">Buy order quote</dt>
                   <dd className="font-semibold">{fmt(item.bazaar.sellPrice)}</dd>
                 </div>
                 <div className="flex justify-between gap-2">
-                  <dt className="text-white/50">Weekly volume</dt>
+                  <dt className="text-muted-foreground">Weekly volume</dt>
                   <dd className="font-semibold">{fmt(item.volume ?? 0)}</dd>
                 </div>
               </>
@@ -319,7 +322,7 @@ function ItemEncyclopediaPage() {
           {!item.bazaar && (
             <p className="mt-3 text-sm text-muted-foreground">Bazaar quote unavailable.</p>
           )}
-          <WikiAuctionQuote itemId={item.id} />
+          <WikiAuctionQuote itemId={item.id} name={item.name} />
         </Section>
 
         {/* Used to craft */}
@@ -349,7 +352,7 @@ function ItemEncyclopediaPage() {
       </Section>
 
       <div className="pt-2">
-        <Link to="/wiki" className="text-sm text-white/50 transition hover:text-white">
+        <Link to="/wiki" className="text-sm text-muted-foreground transition hover:text-white">
           ← Back to the Wiki
         </Link>
       </div>
