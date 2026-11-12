@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils";
 import { fetchItemDetail } from "@/lib/hypixel.functions";
 import { WikiAuctionQuote } from "./WikiAuctionQuote";
 import { titleCase } from "@/lib/skyblock";
+import { MARKET_MAX_AGE_MS } from "@/lib/constants";
 
 export interface WikiItem {
   id: string;
@@ -949,6 +950,7 @@ function WikiItemDetailCard({ item, onClose }: { item: WikiItem; onClose: () => 
     queryKey: ["item-detail", item.id],
     queryFn: () => fetchItemDetail({ data: item.id }),
     staleTime: 60_000,
+    refetchInterval: 60_000,
   });
 
   const extra = detailQuery.data?.extra ?? null;
@@ -976,7 +978,13 @@ function WikiItemDetailCard({ item, onClose }: { item: WikiItem; onClose: () => 
     });
   }, [extra]);
 
-  const quote = detailQuery.data?.item?.bazaar;
+  const detailItem = detailQuery.data?.item;
+  const quote = detailItem?.bazaar;
+  const bazaarTimestamp = detailItem?.bazaarUpdatedAt;
+  const staleBazaar =
+    detailQuery.isError ||
+    detailItem?.bazaarStale ||
+    (bazaarTimestamp !== undefined && Date.now() - bazaarTimestamp > MARKET_MAX_AGE_MS);
   const bazaarBuy = quote?.buyPrice ?? null;
   const bazaarSell = quote?.sellPrice ?? null;
   const buyVolume = quote?.buyMovingWeek ?? 0;
@@ -1087,17 +1095,15 @@ function WikiItemDetailCard({ item, onClose }: { item: WikiItem; onClose: () => 
               {detailQuery.isPending
                 ? "Loading market quotes…"
                 : quote
-                  ? "Indicative Bazaar quotes per unit."
+                  ? staleBazaar
+                    ? "Last observed Bazaar quotes per unit. Data is stale."
+                    : "Indicative Bazaar quotes per unit."
                   : "Bazaar quote unavailable."}
-              {detailQuery.data?.item?.bazaarUpdatedAt && (
+              {bazaarTimestamp && (
                 <span className="block">
                   Hypixel quote timestamp:{" "}
-                  <time dateTime={new Date(detailQuery.data.item.bazaarUpdatedAt).toISOString()}>
-                    {new Date(detailQuery.data.item.bazaarUpdatedAt)
-                      .toISOString()
-                      .slice(0, 16)
-                      .replace("T", " ")}{" "}
-                    UTC
+                  <time dateTime={new Date(bazaarTimestamp).toISOString()}>
+                    {new Date(bazaarTimestamp).toISOString().slice(0, 16).replace("T", " ")} UTC
                   </time>
                 </span>
               )}

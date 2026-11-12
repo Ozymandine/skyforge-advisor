@@ -77,9 +77,9 @@ export function readDisplayedCombatStats(item: Pick<InventoryItem, "lore">): Com
 
 export function isOwnedMeleeWeapon(
   item: InventoryItem,
-  catalog: Map<string, SimulatorWeapon>,
+  catalog?: ReadonlyMap<string, SimulatorWeapon>,
 ): boolean {
-  const weapon = catalog.get(item.id);
+  const weapon = catalog?.get(item.id);
   if (weapon) return weapon.melee;
   return item.lore.some((line) =>
     /^(?:DUNGEON |RIFT )?(?:COMMON|UNCOMMON|RARE|EPIC|LEGENDARY|MYTHIC|DIVINE|SPECIAL|VERY SPECIAL|SUPREME) (?:DUNGEON )?(?:SWORD|LONGSWORD|AXE)$/.test(

@@ -20,6 +20,9 @@ export const TYPICAL_CONTAINER_COUNT = 10;
 /** Public origin of this site — used for absolute og:image URLs. */
 export const SITE_URL = "https://skyforge-advisor.vercel.app";
 
+export const MARKET_MAX_AGE_MS = 5 * 60_000;
+export const BAZAAR_SELL_FEE_RATE = 0.0125;
+
 export const RARITY_COLORS: Record<string, string> = {
   COMMON: "#ffffff",
   UNCOMMON: "#55ff55",

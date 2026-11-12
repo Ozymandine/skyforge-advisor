@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   jungleAmuletBudget,
+  lividDaggerBudget,
   recommendJungleAmulet,
+  recommendLividDagger,
   recommendOdawaTrade,
   recommendRedClawUpgrade,
   redClawUpgradeBudget,
@@ -175,5 +177,64 @@ describe("gemstone progression advice", () => {
     });
     expect(recommendOdawaTrade({ ...ironman, hotm: { ...ironman.hotm, xp: 36_999 } })).toBeNull();
     expect(recommendOdawaTrade({ ...ironman, containers: player.containers })).toBeNull();
+  });
+});
+
+describe("Livid Dagger comparison", () => {
+  const aspect = {
+    ...ring,
+    id: "ASPECT_OF_THE_END",
+    name: "Aspect of the End",
+    lore: ["§7Damage: §c+100", "§7Strength: §c+100", "", "§9§lRARE SWORD"],
+  };
+  const inventory = { id: "inventory", label: "Inventory", slots: 36, items: [aspect] };
+  const combat = {
+    ...player,
+    availability: { ...player.availability, dungeonCompletions: true },
+    containers: [inventory],
+    dungeons: {
+      catacombsLevel: 14,
+      catacombsXp: 14_000,
+      secretsFound: 10,
+      floors: [{ name: "Floor 5", completions: 1, bestScore: 280 }],
+    },
+  };
+
+  it("requires a recorded clear, readable base sword, and a current affordable quote", () => {
+    expect(recommendLividDagger(lividDaggerBudget(combat), quote, now)).toMatchObject({
+      marketItemId: "LIVID_DAGGER",
+      cost: expect.stringContaining("9,395,000 coins"),
+    });
+    expect(
+      lividDaggerBudget({ ...combat, dungeons: { ...combat.dungeons, floors: [] } }),
+    ).toBeNull();
+    expect(
+      lividDaggerBudget({
+        ...combat,
+        availability: { ...combat.availability, dungeonCompletions: false },
+      }),
+    ).toBeNull();
+    expect(recommendLividDagger(combat.purse, quote, quote.validUntil)).toBeNull();
+    expect(recommendLividDagger(quote.price - 1, quote, now)).toBeNull();
+  });
+
+  it("skips other modes, unreadable inventory, modified swords, and other melee weapons", () => {
+    expect(
+      lividDaggerBudget({
+        ...combat,
+        profiles: [{ ...combat.profiles[0]!, gameMode: "Ironman" }],
+      }),
+    ).toBeNull();
+    for (const items of [
+      [],
+      [{ ...aspect, lore: [] }],
+      [{ ...aspect, slot: 10 }],
+      [{ ...aspect, rarity: "EPIC" }],
+      [{ ...aspect, enchantments: { sharpness: 5 } }],
+      [aspect, { ...aspect, id: "LIVID_DAGGER", lore: [] }],
+      [aspect, { ...aspect, id: "HYPERION", lore: ["§6§lLEGENDARY DUNGEON SWORD"] }],
+    ]) {
+      expect(lividDaggerBudget({ ...combat, containers: [{ ...inventory, items }] })).toBeNull();
+    }
   });
 });

@@ -8,7 +8,7 @@ import { WikiAuctionQuote } from "@/components/wiki/WikiAuctionQuote";
 import CoflnetPriceChart from "@/components/wiki/CoflnetPriceChart";
 import { cn } from "@/lib/utils";
 import { titleCase } from "@/lib/skyblock";
-import { SITE_URL } from "@/lib/constants";
+import { MARKET_MAX_AGE_MS, SITE_URL } from "@/lib/constants";
 import { fetchItemDetail } from "@/lib/hypixel.functions";
 
 export const Route = createFileRoute("/wiki/$itemId")({
@@ -86,10 +86,16 @@ function ItemEncyclopediaPage() {
     queryKey: ["item-detail", itemId],
     queryFn: () => fetchItemDetail({ data: itemId }),
     staleTime: 60_000,
+    refetchInterval: 60_000,
     ...(initialDetail ? { initialData: initialDetail } : {}),
   });
 
   const item = detailQuery.data?.item ?? null;
+  const bazaarTimestamp = item?.bazaarUpdatedAt;
+  const staleBazaar =
+    detailQuery.isError ||
+    item?.bazaarStale ||
+    (bazaarTimestamp !== undefined && Date.now() - bazaarTimestamp > MARKET_MAX_AGE_MS);
   const extra = detailQuery.data?.extra ?? null;
   const usedIn = detailQuery.data?.usedIn ?? [];
 
@@ -299,11 +305,14 @@ function ItemEncyclopediaPage() {
               </>
             ) : null}
           </dl>
-          {item.bazaarUpdatedAt && (
+          {bazaarTimestamp && (
             <p className="mt-3 text-xs text-muted-foreground">
+              {staleBazaar && (
+                <span className="block">Last observed Bazaar quotes. Data is stale.</span>
+              )}
               Hypixel quote timestamp:{" "}
-              <time dateTime={new Date(item.bazaarUpdatedAt).toISOString()}>
-                {new Date(item.bazaarUpdatedAt).toISOString().slice(0, 16).replace("T", " ")} UTC
+              <time dateTime={new Date(bazaarTimestamp).toISOString()}>
+                {new Date(bazaarTimestamp).toISOString().slice(0, 16).replace("T", " ")} UTC
               </time>
             </p>
           )}

@@ -4,6 +4,7 @@
 // CORS allowlisted + rate-limited — intended for mods and third-party tools.
 
 import { defineEventHandler, getHeader, setHeader } from "h3";
+import { MARKET_MAX_AGE_MS } from "../../src/lib/constants";
 
 const ALLOWED_ORIGINS = (process.env["PUBLIC_API_ORIGINS"] ?? "")
   .split(",")
@@ -53,7 +54,7 @@ export default defineEventHandler(async (event) => {
   ]);
   const bazaar = await getBazaar();
   const fresh =
-    !bazaar.stale && bazaar.lastUpdated > 0 && Date.now() - bazaar.lastUpdated <= 5 * 60_000;
+    !bazaar.stale && bazaar.lastUpdated > 0 && Date.now() - bazaar.lastUpdated <= MARKET_MAX_AGE_MS;
   const products = fresh ? bazaar.products : [];
   const prices = new Map(products.map((product) => [product.id, product.sellPrice]));
 

@@ -7,8 +7,11 @@ import { useAuctionQuote } from "@/hooks/use-auction-quote";
 import { generateTailoredActionPlan } from "@/lib/advisor-engine";
 import {
   JUNGLE_AMULET_ID,
+  LIVID_DAGGER_ID,
   RED_CLAW_ARTIFACT_ID,
   jungleAmuletBudget,
+  lividDaggerBudget,
+  recommendLividDagger,
   recommendJungleAmulet,
   recommendOdawaTrade,
   recommendRedClawUpgrade,
@@ -22,27 +25,44 @@ export const Route = createFileRoute("/advisor")({
 
 function AdvisorRoute() {
   const { data, isLoading, error, connected } = usePlayer();
-  const baseActions = useMemo(() => generateTailoredActionPlan(data), [data]);
+  const baseActions = useMemo(
+    () => generateTailoredActionPlan(error ? undefined : data),
+    [data, error],
+  );
   const budget = useMemo(() => redClawUpgradeBudget(error ? undefined : data), [data, error]);
   const miningBudget = useMemo(() => jungleAmuletBudget(error ? undefined : data), [data, error]);
+  const daggerBudget = useMemo(() => lividDaggerBudget(error ? undefined : data), [data, error]);
   const market = useAuctionQuote(RED_CLAW_ARTIFACT_ID, budget !== null);
   const miningMarket = useAuctionQuote(JUNGLE_AMULET_ID, miningBudget !== null);
-  const upgrade =
+  const daggerMarket = useAuctionQuote(LIVID_DAGGER_ID, daggerBudget !== null);
+  const now = Date.now();
+  const upgrades = [
     recommendRedClawUpgrade(
       budget,
       market.isError || market.expired ? undefined : market.quote,
-      Date.now(),
-    ) ??
+      now,
+    ),
     recommendJungleAmulet(
       miningBudget,
       miningMarket.isError || miningMarket.expired ? undefined : miningMarket.quote,
-      Date.now(),
-    ) ??
-    recommendOdawaTrade(error ? undefined : data);
-  const actions = upgrade ? [...baseActions, upgrade] : baseActions;
+      now,
+    ),
+    recommendLividDagger(
+      daggerBudget,
+      daggerMarket.isError || daggerMarket.expired ? undefined : daggerMarket.quote,
+      now,
+    ),
+    recommendOdawaTrade(error ? undefined : data),
+  ].filter((action) => action !== null);
+  const actions = [
+    ...baseActions.filter((action) => !action.futureGoal),
+    ...upgrades,
+    ...baseActions.filter((action) => action.futureGoal),
+  ];
   const checkingMarket =
     (budget !== null && !market.quote && !market.isError) ||
-    (miningBudget !== null && !miningMarket.quote && !miningMarket.isError);
+    (miningBudget !== null && !miningMarket.quote && !miningMarket.isError) ||
+    (daggerBudget !== null && !daggerMarket.quote && !daggerMarket.isError);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">

@@ -27,7 +27,7 @@ import {
   type FeedItem,
 } from "@/hooks/use-notification-feed";
 import { formatNumber } from "@/lib/skyblock";
-import { MAX_FAIRY_SOULS } from "@/lib/constants";
+import { MARKET_MAX_AGE_MS, MAX_FAIRY_SOULS } from "@/lib/constants";
 
 const icons: Record<string, typeof IconBell> = {
   market: IconCoins,
@@ -179,7 +179,10 @@ function Notifications() {
   });
 
   useEffect(() => {
-    const products = bazaarQuery.data?.products;
+    const snapshot = bazaarQuery.data;
+    if (!snapshot || snapshot.stale || Date.now() - snapshot.lastUpdated > MARKET_MAX_AGE_MS)
+      return;
+    const products = snapshot.products;
     if (!products?.length || priceAlerts.alerts.length === 0) return;
 
     const prices = new Map(products.map((p) => [p.id, p.buyPrice]));

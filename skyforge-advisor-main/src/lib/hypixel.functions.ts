@@ -14,6 +14,7 @@ import {
 import { z as zod } from "zod";
 import type { AlertRule } from "./market-history.server";
 import { WIKI_AUCTION_PAGES } from "./wiki-auction";
+import { MARKET_MAX_AGE_MS } from "./constants";
 
 const uuidSchema = zod.object({
   uuid: uuidOrNameSchema,
@@ -25,7 +26,7 @@ export const fetchBazaar = createServerFn({ method: "GET" }).handler(async () =>
 
   // Contribute a sample to the persistent market history store.
   const { recordMarketSample } = await import("./market-history.server");
-  if (!data.stale && data.lastUpdated > 0)
+  if (!data.stale && data.lastUpdated > 0 && Date.now() - data.lastUpdated <= MARKET_MAX_AGE_MS)
     recordMarketSample({
       products: data.products.map((p) => ({
         id: p.id,

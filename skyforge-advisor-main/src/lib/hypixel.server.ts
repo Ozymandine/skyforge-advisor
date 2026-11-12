@@ -25,6 +25,7 @@ import { calculateSlayerOverview } from "./slayer";
 import { HYPIXEL_FIRE_SALES_URL } from "./calendar";
 import { getPetLevel } from "./pet-catalog";
 import { getHotmTier } from "./hotm-engine";
+import { BAZAAR_SELL_FEE_RATE, MARKET_MAX_AGE_MS } from "./constants";
 import type { CollectionTier, OfficialCollection } from "./collection-progress";
 import {
   isWikiAuctionCandidate,
@@ -563,6 +564,7 @@ export type WikiMarketData = {
   };
 
   bazaarUpdatedAt?: number;
+  bazaarStale?: boolean;
   auctionHouse?: {
     lowestBin: number | null;
     averageBin: number | null;
@@ -912,7 +914,13 @@ function getBazaarFeed(): Promise<BazaarResponse | null> {
   bazaarRequest ??= getJson<BazaarResponse>(API + "/skyblock/bazaar")
     .then((result) => {
       const data = unwrap(result);
-      if (!data?.products || !Number.isFinite(data.lastUpdated) || data.lastUpdated <= 0)
+      if (
+        !data?.products ||
+        !Number.isSafeInteger(data.lastUpdated) ||
+        data.lastUpdated <= 0 ||
+        data.lastUpdated > Date.now() + 30_000 ||
+        (bazaarFeed && data.lastUpdated < bazaarFeed.data.lastUpdated)
+      )
         return null;
       bazaarFeed = { fetchedAt: Date.now(), data };
       return data;
@@ -931,7 +939,9 @@ export async function getBazaar(): Promise<{
   // Short server cache: every client poll must NOT become a Hypixel fetch.
   const now = Date.now();
   if (bazaarCache && now - bazaarCache.at < BAZAAR_CACHE_TTL) {
-    return bazaarCache.data;
+    return now - bazaarCache.data.lastUpdated > MARKET_MAX_AGE_MS
+      ? { ...bazaarCache.data, stale: true }
+      : bazaarCache.data;
   }
   try {
     const [data, names] = await Promise.all([getBazaarFeed(), nameLookup()]);
@@ -965,7 +975,7 @@ export async function getBazaar(): Promise<{
 
       const gross = q.buyPrice - q.sellPrice;
 
-      const spread = gross - q.buyPrice * 0.0125;
+      const spread = gross - q.buyPrice * BAZAAR_SELL_FEE_RATE;
 
       const margin = (spread / q.sellPrice) * 100;
 
@@ -995,6 +1005,7 @@ export async function getBazaar(): Promise<{
     const fresh = {
       lastUpdated: data.lastUpdated ?? 0,
       products,
+      stale: Date.now() - data.lastUpdated > MARKET_MAX_AGE_MS,
     };
     bazaarCache = { at: Date.now(), data: fresh };
     return fresh;
@@ -1525,7 +1536,9 @@ export async function getAuctions(pages = 6): Promise<{
 // ============================================================================
 
 export async function getWikiItems(): Promise<WikiItem[]> {
-  const [items, bazaarResponse] = await Promise.all([getItems(), getBazaarFeed()]);
+  const [items, freshBazaar] = await Promise.all([getItems(), getBazaarFeed()]);
+  const bazaarResponse = freshBazaar ?? bazaarFeed?.data;
+  const bazaarStale = !freshBazaar || Date.now() - freshBazaar.lastUpdated > MARKET_MAX_AGE_MS;
 
   const bazaarMap = new Map<string, WikiMarketData["bazaar"]>();
 
@@ -1538,7 +1551,15 @@ export async function getWikiItems(): Promise<WikiItem[]> {
         !Number.isFinite(q.buyPrice) ||
         !Number.isFinite(q.sellPrice) ||
         q.buyPrice <= 0 ||
-        q.sellPrice <= 0
+        q.sellPrice <= 0 ||
+        ![
+          q.buyVolume,
+          q.sellVolume,
+          q.buyMovingWeek,
+          q.sellMovingWeek,
+          q.buyOrders,
+          q.sellOrders,
+        ].every((value) => Number.isFinite(value) && value >= 0)
       ) {
         continue;
       }
@@ -1571,7 +1592,9 @@ export async function getWikiItems(): Promise<WikiItem[]> {
     return {
       ...item,
 
-      ...(bazaar && bazaarResponse ? { bazaar, bazaarUpdatedAt: bazaarResponse.lastUpdated } : {}),
+      ...(bazaar && bazaarResponse
+        ? { bazaar, bazaarUpdatedAt: bazaarResponse.lastUpdated, bazaarStale }
+        : {}),
 
       // Hypixel's public item API does not provide
       // a true historical price series. Keep this

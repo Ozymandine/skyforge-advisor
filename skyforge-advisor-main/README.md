@@ -64,8 +64,14 @@ Chest, Personal Vault, and any reported backpacks before suggesting the
 purchase. The advice is withheld if a Red Claw Artifact is already visible in
 storage, the asking price exceeds the purse, or a required input is unavailable.
 Gemstone miners can get a comparable Jungle Amulet quote or a verified Odawa
-trade on Ironman. Dungeon next steps use reported XP, recorded clears, and
+trade on Ironman. A Classic player with a recorded Floor 5 clear, a base
+Aspect of the End in the hotbar, and enough reported coins can compare it with
+a base Livid Dagger. Dungeon next steps use reported XP, recorded clears, and
 published floor requirements.
+
+Bazaar prices use Hypixel's indicative order quotes. The Wiki labels an older
+or cached quote as stale and preserves Hypixel's original timestamp. Stale
+quotes are excluded from alerts and new history samples.
 
 ## Damage Simulator and pet data
 
