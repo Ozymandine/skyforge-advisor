@@ -105,6 +105,7 @@ function Wiki() {
         return next;
       },
       replace: true,
+      resetScroll: false,
     });
   };
 
@@ -118,6 +119,7 @@ function Wiki() {
         return next;
       },
       replace: true,
+      resetScroll: false,
     });
   };
 
