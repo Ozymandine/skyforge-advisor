@@ -783,10 +783,12 @@ export function estimateMinionYield(
  * MINION SLOT PROGRESSION & CRAFTING ENGINE
  * ========================================================================== */
 
-// Unique craft milestone thresholds to unlock minion slots (starts at 5 base slots)
-export const MINION_SLOT_THRESHOLDS = [
+// https://hypixelskyblock.minecraft.wiki/w/Minions#Minion_Slots
+const BASE_MINION_SLOTS = 5;
+const MAX_COMMUNITY_MINION_SLOTS = 5;
+const MINION_SLOT_THRESHOLDS = [
   5, 15, 30, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 350, 400, 450, 500, 550, 600, 650,
-  700, 750, 800, 850,
+  700,
 ];
 
 export type MinionSlotProgression = {
@@ -795,7 +797,7 @@ export type MinionSlotProgression = {
   communitySlots: number;
   totalSlotsUnlocked: number;
   maxPossibleSlots: number;
-  nextSlotThreshold: number;
+  nextSlotThreshold: number | null;
   craftsForNextSlot: number;
   progressToNextPct: number;
 };
@@ -806,33 +808,28 @@ export function getMinionSlotProgression(
 ): MinionSlotProgression {
   const uniqueCraftsCount = new Set(craftedGenerators).size;
 
-  let craftSlots = 5; // Base 5 slots
-  for (const threshold of MINION_SLOT_THRESHOLDS) {
-    if (uniqueCraftsCount >= threshold) {
-      craftSlots++;
-    } else {
-      break;
-    }
-  }
-
-  const currentSlotIndex = Math.min(MINION_SLOT_THRESHOLDS.length - 1, Math.max(0, craftSlots - 5));
-  const nextSlotThreshold = MINION_SLOT_THRESHOLDS[currentSlotIndex] ?? 850;
-  const prevThreshold =
-    currentSlotIndex > 0 ? (MINION_SLOT_THRESHOLDS[currentSlotIndex - 1] ?? 0) : 0;
-
-  const craftsForNextSlot = Math.max(0, nextSlotThreshold - uniqueCraftsCount);
-  const delta = nextSlotThreshold - prevThreshold;
+  const bonuses = MINION_SLOT_THRESHOLDS.filter(
+    (threshold) => uniqueCraftsCount >= threshold,
+  ).length;
+  const craftSlots = BASE_MINION_SLOTS + bonuses;
+  const communitySlots = Math.min(MAX_COMMUNITY_MINION_SLOTS, Math.max(0, communityCenterSlots));
+  const nextSlotThreshold = MINION_SLOT_THRESHOLDS[bonuses] ?? null;
+  const prevThreshold = MINION_SLOT_THRESHOLDS[bonuses - 1] ?? 0;
+  const craftsForNextSlot = nextSlotThreshold === null ? 0 : nextSlotThreshold - uniqueCraftsCount;
   const progressToNextPct =
-    delta > 0
-      ? Math.min(100, Math.round(((uniqueCraftsCount - prevThreshold) / delta) * 100))
-      : 100;
+    nextSlotThreshold === null
+      ? 100
+      : Math.round(
+          (100 * (uniqueCraftsCount - prevThreshold)) / (nextSlotThreshold - prevThreshold),
+        );
 
   return {
     uniqueCraftsCount,
     craftSlotsUnlocked: craftSlots,
-    communitySlots: communityCenterSlots,
-    totalSlotsUnlocked: craftSlots + communityCenterSlots,
-    maxPossibleSlots: 30 + 5, // 30 from crafts + 5 from Elizabeth Community Center
+    communitySlots,
+    totalSlotsUnlocked: craftSlots + communitySlots,
+    maxPossibleSlots:
+      BASE_MINION_SLOTS + MINION_SLOT_THRESHOLDS.length + MAX_COMMUNITY_MINION_SLOTS,
     nextSlotThreshold,
     craftsForNextSlot,
     progressToNextPct,

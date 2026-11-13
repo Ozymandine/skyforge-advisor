@@ -107,9 +107,7 @@ export function MinionsRoute() {
                 setTab("slots");
               }}
             >
-              <IconAward className="size-3.5" /> Slot Progression (
-              {slotProgression.uniqueCraftsCount}
-              /850)
+              <IconAward className="size-3.5" /> Slot Progression
             </Chip>
             <Chip
               active={tab === "fuels"}
@@ -161,10 +159,20 @@ export function MinionsRoute() {
             <IconCompass className="size-4 text-primary" />
           </div>
           <p className="mt-2 text-2xl font-bold font-mono text-foreground">
-            {craftHistoryKnown ? slotProgression.craftsForNextSlot : "—"}{" "}
-            <span className="text-xs text-muted-foreground font-normal">crafts needed</span>
+            {craftHistoryKnown ? (
+              slotProgression.nextSlotThreshold === null ? (
+                "Craft slots complete"
+              ) : (
+                <>
+                  {slotProgression.craftsForNextSlot}{" "}
+                  <span className="text-xs text-muted-foreground font-normal">crafts needed</span>
+                </>
+              )
+            ) : (
+              "—"
+            )}
           </p>
-          {craftHistoryKnown && (
+          {craftHistoryKnown && slotProgression.nextSlotThreshold !== null && (
             <div className="mt-2">
               <ProgressBar pct={slotProgression.progressToNextPct} tone="gold" />
               <span className="mt-1 block text-[10px] text-muted-foreground">
@@ -350,8 +358,9 @@ export function MinionsRoute() {
             <div className="mt-5 space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">
-                  Unique Crafts: {slotProgression.uniqueCraftsCount} /{" "}
-                  {slotProgression.nextSlotThreshold}
+                  Unique crafts: {slotProgression.uniqueCraftsCount}
+                  {slotProgression.nextSlotThreshold !== null &&
+                    ` / ${slotProgression.nextSlotThreshold}`}
                 </span>
                 <span className="font-bold text-primary">
                   {slotProgression.progressToNextPct}% to next slot

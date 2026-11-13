@@ -109,6 +109,21 @@ describe("Minions Engine: Slot Unlock & Progression Engine", () => {
     expect(cheapest[0]!.craftCostCoins).toBeGreaterThan(0);
     expect(cheapest[0]!.minionId).toBeDefined();
   });
+
+  it("caps craft slots at the documented 700 unique crafts and 32 total slots", () => {
+    const crafted = Array.from({ length: 750 }, (_, index) => "CRAFT_" + index);
+    expect(getMinionSlotProgression(crafted.slice(0, 699), 5)).toMatchObject({
+      totalSlotsUnlocked: 31,
+      nextSlotThreshold: 700,
+      craftsForNextSlot: 1,
+    });
+    expect(getMinionSlotProgression(crafted, 5)).toMatchObject({
+      totalSlotsUnlocked: 32,
+      maxPossibleSlots: 32,
+      nextSlotThreshold: null,
+      craftsForNextSlot: 0,
+    });
+  });
 });
 
 describe("Minions Engine: Placed Minions & Claimable Yields", () => {
