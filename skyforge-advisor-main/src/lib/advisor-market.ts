@@ -3,12 +3,19 @@ import type { TailoredAction } from "./advisor-engine";
 import type { PlayerDataValidated } from "./schemas";
 import { formatFull } from "./skyblock";
 import { getHotmTier } from "./hotm-engine";
-import { isOwnedMeleeWeapon, readDisplayedCombatStats } from "./damage-simulator";
+import {
+  ARTISANAL_SHORTBOW_ID,
+  isOwnedMeleeWeapon,
+  readDisplayedCombatStats,
+} from "./damage-simulator";
+import type { InventoryItem } from "./skyblock";
 import type { WikiAuctionQuote } from "./wiki-auction";
 
 export const RED_CLAW_ARTIFACT_ID = "RED_CLAW_ARTIFACT";
 export const JUNGLE_AMULET_ID = "JUNGLE_AMULET";
 export const LIVID_DAGGER_ID = "LIVID_DAGGER";
+export const ASPECT_OF_THE_DRAGON_ID = "ASPECT_OF_THE_DRAGON";
+export const UNSTABLE_DRAGON_BOOTS_ID = "UNSTABLE_DRAGON_BOOTS";
 
 type MarketProfile = Pick<
   PlayerDataValidated,
@@ -62,7 +69,7 @@ function affordableQuote(budget: number | null, quote: WikiAuctionQuote | undefi
     quote.price > budget
   )
     return null;
-  return `Lowest comparable BIN observed at ${formatFull(quote.price)} coins from ${quote.comparableListings} listings. Your reported purse is ${formatFull(budget)} coins. Check the current price in game before buying.`;
+  return `${formatFull(quote.price)} coins · lowest observed comparable BIN from ${quote.comparableListings} listings. Your reported purse is ${formatFull(budget)} coins.`;
 }
 
 export function recommendRedClawUpgrade(
@@ -152,9 +159,55 @@ export function recommendOdawaTrade(player?: MiningProfile | null): TailoredActi
   };
 }
 
-type CombatProfile = MarketProfile & Pick<PlayerDataValidated, "dungeons">;
+type CombatProfile = MarketProfile & Pick<PlayerDataValidated, "dungeons" | "skills">;
 
-export function lividDaggerBudget(player?: CombatProfile | null): number | null {
+function isBaseCopy(item: InventoryItem) {
+  return !(
+    item.stars ||
+    item.reforge ||
+    item.hotPotatoBooks ||
+    item.rarityUpgrades ||
+    item.artOfWar ||
+    item.woodSingularity ||
+    item.abilityScrolls?.length ||
+    [item.enchantments, item.gems, item.attributes].some(
+      (entry) => entry && Object.keys(entry).length,
+    )
+  );
+}
+
+function readableInventory(player: MarketProfile) {
+  return player.containers.find((container) => container.id === "inventory" && !container.locked);
+}
+
+function baseAspectInHotbar(player: MarketProfile) {
+  const items = player.containers.flatMap((container) => container.items);
+  const aspectId = "ASPECT_OF_THE_END";
+  if (!readableInventory(player)?.items.some((item) => item.slot < 9 && item.id === aspectId))
+    return false;
+  return items.every((item) => {
+    if (item.id !== aspectId && !isOwnedMeleeWeapon(item)) return true;
+    const stats = readDisplayedCombatStats(item);
+    return (
+      item.id === aspectId &&
+      item.rarity === "RARE" &&
+      isBaseCopy(item) &&
+      stats?.DAMAGE === 100 &&
+      stats.STRENGTH === 100 &&
+      (stats.CRIT_DAMAGE ?? 0) === 0
+    );
+  });
+}
+
+function combatLevel(player?: CombatProfile | null) {
+  return player?.availability?.skillKeys.includes("COMBAT")
+    ? player.skills.find((entry) => entry.key === "COMBAT")?.level
+    : undefined;
+}
+
+export function lividDaggerBudget(
+  player?: (MarketProfile & Pick<PlayerDataValidated, "dungeons">) | null,
+): number | null {
   const budget = classicPurse(player);
   if (
     budget === null ||
@@ -164,36 +217,131 @@ export function lividDaggerBudget(player?: CombatProfile | null): number | null 
   )
     return null;
 
-  const items = player.containers.flatMap((container) => container.items);
-  const hotbar = player.containers.find(
-    (container) => container.id === "inventory" && !container.locked,
-  )?.items;
-  const equippedCandidate = hotbar?.find(
-    (item) => item.slot < 9 && item.id === "ASPECT_OF_THE_END",
-  );
-  if (!equippedCandidate) return null;
-  if (items.some((item) => item.id === LIVID_DAGGER_ID)) return null;
+  return !player.containers.some((container) =>
+    container.items.some((item) => item.id === LIVID_DAGGER_ID),
+  ) && baseAspectInHotbar(player)
+    ? budget
+    : null;
+}
 
-  for (const item of items) {
-    const sword = item.id === "ASPECT_OF_THE_END" || isOwnedMeleeWeapon(item);
-    if (!sword) continue;
-    const stats = readDisplayedCombatStats(item);
-    if (
-      item.id !== "ASPECT_OF_THE_END" ||
-      item.rarity !== "RARE" ||
-      !stats ||
-      stats.DAMAGE !== 100 ||
-      stats.STRENGTH !== 100 ||
-      (stats.CRIT_DAMAGE ?? 0) !== 0 ||
-      item.stars ||
-      item.reforge ||
-      item.hotPotatoBooks ||
-      item.rarityUpgrades ||
-      (item.enchantments && Object.keys(item.enchantments).length)
+export function aspectOfTheDragonsBudget(player?: CombatProfile | null) {
+  const budget = classicPurse(player);
+  return budget !== null &&
+    player?.availability?.accessoryStorage &&
+    (combatLevel(player) ?? -1) >= 18 &&
+    !player.containers.some((container) =>
+      container.items.some(
+        (item) =>
+          item.id === ASPECT_OF_THE_DRAGON_ID ||
+          item.id === LIVID_DAGGER_ID ||
+          item.id === "ASPECT_OF_THE_VOID",
+      ),
+    ) &&
+    baseAspectInHotbar(player)
+    ? budget
+    : null;
+}
+
+export function recommendAspectOfTheDragons(
+  budget: number | null,
+  quote: WikiAuctionQuote | undefined,
+  now: number,
+): TailoredAction | null {
+  const cost = affordableQuote(budget, quote, now);
+  return cost
+    ? {
+        id: "buy-aspect-of-the-dragons",
+        title: "Upgrade to Aspect of the Dragons",
+        detail:
+          "You meet Combat 18 and carry a base Aspect of the End. Look for a base Legendary Aspect of the Dragons for overworld melee.",
+        benefit:
+          "Adds 125 base weapon Damage at the same 100 Strength. Keep the Aspect of the End for teleporting.",
+        cost,
+        marketItemId: ASPECT_OF_THE_DRAGON_ID,
+        simulatorWeaponId: ASPECT_OF_THE_DRAGON_ID,
+      }
+    : null;
+}
+
+export function unstableBootsBudget(player?: CombatProfile | null) {
+  const budget = classicPurse(player);
+  if (
+    budget === null ||
+    !player?.availability?.accessoryStorage ||
+    !player.availability.containerIds.includes("armor") ||
+    (combatLevel(player) ?? -1) < 16 ||
+    player.containers.some((container) =>
+      container.items.some(
+        (item) =>
+          item.id !== "END_BOOTS" &&
+          (item.id.endsWith("_BOOTS") ||
+            item.lore.some((line) => /\bBOOTS$/.test(line.replace(/§./g, "").trim()))),
+      ),
     )
-      return null;
-  }
-  return budget;
+  )
+    return null;
+  const armor = player.containers.find(
+    (container) => container.id === "armor" && !container.locked,
+  );
+  const boots = armor?.items.find((item) => item.id === "END_BOOTS" && item.rarity === "EPIC");
+  const stats = boots && readDisplayedCombatStats(boots);
+  return boots && isBaseCopy(boots) && stats?.HEALTH === 15 && stats.DEFENSE === 25 ? budget : null;
+}
+
+export function recommendUnstableBoots(
+  budget: number | null,
+  quote: WikiAuctionQuote | undefined,
+  now: number,
+): TailoredAction | null {
+  const cost = affordableQuote(budget, quote, now);
+  return cost
+    ? {
+        id: "buy-unstable-dragon-boots",
+        title: "Compare Unstable Dragon Boots for combat",
+        detail:
+          "You meet Combat 16 and wear base Ender Boots. Compare unmodified Unstable Dragon Boots for overworld combat. Keep your Ender Boots for the End-specific bonuses and loadouts.",
+        benefit:
+          "Outside The End, the base swap adds 45 Health, 65 Defense, 5% Crit Chance and 15% Crit Damage.",
+        cost,
+        marketItemId: UNSTABLE_DRAGON_BOOTS_ID,
+      }
+    : null;
+}
+
+export function recommendStarterBow(player?: CombatProfile | null): TailoredAction | null {
+  const level = combatLevel(player);
+  const mode = player?.profiles.find(
+    (profile) => profile.profileId === player.activeProfileId,
+  )?.gameMode;
+  if (
+    !player?.availability?.accessoryStorage ||
+    !readableInventory(player) ||
+    level === undefined ||
+    level < 4 ||
+    level >= 12 ||
+    (mode !== "Classic" && mode !== "Ironman") ||
+    !player.availability.purse ||
+    !Number.isFinite(player.purse) ||
+    player.purse < 600 ||
+    player.containers.some((container) =>
+      container.items.some(
+        (item) =>
+          item.id.endsWith("_SHORTBOW") ||
+          item.id === "TERMINATOR" ||
+          item.lore.some((line) => /\b(?:SHORT)?BOW$/.test(line.replace(/§./g, "").trim())),
+      ),
+    )
+  )
+    return null;
+  return {
+    id: "buy-starter-bow",
+    title: "Pick up an Artisanal Shortbow",
+    detail:
+      "You meet Combat 4. Visit the Weaponsmith in the Hub and buy the bow. Bring arrows to use it.",
+    benefit: "Gives you an instant-firing ranged weapon for targets that accept arrows.",
+    cost: "600 coins for the bow",
+    simulatorWeaponId: ARTISANAL_SHORTBOW_ID,
+  };
 }
 
 export function recommendLividDagger(
@@ -212,5 +360,6 @@ export function recommendLividDagger(
       "Its base 210 Damage and 50% Crit Damage improve standard critical hits over the base Aspect of the End. Keep the Aspect for teleporting.",
     cost,
     marketItemId: LIVID_DAGGER_ID,
+    simulatorWeaponId: LIVID_DAGGER_ID,
   };
 }

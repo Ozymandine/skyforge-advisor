@@ -46,7 +46,9 @@ coverage.
 
 The Wiki quotes single, unmodified copies of Jungle Amulet, Red Claw Artifact,
 Gravity Talisman, Fish Affinity Talisman, Potion Affinity Artifact, Lumberjack
-Artifact, Ender Artifact, Aspect of the End, Aspect of the Void, and Livid Dagger.
+Artifact, Ender Artifact, Aspect of the End, Aspect of the Dragons, Aspect of the
+Void, Livid Dagger, and Unstable Dragon Boots. Livid Dagger also has a separate
+Legendary five-star variant with no other upgrades.
 It matches the canonical item ID and stack count in the
 listing's decoded NBT, requires base rarity, and excludes unknown item metadata
 and modifiers. Each quote requires at least three active, unique BIN listings.
@@ -66,8 +68,10 @@ storage, the asking price exceeds the purse, or a required input is unavailable.
 Gemstone miners can get a comparable Jungle Amulet quote or a verified Odawa
 trade on Ironman. A Classic player with a recorded Floor 5 clear, a base
 Aspect of the End in the hotbar, and enough reported coins can compare it with
-a base Livid Dagger. Dungeon next steps use reported XP, recorded clears, and
-published floor requirements.
+a base Livid Dagger. The Advisor also checks an Artisanal Shortbow NPC purchase
+at early Combat levels, an Aspect of the Dragons melee upgrade, and an Unstable
+Dragon Boots comparison outside The End. Dungeon next steps use reported XP,
+recorded clears, and published floor requirements.
 
 Bazaar prices use Hypixel's indicative order quotes. The Wiki labels an older
 or cached quote as stale and preserves Hypixel's original timestamp. Stale
@@ -79,17 +83,27 @@ limiting the response. The default board still shows the soonest-ending sample.
 ## Damage Simulator and pet data
 
 The simulator uses the Hypixel item catalog for sword, longsword, qualifying
-axe, bow, and wand presets. It calculates standard overworld melee hits and
-effective health. A readable owned weapon or equipped piece contributes its
+axe, bow, and wand presets. It estimates standard overworld melee hits and one
+base Artisanal Shortbow shot with a Flint Arrow. A readable owned melee weapon or equipped piece contributes its
 displayed overworld stats. Other player bonuses can be entered manually.
 The mob list records published health and applies mitigation when a defense
-value is available or entered. Bow, ability, and dungeon mechanics require
-separate damage models.
+value is available or entered. It identifies documented Flint Arrow immunity
+and withholds target-specific shot estimates when compatibility is unverified.
+Other bows, weapon abilities, and dungeon damage require separate models.
 
 The pet catalog and XP curves come from the pinned MIT-licensed
 [NotEnoughUpdates data](https://github.com/NotEnoughUpdates/NotEnoughUpdates-REPO).
 Pet combat presets estimate base stats between the source's level endpoints.
 Run `node scripts/generate-pet-catalog.mjs <NEU-commit-SHA>` to refresh the tables.
+
+## Minion yield estimates
+
+The yield table models Slime, Snow, Clay, and Cobblestone Minions in a standard
+layout. It compares no fuel, Enchanted Lava Bucket, and Hamster Wheel. The hopper
+option uses 70% of NPC prices after storage is full. Bazaar instant-sell
+estimates apply the standard 1.25% tax to the buy-order quote and subtract any
+recurring fuel cost at the sell-offer quote. The estimate excludes upgrades,
+upfront costs, order depth, and specialized setups such as Inferno.
 
 ## Market history store
 

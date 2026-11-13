@@ -1,5 +1,6 @@
 import { gzipSync } from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { wikiListingIdentity } from "../src/lib/wiki-auction";
 
 const jungleId = "JUNGLE_AMULET";
 const redClawId = "RED_CLAW_ARTIFACT";
@@ -12,7 +13,12 @@ function nbtString(value: string) {
   return Buffer.concat([length, data]);
 }
 
-function itemBytes(id: string, count = 1, attributes: string[] = [], weapon = false) {
+function itemBytes(
+  id: string,
+  count = 1,
+  attributes: Array<string | [string, number]> = [],
+  weapon = false,
+) {
   return gzipSync(
     Buffer.concat([
       Buffer.from([10, 0, 0, 9]), // Root compound and item list
@@ -27,7 +33,10 @@ function itemBytes(id: string, count = 1, attributes: string[] = [], weapon = fa
       Buffer.from([8]),
       nbtString("id"),
       nbtString(id),
-      ...attributes.flatMap((key) => [Buffer.from([1]), nbtString(key), Buffer.from([1])]),
+      ...attributes.flatMap((attribute) => {
+        const [key, value] = typeof attribute === "string" ? [attribute, 1] : attribute;
+        return [Buffer.from([1]), nbtString(key), Buffer.from([value])];
+      }),
       Buffer.from([0, 0, 0, 0]), // End ExtraAttributes, tag, item and root
     ]),
   ).toString("base64");
@@ -177,6 +186,57 @@ describe("Wiki active BIN quotes", () => {
       price: 300,
       comparableListings: 3,
     });
+  });
+
+  it("separates exact five-star Livid Daggers from base copies and other modifications", async () => {
+    const id = "LIVID_DAGGER";
+    const base = { category: "weapon", tier: "LEGENDARY", item_bytes: itemBytes(id, 1, [], true) };
+    const starred = { ...base, item_bytes: itemBytes(id, 1, [["upgrade_level", 5]], true) };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        snapshotPage(0, [
+          listing("base-a", 300, base),
+          listing("base-b", 310, base),
+          listing("base-c", 320, base),
+          listing("stars-a", 500, starred),
+          listing("stars-b", 510, starred),
+          listing("stars-c", 520, starred),
+          listing("too-many", 1, {
+            ...base,
+            item_bytes: itemBytes(id, 1, [["upgrade_level", 6]], true),
+          }),
+          listing("reforged", 1, {
+            ...base,
+            item_bytes: itemBytes(id, 1, [["upgrade_level", 5], "modifier"], true),
+          }),
+          listing("recomb", 1, { ...starred, tier: "MYTHIC" }),
+        ]),
+      ),
+    );
+    const { getWikiAuctionQuote } = await import("../src/lib/hypixel.server");
+    expect(await getWikiAuctionQuote(id)).toMatchObject({
+      status: "quoted",
+      comparableListings: 3,
+      price: 300,
+    });
+    expect(await getWikiAuctionQuote(id, "five-star")).toMatchObject({
+      status: "quoted",
+      comparableListings: 3,
+      price: 500,
+    });
+    expect(await getWikiAuctionQuote(jungleId, "five-star")).toEqual({ status: "unsupported" });
+  });
+
+  it("allows observed Dragon provenance UUIDs and excludes modified armor", () => {
+    const tag = { Unbreakable: 1 };
+    const dragon = { id: "ASPECT_OF_THE_DRAGON", bossId: "fc235ef2-b9f4-49f6-be0d-5733431d20e1" };
+    expect(wikiListingIdentity(1, tag, dragon)).toEqual({ itemId: dragon.id, variant: "base" });
+    expect(wikiListingIdentity(1, tag, { ...dragon, bossId: 1 })).toBeUndefined();
+    const boots = { id: "UNSTABLE_DRAGON_BOOTS" };
+    expect(wikiListingIdentity(1, tag, boots)).toEqual({ itemId: boots.id, variant: "base" });
+    expect(wikiListingIdentity(1, tag, { ...boots, dye_item: "DYE_PURE_WHITE" })).toBeUndefined();
+    expect(wikiListingIdentity(1, tag, { ...boots, dungeon_item_level: 1 })).toBeUndefined();
   });
 
   it("withholds prices after a failed refresh or when Hypixel's snapshot is old", async () => {

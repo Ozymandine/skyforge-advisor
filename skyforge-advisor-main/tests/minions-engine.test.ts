@@ -8,6 +8,7 @@ import {
   MINION_FUELS,
   MINION_UPGRADES,
   calculateMinionDailyOutput,
+  estimateMinionYield,
   getMinionSlotProgression,
   getCheapestMinionCrafts,
   calculatePlacedMinionClaims,
@@ -32,10 +33,15 @@ describe("Minions Engine: Daily Output & Economy Calculation", () => {
         hopper: "ENCHANTED_HOPPER",
       });
 
-      expect(output.dailyActions).toBeGreaterThan(6000);
-      expect(output.dailyNpcCoins).toBeGreaterThan(150_000);
-      expect(output.itemsProduced.some((i) => i.id === "CORRUPT_FRAGMENT")).toBe(true);
-      expect(output.itemsProduced.some((i) => i.id === "DIAMOND")).toBe(true);
+      expect(output.dailyActions).toBe(9_000);
+      expect(output.dailyNpcCoins).toBe(71_190);
+      expect(output.itemsProduced.find((item) => item.id === "CORRUPTED_FRAGMENT")).toMatchObject({
+        dailyAmount: 4_500,
+        npcCoinValue: 3_150,
+      });
+      expect(output.itemsProduced.find((item) => item.id === "DIAMOND")).toMatchObject({
+        dailyAmount: 900,
+      });
     }
   });
 
@@ -59,9 +65,21 @@ describe("Minions Engine: Daily Output & Economy Calculation", () => {
 describe("Minions Engine: Slot Unlock & Progression Engine", () => {
   it("calculates correct unlocked slots from unique crafts and community upgrades", () => {
     const mockCrafted = [
-      "COBBLESTONE_1", "COBBLESTONE_2", "COBBLESTONE_3", "COBBLESTONE_4", "COBBLESTONE_5",
-      "COAL_1", "COAL_2", "COAL_3", "COAL_4", "COAL_5",
-      "IRON_1", "IRON_2", "IRON_3", "IRON_4", "IRON_5",
+      "COBBLESTONE_1",
+      "COBBLESTONE_2",
+      "COBBLESTONE_3",
+      "COBBLESTONE_4",
+      "COBBLESTONE_5",
+      "COAL_1",
+      "COAL_2",
+      "COAL_3",
+      "COAL_4",
+      "COAL_5",
+      "IRON_1",
+      "IRON_2",
+      "IRON_3",
+      "IRON_4",
+      "IRON_5",
     ]; // 15 unique crafts
 
     const progression = getMinionSlotProgression(mockCrafted, 2); // +2 community center slots
@@ -121,10 +139,47 @@ describe("Minions Engine: Placed Minions & Claimable Yields", () => {
     const elapsedHours = 24; // 1 full day of offline generation
     const claims = calculatePlacedMinionClaims(placed, elapsedHours * 3600 * 1000);
 
-    expect(claims.totalClaimableCoins).toBeGreaterThan(200_000);
+    expect(claims.totalClaimableCoins).toBeGreaterThan(70_000);
     expect(claims.minionReports.length).toBe(2);
     expect(claims.minionReports[0]!.claimableCoins).toBeGreaterThan(0);
-    expect(claims.totalDailyRate).toBeGreaterThan(200_000);
+    expect(claims.totalDailyRate).toBeGreaterThan(70_000);
   });
 });
 
+describe("published minion yield estimates", () => {
+  const slime = MINIONS_CATALOG.find((minion) => minion.id === "SLIME" && minion.tier === 11)!;
+  const prices = new Map([
+    ["SLIME_BALL", { buyPrice: 25, sellPrice: 10 }],
+    ["HAMSTER_WHEEL", { buyPrice: 150_000, sellPrice: 1 }],
+  ]);
+
+  it("uses current NPC values, the hopper rate, and two actions per harvest", () => {
+    expect(estimateMinionYield(slime, "NONE", "npc", new Map())).toMatchObject({
+      dailyCoins: 25_200,
+      dailyFuelCost: 0,
+      output: { dailyHarvests: 3_600 },
+    });
+    const cobble = MINIONS_CATALOG.find(
+      (minion) => minion.id === "COBBLESTONE" && minion.tier === 1,
+    )!;
+    expect(estimateMinionYield(cobble, "NONE", "npc", new Map())?.dailyCoins).toBe(2_160);
+  });
+
+  it("prices consumables on the buy side and subtracts the sell tax and daily fuel cost", () => {
+    expect(estimateMinionYield(slime, "HAMSTER_WHEEL", "bazaar", prices)).toMatchObject({
+      dailyCoins: -43_350,
+      dailyFuelCost: 150_000,
+    });
+    expect(estimateMinionYield(slime, "ENCHANTED_LAVA_BUCKET", "bazaar", prices)).toMatchObject({
+      dailyCoins: 88_875,
+      dailyFuelCost: 0,
+    });
+  });
+
+  it("withholds Bazaar and fuel estimates when quotes are missing and excludes unsupported setups", () => {
+    expect(estimateMinionYield(slime, "NONE", "bazaar", new Map())?.dailyCoins).toBeNull();
+    expect(estimateMinionYield(slime, "HAMSTER_WHEEL", "npc", new Map())?.dailyCoins).toBeNull();
+    const inferno = MINIONS_CATALOG.find((minion) => minion.id === "INFERNO")!;
+    expect(estimateMinionYield(inferno, "NONE", "npc", prices)).toBeNull();
+  });
+});

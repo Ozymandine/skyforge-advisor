@@ -12,10 +12,19 @@ const variants = new Map(
     LUMBERJACK_ARTIFACT: { rarity: "RARE", category: "accessories" },
     ENDER_ARTIFACT: { rarity: "EPIC", category: "accessories" },
     ASPECT_OF_THE_END: { rarity: "RARE", category: "weapon" },
+    ASPECT_OF_THE_DRAGON: { rarity: "LEGENDARY", category: "weapon" },
     ASPECT_OF_THE_VOID: { rarity: "EPIC", category: "weapon" },
     LIVID_DAGGER: { rarity: "LEGENDARY", category: "weapon" },
-  } satisfies Record<string, { rarity: string; category: "accessories" | "weapon" }>),
+    UNSTABLE_DRAGON_BOOTS: { rarity: "LEGENDARY", category: "armor" },
+  } satisfies Record<string, { rarity: string; category: "accessories" | "weapon" | "armor" }>),
 );
+
+export const WIKI_AUCTION_VARIANTS = ["base", "five-star"] as const;
+export type WikiAuctionVariant = (typeof WIKI_AUCTION_VARIANTS)[number];
+
+export function wikiAuctionVariants(itemId: string): readonly WikiAuctionVariant[] {
+  return itemId === "LIVID_DAGGER" ? WIKI_AUCTION_VARIANTS : ["base"];
+}
 
 export function wikiAuctionRarity(itemId: string): string | undefined {
   return variants.get(itemId)?.rarity;
@@ -46,29 +55,41 @@ export function isWikiAuctionCandidate(auction: {
   );
 }
 
-export function unmodifiedWikiItemId(
+const provenanceUuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
+
+export function wikiListingIdentity(
   count: unknown,
   tag: Record<string, unknown> | null,
   extra: Record<string, unknown> | null,
-): string | undefined {
+): { itemId: string; variant: WikiAuctionVariant } | undefined {
   const id = extra?.["id"];
   const variant = typeof id === "string" ? variants.get(id) : undefined;
   if (
-    typeof id === "string" &&
-    variant &&
-    count === 1 &&
-    tag &&
-    Object.keys(tag).every(
+    typeof id !== "string" ||
+    !variant ||
+    count !== 1 ||
+    !tag ||
+    !extra ||
+    !Object.keys(tag).every(
       (key) =>
         baseTags.has(key) ||
-        (variant.category === "weapon" && key === "Unbreakable" && tag[key] === 1),
-    ) &&
-    extra &&
-    Object.keys(extra).every((key) => identityAttributes.has(key))
-  ) {
-    return id;
-  }
-  return undefined;
+        (variant.category !== "accessories" && key === "Unbreakable" && tag[key] === 1),
+    )
+  )
+    return undefined;
+
+  const variantId: WikiAuctionVariant =
+    id === "LIVID_DAGGER" && extra["upgrade_level"] === 5 ? "five-star" : "base";
+  const hasOnlyKnownAttributes = Object.keys(extra).every(
+    (key) =>
+      identityAttributes.has(key) ||
+      (variantId === "five-star" && key === "upgrade_level") ||
+      (id === "ASPECT_OF_THE_DRAGON" &&
+        (key === "bossId" || key === "spawnedFor") &&
+        typeof extra[key] === "string" &&
+        provenanceUuid.test(extra[key])),
+  );
+  return hasOnlyKnownAttributes ? { itemId: id, variant: variantId } : undefined;
 }
 
 export type ComparableListing = { price: number; endsAt: number };

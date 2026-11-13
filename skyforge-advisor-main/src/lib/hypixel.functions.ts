@@ -13,7 +13,7 @@ import {
 } from "./schemas";
 import { z as zod } from "zod";
 import type { AlertRule } from "./market-history.server";
-import { WIKI_AUCTION_PAGES } from "./wiki-auction";
+import { WIKI_AUCTION_PAGES, WIKI_AUCTION_VARIANTS } from "./wiki-auction";
 import { MARKET_MAX_AGE_MS } from "./constants";
 
 const uuidSchema = zod.object({
@@ -316,11 +316,15 @@ export const fetchItemDetail = createServerFn({ method: "GET" })
   });
 
 export const fetchWikiAuctionQuote = createServerFn({ method: "GET" })
-  .validator((input: unknown) => itemIdSchema.parse(input))
+  .validator((input: unknown) =>
+    zod
+      .object({ itemId: itemIdSchema, variant: zod.enum(WIKI_AUCTION_VARIANTS) })
+      .parse(typeof input === "string" ? { itemId: input, variant: "base" } : input),
+  )
   .handler(async ({ data }) => {
     setResponseHeader("Cache-Control", "no-store");
     const { getWikiAuctionQuote } = await import("./hypixel.server");
-    return getWikiAuctionQuote(data);
+    return getWikiAuctionQuote(data.itemId, data.variant);
   });
 
 export const fetchPlayer = createServerFn({ method: "POST" })

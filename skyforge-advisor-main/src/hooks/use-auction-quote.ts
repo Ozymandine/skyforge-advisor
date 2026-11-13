@@ -1,13 +1,22 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchWikiAuctionQuote } from "@/lib/hypixel.functions";
-import { wikiAuctionRarity } from "@/lib/wiki-auction";
+import {
+  wikiAuctionRarity,
+  wikiAuctionVariants,
+  type WikiAuctionVariant,
+} from "@/lib/wiki-auction";
 
-export function useAuctionQuote(itemId: string, enabled = true) {
-  const supported = Boolean(wikiAuctionRarity(itemId));
+export function useAuctionQuote(
+  itemId: string,
+  enabled = true,
+  variant: WikiAuctionVariant = "base",
+) {
+  const supported =
+    Boolean(wikiAuctionRarity(itemId)) && wikiAuctionVariants(itemId).includes(variant);
   const query = useQuery({
-    queryKey: ["wiki-auction-quote", itemId],
-    queryFn: () => fetchWikiAuctionQuote({ data: itemId }),
+    queryKey: ["wiki-auction-quote", itemId, variant],
+    queryFn: () => fetchWikiAuctionQuote({ data: { itemId, variant } }),
     enabled: supported && enabled,
     staleTime: 30_000,
     refetchInterval: 30_000,

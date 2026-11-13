@@ -6,6 +6,7 @@ export type CombatStats = Partial<
 >;
 
 const combatKeys = ["DAMAGE", "STRENGTH", "CRIT_DAMAGE", "HEALTH", "DEFENSE"] as const;
+export const ARTISANAL_SHORTBOW_ID = "ARTISANAL_SHORTBOW";
 
 export type SimulatorWeapon = {
   id: string;
@@ -91,16 +92,22 @@ export function isOwnedMeleeWeapon(
   );
 }
 
-export type MobTarget = { id: string; name: string; health: number; defense?: number };
+export type MobTarget = {
+  id: string;
+  name: string;
+  health: number;
+  defense?: number;
+  flintArrow?: "supported" | "immune";
+};
 
 // Explicit variants from the community SkyBlock mob index. A missing
 // Defense stat stays unknown. Health alone cannot establish hits to kill.
 export const MOB_TARGETS: MobTarget[] = [
-  { id: "graveyard_zombie", name: "Graveyard Zombie · Lv 1", health: 100 },
+  { id: "graveyard_zombie", name: "Graveyard Zombie · Lv 1", health: 100, flintArrow: "supported" },
   { id: "crypt_ghoul", name: "Crypt Ghoul · Lv 33", health: 2_000 },
   { id: "golden_ghoul", name: "Golden Ghoul · Lv 65", health: 20_000 },
   { id: "seer", name: "Seer · Lv 55", health: 9_500 },
-  { id: "zealot", name: "Zealot · Lv 73", health: 13_000 },
+  { id: "zealot", name: "Zealot · Lv 73", health: 13_000, flintArrow: "immune" },
   { id: "special_zealot", name: "Special Zealot · Lv 73", health: 13_000 },
   { id: "zealot_bruiser", name: "Zealot Bruiser · Lv 115", health: 65_000 },
   { id: "voidling_fanatic", name: "Voidling Fanatic · Lv 183", health: 750_000 },
@@ -110,6 +117,11 @@ export const MOB_TARGETS: MobTarget[] = [
   { id: "glacite_walker", name: "Glacite Walker · Lv 24", health: 888, defense: 1_000 },
   { id: "treasure_hoarder", name: "Treasure Hoarder · Lv 61", health: 15_000 },
   { id: "ghost", name: "Ghost · Lv 157", health: 1_000_000 },
+  { id: "enderman_42", name: "Enderman · Lv 45", health: 4_500, flintArrow: "immune" },
+  { id: "enderman_45", name: "Enderman · Lv 51", health: 6_000, flintArrow: "immune" },
+  { id: "enderman_50", name: "Enderman · Lv 59", health: 9_000, flintArrow: "immune" },
+  { id: "nest_endermite", name: "Nest Endermite · Lv 50", health: 4_500 },
+  { id: "old_wolf", name: "Old Wolf · Lv 67", health: 15_000 },
 ];
 
 export type SimulatorLoadout = {
@@ -119,6 +131,7 @@ export type SimulatorLoadout = {
   gear: CombatStats[];
   additional: CombatStats;
   targetDefense: number | null;
+  flintArrow?: boolean;
 };
 
 export function calculateSimulation({
@@ -128,6 +141,7 @@ export function calculateSimulation({
   gear,
   additional,
   targetDefense,
+  flintArrow = false,
 }: SimulatorLoadout) {
   const sources = [weapon, pet, ...gear, additional];
   const stat = (key: keyof CombatStats) =>
@@ -156,7 +170,10 @@ export function calculateSimulation({
     validCombat &&
     strength >= -100 &&
     critDamage >= -100
-      ? Math.max(0, (5 + stat("DAMAGE")) * (1 + strength / 100) * (1 + warriorBonus))
+      ? Math.max(
+          0,
+          (5 + stat("DAMAGE") + (flintArrow ? 1 : 0)) * (1 + strength / 100) * (1 + warriorBonus),
+        )
       : null;
   const damageFactor =
     targetDefense !== null && Number.isFinite(targetDefense) && targetDefense >= 0

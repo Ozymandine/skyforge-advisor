@@ -1,43 +1,25 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  IconTrendingUp,
-  IconAward,
-  IconZap,
-  IconSparkles,
-  IconSearch,
-  IconCheckCircle2,
-  IconLock,
-  IconArrowUpRight,
-  IconCoins,
-  IconCompass,
-} from "@/assets/icons";
+import { IconTrendingUp, IconAward, IconZap, IconCompass } from "@/assets/icons";
 
-import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
-import {
-  Chip,
-  PageHero,
-  Panel,
-  ProgressBar,
-  RarityTag,
-  StatRow,
-} from "@/components/layout/app-shell";
+import { Chip, PageHero, Panel, ProgressBar } from "@/components/layout/app-shell";
 import { ItemIcon } from "@/components/ui/item-icon";
-import { MinecraftTooltip } from "@/components/ui/minecraft-tooltip";
 import { usePlayer } from "@/hooks/use-account";
 import { fetchBazaar } from "@/lib/hypixel.functions";
 import { playClickSound } from "@/lib/sound-effects";
 import {
   MINIONS_CATALOG,
   MINION_FUELS,
-  MINION_UPGRADES,
-  RAW_MINION_PROFILES,
-  calculateMinionDailyOutput,
+  MINION_ESTIMATE_FUELS,
+  MINION_ESTIMATE_IDS,
+  ENCHANTED_HOPPER_RATE,
+  estimateMinionYield,
   getMinionSlotProgression,
-  type MinionDefinition,
-  type MinionCategory,
 } from "@/lib/minions-engine";
+import { MARKET_MAX_AGE_MS } from "@/lib/constants";
+import { formatFull } from "@/lib/skyblock";
+import { marketControl } from "@/components/market-controls";
 
 export const Route = createFileRoute("/minions")({
   component: MinionsRoute,
@@ -49,24 +31,34 @@ export function MinionsRoute() {
   const { data: player } = usePlayer();
   const craftHistoryKnown = player?.craftedGenerators !== undefined;
   const [tab, setTab] = useState<TabMode>("leaderboard");
-  const [categoryFilter, setCategoryFilter] = useState<"all" | MinionCategory>("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [sellMode, setSellMode] = useState<"npc" | "bazaar">("npc");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [fuelId, setFuelId] =
+    useState<(typeof MINION_ESTIMATE_FUELS)[number]>("ENCHANTED_LAVA_BUCKET");
 
   // Live Bazaar query
-  const { data: bazaarData } = useQuery({
+  const {
+    data: bazaarData,
+    isLoading: marketLoading,
+    isError: marketError,
+  } = useQuery({
     queryKey: ["bazaar"],
     queryFn: fetchBazaar,
     staleTime: 45_000,
+    refetchInterval: 60_000,
   });
 
-  const bazaarPriceMap = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const prod of bazaarData?.products ?? []) {
-      map.set(prod.id, prod.sellPrice || prod.buyPrice || 0);
-    }
-    return map;
-  }, [bazaarData]);
+  const freshMarket = Boolean(
+    bazaarData &&
+    !marketError &&
+    !bazaarData.stale &&
+    bazaarData.lastUpdated > 0 &&
+    Date.now() - bazaarData.lastUpdated <= MARKET_MAX_AGE_MS,
+  );
+  const prices = useMemo(
+    () => new Map(freshMarket ? bazaarData?.products.map((product) => [product.id, product]) : []),
+    [bazaarData, freshMarket],
+  );
 
   // Minion slot progression from profile
   const slotProgression = useMemo(() => {
@@ -76,58 +68,22 @@ export function MinionsRoute() {
     return getMinionSlotProgression(player?.craftedGenerators ?? [], communitySlots);
   }, [player?.craftedGenerators, player?.communityUpgrades]);
 
-  // Leaderboard calculation across all catalog minions
-  const leaderboardEntries = useMemo(() => {
-    return MINIONS_CATALOG.filter((m) => {
-      if (categoryFilter !== "all" && m.category !== categoryFilter) return false;
-      if (searchQuery && !m.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-      return true;
-    })
-      .map((minion) => {
-        const lava = MINION_FUELS.find((f) => f.id === "ENCHANTED_LAVA_BUCKET");
-        const corruptSoil =
-          minion.category === "combat"
-            ? MINION_UPGRADES.find((u) => u.id === "CORRUPT_SOIL")
-            : undefined;
-        const diamondSpreading = MINION_UPGRADES.find((u) => u.id === "DIAMOND_SPREADING");
-
-        const output = calculateMinionDailyOutput({
-          minion,
-          fuel: lava,
-          upgrade1: corruptSoil,
-          upgrade2: diamondSpreading,
-          hopper: sellMode === "npc" ? "ENCHANTED_HOPPER" : "NONE",
-          bazaarPriceMap,
-        });
-
-        const dailyCoins = sellMode === "npc" ? output.dailyNpcCoins : output.dailyBazaarCoins;
-        return {
-          minion,
-          output,
-          dailyCoins,
-          fullSetupDailyCoins: craftHistoryKnown
-            ? dailyCoins * slotProgression.totalSlotsUnlocked
-            : null,
-        };
-      })
-      .sort((a, b) => b.dailyCoins - a.dailyCoins);
-  }, [
-    categoryFilter,
-    searchQuery,
-    sellMode,
-    bazaarPriceMap,
-    slotProgression.totalSlotsUnlocked,
-    craftHistoryKnown,
-  ]);
-
-  // Top meta recommendations
-  const topAfkMinion = leaderboardEntries[0];
-  const topBazaarMinion = useMemo(() => {
-    const bzList = [...leaderboardEntries].sort(
-      (a, b) => b.output.dailyBazaarCoins - a.output.dailyBazaarCoins,
-    );
-    return bzList[0];
-  }, [leaderboardEntries]);
+  const estimates = useMemo(
+    () =>
+      MINIONS_CATALOG.flatMap((minion) => {
+        if (categoryFilter !== "all" && minion.category !== categoryFilter) return [];
+        const estimate = estimateMinionYield(minion, fuelId, sellMode, prices);
+        return estimate ? [{ minion, ...estimate }] : [];
+      }).sort((a, b) => {
+        if (a.dailyCoins === null) return b.dailyCoins === null ? 0 : 1;
+        return b.dailyCoins === null ? -1 : b.dailyCoins - a.dailyCoins;
+      }),
+    [categoryFilter, fuelId, sellMode, prices],
+  );
+  const firstEstimate = estimates.find((entry) => entry.dailyCoins !== null);
+  const supportedFuels = MINION_FUELS.filter((fuel) =>
+    MINION_ESTIMATE_FUELS.some((id) => id === fuel.id),
+  );
 
   return (
     <div className="space-y-6 pb-12">
@@ -162,15 +118,15 @@ export function MinionsRoute() {
                 setTab("fuels");
               }}
             >
-              <IconZap className="size-3.5" /> Fuel & Upgrade ROI
+              <IconZap className="size-3.5" /> Supported fuels
             </Chip>
           </div>
         }
       />
 
       {/* Top Level Summary Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Panel className="relative overflow-hidden bg-slate-900/60 border-amber-500/20">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Panel className="relative overflow-hidden border-amber-500/20">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Unlocked Minion Slots
@@ -197,14 +153,14 @@ export function MinionsRoute() {
           </div>
         </Panel>
 
-        <Panel className="relative overflow-hidden bg-slate-900/60 border-primary/20">
+        <Panel className="relative overflow-hidden border-primary/20">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Next Slot Goal
             </span>
             <IconCompass className="size-4 text-primary" />
           </div>
-          <p className="mt-2 text-2xl font-bold font-mono text-white">
+          <p className="mt-2 text-2xl font-bold font-mono text-foreground">
             {craftHistoryKnown ? slotProgression.craftsForNextSlot : "—"}{" "}
             <span className="text-xs text-muted-foreground font-normal">crafts needed</span>
           </p>
@@ -217,165 +173,151 @@ export function MinionsRoute() {
             </div>
           )}
         </Panel>
-
-        <Panel className="relative overflow-hidden bg-slate-900/60 border-emerald-500/20">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
-              Highest estimated yield
-            </span>
-            <IconCoins className="size-4 text-emerald-400" />
-          </div>
-          <p className="mt-2 text-lg font-bold text-white truncate">
-            {topAfkMinion?.minion.name ?? "—"}
-          </p>
-          <p className="text-xs font-bold text-emerald-400">
-            +{topAfkMinion?.dailyCoins.toLocaleString()}{" "}
-            <span className="text-[10px] text-muted-foreground font-normal">/ day per minion</span>
-          </p>
-        </Panel>
-
-        <Panel className="relative overflow-hidden bg-slate-900/60 border-purple-500/20">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-purple-300 uppercase tracking-wider">
-              Highest Bazaar estimate
-            </span>
-            <IconSparkles className="size-4 text-purple-400" />
-          </div>
-          <p className="mt-2 text-lg font-bold text-white truncate">
-            {topBazaarMinion?.minion.name ?? "—"}
-          </p>
-          <p className="text-xs font-bold text-purple-300">
-            +{topBazaarMinion?.output.dailyBazaarCoins.toLocaleString()}{" "}
-            <span className="text-[10px] text-muted-foreground font-normal">/ day per minion</span>
-          </p>
-        </Panel>
       </div>
 
       {/* =========================================================================
        * TAB 1: PROFITABILITY LEADERBOARD
        * ======================================================================= */}
       {tab === "leaderboard" && (
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            {/* Category Filter Chips */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              {(["all", "combat", "farming", "mining", "foraging", "fishing"] as const).map(
-                (cat) => (
-                  <Chip
-                    key={cat}
-                    active={categoryFilter === cat}
-                    onClick={() => {
-                      playClickSound();
-                      setCategoryFilter(cat);
-                    }}
-                  >
-                    {cat.toUpperCase()}
-                  </Chip>
-                ),
-              )}
-            </div>
-
-            {/* Sell Mode Toggle (NPC vs Bazaar) */}
-            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-background/30 p-1">
-              <button
-                onClick={() => {
-                  playClickSound();
-                  setSellMode("npc");
+        <Panel className="space-y-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="grid gap-1 text-sm">
+              Fuel
+              <select
+                value={fuelId}
+                className={marketControl}
+                onChange={(event) => {
+                  const next = MINION_ESTIMATE_FUELS.find((id) => id === event.target.value);
+                  if (next) setFuelId(next);
                 }}
-                className={`rounded-lg px-3 py-1 text-xs font-bold transition-all ${
-                  sellMode === "npc"
-                    ? "bg-primary text-primary-foreground shadow"
-                    : "text-muted-foreground hover:text-white"
-                }`}
               >
-                AFK Hopper (NPC 90%)
-              </button>
-              <button
-                onClick={() => {
-                  playClickSound();
-                  setSellMode("bazaar");
-                }}
-                className={`rounded-lg px-3 py-1 text-xs font-bold transition-all ${
-                  sellMode === "bazaar"
-                    ? "bg-primary text-primary-foreground shadow"
-                    : "text-muted-foreground hover:text-white"
-                }`}
+                {supportedFuels.map((fuel) => (
+                  <option key={fuel.id} value={fuel.id}>
+                    {fuel.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1 text-sm">
+              Selling method
+              <select
+                value={sellMode}
+                className={marketControl}
+                onChange={(event) =>
+                  setSellMode(event.target.value === "bazaar" ? "bazaar" : "npc")
+                }
               >
-                Manual Bazaar Sell
-              </button>
-            </div>
+                <option value="npc">Enchanted Hopper ({ENCHANTED_HOPPER_RATE * 100}% NPC)</option>
+                <option value="bazaar">Bazaar instant sell</option>
+              </select>
+            </label>
+            <label className="grid gap-1 text-sm">
+              Category
+              <select
+                value={categoryFilter}
+                className={marketControl}
+                onChange={(event) => setCategoryFilter(event.target.value)}
+              >
+                <option value="all">All supported minions</option>
+                <option value="combat">Combat</option>
+                <option value="mining">Mining</option>
+                <option value="fishing">Fishing</option>
+              </select>
+            </label>
           </div>
-
-          {/* Leaderboard Table */}
-          <div className="overflow-hidden rounded-2xl panel-card">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="border-b border-white/10 bg-primary/5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                  <tr>
-                    <th className="px-4 py-3 text-center">#</th>
-                    <th className="px-4 py-3">Minion & Tier</th>
-                    <th className="px-4 py-3">Speed</th>
-                    <th className="px-4 py-3">Primary Drops</th>
-                    <th className="px-4 py-3 text-right">Daily Coins (1 Minion)</th>
-                    <th className="px-4 py-3 text-right">
-                      Full Setup ({slotProgression.totalSlotsUnlocked || 24} Slots)
+          <p className="text-sm text-muted-foreground">
+            Daily estimates assume uninterrupted production in a standard layout without upgrades or
+            external boosts. Hopper rates assume storage is already full. Bazaar proceeds use the
+            current buy-order quote after the standard fee. Actual prices depend on order depth and
+            can change before you sell. Consumable fuel is priced at the current sell-offer quote.
+            Upfront setup costs are excluded.
+          </p>
+          {firstEstimate && (
+            <p className="text-sm">
+              Highest under these settings: <strong>{firstEstimate.minion.name}</strong>
+            </p>
+          )}
+          {!freshMarket && (sellMode === "bazaar" || fuelId === "HAMSTER_WHEEL") && (
+            <p role="status" className="text-sm text-muted-foreground">
+              {marketLoading
+                ? "Loading Bazaar quotes…"
+                : bazaarData?.stale
+                  ? "Bazaar quotes are stale."
+                  : "Current Bazaar quotes are unavailable."}
+            </p>
+          )}
+          {freshMarket && estimates.some((entry) => entry.dailyCoins === null) && (
+            <p role="status" className="text-sm text-muted-foreground">
+              Some drops or fuel have no usable market quote.
+            </p>
+          )}
+          <div className="overflow-x-auto rounded-xl border border-border">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-border bg-primary/5 text-xs text-muted-foreground">
+                <tr>
+                  <th scope="col" className="px-3 py-2">
+                    Minion
+                  </th>
+                  <th scope="col" className="px-3 py-2">
+                    Drops / day
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-right">
+                    Fuel / day
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-right">
+                    Coins / day after fuel
+                  </th>
+                  {craftHistoryKnown && (
+                    <th scope="col" className="px-3 py-2 text-right">
+                      {slotProgression.totalSlotsUnlocked} slots / day
                     </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {leaderboardEntries.map((entry, index) => (
-                    <tr
-                      key={`${entry.minion.id}-${entry.minion.tier}`}
-                      className="hover:bg-white/[0.02] transition-colors"
-                    >
-                      <td className="px-4 py-3 text-center font-bold text-muted-foreground">
-                        {index + 1}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <ItemIcon
-                            id={`${entry.minion.id}_GENERATOR_${entry.minion.tier}`}
-                            name={entry.minion.name}
-                            className="size-8 object-contain"
-                          />
-                          <div>
-                            <p className="font-bold text-white text-sm">{entry.minion.name}</p>
-                            <span className="text-[10px] text-muted-foreground uppercase">
-                              {entry.minion.category}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-slate-300 font-medium">
-                        {entry.output.effectiveActionTime}s / action
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          {entry.output.itemsProduced.map((item) => (
-                            <span
-                              key={item.id}
-                              className="rounded bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300"
-                            >
-                              {item.dailyAmount.toLocaleString()}× {item.name}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-right font-bold text-emerald-400 text-sm">
-                        +{entry.dailyCoins.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-right font-bold text-amber-300 text-sm">
-                        {entry.fullSetupDailyCoins === null
+                  )}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {estimates.map(({ minion, output, dailyFuelCost, dailyCoins }) => (
+                  <tr
+                    key={minion.id + "-" + minion.tier}
+                    className="transition-colors hover:bg-primary/5"
+                  >
+                    <th scope="row" className="px-3 py-2 font-medium">
+                      <div className="flex items-center gap-2">
+                        <ItemIcon
+                          id={minion.id + "_GENERATOR_" + minion.tier}
+                          name={minion.name}
+                          className="size-7 shrink-0"
+                        />
+                        {minion.name}
+                      </div>
+                    </th>
+                    <td className="px-3 py-2 text-muted-foreground">
+                      {output.itemsProduced
+                        .map((drop) => formatFull(drop.dailyAmount) + " × " + drop.name)
+                        .join(", ")}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {dailyFuelCost === null ? "—" : formatFull(dailyFuelCost)}
+                    </td>
+                    <td className="px-3 py-2 text-right font-semibold tabular-nums">
+                      {dailyCoins === null ? "Unavailable" : formatFull(dailyCoins)}
+                    </td>
+                    {craftHistoryKnown && (
+                      <td className="px-3 py-2 text-right tabular-nums">
+                        {dailyCoins === null
                           ? "—"
-                          : entry.fullSetupDailyCoins.toLocaleString()}
+                          : formatFull(dailyCoins * slotProgression.totalSlotsUnlocked)}
                       </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
+          <p className="text-sm text-muted-foreground">
+            Yield estimates cover {MINION_ESTIMATE_IDS.size} minion types. Inferno production
+            depends on specialized fuel and setup.
+          </p>
+        </Panel>
       )}
 
       {/* =========================================================================
@@ -393,7 +335,7 @@ export function MinionsRoute() {
           <Panel>
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                   <IconAward className="size-5 text-amber-400" /> Minion Slot Roadmap
                 </h3>
                 <p className="text-xs text-muted-foreground">
@@ -439,68 +381,32 @@ export function MinionsRoute() {
        * TAB 3: FUEL & UPGRADE OPTIMIZER
        * ======================================================================= */}
       {tab === "fuels" && (
-        <div className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Permanent Fuels */}
-            <Panel>
-              <h3 className="text-sm font-bold text-amber-300 flex items-center gap-2">
-                <IconZap className="size-4" /> Permanent Fuel Options
-              </h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                One-time cost fuels that provide permanent continuous speed boosts.
-              </p>
-              <div className="mt-4 space-y-2.5">
-                {MINION_FUELS.filter((f) => !f.durationHours && f.id !== "NONE").map((fuel) => (
+        <Panel className="space-y-3">
+          <h2 className="text-lg font-semibold">Supported fuels</h2>
+          <dl className="divide-y divide-border">
+            {supportedFuels
+              .filter((fuel) => fuel.id !== "NONE")
+              .map((fuel) => {
+                const price = prices.get(fuel.id)?.buyPrice;
+                return (
                   <div
                     key={fuel.id}
-                    className="flex items-center justify-between rounded-xl border border-white/10 bg-black/40 p-3"
+                    className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"
                   >
-                    <div>
-                      <h4 className="text-sm font-bold text-white">{fuel.name}</h4>
-                      <span className="text-xs text-emerald-400 font-medium">
-                        +{(fuel.speedBonus * 100).toFixed(0)}% Speed
-                      </span>
-                    </div>
-                    <span className="font-mono text-xs font-bold text-amber-300">
-                      ≈ {fuel.costCoins?.toLocaleString()} coins
-                    </span>
+                    <dt className="flex items-center gap-2 font-medium">
+                      <ItemIcon id={fuel.id} name={fuel.name} className="size-6" />
+                      {fuel.name}
+                    </dt>
+                    <dd className="text-muted-foreground">
+                      +{Math.round(fuel.speedBonus * 100)}% speed ·{" "}
+                      {fuel.durationHours ? fuel.durationHours + " hours" : "Permanent"}
+                      {price && " · " + formatFull(price) + " coins per item (sell-offer quote)"}
+                    </dd>
                   </div>
-                ))}
-              </div>
-            </Panel>
-
-            {/* Consumable Fuels */}
-            <Panel>
-              <h3 className="text-sm font-bold text-purple-300 flex items-center gap-2">
-                <IconSparkles className="size-4" /> Consumable & Timed Boosters
-              </h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                High-power timed fuels used for max output scaling or special events.
-              </p>
-              <div className="mt-4 space-y-2.5">
-                {MINION_FUELS.filter((f) => f.durationHours).map((fuel) => (
-                  <div
-                    key={fuel.id}
-                    className="flex items-center justify-between rounded-xl border border-white/10 bg-black/40 p-3"
-                  >
-                    <div>
-                      <h4 className="text-sm font-bold text-white">{fuel.name}</h4>
-                      <span className="text-xs text-purple-300 font-medium">
-                        {fuel.outputMultiplier
-                          ? `${fuel.outputMultiplier}× Output Multiplier`
-                          : `+${(fuel.speedBonus * 100).toFixed(0)}% Speed`}{" "}
-                        ({fuel.durationHours}h duration)
-                      </span>
-                    </div>
-                    <span className="font-mono text-xs font-bold text-muted-foreground">
-                      ≈ {fuel.costCoins?.toLocaleString()} coins / item
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </Panel>
-          </div>
-        </div>
+                );
+              })}
+          </dl>
+        </Panel>
       )}
     </div>
   );

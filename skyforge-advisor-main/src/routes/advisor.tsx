@@ -4,18 +4,26 @@ import { ConnectPrompt, ErrorState, LoadState } from "@/components/data-states";
 import { PageHero, Panel } from "@/components/layout/app-shell";
 import { usePlayer } from "@/hooks/use-account";
 import { useAuctionQuote } from "@/hooks/use-auction-quote";
+import { ItemIcon } from "@/components/ui/item-icon";
 import { generateTailoredActionPlan } from "@/lib/advisor-engine";
 import {
   JUNGLE_AMULET_ID,
+  ASPECT_OF_THE_DRAGON_ID,
   LIVID_DAGGER_ID,
   RED_CLAW_ARTIFACT_ID,
+  UNSTABLE_DRAGON_BOOTS_ID,
+  aspectOfTheDragonsBudget,
   jungleAmuletBudget,
   lividDaggerBudget,
   recommendLividDagger,
+  recommendAspectOfTheDragons,
   recommendJungleAmulet,
   recommendOdawaTrade,
   recommendRedClawUpgrade,
+  recommendStarterBow,
+  recommendUnstableBoots,
   redClawUpgradeBudget,
+  unstableBootsBudget,
 } from "@/lib/advisor-market";
 
 export const Route = createFileRoute("/advisor")({
@@ -35,8 +43,30 @@ function AdvisorRoute() {
   const market = useAuctionQuote(RED_CLAW_ARTIFACT_ID, budget !== null);
   const miningMarket = useAuctionQuote(JUNGLE_AMULET_ID, miningBudget !== null);
   const daggerMarket = useAuctionQuote(LIVID_DAGGER_ID, daggerBudget !== null);
+  const aspectBudget = aspectOfTheDragonsBudget(error ? undefined : data);
+  const bootsBudget = unstableBootsBudget(error ? undefined : data);
+  const aspectMarket = useAuctionQuote(ASPECT_OF_THE_DRAGON_ID, aspectBudget !== null);
+  const bootsMarket = useAuctionQuote(UNSTABLE_DRAGON_BOOTS_ID, bootsBudget !== null);
   const now = Date.now();
+  const weaponUpgrade =
+    recommendAspectOfTheDragons(
+      aspectBudget,
+      aspectMarket.isError || aspectMarket.expired ? undefined : aspectMarket.quote,
+      now,
+    ) ??
+    recommendLividDagger(
+      daggerBudget,
+      daggerMarket.isError || daggerMarket.expired ? undefined : daggerMarket.quote,
+      now,
+    );
   const upgrades = [
+    weaponUpgrade,
+    recommendUnstableBoots(
+      bootsBudget,
+      bootsMarket.isError || bootsMarket.expired ? undefined : bootsMarket.quote,
+      now,
+    ),
+    recommendStarterBow(error ? undefined : data),
     recommendRedClawUpgrade(
       budget,
       market.isError || market.expired ? undefined : market.quote,
@@ -47,22 +77,19 @@ function AdvisorRoute() {
       miningMarket.isError || miningMarket.expired ? undefined : miningMarket.quote,
       now,
     ),
-    recommendLividDagger(
-      daggerBudget,
-      daggerMarket.isError || daggerMarket.expired ? undefined : daggerMarket.quote,
-      now,
-    ),
     recommendOdawaTrade(error ? undefined : data),
   ].filter((action) => action !== null);
   const actions = [
-    ...baseActions.filter((action) => !action.futureGoal),
     ...upgrades,
+    ...baseActions.filter((action) => !action.futureGoal),
     ...baseActions.filter((action) => action.futureGoal),
   ];
   const checkingMarket =
     (budget !== null && !market.quote && !market.isError) ||
     (miningBudget !== null && !miningMarket.quote && !miningMarket.isError) ||
-    (daggerBudget !== null && !daggerMarket.quote && !daggerMarket.isError);
+    (daggerBudget !== null && !daggerMarket.quote && !daggerMarket.isError) ||
+    (aspectBudget !== null && !aspectMarket.quote && !aspectMarket.isError) ||
+    (bootsBudget !== null && !bootsMarket.quote && !bootsMarket.isError);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -80,6 +107,11 @@ function AdvisorRoute() {
               <h2 className="text-lg font-semibold">Next steps</h2>
               <span className="text-sm text-muted-foreground">{data.username}</span>
             </div>
+            {checkingMarket && (
+              <p role="status" className="mt-3 text-sm text-muted-foreground">
+                Checking comparable Auction House prices…
+              </p>
+            )}
             {actions.length ? (
               <ol className="mt-4 space-y-3">
                 {actions.map((action, index) => (
@@ -88,15 +120,23 @@ function AdvisorRoute() {
                     className="rounded-2xl border border-border bg-background/35 p-4 sm:p-5"
                   >
                     <div className="flex items-baseline gap-3">
-                      <span className="text-sm tabular-nums text-muted-foreground">
-                        {index + 1}.
-                      </span>
+                      {action.marketItemId || action.simulatorWeaponId ? (
+                        <ItemIcon
+                          id={action.marketItemId ?? action.simulatorWeaponId ?? ""}
+                          name={action.title}
+                          className="size-6 shrink-0 self-center"
+                        />
+                      ) : (
+                        <span className="w-6 shrink-0 text-sm tabular-nums text-muted-foreground">
+                          {index + 1}.
+                        </span>
+                      )}
                       <h3 className="text-base font-semibold">{action.title}</h3>
                       {action.futureGoal && (
                         <span className="text-xs text-muted-foreground">Future goal</span>
                       )}
                     </div>
-                    <div className="mt-2 space-y-2 pl-6 text-sm leading-relaxed">
+                    <div className="mt-2 space-y-2 sm:pl-9 text-sm leading-relaxed">
                       <p>{action.detail}</p>
                       <p className="text-muted-foreground">{action.benefit}</p>
                       {action.cost && <p className="text-muted-foreground">{action.cost}</p>}
@@ -111,27 +151,36 @@ function AdvisorRoute() {
                           View progress
                         </Link>
                       )}
-                      {action.marketItemId && (
-                        <Link
-                          to="/wiki/$itemId"
-                          params={{ itemId: action.marketItemId }}
-                          className="inline-block text-primary hover:underline"
-                        >
-                          View Wiki prices
-                        </Link>
-                      )}
+                      <div className="flex flex-wrap gap-x-4 gap-y-2 empty:hidden">
+                        {action.marketItemId && (
+                          <Link
+                            to="/wiki/$itemId"
+                            params={{ itemId: action.marketItemId }}
+                            className="inline-block text-primary hover:underline"
+                          >
+                            View Wiki prices
+                          </Link>
+                        )}
+                        {action.simulatorWeaponId && (
+                          <Link
+                            to="/simulator"
+                            search={{ weapon: action.simulatorWeaponId }}
+                            className="inline-block text-primary hover:underline"
+                          >
+                            Open in Damage Simulator
+                          </Link>
+                        )}
+                      </div>
                     </div>
                   </li>
                 ))}
               </ol>
-            ) : checkingMarket ? (
-              <p role="status" className="mt-3 text-sm text-muted-foreground">
-                Checking comparable Auction House prices…
-              </p>
             ) : (
-              <p className="mt-3 text-sm text-muted-foreground">
-                There isn’t enough confirmed progress to suggest a next step for this profile.
-              </p>
+              !checkingMarket && (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  There isn’t enough confirmed progress to suggest a next step for this profile.
+                </p>
+              )
             )}
           </Panel>
         </>

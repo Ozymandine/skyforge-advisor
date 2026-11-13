@@ -366,6 +366,7 @@ export type TailoredAction = {
   cost?: string;
   link?: "/skills" | "/inventory";
   marketItemId?: string;
+  simulatorWeaponId?: string;
   futureGoal?: boolean;
 };
 

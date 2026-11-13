@@ -3,6 +3,7 @@ import {
   buildWeaponCatalog,
   calculateSimulation,
   isOwnedMeleeWeapon,
+  MOB_TARGETS,
   readDisplayedCombatStats,
   type SimulatorLoadout,
 } from "../src/lib/damage-simulator";
@@ -39,6 +40,24 @@ describe("overworld melee estimate", () => {
     expect(calculateSimulation({ ...loadout, pet: null }).effectiveHealth).toBeNull();
     expect(calculateSimulation({ ...loadout, targetDefense: null }).afterDefense).toBeNull();
     expect(calculateSimulation({ ...loadout, targetDefense: -1 }).afterDefense).toBeNull();
+  });
+});
+
+describe("Artisanal Shortbow with Flint Arrow", () => {
+  it("includes the arrow's base damage and applies the standard damage multipliers", () => {
+    const shot = { ...loadout, combatLevel: 4, weapon: { DAMAGE: 40 }, flintArrow: true };
+    expect(calculateSimulation(shot)).toMatchObject({
+      normalHit: 53,
+      critHit: 80,
+      afterDefense: { normal: 26, critical: 40 },
+    });
+    expect(calculateSimulation({ ...shot, flintArrow: false }).normalHit).toBe(52);
+  });
+
+  it("distinguishes target immunity from unverified target compatibility", () => {
+    expect(MOB_TARGETS.find((mob) => mob.id === "zealot")?.flintArrow).toBe("immune");
+    expect(MOB_TARGETS.find((mob) => mob.id === "graveyard_zombie")?.flintArrow).toBe("supported");
+    expect(MOB_TARGETS.find((mob) => mob.id === "ghost")?.flintArrow).toBeUndefined();
   });
 });
 

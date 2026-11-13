@@ -1,6 +1,10 @@
 // src/lib/minions-engine.ts
-// Authoritative SkyBlock Minion Economy, Placed Minion Loadouts,
+// SkyBlock minion production estimates, placed minion loadouts,
 // Daily Output Engine, Fuel ROI Calculator, and Slot Progression.
+
+import { BAZAAR_SELL_FEE_RATE } from "./constants";
+
+export const ENCHANTED_HOPPER_RATE = 0.7;
 
 export type MinionCategory = "farming" | "mining" | "combat" | "foraging" | "fishing";
 
@@ -140,16 +144,16 @@ export const MINION_UPGRADES: MinionUpgrade[] = [
   {
     id: "CORRUPT_SOIL",
     name: "Corrupt Soil",
-    description: "Produces 1 Corrupt Fragment and 1 Sulphur per harvest action",
+    description: "Adds Corrupted Fragments and Sulphur to mob drops",
     extraDrops: [
-      { id: "CORRUPT_FRAGMENT", name: "Corrupt Fragment", amountPerAction: 1, npcPrice: 20 },
-      { id: "SULPHUR", name: "Sulphur", amountPerAction: 1, npcPrice: 20 },
+      { id: "CORRUPTED_FRAGMENT", name: "Corrupted Fragment", amountPerAction: 1, npcPrice: 1 },
+      { id: "SULPHUR_ORE", name: "Sulphur", amountPerAction: 1, npcPrice: 10 },
     ],
   },
   {
     id: "DIAMOND_SPREADING",
     name: "Diamond Spreading",
-    description: "Generates 1 Diamond for every ~10 harvest actions (~0.1 per action)",
+    description: "Generates 1 Diamond per 10 naturally harvested items on average",
     extraDrops: [{ id: "DIAMOND", name: "Diamond", amountPerAction: 0.1, npcPrice: 8 }],
   },
   {
@@ -188,9 +192,9 @@ export const MINION_UPGRADES: MinionUpgrade[] = [
 
 // Base speed curves (seconds per action) for Tier 1 to 12
 const ACTION_TIMES: Record<string, number[]> = {
-  SLIME: [26, 26, 24, 24, 21, 21, 18, 18, 15, 15, 12],
-  SNOW: [13, 13, 11, 11, 9, 9, 8, 8, 7, 7, 6.5],
-  CLAY: [32, 32, 29, 29, 26, 26, 22, 22, 19, 19, 16],
+  SLIME: [26, 26, 24, 24, 22, 22, 19, 19, 16, 16, 12],
+  SNOW: [13, 13, 12, 12, 11, 11, 9.5, 9.5, 8, 8, 6.5, 5.8],
+  CLAY: [32, 32, 30, 30, 27.5, 27.5, 24, 24, 20, 20, 16, 14],
   SHEEP: [24, 24, 22, 22, 19, 19, 16, 16, 13, 13, 10, 8],
   COW: [26, 26, 24, 24, 21, 21, 18, 18, 15, 15, 12, 9.5],
   PIG: [26, 26, 24, 24, 21, 21, 18, 18, 15, 15, 12, 9.5],
@@ -206,7 +210,7 @@ const ACTION_TIMES: Record<string, number[]> = {
   CACTUS: [27, 27, 24, 24, 21, 21, 18, 18, 15, 15, 12, 9],
   SUGAR_CANE: [24, 24, 22, 22, 19, 19, 16, 16, 13, 13, 10, 7.5],
   NETHER_WART: [30, 30, 27, 27, 24, 24, 21, 21, 18, 18, 15, 11],
-  COBBLESTONE: [14, 14, 12, 12, 10, 10, 9, 9, 8, 8, 7, 5.5],
+  COBBLESTONE: [14, 14, 12, 12, 10, 10, 9, 9, 8, 8, 7, 6],
   COAL: [15, 15, 13, 13, 11, 11, 10, 10, 9, 9, 8, 6.5],
   IRON: [17, 17, 15, 15, 13, 13, 11, 11, 9, 9, 8, 6],
   GOLD: [22, 22, 19, 19, 16, 16, 14, 14, 12, 12, 10, 7.5],
@@ -254,7 +258,7 @@ export const RAW_MINION_PROFILES: Array<{
     id: "SLIME",
     name: "Slime Minion",
     category: "combat",
-    primaryDrop: { id: "SLIME_BALL", name: "Slimeball", amount: 1.5, npcPrice: 5 },
+    primaryDrop: { id: "SLIME_BALL", name: "Slimeball", amount: 2, npcPrice: 5 },
   },
   {
     id: "REVENANT",
@@ -287,8 +291,7 @@ export const RAW_MINION_PROFILES: Array<{
     id: "INFERNO",
     name: "Inferno Minion",
     category: "combat",
-    primaryDrop: { id: "INFERNO_VERTEX", name: "Inferno Vertex", amount: 0.05, npcPrice: 50_000 },
-    secondaryDrops: [{ id: "CRUDE_GABAGOOL", name: "Crude Gabagool", amount: 1.0, npcPrice: 100 }],
+    primaryDrop: { id: "CRUDE_GABAGOOL", name: "Crude Gabagool", amount: 1, npcPrice: 1 },
   },
   {
     id: "ZOMBIE",
@@ -334,7 +337,7 @@ export const RAW_MINION_PROFILES: Array<{
     primaryDrop: { id: "GHAST_TEAR", name: "Ghast Tear", amount: 1, npcPrice: 16 },
   },
 
-  // Mining
+  // Mining and fishing
   {
     id: "SNOW",
     name: "Snow Minion",
@@ -344,8 +347,8 @@ export const RAW_MINION_PROFILES: Array<{
   {
     id: "CLAY",
     name: "Clay Minion",
-    category: "mining",
-    primaryDrop: { id: "CLAY_BALL", name: "Clay", amount: 4, npcPrice: 3 },
+    category: "fishing",
+    primaryDrop: { id: "CLAY_BALL", name: "Clay Ball", amount: 4, npcPrice: 3 },
   },
   {
     id: "DIAMOND",
@@ -369,7 +372,7 @@ export const RAW_MINION_PROFILES: Array<{
     id: "COBBLESTONE",
     name: "Cobblestone Minion",
     category: "mining",
-    primaryDrop: { id: "COBBLESTONE", name: "Cobblestone", amount: 1, npcPrice: 3 },
+    primaryDrop: { id: "COBBLESTONE", name: "Cobblestone", amount: 1, npcPrice: 1 },
   },
   {
     id: "COAL",
@@ -664,16 +667,16 @@ export function calculateMinionDailyOutput({
   // Total harvest actions per 24 hours (86,400 seconds) = 86400 / (actionTime * 2) * speedMultiplier
   const secondsPerDay = 86_400;
   const effectiveActionTime = minion.actionTime / Math.max(0.1, speedMultiplier);
-  const dailyActions = Math.round((secondsPerDay / effectiveActionTime) * outputMult);
-  const dailyHarvests = Math.round(dailyActions / 2);
+  const dailyActions = secondsPerDay / effectiveActionTime;
+  const dailyHarvests = dailyActions / 2;
 
   const hopperMultiplier =
-    hopper === "ENCHANTED_HOPPER" ? 0.9 : hopper === "BUDGET_HOPPER" ? 0.5 : 1.0;
+    hopper === "ENCHANTED_HOPPER" ? ENCHANTED_HOPPER_RATE : hopper === "BUDGET_HOPPER" ? 0.5 : 1.0;
 
   const itemsProduced: CalculatedDailyOutput["itemsProduced"] = [];
 
   // Primary Drop
-  const primaryDailyAmount = Math.round(dailyHarvests * minion.primaryDrop.amountPerAction);
+  const primaryDailyAmount = dailyHarvests * minion.primaryDrop.amountPerAction * outputMult;
   const primaryBzPrice = bazaarPriceMap.get(minion.primaryDrop.id) ?? minion.primaryDrop.npcPrice;
   itemsProduced.push({
     id: minion.primaryDrop.id,
@@ -685,7 +688,7 @@ export function calculateMinionDailyOutput({
 
   // Secondary Drops
   for (const sec of minion.secondaryDrops ?? []) {
-    const secDailyAmount = Math.round(dailyHarvests * sec.amountPerAction);
+    const secDailyAmount = dailyHarvests * sec.amountPerAction * outputMult;
     const secBzPrice = bazaarPriceMap.get(sec.id) ?? sec.npcPrice;
     itemsProduced.push({
       id: sec.id,
@@ -696,18 +699,27 @@ export function calculateMinionDailyOutput({
     });
   }
 
-  // Upgrade Extra Drops (e.g. Corrupt Soil, Diamond Spreading)
-  const extraDropSources = [...(upgrade1?.extraDrops ?? []), ...(upgrade2?.extraDrops ?? [])];
-  for (const extra of extraDropSources) {
-    const extraDailyAmount = Math.round(dailyHarvests * extra.amountPerAction);
-    const extraBzPrice = bazaarPriceMap.get(extra.id) ?? extra.npcPrice;
-    itemsProduced.push({
-      id: extra.id,
-      name: extra.name,
-      dailyAmount: extraDailyAmount,
-      npcCoinValue: Math.round(extraDailyAmount * extra.npcPrice * hopperMultiplier),
-      bazaarCoinValue: Math.round(extraDailyAmount * extraBzPrice),
-    });
+  const harvestedItems = itemsProduced.reduce((sum, item) => sum + item.dailyAmount, 0);
+  for (const upgrade of [upgrade1, upgrade2]) {
+    if (
+      upgrade?.id === "CORRUPT_SOIL" &&
+      minion.category !== "combat" &&
+      !["COW", "PIG", "CHICKEN", "SHEEP", "RABBIT"].includes(minion.id)
+    )
+      continue;
+    for (const extra of upgrade?.extraDrops ?? []) {
+      const basis =
+        upgrade?.id === "DIAMOND_SPREADING" ? harvestedItems : dailyHarvests * outputMult;
+      const extraDailyAmount = basis * extra.amountPerAction;
+      const extraBzPrice = bazaarPriceMap.get(extra.id) ?? extra.npcPrice;
+      itemsProduced.push({
+        id: extra.id,
+        name: extra.name,
+        dailyAmount: extraDailyAmount,
+        npcCoinValue: Math.round(extraDailyAmount * extra.npcPrice * hopperMultiplier),
+        bazaarCoinValue: Math.round(extraDailyAmount * extraBzPrice),
+      });
+    }
   }
 
   const dailyNpcCoins = itemsProduced.reduce((sum, item) => sum + item.npcCoinValue, 0);
@@ -721,6 +733,49 @@ export function calculateMinionDailyOutput({
     dailyNpcCoins,
     dailyBazaarCoins,
     itemsProduced,
+  };
+}
+
+export const MINION_ESTIMATE_FUELS = ["NONE", "ENCHANTED_LAVA_BUCKET", "HAMSTER_WHEEL"] as const;
+type EstimateFuel = (typeof MINION_ESTIMATE_FUELS)[number];
+export const MINION_ESTIMATE_IDS = new Set(["SLIME", "SNOW", "CLAY", "COBBLESTONE"]);
+export type MinionMarketPrices = ReadonlyMap<string, { buyPrice: number; sellPrice: number }>;
+
+export function estimateMinionYield(
+  minion: MinionDefinition,
+  fuelId: EstimateFuel,
+  sale: "npc" | "bazaar",
+  prices: MinionMarketPrices,
+) {
+  if (!MINION_ESTIMATE_IDS.has(minion.id)) return null;
+  const fuel = MINION_FUELS.find((entry) => entry.id === fuelId);
+  if (!fuel) return null;
+
+  const output = calculateMinionDailyOutput({ minion, fuel });
+  const fuelPrice = prices.get(fuel.id)?.buyPrice;
+  const dailyFuelCost =
+    fuel.durationHours === undefined
+      ? 0
+      : typeof fuelPrice === "number" && Number.isFinite(fuelPrice) && fuelPrice > 0
+        ? (fuelPrice * 24) / fuel.durationHours
+        : null;
+  const bazaarProceeds = output.itemsProduced.map((item) => {
+    const price = prices.get(item.id)?.sellPrice;
+    return typeof price === "number" && Number.isFinite(price) && price > 0
+      ? item.dailyAmount * price * (1 - BAZAAR_SELL_FEE_RATE)
+      : null;
+  });
+  const gross =
+    sale === "npc"
+      ? output.dailyNpcCoins
+      : bazaarProceeds.some((value) => value === null)
+        ? null
+        : bazaarProceeds.reduce<number>((sum, value) => sum + (value ?? 0), 0);
+
+  return {
+    output,
+    dailyFuelCost,
+    dailyCoins: gross === null || dailyFuelCost === null ? null : Math.round(gross - dailyFuelCost),
   };
 }
 
@@ -856,10 +911,8 @@ export function calculatePlacedMinionClaims(
   const minionReports: PlacedMinionReport[] = [];
 
   for (const setup of placedSetups) {
-    const minionDef =
-      MINIONS_CATALOG.find((m) => m.id === setup.minionId && m.tier === setup.tier) ||
-      MINIONS_CATALOG.find((m) => m.id === setup.minionId && m.tier === 11) ||
-      MINIONS_CATALOG[0]!;
+    const minionDef = MINIONS_CATALOG.find((m) => m.id === setup.minionId && m.tier === setup.tier);
+    if (!minionDef || minionDef.id === "INFERNO") continue;
 
     const fuel = MINION_FUELS.find((f) => f.id === setup.fuelId);
     const up1 = MINION_UPGRADES.find((u) => u.id === setup.upgrade1Id);

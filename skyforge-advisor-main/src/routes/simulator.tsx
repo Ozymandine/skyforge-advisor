@@ -7,6 +7,7 @@ import { ItemIcon } from "@/components/ui/item-icon";
 import { usePlayer } from "@/hooks/use-account";
 import {
   calculateSimulation,
+  ARTISANAL_SHORTBOW_ID,
   isOwnedMeleeWeapon,
   MOB_TARGETS,
   readDisplayedCombatStats,
@@ -17,6 +18,10 @@ import { getPetCombatStats, PET_CATALOG } from "@/lib/pet-catalog";
 import { formatFull } from "@/lib/skyblock";
 
 export const Route = createFileRoute("/simulator")({
+  validateSearch: (search: Record<string, unknown>): { weapon?: string } =>
+    typeof search["weapon"] === "string" && /^[A-Z0-9_]{1,100}$/.test(search["weapon"])
+      ? { weapon: search["weapon"] }
+      : {},
   head: () => ({ meta: [{ title: "Damage Simulator — SkyForge" }] }),
   component: SimulatorPage,
 });
@@ -104,7 +109,8 @@ function SimulatorPage() {
     retry: false,
   });
 
-  const [weaponChoice, setWeaponChoice] = useState("");
+  const { weapon: initialWeapon } = Route.useSearch();
+  const [weaponChoice, setWeaponChoice] = useState(initialWeapon ?? "");
   const [customWeapon, setCustomWeapon] = useState<CombatStats>({});
   const [combatLevel, setCombatLevel] = useState<number | null>(0);
   const [petChoice, setPetChoice] = useState<{
@@ -156,6 +162,8 @@ function SimulatorPage() {
     ) ?? [];
   const ownedWeapon = ownedWeapons.find((entry) => entry.value === weaponChoice)?.item;
   const catalogWeapon = weaponLookup.get(weaponChoice);
+  const flintArrow = catalogWeapon?.id === ARTISANAL_SHORTBOW_ID;
+  const supportedWeapon = Boolean(catalogWeapon?.melee || flintArrow);
   const weapon =
     weaponChoice === "unarmed"
       ? { DAMAGE: 0 }
@@ -163,8 +171,8 @@ function SimulatorPage() {
         ? customWeapon
         : ownedWeapon
           ? readDisplayedCombatStats(ownedWeapon)
-          : catalogWeapon?.melee
-            ? catalogWeapon.stats
+          : supportedWeapon
+            ? (catalogWeapon?.stats ?? null)
             : null;
   const weaponIcon = ownedWeapon ?? catalogWeapon;
 
@@ -181,25 +189,37 @@ function SimulatorPage() {
   );
 
   const mob = MOB_TARGETS.find((target) => target.id === targetId);
+  const projectileBlocked = flintArrow && mob?.flintArrow === "immune";
+  const projectileUnverified = flintArrow && mob !== undefined && mob.flintArrow === undefined;
   const result = calculateSimulation({
     combatLevel: combatLevel ?? Number.NaN,
     weapon,
     pet: petStats,
     gear,
     additional,
-    targetDefense: mob ? targetDefense : null,
+    targetDefense: mob && !projectileBlocked && !projectileUnverified ? targetDefense : null,
+    flintArrow,
   });
 
   const damageContext = result.afterDefense ? "After target defense" : "Before target defense";
-  const shownNormal = result.afterDefense?.normal ?? result.normalHit;
-  const shownCrit = result.afterDefense?.critical ?? result.critHit;
+  const shownNormal = projectileBlocked
+    ? 0
+    : projectileUnverified
+      ? null
+      : (result.afterDefense?.normal ?? result.normalHit);
+  const shownCrit = projectileBlocked
+    ? 0
+    : projectileUnverified
+      ? null
+      : (result.afterDefense?.critical ?? result.critHit);
+  const hitContext = projectileBlocked ? "Target avoids Flint Arrows" : damageContext;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <PageHero title="Damage Simulator" />
       <p className="text-sm text-muted-foreground">
-        Estimate a standard overworld melee hit with base item stats or a readable copy from your
-        profile.
+        Estimate an overworld melee hit or a single shot from a base Artisanal Shortbow with a Flint
+        Arrow.
       </p>
 
       <div aria-live="polite" className="grid gap-3 sm:grid-cols-3">
@@ -208,14 +228,14 @@ function SimulatorPage() {
           <p className="mt-1 text-2xl font-semibold tabular-nums">
             {shownNormal === null ? "—" : formatFull(shownNormal)}
           </p>
-          {shownNormal !== null && <p className="text-xs text-muted-foreground">{damageContext}</p>}
+          {shownNormal !== null && <p className="text-xs text-muted-foreground">{hitContext}</p>}
         </Panel>
         <Panel className="p-4">
           <p className="text-sm text-muted-foreground">Critical hit</p>
           <p className="mt-1 text-2xl font-semibold tabular-nums">
             {shownCrit === null ? "—" : formatFull(shownCrit)}
           </p>
-          {shownCrit !== null && <p className="text-xs text-muted-foreground">{damageContext}</p>}
+          {shownCrit !== null && <p className="text-xs text-muted-foreground">{hitContext}</p>}
         </Panel>
         <Panel className="p-4">
           <p className="text-sm text-muted-foreground">Effective health</p>
@@ -316,12 +336,18 @@ function SimulatorPage() {
               </div>
             </div>
           )}
-          {catalogWeapon && !catalogWeapon.melee && (
+          {flintArrow && (
+            <p className="text-sm text-muted-foreground">
+              One Flint Arrow adds 1 base Damage. The estimate is per shot, without attack speed or
+              extra projectile effects.
+            </p>
+          )}
+          {catalogWeapon && !supportedWeapon && (
             <p role="status" className="text-sm text-muted-foreground">
               Choose a melee weapon to calculate a hit. This item uses a separate damage model.
             </p>
           )}
-          {(ownedWeapon || catalogWeapon?.melee) && weapon?.DAMAGE === undefined && (
+          {(ownedWeapon || supportedWeapon) && weapon?.DAMAGE === undefined && (
             <p role="status" className="text-sm text-muted-foreground">
               Weapon damage is unavailable. Enter the displayed stats manually.
             </p>
@@ -534,7 +560,13 @@ function SimulatorPage() {
                 placeholder="Unknown"
                 onChange={setTargetDefense}
               />
-              {targetDefense === null && (
+              {projectileUnverified && (
+                <p className="text-xs text-muted-foreground">
+                  Flint Arrow behavior is unverified for this target. Choose another target or
+                  compare before target defense.
+                </p>
+              )}
+              {targetDefense === null && !projectileUnverified && !projectileBlocked && (
                 <p className="text-xs text-muted-foreground">
                   Defense is unverified for this target. Hit values are shown before mitigation.
                 </p>

@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
+  aspectOfTheDragonsBudget,
   jungleAmuletBudget,
   lividDaggerBudget,
   recommendJungleAmulet,
   recommendLividDagger,
+  recommendAspectOfTheDragons,
   recommendOdawaTrade,
   recommendRedClawUpgrade,
+  recommendStarterBow,
+  recommendUnstableBoots,
   redClawUpgradeBudget,
+  unstableBootsBudget,
 } from "../src/lib/advisor-market";
 import { computeSkill } from "../src/lib/skyblock";
 import type { WikiAuctionQuote } from "../src/lib/wiki-auction";
@@ -236,5 +241,98 @@ describe("Livid Dagger comparison", () => {
     ]) {
       expect(lividDaggerBudget({ ...combat, containers: [{ ...inventory, items }] })).toBeNull();
     }
+  });
+});
+
+describe("starter and early combat progression", () => {
+  const aspect = {
+    ...ring,
+    id: "ASPECT_OF_THE_END",
+    name: "Aspect of the End",
+    lore: ["Damage: +100", "Strength: +100", "RARE SWORD"],
+  };
+  const boots = {
+    ...ring,
+    id: "END_BOOTS",
+    name: "Ender Boots",
+    rarity: "EPIC",
+    lore: ["Health: +15", "Defense: +25", "EPIC BOOTS"],
+  };
+  const inventory = { id: "inventory", label: "Inventory", slots: 36, items: [aspect] };
+  const armor = { id: "armor", label: "Armor", slots: 4, items: [boots] };
+  const combat = {
+    ...player,
+    availability: {
+      ...player.availability,
+      skillKeys: ["COMBAT"],
+      containerIds: [...player.availability.containerIds, "armor"],
+    },
+    skills: [computeSkill("COMBAT", 300_000)],
+    containers: [inventory, armor],
+  };
+
+  it("offers an affordable overworld weapon to an eligible Classic player", () => {
+    expect(recommendAspectOfTheDragons(aspectOfTheDragonsBudget(combat), quote, now)).toMatchObject(
+      { marketItemId: "ASPECT_OF_THE_DRAGON", simulatorWeaponId: "ASPECT_OF_THE_DRAGON" },
+    );
+    expect(
+      aspectOfTheDragonsBudget({ ...combat, skills: [computeSkill("COMBAT", 50_000)] }),
+    ).toBeNull();
+    expect(
+      aspectOfTheDragonsBudget({
+        ...combat,
+        containers: [{ ...inventory, items: [{ ...aspect, gems: { RUBY_0: "PERFECT" } }] }],
+      }),
+    ).toBeNull();
+    expect(recommendAspectOfTheDragons(quote.price - 1, quote, now)).toBeNull();
+    expect(recommendAspectOfTheDragons(combat.purse, quote, quote.validUntil)).toBeNull();
+  });
+
+  it("requires visible base Ender Boots, known skill, budget, and no other boots for the armor comparison", () => {
+    expect(recommendUnstableBoots(unstableBootsBudget(combat), quote, now)).toMatchObject({
+      marketItemId: "UNSTABLE_DRAGON_BOOTS",
+      benefit: expect.stringContaining("Outside The End"),
+    });
+    expect(unstableBootsBudget({ ...combat, containers: [inventory] })).toBeNull();
+    expect(
+      unstableBootsBudget({
+        ...combat,
+        containers: [inventory, { ...armor, items: [{ ...boots, reforge: "Fierce" }] }],
+      }),
+    ).toBeNull();
+    expect(
+      unstableBootsBudget({
+        ...combat,
+        containers: [
+          { ...inventory, items: [aspect, { ...boots, id: "SUPERIOR_DRAGON_BOOTS" }] },
+          armor,
+        ],
+      }),
+    ).toBeNull();
+    expect(
+      unstableBootsBudget({ ...combat, availability: { ...combat.availability, skillKeys: [] } }),
+    ).toBeNull();
+    const ironman = { ...combat, profiles: [{ ...player.profiles[0]!, gameMode: "Ironman" }] };
+    expect(unstableBootsBudget(ironman)).toBeNull();
+    expect(aspectOfTheDragonsBudget(ironman)).toBeNull();
+  });
+
+  it("uses the starter NPC purchase for Classic and Ironman when no bow is visible", () => {
+    const beginner = { ...combat, skills: [computeSkill("COMBAT", 675)], purse: 600 };
+    for (const gameMode of ["Classic", "Ironman"]) {
+      expect(
+        recommendStarterBow({ ...beginner, profiles: [{ ...player.profiles[0]!, gameMode }] }),
+      ).toMatchObject({ cost: "600 coins for the bow", simulatorWeaponId: "ARTISANAL_SHORTBOW" });
+    }
+    expect(recommendStarterBow({ ...beginner, purse: 599 })).toBeNull();
+    expect(
+      recommendStarterBow({ ...beginner, containers: [{ ...inventory, locked: true }] }),
+    ).toBeNull();
+    expect(
+      recommendStarterBow({
+        ...beginner,
+        containers: [{ ...inventory, items: [{ ...aspect, id: "DRAGON_SHORTBOW", lore: [] }] }],
+      }),
+    ).toBeNull();
   });
 });
