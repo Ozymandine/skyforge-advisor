@@ -142,23 +142,16 @@
   --scene-accent: #dedbd1;
   --scene-shade: rgb(20 23 21 / 0.58);
   --scene-panel-opacity: 70%;
-  --scene-hero-start: #292e28;
-  --scene-hero-end: #202723;
   --scene-chrome: #191d1a;
-  --scene-edge: rgb(237 224 194 / 0.2);
   --scene-highlight: rgb(241 215 151 / 0.13);
 }
 
 :root[data-skyforge-accent="sage"] {
   --scene-accent: #b6c5a2;
-  --scene-hero-start: #363f32;
-  --scene-hero-end: #272e25;
 }
 
 :root[data-skyforge-accent="sand"] {
   --scene-accent: #d9c4a3;
-  --scene-hero-start: #433b31;
-  --scene-hero-end: #2f2b25;
 }
 
 :root.light {
@@ -174,10 +167,7 @@
   --color-destructive: #a32132;
   --scene-accent: #35573f;
   --scene-shade: rgb(244 239 217 / 0.61);
-  --scene-hero-start: #fcf6e6;
-  --scene-hero-end: #e5ebd8;
   --scene-chrome: #f4f0e5;
-  --scene-edge: rgb(39 53 33 / 0.23);
   --scene-highlight: rgb(100 127 69 / 0.14);
 }
 
@@ -190,15 +180,11 @@
 
 :root[data-skyforge-phase="dawn"] {
   --scene-shade: rgb(251 220 184 / 0.63);
-  --scene-hero-start: #fff4df;
-  --scene-hero-end: #eed9c3;
   --scene-chrome: #f5e8d5;
 }
 
 :root[data-skyforge-phase="dusk"] {
   --scene-shade: rgb(58 37 30 / 0.56);
-  --scene-hero-start: #3b2f29;
-  --scene-hero-end: #292725;
   --scene-chrome: #28231e;
   --scene-highlight: rgb(241 158 105 / 0.16);
 }
@@ -247,27 +233,6 @@
   transition: background-color 280ms ease;
 }
 
-.skyforge-hero {
-  color: var(--color-parchment);
-  border: 1px solid var(--scene-edge);
-  background:
-    radial-gradient(ellipse at 85% 0%, rgb(229 226 213 / 0.08), transparent 55%),
-    linear-gradient(115deg, var(--scene-hero-start), var(--scene-hero-end));
-}
-
-.hero-landscape::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, var(--scene-hero-end), transparent 35%);
-  pointer-events: none;
-}
-
-.hero-landscape img {
-  object-position: center 45%;
-  animation: scene-arrival 750ms ease-out both;
-}
-
 .clock-phase {
   animation: clock-arrival 280ms cubic-bezier(0.18, 0.8, 0.33, 1) both;
 }
@@ -301,16 +266,6 @@
     border-color: var(--scene-accent);
   }
 }
-@keyframes scene-arrival {
-  from {
-    opacity: 0.35;
-    transform: scale(1.055);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
 @keyframes clock-arrival {
   from {
     opacity: 0.4;
@@ -329,12 +284,6 @@
     transform: scaleX(1);
   }
 }
-@media (max-width: 63.99rem) {
-  .hero-landscape::after {
-    background: linear-gradient(0deg, var(--scene-hero-start), transparent 55%);
-  }
-}
-
 .theme-solid .panel-card,
 .theme-solid .glass,
 .theme-solid .glass-soft,
@@ -355,7 +304,6 @@
   .animate-page-in,
   .animate-pulse-glow,
   .animate-float-slow,
-  .hero-landscape img,
   .clock-phase,
   .progress-fill,
   .game-tile,

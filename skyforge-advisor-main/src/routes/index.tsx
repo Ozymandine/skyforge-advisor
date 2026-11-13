@@ -12,7 +12,6 @@ import { ItemIcon } from "@/components/ui/item-icon";
 import { fetchBazaar, fetchElection, fetchFireSale, fetchNews } from "@/lib/hypixel.functions";
 import { formatNumber } from "@/lib/skyblock";
 import { useAccount, useConnectPlayer } from "@/hooks/use-account";
-import landscape from "@/assets/skyblock-header.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -107,16 +106,16 @@ function Landing() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-8">
-      <section className="skyforge-hero grid overflow-hidden rounded-2xl lg:grid-cols-[minmax(0,1fr)_minmax(19rem,0.9fr)]">
-        <div className="relative z-10 flex flex-col justify-center p-5 sm:p-8 lg:p-10">
+      <section className="panel-card rounded-2xl px-5 py-8 sm:px-8 sm:py-10">
+        <div className="mx-auto max-w-xl text-center">
           <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
             {account.connected ? "SkyForge" : "Connect your profile"}
           </h1>
           <form
             onSubmit={(event) => void handleSearch(event)}
-            className="mt-5 flex flex-wrap gap-2"
+            className="mt-5 flex flex-col gap-2 sm:flex-row"
           >
-            <div className="relative min-w-0 flex-[1_1_12rem]">
+            <div className="relative min-w-0 flex-1">
               <IconSearch className="absolute left-3 top-1/2 size-4 -translate-y-1/2" />
               <label htmlFor="hero-username" className="sr-only">
                 Minecraft username
@@ -161,7 +160,7 @@ function Landing() {
               Open dashboard <IconArrowRight className="size-4" />
             </Link>
           )}
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
             <span>Popular profiles</span>
             {["Deathstreeks", "Refraction", "Hellcastle", "56ms"].map((name) => (
               <Link
@@ -174,12 +173,6 @@ function Landing() {
               </Link>
             ))}
           </div>
-        </div>
-        <div
-          className="hero-landscape relative order-first min-h-28 overflow-hidden lg:order-last lg:min-h-64"
-          aria-hidden="true"
-        >
-          <img src={landscape} alt="" className="absolute inset-0 size-full object-cover" />
         </div>
       </section>
 
