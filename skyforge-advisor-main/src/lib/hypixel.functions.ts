@@ -251,26 +251,8 @@ export const fetchFireSale = createServerFn({ method: "GET" }).handler(async () 
 export const fetchExternalPriceHistory = createServerFn({ method: "POST" })
   .validator((input: unknown) => externalPriceHistoryInputSchema.parse(input ?? {}))
   .handler(async ({ data }) => {
-    const days = data.days ?? 30;
-    try {
-      const res = await fetch(
-        `https://api.coflnet.com/skyblock/price/${encodeURIComponent(data.itemId)}/history/compact`,
-        { signal: AbortSignal.timeout(8000) },
-      );
-      if (!res.ok) return { points: [], source: "none" as const };
-      const raw = (await res.json()) as Array<[number, number, number?]>;
-      const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-      const points = (Array.isArray(raw) ? raw : [])
-        .map((entry) => ({
-          t: Number(entry[0] ?? 0),
-          v: Number(entry[1] ?? 0),
-          s: Number(entry[2] ?? 0),
-        }))
-        .filter((p) => p.t >= cutoff && p.v > 0);
-      return { points, source: "coflnet" as const };
-    } catch {
-      return { points: [], source: "none" as const };
-    }
+    const { getExternalPriceHistory } = await import("./coflnet-history.server");
+    return getExternalPriceHistory(data.itemId, data.days ?? 30, data.market);
   });
 
 export const fetchItems = createServerFn({ method: "GET" }).handler(async () => {

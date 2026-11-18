@@ -83,6 +83,7 @@ export const priceHistoryInputSchema = z.object({
 export const externalPriceHistoryInputSchema = z.object({
   itemId: itemIdSchema,
   days: z.number().int().min(1).max(90).optional(),
+  market: z.enum(["auction", "bazaar"]).default("auction"),
 });
 
 export const webhookInputSchema = z

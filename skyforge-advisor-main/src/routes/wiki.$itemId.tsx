@@ -348,7 +348,11 @@ function ItemEncyclopediaPage() {
 
       {/* Historical Price Chart (Coflnet 30/90 Days) */}
       <Section title="Market Price History & Trends">
-        <CoflnetPriceChart itemId={item.id} itemName={item.name} />
+        <CoflnetPriceChart
+          itemId={item.id}
+          itemName={item.name}
+          market={item.bazaar ? "bazaar" : "auction"}
+        />
       </Section>
 
       <div className="pt-2">

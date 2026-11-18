@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useDeferredValue, useMemo, useState } from "react";
+import { lazy, Suspense, useDeferredValue, useMemo, useState } from "react";
 import { ErrorState, LoadState } from "@/components/data-states";
 import { PageHero, Panel } from "@/components/layout/app-shell";
 import { MarketControls, MarketFreshness, marketControl } from "@/components/market-controls";
@@ -8,6 +8,16 @@ import { ItemIcon } from "@/components/ui/item-icon";
 import { useWatchlist } from "@/hooks/use-watchlist";
 import { fetchBazaar } from "@/lib/hypixel.functions";
 import { formatNumber, type BazaarProduct } from "@/lib/skyblock";
+import { formatCoins } from "@/lib/market-format";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+const CoflnetPriceChart = lazy(() => import("@/components/wiki/CoflnetPriceChart"));
 
 const pageSize = 48;
 const volume = (item: BazaarProduct) => item.buyMovingWeek + item.sellMovingWeek;
@@ -24,6 +34,7 @@ export function BazaarBoard({ spreadMode = false }: { spreadMode?: boolean }) {
   const [watching, setWatching] = useState(false);
   const [positiveOnly, setPositiveOnly] = useState(spreadMode);
   const [visible, setVisible] = useState(pageSize);
+  const [historyItem, setHistoryItem] = useState<BazaarProduct | null>(null);
   const search = useDeferredValue(query.trim().toLowerCase());
   const watchlist = useWatchlist();
   const { data, error, isLoading, isFetching, refetch } = useQuery({
@@ -114,8 +125,9 @@ export function BazaarBoard({ spreadMode = false }: { spreadMode?: boolean }) {
         {Boolean(data?.lastUpdated) && (
           <>
             <p className="border-t border-border pt-4 text-xs text-muted-foreground">
-              Indicative order prices. Net spread assumes a 1.25% sell fee and both orders filling
-              at the displayed prices.
+              {data?.products.length.toLocaleString()} markets · Indicative order quotes per item.
+              After-fee spread assumes a 1.25% sell fee and both orders filling at the displayed
+              prices. Volume does not guarantee a fill.
             </p>
             {rows.length === 0 && (
               <p role="status" className="py-4 text-sm text-muted-foreground">
@@ -160,23 +172,113 @@ export function BazaarBoard({ spreadMode = false }: { spreadMode?: boolean }) {
                     <dl className="mt-3 grid grid-cols-3 gap-2 text-xs tabular-nums">
                       <div>
                         <dt className="text-muted-foreground">Buy order</dt>
-                        <dd className="mt-1 font-medium">{formatNumber(item.sellPrice)}</dd>
+                        <dd
+                          className="mt-1 font-mono text-base font-semibold"
+                          title={item.sellPrice.toLocaleString("en-US", {
+                            maximumFractionDigits: 4,
+                          })}
+                        >
+                          {formatCoins(item.sellPrice)}
+                        </dd>
                       </div>
                       <div>
                         <dt className="text-muted-foreground">Sell offer</dt>
-                        <dd className="mt-1 font-medium">{formatNumber(item.buyPrice)}</dd>
+                        <dd
+                          className="mt-1 font-mono text-base font-semibold"
+                          title={item.buyPrice.toLocaleString("en-US", {
+                            maximumFractionDigits: 4,
+                          })}
+                        >
+                          {formatCoins(item.buyPrice)}
+                        </dd>
                       </div>
                       <div>
-                        <dt className="text-muted-foreground">Net spread</dt>
-                        <dd className="mt-1 font-medium">
+                        <dt className="text-muted-foreground">Est. net / unit</dt>
+                        <dd
+                          className={
+                            "mt-1 font-mono text-base font-semibold " +
+                            (item.spread >= 0 ? "text-emerald-400" : "text-rose-400")
+                          }
+                          title={item.spread.toLocaleString("en-US", { maximumFractionDigits: 4 })}
+                        >
                           {item.spread > 0 ? "+" : ""}
-                          {formatNumber(item.spread)}
+                          {formatCoins(item.spread)}
                         </dd>
                       </div>
                     </dl>
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      Weekly volume · {formatNumber(volume(item))} units
-                    </p>
+                    <dl className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3 text-xs tabular-nums">
+                      <div>
+                        <dt className="text-muted-foreground">Gross spread</dt>
+                        <dd className="mt-1 font-medium">
+                          {formatCoins(item.buyPrice - item.sellPrice)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Sale fee / unit</dt>
+                        <dd className="mt-1 font-medium">
+                          {formatCoins(item.buyPrice - item.sellPrice - item.spread)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">Est. margin</dt>
+                        <dd className="mt-1 font-medium">{item.margin.toFixed(2)}%</dd>
+                      </div>
+                    </dl>
+                    <div className="mt-4 rounded-xl bg-background/25 p-3">
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div>
+                          <p className="text-muted-foreground">Buy volume · 7d</p>
+                          <p className="mt-1 font-mono text-sky-400">
+                            {formatNumber(item.buyMovingWeek)} units
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-muted-foreground">Sell volume · 7d</p>
+                          <p className="mt-1 font-mono text-emerald-400">
+                            {formatNumber(item.sellMovingWeek)} units
+                          </p>
+                        </div>
+                      </div>
+                      <div
+                        aria-hidden="true"
+                        className="mt-2 flex h-1.5 overflow-hidden rounded-full bg-foreground/10"
+                      >
+                        <div
+                          className="bg-sky-400 transition-[width] duration-300"
+                          style={{
+                            width: `${volume(item) ? (item.buyMovingWeek / volume(item)) * 100 : 0}%`,
+                          }}
+                        />
+                        <div
+                          className="bg-emerald-400 transition-[width] duration-300"
+                          style={{
+                            width: `${volume(item) ? (item.sellMovingWeek / volume(item)) * 100 : 0}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-3 text-xs">
+                      <Link
+                        to="/wiki/$itemId"
+                        params={{ itemId: item.id }}
+                        className="text-muted-foreground hover:text-primary hover:underline"
+                      >
+                        Item guide →
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => setHistoryItem(item)}
+                        className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-primary transition-colors hover:bg-primary/10"
+                        aria-label={`Price history for ${item.name}`}
+                      >
+                        <img
+                          src="/vanilla/clock.png"
+                          alt=""
+                          className="size-4 [image-rendering:pixelated]"
+                        />
+                        Price history
+                      </button>
+                    </div>
                   </li>
                 );
               })}
@@ -193,6 +295,37 @@ export function BazaarBoard({ spreadMode = false }: { spreadMode?: boolean }) {
           </>
         )}
       </Panel>
+      <Dialog
+        open={Boolean(historyItem)}
+        onOpenChange={(open) => {
+          if (!open) setHistoryItem(null);
+        }}
+      >
+        <DialogContent className="max-h-[85dvh] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-2xl border-border bg-background p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>{historyItem?.name} · price history</DialogTitle>
+            <DialogDescription>
+              Historical quotes from Coflnet, separate from the current Hypixel snapshot.
+            </DialogDescription>
+          </DialogHeader>
+          {historyItem && (
+            <Suspense
+              fallback={
+                <p role="status" className="py-10 text-center text-sm text-muted-foreground">
+                  Loading chart…
+                </p>
+              }
+            >
+              <CoflnetPriceChart
+                key={historyItem.id}
+                itemId={historyItem.id}
+                itemName={historyItem.name}
+                market="bazaar"
+              />
+            </Suspense>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

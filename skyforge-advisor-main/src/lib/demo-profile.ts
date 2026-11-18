@@ -1,4 +1,5 @@
 import { computeDungeonLevel, computeSkill, type PlayerData, type SkillKey } from "./skyblock";
+import demoItemDetails from "./items/demo-item-details.json";
 
 // A fictional, deterministic training profile. It never represents a Hypixel
 // account, never calls the profile API, and must not enter real profile history.
@@ -151,6 +152,18 @@ export function createDemoProfile(): PlayerData {
     { id: "equipment", label: "Equipment", slots: 4, items: [] },
     { id: "vault", label: "Personal Vault", slots: 54, items: [] },
   ];
+  const catalog = demoItemDetails.items as Record<string, { rarity: string; lore: string[] }>;
+  for (const container of containers) {
+    for (const item of container.items) {
+      const details = catalog[item.id];
+      if (details) {
+        item.rarity = details.rarity;
+        item.lore = details.lore
+          .filter((line) => !line.includes("Gemstones:"))
+          .map((line) => line.replace(/[\uE000-\uF8FF]/g, ""));
+      }
+    }
+  }
   return {
     source: "demo",
     username: DEMO_USERNAME,

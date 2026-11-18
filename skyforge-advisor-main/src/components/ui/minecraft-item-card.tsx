@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Link } from "@tanstack/react-router";
 import { ItemIcon } from "@/components/ui/item-icon";
 import { RenderMinecraftLore } from "@/lib/minecraft-text";
 import { RARITY_COLORS } from "@/lib/constants";
@@ -97,6 +98,13 @@ export function MinecraftItemCard({ item, className, estimatedValue }: Minecraft
           </span>
         </div>
       )}
+      <Link
+        to="/wiki/$itemId"
+        params={{ itemId: item.id }}
+        className="mt-4 inline-block border-t border-white/15 pt-3 text-xs text-sky-300 hover:underline"
+      >
+        Item guide, requirements & market quotes →
+      </Link>
     </div>
   );
 }

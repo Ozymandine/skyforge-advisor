@@ -1,0 +1,158 @@
+{
+  "source": "Bundled NEU lore, checked against the official Hypixel item resource on 2026-11-18. Fishing Rod Sea Creature Chance follows the official resource.",
+  "items": {
+    "ASPECT_OF_THE_END": {
+      "rarity": "RARE",
+      "lore": [
+        "§7Damage: §c+100",
+        "§7Strength: §c+100",
+        "§7Gemstones: §8[§7§8]",
+        "",
+        "§6Ability: Instant Transmission  §e§lRIGHT CLICK",
+        "§7Teleport §a8 blocks§7 ahead of you and",
+        "§7gain §a+50 §f Speed§7 for §a3 seconds§7.",
+        "§8Mana Cost: §b50",
+        "",
+        "§8This item can be reforged!",
+        "§9§lRARE SWORD"
+      ]
+    },
+    "DIAMOND_PICKAXE": {
+      "rarity": "UNCOMMON",
+      "lore": [
+        "§8Breaking Power 4",
+        "",
+        "§7Damage: §c+30",
+        "§7Mining Speed: §6+220",
+        "",
+        "§8This item can be reforged!",
+        "§a§lUNCOMMON PICKAXE"
+      ]
+    },
+    "FISHING_ROD": {
+      "rarity": "COMMON",
+      "lore": [
+        "§7Damage: §c+15",
+        "§7Strength: §c+15",
+        "§7Fishing Speed: §b+5",
+        "§7Sea Creature Chance: §3+2%",
+        "",
+        "§9ථ Hook §8§lNONE",
+        "§9ꨃ Line §8§lNONE",
+        "§9࿉ Sinker §8§lNONE",
+        "",
+        "§7Talk to §2Roddy §7in the §2Backwater",
+        "§2Bayou §7to apply parts to this rod.",
+        "",
+        "§8This item can be reforged!",
+        "§f§lCOMMON FISHING ROD"
+      ]
+    },
+    "ENCHANTED_ENDER_PEARL": {
+      "rarity": "UNCOMMON",
+      "lore": ["§8Collection Item", "", "§a§lUNCOMMON"]
+    },
+    "ENCHANTED_DIAMOND": {
+      "rarity": "UNCOMMON",
+      "lore": ["§8Collection Item", "", "§a§lUNCOMMON ORE"]
+    },
+    "ENCHANTED_WHEAT": {
+      "rarity": "UNCOMMON",
+      "lore": ["§8Collection Item", "", "§a§lUNCOMMON"]
+    },
+    "SUPERBOOM_TNT": {
+      "rarity": "RARE",
+      "lore": [
+        "§7Blows up cracked brick walls and",
+        "§7crypts, which are typically found in",
+        "§cDungeons §7and the §5Crystal Hollows§7.",
+        "",
+        "§9§lRARE"
+      ]
+    },
+    "END_BOOTS": {
+      "rarity": "EPIC",
+      "lore": [
+        "§7Health: §c+15",
+        "§7Defense: §a+25",
+        "",
+        "§7All stats on this armor piece are",
+        "§7multiplied by §52x §7while on the End",
+        "§7Island!",
+        "",
+        "§8This item can be reforged!",
+        "§4❣ §cRequires §aCombat Skill 12§c.",
+        "§8§l* §8Co-op Soulbound §8§l*",
+        "§5§lEPIC BOOTS"
+      ]
+    },
+    "END_LEGGINGS": {
+      "rarity": "EPIC",
+      "lore": [
+        "§7Health: §c+25",
+        "§7Defense: §a+50",
+        "",
+        "§7All stats on this armor piece are",
+        "§7multiplied by §52x §7while on the End",
+        "§7Island!",
+        "",
+        "§8This item can be reforged!",
+        "§4❣ §cRequires §aCombat Skill 12§c.",
+        "§8§l* §8Co-op Soulbound §8§l*",
+        "§5§lEPIC LEGGINGS"
+      ]
+    },
+    "END_CHESTPLATE": {
+      "rarity": "EPIC",
+      "lore": [
+        "§7Health: §c+30",
+        "§7Defense: §a+60",
+        "",
+        "§7All stats on this armor piece are",
+        "§7multiplied by §52x §7while on the End",
+        "§7Island!",
+        "",
+        "§8This item can be reforged!",
+        "§4❣ §cRequires §aCombat Skill 12§c.",
+        "§8§l* §8Co-op Soulbound §8§l*",
+        "§5§lEPIC CHESTPLATE"
+      ]
+    },
+    "END_HELMET": {
+      "rarity": "EPIC",
+      "lore": [
+        "§7Health: §c+20",
+        "§7Defense: §a+35",
+        "",
+        "§7All stats on this armor piece are",
+        "§7multiplied by §52x §7while on the End",
+        "§7Island!",
+        "",
+        "§8This item can be reforged!",
+        "§4❣ §cRequires §aCombat Skill 12§c.",
+        "§8§l* §8Co-op Soulbound §8§l*",
+        "§5§lEPIC HELMET"
+      ]
+    },
+    "FARMING_TALISMAN": {
+      "rarity": "UNCOMMON",
+      "lore": [
+        "§7Farming Fortune: §6+3",
+        "§7Accessory Power: §6+5",
+        "",
+        "§8Works while in Accessory Bag!",
+        "§a§lUNCOMMON ACCESSORY"
+      ]
+    },
+    "SPEED_TALISMAN": {
+      "rarity": "COMMON",
+      "lore": [
+        "§7Speed: §f+1",
+        "§7Accessory Power: §6+3",
+        "",
+        "§8Works while in Accessory Bag!",
+        "§f§lCOMMON ACCESSORY"
+      ]
+    }
+  }
+}

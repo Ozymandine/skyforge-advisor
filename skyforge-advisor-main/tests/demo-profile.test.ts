@@ -20,6 +20,17 @@ afterEach(() => {
 });
 
 describe("explicit sample profile", () => {
+  it("includes catalog-backed abilities, requirements, and correct base rarities", () => {
+    const items = createDemoProfile().containers.flatMap((container) => container.items);
+    expect(items.find((item) => item.id === "ASPECT_OF_THE_END")?.lore.join(" ")).toContain(
+      "Instant Transmission",
+    );
+    expect(items.find((item) => item.id === "END_BOOTS")?.lore.join(" ")).toContain(
+      "Combat Skill 12",
+    );
+    expect(items.find((item) => item.id === "DIAMOND_PICKAXE")?.rarity).toBe("UNCOMMON");
+    expect(items.find((item) => item.id === "FARMING_TALISMAN")?.rarity).toBe("UNCOMMON");
+  });
   it("is deterministic, labelled, schema-valid, and computes totals from its skills", () => {
     const profile = createDemoProfile();
     expect(profile).toEqual(createDemoProfile());
