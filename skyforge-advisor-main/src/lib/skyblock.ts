@@ -405,6 +405,8 @@ export type ProfileAvailability = {
 };
 
 export type PlayerData = {
+  /** Explicitly labelled fictional profile, for exploring without an API key. */
+  source?: "demo";
   availability?: ProfileAvailability | undefined;
   username: string;
   uuid: string;

@@ -4,21 +4,31 @@ import { useCallback, useEffect, useState } from "react";
 import { fetchPlayer } from "@/lib/hypixel.functions";
 import { recordSnapshot } from "@/lib/history";
 import { usernameSchema } from "@/lib/schemas";
+import {
+  createDemoProfile,
+  DEMO_PROFILE_ID,
+  DEMO_SESSION_KEY,
+  DEMO_USERNAME,
+} from "@/lib/demo-profile";
 
 const NAME_STORAGE = "sba.username";
 const PROFILE_STORAGE = "sba.profileId";
 
-type Account = { username: string; profileId: string };
+type Account = { username: string; profileId: string; demo: boolean };
 
-const EMPTY: Account = { username: "", profileId: "" };
+const EMPTY: Account = { username: "", profileId: "", demo: false };
 
 const listeners = new Set<() => void>();
 
 function read(): Account {
   if (typeof window === "undefined") return EMPTY;
+  if (sessionStorage.getItem(DEMO_SESSION_KEY) === "true") {
+    return { username: DEMO_USERNAME, profileId: DEMO_PROFILE_ID, demo: true };
+  }
   return {
     username: localStorage.getItem(NAME_STORAGE) ?? "",
     profileId: localStorage.getItem(PROFILE_STORAGE) ?? "",
+    demo: false,
   };
 }
 
@@ -44,7 +54,8 @@ export function useAccount() {
     };
   }, []);
 
-  const save = useCallback((next: Partial<Account>) => {
+  const save = useCallback((next: Partial<Pick<Account, "username" | "profileId">>) => {
+    sessionStorage.removeItem(DEMO_SESSION_KEY);
     const current = read();
     const merged = { ...current, ...next };
     localStorage.setItem(NAME_STORAGE, merged.username);
@@ -53,9 +64,20 @@ export function useAccount() {
   }, []);
 
   const clear = useCallback(() => {
+    sessionStorage.removeItem(DEMO_SESSION_KEY);
     localStorage.removeItem(NAME_STORAGE);
     localStorage.removeItem(PROFILE_STORAGE);
     listeners.forEach((l) => l());
+  }, []);
+
+  const enterDemo = useCallback(() => {
+    sessionStorage.setItem(DEMO_SESSION_KEY, "true");
+    listeners.forEach((listener) => listener());
+  }, []);
+
+  const exitDemo = useCallback(() => {
+    sessionStorage.removeItem(DEMO_SESSION_KEY);
+    listeners.forEach((listener) => listener());
   }, []);
 
   return {
@@ -64,16 +86,22 @@ export function useAccount() {
     connected: hydrated && !!account.username,
     save,
     clear,
+    enterDemo,
+    exitDemo,
   };
 }
 
 export function playerQueryOptions(username: string, profileId = "") {
+  const demo = username === DEMO_USERNAME && profileId === DEMO_PROFILE_ID;
   return {
-    queryKey: ["player", username.toLowerCase(), profileId],
+    queryKey: [demo ? "demo-player" : "player", username.toLowerCase(), profileId],
     staleTime: 60_000,
     refetchOnWindowFocus: false,
     retry: false,
-    queryFn: () => fetchPlayer({ data: { username, ...(profileId ? { profileId } : {}) } }),
+    queryFn: async () => {
+      if (demo) return createDemoProfile();
+      return fetchPlayer({ data: { username, ...(profileId ? { profileId } : {}) } });
+    },
   };
 }
 
@@ -95,7 +123,9 @@ export function useConnectPlayer() {
     try {
       const current = read();
       const profileId =
-        current.username.toLowerCase() === parsed.data.toLowerCase() ? current.profileId : "";
+        !current.demo && current.username.toLowerCase() === parsed.data.toLowerCase()
+          ? current.profileId
+          : "";
       const player = await queryClient.fetchQuery(playerQueryOptions(parsed.data, profileId));
       if (!player) {
         setError("SkyForge couldn't read that SkyBlock profile. Try again.");
@@ -115,7 +145,7 @@ export function useConnectPlayer() {
   return { connect, connecting, error, clearError: () => setError(undefined) };
 }
 
-/** Live profile data for the stored account. */
+/** Live data for the stored account, or the explicitly selected sample profile. */
 export function usePlayer() {
   const { username, profileId, connected } = useAccount();
   const query = useQuery({ ...playerQueryOptions(username, profileId), enabled: connected });

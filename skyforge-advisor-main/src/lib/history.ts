@@ -56,6 +56,7 @@ function writeSnapshots(key: string, snapshots: ProfileSnapshot[]): void {
  */
 /** Minimal shape needed to record a snapshot (structural, validation-friendly). */
 export type SnapshotSource = {
+  source?: "demo" | undefined;
   uuid: string;
   activeProfileId: string;
   purse: number;
@@ -68,6 +69,7 @@ export type SnapshotSource = {
 };
 
 export function recordSnapshot(data: SnapshotSource): void {
+  if (data.source === "demo") return;
   const key = storageKey(data.uuid, data.activeProfileId);
   const snapshots = readSnapshots(key);
   const now = Date.now();

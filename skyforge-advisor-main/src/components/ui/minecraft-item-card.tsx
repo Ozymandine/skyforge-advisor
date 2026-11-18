@@ -31,7 +31,7 @@ export function MinecraftItemCard({ item, className, estimatedValue }: Minecraft
   return (
     <div
       className={cn(
-        "relative rounded-2xl border-2 border-[#2a0054] bg-[#100010]/95 p-4 shadow-2xl backdrop-blur-xl ring-2 ring-[#080008] text-white select-none transition-all",
+        "relative overflow-hidden rounded-2xl border-2 border-[#2a0054] bg-[#100010]/95 p-4 shadow-2xl backdrop-blur-xl ring-2 ring-[#080008] text-white select-none transition-all",
         className,
       )}
     >

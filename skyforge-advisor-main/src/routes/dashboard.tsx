@@ -50,10 +50,25 @@ function Dashboard() {
     .filter((skill) => !data.availability || data.availability.skillKeys.includes(skill.key))
     .sort((a, b) => b.level - a.level || b.totalXp - a.totalXp)
     .slice(0, 4);
+  const armor = data.containers.find((container) => container.id === "armor");
+  const inventory = data.containers.find((container) => container.id === "inventory");
+  const hotbar = inventory?.items.filter((item) => item.slot < 9) ?? [];
+  const loadout = [...(armor?.items ?? []), ...hotbar.slice(0, 3)];
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
-      <PageHero title="Dashboard" />
+      <PageHero
+        title="Dashboard"
+        actions={
+          <Link
+            to="/advisor"
+            className="inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/20"
+          >
+            <ItemIcon id="ENDER_EYE" name="Advisor" className="size-4" />
+            Plan your next step <span aria-hidden="true">→</span>
+          </Link>
+        }
+      />
       <Panel className="space-y-5">
         <div className="flex flex-wrap items-center gap-3">
           <PlayerHeadAvatar uuid={data.uuid} name={data.username} size={48} className="size-10" />
@@ -95,26 +110,62 @@ function Dashboard() {
           ))}
         </dl>
       </Panel>
-      <Panel>
-        <h2 className="text-lg font-semibold">SkyBlock level</h2>
-        {skyBlockLevel ? (
-          <>
-            <div className="mt-3 flex flex-wrap justify-between gap-2 text-sm">
-              <span>Level {skyBlockLevel.level}</span>
-              <span className="text-muted-foreground">
-                {skyBlockLevel.remainingXp} XP to level {skyBlockLevel.level + 1}
-              </span>
-            </div>
-            <div className="mt-2">
-              <ProgressBar pct={skyBlockLevel.progress} />
-            </div>
-          </>
-        ) : (
-          <p className="mt-2 text-sm text-muted-foreground">
-            Hypixel has no SkyBlock XP for this profile.
-          </p>
-        )}
-      </Panel>
+      <div className="grid items-stretch gap-4 lg:grid-cols-2">
+        <Panel className="flex flex-col justify-center">
+          <h2 className="text-lg font-semibold">SkyBlock level</h2>
+          {skyBlockLevel ? (
+            <>
+              <div className="mt-3 flex flex-wrap justify-between gap-2 text-sm">
+                <span>Level {skyBlockLevel.level}</span>
+                <span className="text-muted-foreground">
+                  {skyBlockLevel.remainingXp} XP to level {skyBlockLevel.level + 1}
+                </span>
+              </div>
+              <div className="mt-2">
+                <ProgressBar pct={skyBlockLevel.progress} />
+              </div>
+            </>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Hypixel has no SkyBlock XP for this profile.
+            </p>
+          )}
+        </Panel>
+        <Panel>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold">Armor & hotbar</h2>
+            <Link to="/inventory" className="text-sm text-primary hover:underline">
+              View gear →
+            </Link>
+          </div>
+          {loadout.length ? (
+            <ul className="mt-4 flex flex-wrap gap-2">
+              {loadout.map((item, index) => (
+                <li key={`${item.id}-${index}`}>
+                  <Link
+                    to="/inventory"
+                    title={item.name}
+                    aria-label={`View ${item.name} in inventory`}
+                    className="group flex size-12 items-center justify-center rounded-xl border border-border bg-background/35 transition hover:-translate-y-1 hover:border-primary/40 hover:bg-primary/10 sm:size-14"
+                  >
+                    <ItemIcon
+                      id={item.id}
+                      name={item.name}
+                      className="size-8 transition-transform group-hover:scale-110"
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-sm text-muted-foreground">
+              {armor || inventory
+                ? "No gear in the available armor and hotbar slots."
+                : "Inventory sharing is unavailable for this profile."}
+            </p>
+          )}
+        </Panel>
+      </div>
       <Panel>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold">Top skills</h2>

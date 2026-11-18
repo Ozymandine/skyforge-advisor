@@ -3,8 +3,10 @@ import { IconLoader2 } from "@/assets/icons";
 import type { ReactNode } from "react";
 
 import { Panel } from "@/components/layout/app-shell";
+import { useAccount } from "@/hooks/use-account";
 
 export function ConnectPrompt({ what }: { what: string }) {
+  const { enterDemo } = useAccount();
   return (
     <Panel className="text-center">
       <div
@@ -29,6 +31,13 @@ export function ConnectPrompt({ what }: { what: string }) {
       >
         Connect now
       </Link>
+      <button
+        type="button"
+        onClick={enterDemo}
+        className="mt-3 block mx-auto text-sm text-primary underline-offset-4 hover:underline"
+      >
+        Or explore with a sample profile
+      </button>
     </Panel>
   );
 }

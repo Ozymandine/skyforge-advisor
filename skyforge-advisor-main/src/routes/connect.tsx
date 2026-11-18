@@ -77,20 +77,42 @@ function Connect() {
         </form>
       </Panel>
 
+      <Panel className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-sm font-semibold">Try a sample profile</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Explore the dashboard and Advisor without connecting an account.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            account.enterDemo();
+            void navigate({ to: "/dashboard" });
+          }}
+          className="rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/20"
+        >
+          Explore demo →
+        </button>
+      </Panel>
+
       {account.connected && (
         <Panel className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm">Saved profile: {account.username}</p>
+          <p className="text-sm">
+            {account.demo ? "Demo profile" : `Saved profile: ${account.username}`}
+          </p>
           <button
             type="button"
             disabled={connecting}
             onClick={() => {
-              account.clear();
+              if (account.demo) account.exitDemo();
+              else account.clear();
               setDraft("");
               clearError();
             }}
             className="text-sm text-muted-foreground underline underline-offset-2 hover:text-foreground"
           >
-            Disconnect
+            {account.demo ? "Exit demo" : "Disconnect"}
           </button>
         </Panel>
       )}

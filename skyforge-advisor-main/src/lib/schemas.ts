@@ -277,6 +277,7 @@ export const communityUpgradeSchema = z.object({
 });
 
 export const playerDataSchema = z.object({
+  source: z.literal("demo").optional(),
   availability: z
     .object({
       skillKeys: z.array(z.string()),

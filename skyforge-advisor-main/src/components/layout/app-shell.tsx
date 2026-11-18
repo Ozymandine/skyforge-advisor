@@ -23,6 +23,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import headerPoster from "@/assets/skyblock-header.jpg";
 import { usePlayer, useAccount } from "@/hooks/use-account";
+import { DEMO_PROFILE_ID } from "@/lib/demo-profile";
 import {
   fetchBazaar,
   fetchAuctions,
@@ -146,7 +147,11 @@ export function PlayerHeadAvatar({
       )}
     >
       <img
-        src={`https://mc-heads.net/avatar/${encodeURIComponent(identifier)}/${size}`}
+        src={
+          identifier === DEMO_PROFILE_ID
+            ? "/vanilla/player_head.png"
+            : `https://mc-heads.net/avatar/${encodeURIComponent(identifier)}/${size}`
+        }
         alt={name || "Player avatar"}
         loading="lazy"
         onError={() => setFailedFor(identifier)}
@@ -391,24 +396,30 @@ function Header({
                   className="size-6 rounded-lg"
                 />
                 <span className="hidden max-w-28 truncate text-xs font-medium sm:inline">
-                  {activeProfile?.cuteName ?? account.username}
+                  {account.demo ? "Demo profile" : (activeProfile?.cuteName ?? account.username)}
                 </span>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {profiles.map((entry) => (
-                  <DropdownMenuItem
-                    key={entry.profileId}
-                    onSelect={() => account.save({ profileId: entry.profileId })}
-                  >
-                    {entry.cuteName}
-                    {activeProfile?.profileId === entry.profileId ? " (active)" : ""}
+                {!account.demo &&
+                  profiles.map((entry) => (
+                    <DropdownMenuItem
+                      key={entry.profileId}
+                      onSelect={() => account.save({ profileId: entry.profileId })}
+                    >
+                      {entry.cuteName}
+                      {activeProfile?.profileId === entry.profileId ? " (active)" : ""}
+                    </DropdownMenuItem>
+                  ))}
+                {!account.demo && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile/$username" params={{ username: account.username }}>
+                      View public profile
+                    </Link>
                   </DropdownMenuItem>
-                ))}
-                <DropdownMenuItem asChild>
-                  <Link to="/profile/$username" params={{ username: account.username }}>
-                    View public profile
-                  </Link>
-                </DropdownMenuItem>
+                )}
+                {account.demo && (
+                  <DropdownMenuItem onSelect={account.exitDemo}>Exit demo</DropdownMenuItem>
+                )}
                 <DropdownMenuItem asChild>
                   <Link to="/connect">Switch account</Link>
                 </DropdownMenuItem>
@@ -640,6 +651,27 @@ export function AppShell({ children }: { children: ReactNode }) {
             onOpenNav={() => setNavOpen(true)}
             onCycleThemeRef={cycleThemeRef}
           />
+          {account.demo && (
+            <div
+              role="status"
+              className="flex flex-wrap items-center justify-between gap-2 border-b border-primary/20 bg-background/80 px-4 py-2 text-xs sm:px-8"
+            >
+              <p>
+                <span className="font-semibold text-primary">Demo profile</span>
+                <span className="text-muted-foreground">
+                  {" "}
+                  · Fictional sample stats. Market quotes come from Hypixel's public feeds.
+                </span>
+              </p>
+              <button
+                type="button"
+                onClick={account.exitDemo}
+                className="shrink-0 rounded-md px-2 py-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-foreground"
+              >
+                Exit demo
+              </button>
+            </div>
+          )}
           <main key={pathname} className="animate-page-in flex-1 px-4 pb-8 pt-6 sm:px-8 md:pb-12">
             {children}
           </main>

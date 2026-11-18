@@ -138,7 +138,7 @@ function Inventory() {
                           )}
                         />
                       </div>
-                      <div className="mt-5 grid grid-cols-9 gap-2 rounded-2xl border border-white/10 bg-black/50 p-3 shadow-inner">
+                      <div className="mt-5 grid grid-cols-9 gap-1 rounded-2xl border border-white/10 bg-black/50 p-2 shadow-inner sm:gap-2 sm:p-3">
                         {Array.from({ length: current.slots }).map((_, slot) => {
                           const slotItem = current.items.find((i) => i.slot === slot);
                           return (
@@ -150,6 +150,7 @@ function Inventory() {
                               disabled={!slotItem}
                             >
                               <button
+                                aria-label={slotItem?.name ?? `Empty slot ${slot + 1}`}
                                 onClick={() => {
                                   if (slotItem) {
                                     playClickSound();
@@ -160,7 +161,7 @@ function Inventory() {
                                   if (slotItem) playSlotHoverSound();
                                 }}
                                 className={cn(
-                                  "group relative flex aspect-square w-full items-center justify-center rounded-xl border p-1 transition-none select-none",
+                                  "group relative flex aspect-square min-w-0 w-full items-center justify-center rounded-md border p-0.5 transition-none select-none sm:rounded-xl sm:p-1",
                                   selected === slot
                                     ? "border-emerald-400 bg-emerald-500/25 ring-2 ring-emerald-400/50 shadow-lg shadow-emerald-500/20"
                                     : slotItem
@@ -173,7 +174,7 @@ function Inventory() {
                                     <ItemIcon
                                       id={slotItem.id}
                                       name={slotItem.name}
-                                      className="size-8 object-contain"
+                                      className="size-full max-h-8 max-w-8 object-contain"
                                     />
                                     {slotItem.count > 1 && (
                                       <span className="absolute bottom-1 right-1.5 font-mono text-[10px] font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,1)]">

@@ -160,6 +160,20 @@ function Landing() {
               Open dashboard <IconArrowRight className="size-4" />
             </Link>
           )}
+          <div className="mt-4 flex flex-col items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                account.enterDemo();
+                void navigate({ to: "/dashboard" });
+              }}
+              className="inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition hover:bg-primary/20 active:scale-[0.98]"
+            >
+              <ItemIcon id="COMPASS" name="Demo" className="size-4" />
+              Explore demo <span aria-hidden="true">→</span>
+            </button>
+            <span className="text-xs text-muted-foreground">Sample profile · no login needed</span>
+          </div>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
             <span>Popular profiles</span>
             {["Deathstreeks", "Refraction", "Hellcastle", "56ms"].map((name) => (
