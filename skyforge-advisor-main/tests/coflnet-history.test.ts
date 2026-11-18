@@ -52,7 +52,7 @@ describe("Coflnet server cache and failure states", () => {
     vi.resetModules();
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(now);
-    const request = vi.fn(async () => Response.json(rows));
+    const request = vi.fn(async (_url: string, _options?: RequestInit) => Response.json(rows));
     vi.stubGlobal("fetch", request);
     return {
       request,
